@@ -1,0 +1,8 @@
+DB:
+  USER: dimo
+  PASSWORD: dimo
+  PORT: 5432
+  HOST: localhost
+  NAME: identity_api
+  MAX_OPEN_CONNECTIONS: 5
+  MAX_IDLE_CONNECTIONS: 5
