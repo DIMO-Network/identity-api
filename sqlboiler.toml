@@ -1,0 +1,9 @@
+[psql]
+dbname = "identity_api"
+blacklist = ["migrations"]
+host   = "localhost"
+port   = 5432
+user   = "dimo"
+pass   = "dimo"
+schema = "identity_api"
+sslmode= "disable"
