@@ -6,42 +6,19 @@ package graph
 
 import (
 	"context"
-	"crypto/rand"
-	"fmt"
-	"math/big"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/controllers"
+	"github.com/ethereum/go-ethereum/common"
 )
 
-// CreateTodo is the resolver for the createTodo field.
-func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) (*model.Todo, error) {
-	rand, _ := rand.Int(rand.Reader, big.NewInt(100))
-	todo := &model.Todo{
-		Text: input.Text,
-		ID:   fmt.Sprintf("T%d", rand),
-		User: &model.User{ID: input.UserID, Name: "user " + input.UserID},
-	}
-	r.todos = append(r.todos, todo)
-	return todo, nil
-}
-
-// Todos is the resolver for the todos field.
-func (r *queryResolver) Todos(ctx context.Context) ([]*model.Todo, error) {
-	return r.todos, nil
-}
-
 // OwnedVehicles is the resolver for the ownedVehicles field.
-func (r *queryResolver) OwnedVehicles(ctx context.Context, address string) ([]*model.Vehicle, error) {
-	vr := controllers.NewVehiclesCtrl()
-	return vr.GetOwnedVehicles(ctx, address)
+func (r *queryResolver) OwnedVehicles(ctx context.Context, address common.Address) ([]*model.Vehicle, error) {
+	vr := controllers.NewVehiclesCtrl(ctx, r.Db)
+	return vr.GetOwnedVehicles(address)
 }
-
-// Mutation returns MutationResolver implementation.
-func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
-type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }

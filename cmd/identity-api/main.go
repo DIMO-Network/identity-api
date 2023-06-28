@@ -39,7 +39,9 @@ func main() {
 	pdb := db.NewDbConnectionFromSettings(context.Background(), &settings.DB, true)
 	pdb.WaitForDB(logger)
 
-	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
+	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{
+		Db: pdb,
+	}}))
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", srv)

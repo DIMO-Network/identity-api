@@ -5,13 +5,6 @@
 scalar Time
 scalar Address
 
-type Todo {
-  id: ID!
-  text: String!
-  done: Boolean!
-  user: User!
-}
-
 type Vehicle {
   id: ID!
   owner: Address!
@@ -21,21 +14,6 @@ type Vehicle {
   mintTime: Time!
 }
 
-type User {
-  id: ID!
-  name: String!
-}
-
 type Query {
-  todos: [Todo!]!
-  ownedVehicles(address: String!): [Vehicle!]!
-}
-
-input NewTodo {
-  text: String!
-  userId: String!
-}
-
-type Mutation {
-  createTodo(input: NewTodo!): Todo!
+  ownedVehicles(address: Address!): [Vehicle!]!
 }

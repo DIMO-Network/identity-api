@@ -9,4 +9,8 @@ make models
 
 ## Start App
 
-go run ./cmd/identity-api
+`go run ./cmd/identity-api`
+
+## Create migration
+
+`goose -dir migrations create <migration_name> sql`

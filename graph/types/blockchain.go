@@ -9,19 +9,19 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func MarshalAddress(addr []byte) graphql.Marshaler {
+func MarshalAddress(addr common.Address) graphql.Marshaler {
 	return graphql.WriterFunc(func(w io.Writer) {
-		io.WriteString(w, strconv.Quote(common.BytesToAddress(addr).Hex()))
+		io.WriteString(w, strconv.Quote(addr.Hex()))
 	})
 }
 
-func UnmarshalAddress(v interface{}) ([]byte, error) {
+func UnmarshalAddress(v interface{}) (common.Address, error) {
 	switch v := v.(type) {
 	case string:
-		return common.HexToAddress(v).Bytes(), nil
+		return common.HexToAddress(v), nil
 	case byte:
-		return []byte{v}, nil
+		return common.BytesToAddress([]byte{v}), nil
 	default:
-		return nil, fmt.Errorf("%T is not a string", v)
+		return common.Address{}, fmt.Errorf("%T is not a string", v)
 	}
 }
