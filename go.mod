@@ -5,8 +5,10 @@ go 1.20
 require (
 	github.com/99designs/gqlgen v0.17.34
 	github.com/DIMO-Network/shared v0.9.53
+	github.com/ethereum/go-ethereum v1.10.26
 	github.com/pressly/goose/v3 v3.11.2
 	github.com/rs/zerolog v1.29.1
+	github.com/segmentio/ksuid v1.0.4
 	github.com/vektah/gqlparser/v2 v2.5.4
 )
 
@@ -43,6 +45,7 @@ require (
 	github.com/valyala/fasthttp v1.47.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
+	golang.org/x/crypto v0.8.0 // indirect
 	golang.org/x/mod v0.10.0 // indirect
 	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect

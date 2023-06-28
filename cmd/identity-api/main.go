@@ -44,5 +44,8 @@ func main() {
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", srv)
 
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", settings.Port), nil))
+	prt := 4000
+	logger.Info().Msg(fmt.Sprintf("Server started on port:%d", prt))
+
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", prt), nil))
 }

@@ -2,6 +2,10 @@
 
 package model
 
+import (
+	"time"
+)
+
 type NewTodo struct {
 	Text   string `json:"text"`
 	UserID string `json:"userId"`
@@ -17,4 +21,13 @@ type Todo struct {
 type User struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
+}
+
+type Vehicle struct {
+	ID       string    `json:"id"`
+	Owner    []byte    `json:"owner"`
+	Make     string    `json:"make"`
+	Model    string    `json:"model"`
+	Year     int       `json:"year"`
+	MintTime time.Time `json:"mintTime"`
 }

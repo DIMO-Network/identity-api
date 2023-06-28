@@ -2,11 +2,23 @@
 #
 # https://gqlgen.com/getting-started/
 
+scalar Time
+scalar Address
+
 type Todo {
   id: ID!
   text: String!
   done: Boolean!
   user: User!
+}
+
+type Vehicle {
+  id: ID!
+  owner: Address!
+  make: String!
+  model: String!
+  year: Int!
+  mintTime: Time!
 }
 
 type User {
@@ -16,6 +28,7 @@ type User {
 
 type Query {
   todos: [Todo!]!
+  ownedVehicles(address: String!): [Vehicle!]!
 }
 
 input NewTodo {

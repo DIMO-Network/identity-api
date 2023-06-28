@@ -85,3 +85,5 @@ models:
       - github.com/99designs/gqlgen/graphql.Int
       - github.com/99designs/gqlgen/graphql.Int64
       - github.com/99designs/gqlgen/graphql.Int32
+  Address:
+    model: github.com/DIMO-Network/identity-api/graph/types.Address
