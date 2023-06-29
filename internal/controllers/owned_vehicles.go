@@ -34,7 +34,7 @@ func (v *VehiclesCtrl) GetOwnedVehicles(addr common.Address) ([]*gmodel.Vehicle,
 	for _, m := range mv {
 		res = append(res, &gmodel.Vehicle{
 			ID:       m.ID.String(),
-			Owner:    common.Address(m.OwnerAddress.Bytes),
+			Owner:    common.BytesToAddress(m.OwnerAddress.Bytes),
 			Make:     m.Make,
 			Model:    m.Model,
 			Year:     int(m.Year),
