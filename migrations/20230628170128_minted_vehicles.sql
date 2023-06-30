@@ -2,6 +2,8 @@
 -- +goose StatementBegin
 SELECT 'up SQL query';
 
+SET search_path = identity_api, public;
+
 CREATE TABLE minted_vehicles(
     id numeric(78, 0)
         CONSTRAINT minted_vehicles_id_key UNIQUE,
