@@ -40,7 +40,7 @@ func main() {
 	pdb.WaitForDB(logger)
 
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{
-		Db: pdb,
+		DB: pdb,
 	}}))
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))

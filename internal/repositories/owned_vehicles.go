@@ -15,7 +15,7 @@ type VehiclesCtrl struct {
 	pdb db.Store
 }
 
-func NewVehiclesCtrl(ctx context.Context, pdb db.Store) VehiclesCtrl {
+func NewVehiclesRepo(ctx context.Context, pdb db.Store) VehiclesCtrl {
 	return VehiclesCtrl{
 		ctx: ctx,
 		pdb: pdb,
@@ -34,7 +34,7 @@ func (v *VehiclesCtrl) GetOwnedVehicles(addr common.Address) ([]*gmodel.Vehicle,
 	for _, m := range mv {
 		res = append(res, &gmodel.Vehicle{
 			ID:       m.ID.String(),
-			Owner:    common.BytesToAddress(m.OwnerAddress.Bytes),
+			Owner:    addr,
 			Make:     m.Make,
 			Model:    m.Model,
 			Year:     int(m.Year),
