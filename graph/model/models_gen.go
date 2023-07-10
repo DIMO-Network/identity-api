@@ -2,19 +2,17 @@
 
 package model
 
-type NewTodo struct {
-	Text   string `json:"text"`
-	UserID string `json:"userId"`
-}
+import (
+	"time"
 
-type Todo struct {
-	ID   string `json:"id"`
-	Text string `json:"text"`
-	Done bool   `json:"done"`
-	User *User  `json:"user"`
-}
+	"github.com/ethereum/go-ethereum/common"
+)
 
-type User struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+type Vehicle struct {
+	ID       string         `json:"id"`
+	Owner    common.Address `json:"owner"`
+	Make     string         `json:"make"`
+	Model    string         `json:"model"`
+	Year     int            `json:"year"`
+	MintTime time.Time      `json:"mintTime"`
 }

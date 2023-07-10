@@ -6,26 +6,19 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
+	repo "github.com/DIMO-Network/identity-api/internal/repositories"
+	"github.com/ethereum/go-ethereum/common"
 )
 
-// CreateTodo is the resolver for the createTodo field.
-func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) (*model.Todo, error) {
-	panic(fmt.Errorf("not implemented: CreateTodo - createTodo"))
+// OwnedVehicles is the resolver for the ownedVehicles field.
+func (r *queryResolver) OwnedVehicles(ctx context.Context, address common.Address) ([]*model.Vehicle, error) {
+	vr := repo.NewVehiclesRepo(ctx, r.DB)
+	return vr.GetOwnedVehicles(address)
 }
-
-// Todos is the resolver for the todos field.
-func (r *queryResolver) Todos(ctx context.Context) ([]*model.Todo, error) {
-	panic(fmt.Errorf("not implemented: Todos - todos"))
-}
-
-// Mutation returns MutationResolver implementation.
-func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
-type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }

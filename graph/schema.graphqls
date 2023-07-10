@@ -2,27 +2,18 @@
 #
 # https://gqlgen.com/getting-started/
 
-type Todo {
-  id: ID!
-  text: String!
-  done: Boolean!
-  user: User!
-}
+scalar Time
+scalar Address
 
-type User {
+type Vehicle {
   id: ID!
-  name: String!
+  owner: Address!
+  make: String!
+  model: String!
+  year: Int!
+  mintTime: Time!
 }
 
 type Query {
-  todos: [Todo!]!
-}
-
-input NewTodo {
-  text: String!
-  userId: String!
-}
-
-type Mutation {
-  createTodo(input: NewTodo!): Todo!
+  ownedVehicles(address: Address!): [Vehicle!]!
 }
