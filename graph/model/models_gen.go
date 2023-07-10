@@ -8,6 +8,14 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+type AftermarketDevice struct {
+	ID                 string         `json:"id"`
+	Owner              common.Address `json:"owner"`
+	BeneficiaryAddress common.Address `json:"beneficiary_address"`
+	VehicleID          string         `json:"vehicle_id"`
+	MintTime           time.Time      `json:"mintTime"`
+}
+
 type Vehicle struct {
 	ID       string         `json:"id"`
 	Owner    common.Address `json:"owner"`

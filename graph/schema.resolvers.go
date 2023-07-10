@@ -18,6 +18,12 @@ func (r *queryResolver) OwnedVehicles(ctx context.Context, address common.Addres
 	return vr.GetOwnedVehicles(address)
 }
 
+// AftermarketDevices is the resolver for the aftermarketDevices field.
+func (r *queryResolver) AftermarketDevices(ctx context.Context, address common.Address) ([]*model.AftermarketDevice, error) {
+	adr := repo.NewADRepo(ctx, r.DB)
+	return adr.GetAftermarketDevices(address)
+}
+
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
