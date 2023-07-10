@@ -23,8 +23,8 @@ func NewVehiclesRepo(ctx context.Context, pdb db.Store) VehiclesCtrl {
 }
 
 func (v *VehiclesCtrl) GetOwnedVehicles(addr common.Address) ([]*gmodel.Vehicle, error) {
-	mv, err := models.MintedVehicles(
-		models.MintedVehicleWhere.OwnerAddress.EQ(null.BytesFrom(addr.Bytes())),
+	mv, err := models.Vehicles(
+		models.VehicleWhere.OwnerAddress.EQ(null.BytesFrom(addr.Bytes())),
 	).All(v.ctx, v.pdb.DBS().Reader)
 	if err != nil {
 		return nil, err
