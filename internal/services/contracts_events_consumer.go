@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"math/big"
 	"time"
 
@@ -135,20 +134,11 @@ func (c *ContractsEventsConsumer) handleVehicleNodeMintedEvent(e *ContractEventD
 		return err
 	}
 
-	log.Println(args.Owner, args.TokenId)
-
-	devices, err := c.dSvc.ListUserDevicesForUser(c.ctx, &dgrpc.ListUserDevicesForUserRequest{
-		EthereumAddress: args.Owner.Hex(),
+	device, err := c.dSvc.GetUserDeviceByTokenId(c.ctx, &dgrpc.GetUserDeviceByTokenIdRequest{
+		TokenId: args.TokenId.Int64(),
 	})
 	if err != nil {
 		return err
-	}
-
-	device := &dgrpc.UserDevice{}
-	for _, ud := range devices.UserDevices {
-		if *device.TokenId == args.TokenId.Uint64() {
-			device = ud
-		}
 	}
 
 	if device == nil {

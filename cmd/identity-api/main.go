@@ -84,7 +84,7 @@ func startContractEventsConsumer(ctx context.Context, logger zerolog.Logger, set
 		ClusterConfig:   clusterConfig,
 		BrokerAddresses: strings.Split(settings.KafkaBrokers, ","),
 		Topic:           settings.ContractsEventTopic,
-		GroupID:         "user-devices",
+		GroupID:         "devices-identity",
 		MaxInFlight:     int64(5),
 	}
 	consumer, err := kafka.NewConsumer(cfg, &logger)
