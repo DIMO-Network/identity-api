@@ -15,7 +15,7 @@ type VehiclesCtrl struct {
 	pdb db.Store
 }
 
-func NewVehiclesCtrl(ctx context.Context, pdb db.Store) VehiclesCtrl {
+func NewVehiclesRepo(ctx context.Context, pdb db.Store) VehiclesCtrl {
 	return VehiclesCtrl{
 		ctx: ctx,
 		pdb: pdb,
@@ -23,8 +23,8 @@ func NewVehiclesCtrl(ctx context.Context, pdb db.Store) VehiclesCtrl {
 }
 
 func (v *VehiclesCtrl) GetOwnedVehicles(addr common.Address) ([]*gmodel.Vehicle, error) {
-	mv, err := models.MintedVehicles(
-		models.MintedVehicleWhere.OwnerAddress.EQ(null.BytesFrom(addr.Bytes())),
+	mv, err := models.Vehicles(
+		models.VehicleWhere.OwnerAddress.EQ(null.BytesFrom(addr.Bytes())),
 	).All(v.ctx, v.pdb.DBS().Reader)
 	if err != nil {
 		return nil, err
@@ -34,7 +34,7 @@ func (v *VehiclesCtrl) GetOwnedVehicles(addr common.Address) ([]*gmodel.Vehicle,
 	for _, m := range mv {
 		res = append(res, &gmodel.Vehicle{
 			ID:       m.ID.String(),
-			Owner:    common.BytesToAddress(m.OwnerAddress.Bytes),
+			Owner:    addr,
 			Make:     m.Make,
 			Model:    m.Model,
 			Year:     int(m.Year),

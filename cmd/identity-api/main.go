@@ -64,7 +64,7 @@ func main() {
 	startContractEventsConsumer(ctx, logger, &settings, pdb, dSvc, ddFSvc)
 
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{
-		Db: pdb,
+		DB: pdb,
 	}}))
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))

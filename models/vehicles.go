@@ -23,20 +23,20 @@ import (
 	"github.com/volatiletech/strmangle"
 )
 
-// MintedVehicle is an object representing the database table.
-type MintedVehicle struct {
+// Vehicle is an object representing the database table.
+type Vehicle struct {
 	ID           types.Decimal `boil:"id" json:"id" toml:"id" yaml:"id"`
 	OwnerAddress null.Bytes    `boil:"owner_address" json:"owner_address,omitempty" toml:"owner_address" yaml:"owner_address,omitempty"`
 	Make         string        `boil:"make" json:"make" toml:"make" yaml:"make"`
 	Model        string        `boil:"model" json:"model" toml:"model" yaml:"model"`
-	Year         int16         `boil:"year" json:"year" toml:"year" yaml:"year"`
+	Year         int           `boil:"year" json:"year" toml:"year" yaml:"year"`
 	MintTime     time.Time     `boil:"mint_time" json:"mint_time" toml:"mint_time" yaml:"mint_time"`
 
-	R *mintedVehicleR `boil:"-" json:"-" toml:"-" yaml:"-"`
-	L mintedVehicleL  `boil:"-" json:"-" toml:"-" yaml:"-"`
+	R *vehicleR `boil:"-" json:"-" toml:"-" yaml:"-"`
+	L vehicleL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
-var MintedVehicleColumns = struct {
+var VehicleColumns = struct {
 	ID           string
 	OwnerAddress string
 	Make         string
@@ -52,7 +52,7 @@ var MintedVehicleColumns = struct {
 	MintTime:     "mint_time",
 }
 
-var MintedVehicleTableColumns = struct {
+var VehicleTableColumns = struct {
 	ID           string
 	OwnerAddress string
 	Make         string
@@ -60,12 +60,12 @@ var MintedVehicleTableColumns = struct {
 	Year         string
 	MintTime     string
 }{
-	ID:           "minted_vehicles.id",
-	OwnerAddress: "minted_vehicles.owner_address",
-	Make:         "minted_vehicles.make",
-	Model:        "minted_vehicles.model",
-	Year:         "minted_vehicles.year",
-	MintTime:     "minted_vehicles.mint_time",
+	ID:           "vehicles.id",
+	OwnerAddress: "vehicles.owner_address",
+	Make:         "vehicles.make",
+	Model:        "vehicles.model",
+	Year:         "vehicles.year",
+	MintTime:     "vehicles.mint_time",
 }
 
 // Generated where
@@ -138,22 +138,22 @@ func (w whereHelperstring) NIN(slice []string) qm.QueryMod {
 	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
 }
 
-type whereHelperint16 struct{ field string }
+type whereHelperint struct{ field string }
 
-func (w whereHelperint16) EQ(x int16) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
-func (w whereHelperint16) NEQ(x int16) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
-func (w whereHelperint16) LT(x int16) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
-func (w whereHelperint16) LTE(x int16) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
-func (w whereHelperint16) GT(x int16) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
-func (w whereHelperint16) GTE(x int16) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
-func (w whereHelperint16) IN(slice []int16) qm.QueryMod {
+func (w whereHelperint) EQ(x int) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
+func (w whereHelperint) NEQ(x int) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
+func (w whereHelperint) LT(x int) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
+func (w whereHelperint) LTE(x int) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
+func (w whereHelperint) GT(x int) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
+func (w whereHelperint) GTE(x int) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
+func (w whereHelperint) IN(slice []int) qm.QueryMod {
 	values := make([]interface{}, 0, len(slice))
 	for _, value := range slice {
 		values = append(values, value)
 	}
 	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
 }
-func (w whereHelperint16) NIN(slice []int16) qm.QueryMod {
+func (w whereHelperint) NIN(slice []int) qm.QueryMod {
 	values := make([]interface{}, 0, len(slice))
 	for _, value := range slice {
 		values = append(values, value)
@@ -182,69 +182,69 @@ func (w whereHelpertime_Time) GTE(x time.Time) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.GTE, x)
 }
 
-var MintedVehicleWhere = struct {
+var VehicleWhere = struct {
 	ID           whereHelpertypes_Decimal
 	OwnerAddress whereHelpernull_Bytes
 	Make         whereHelperstring
 	Model        whereHelperstring
-	Year         whereHelperint16
+	Year         whereHelperint
 	MintTime     whereHelpertime_Time
 }{
-	ID:           whereHelpertypes_Decimal{field: "\"identity_api\".\"minted_vehicles\".\"id\""},
-	OwnerAddress: whereHelpernull_Bytes{field: "\"identity_api\".\"minted_vehicles\".\"owner_address\""},
-	Make:         whereHelperstring{field: "\"identity_api\".\"minted_vehicles\".\"make\""},
-	Model:        whereHelperstring{field: "\"identity_api\".\"minted_vehicles\".\"model\""},
-	Year:         whereHelperint16{field: "\"identity_api\".\"minted_vehicles\".\"year\""},
-	MintTime:     whereHelpertime_Time{field: "\"identity_api\".\"minted_vehicles\".\"mint_time\""},
+	ID:           whereHelpertypes_Decimal{field: "\"identity_api\".\"vehicles\".\"id\""},
+	OwnerAddress: whereHelpernull_Bytes{field: "\"identity_api\".\"vehicles\".\"owner_address\""},
+	Make:         whereHelperstring{field: "\"identity_api\".\"vehicles\".\"make\""},
+	Model:        whereHelperstring{field: "\"identity_api\".\"vehicles\".\"model\""},
+	Year:         whereHelperint{field: "\"identity_api\".\"vehicles\".\"year\""},
+	MintTime:     whereHelpertime_Time{field: "\"identity_api\".\"vehicles\".\"mint_time\""},
 }
 
-// MintedVehicleRels is where relationship names are stored.
-var MintedVehicleRels = struct {
+// VehicleRels is where relationship names are stored.
+var VehicleRels = struct {
 }{}
 
-// mintedVehicleR is where relationships are stored.
-type mintedVehicleR struct {
+// vehicleR is where relationships are stored.
+type vehicleR struct {
 }
 
 // NewStruct creates a new relationship struct
-func (*mintedVehicleR) NewStruct() *mintedVehicleR {
-	return &mintedVehicleR{}
+func (*vehicleR) NewStruct() *vehicleR {
+	return &vehicleR{}
 }
 
-// mintedVehicleL is where Load methods for each relationship are stored.
-type mintedVehicleL struct{}
+// vehicleL is where Load methods for each relationship are stored.
+type vehicleL struct{}
 
 var (
-	mintedVehicleAllColumns            = []string{"id", "owner_address", "make", "model", "year", "mint_time"}
-	mintedVehicleColumnsWithoutDefault = []string{"id", "make", "model", "year"}
-	mintedVehicleColumnsWithDefault    = []string{"owner_address", "mint_time"}
-	mintedVehiclePrimaryKeyColumns     = []string{"id"}
-	mintedVehicleGeneratedColumns      = []string{}
+	vehicleAllColumns            = []string{"id", "owner_address", "make", "model", "year", "mint_time"}
+	vehicleColumnsWithoutDefault = []string{"id", "make", "model", "year"}
+	vehicleColumnsWithDefault    = []string{"owner_address", "mint_time"}
+	vehiclePrimaryKeyColumns     = []string{"id"}
+	vehicleGeneratedColumns      = []string{}
 )
 
 type (
-	// MintedVehicleSlice is an alias for a slice of pointers to MintedVehicle.
-	// This should almost always be used instead of []MintedVehicle.
-	MintedVehicleSlice []*MintedVehicle
-	// MintedVehicleHook is the signature for custom MintedVehicle hook methods
-	MintedVehicleHook func(context.Context, boil.ContextExecutor, *MintedVehicle) error
+	// VehicleSlice is an alias for a slice of pointers to Vehicle.
+	// This should almost always be used instead of []Vehicle.
+	VehicleSlice []*Vehicle
+	// VehicleHook is the signature for custom Vehicle hook methods
+	VehicleHook func(context.Context, boil.ContextExecutor, *Vehicle) error
 
-	mintedVehicleQuery struct {
+	vehicleQuery struct {
 		*queries.Query
 	}
 )
 
 // Cache for insert, update and upsert
 var (
-	mintedVehicleType                 = reflect.TypeOf(&MintedVehicle{})
-	mintedVehicleMapping              = queries.MakeStructMapping(mintedVehicleType)
-	mintedVehiclePrimaryKeyMapping, _ = queries.BindMapping(mintedVehicleType, mintedVehicleMapping, mintedVehiclePrimaryKeyColumns)
-	mintedVehicleInsertCacheMut       sync.RWMutex
-	mintedVehicleInsertCache          = make(map[string]insertCache)
-	mintedVehicleUpdateCacheMut       sync.RWMutex
-	mintedVehicleUpdateCache          = make(map[string]updateCache)
-	mintedVehicleUpsertCacheMut       sync.RWMutex
-	mintedVehicleUpsertCache          = make(map[string]insertCache)
+	vehicleType                 = reflect.TypeOf(&Vehicle{})
+	vehicleMapping              = queries.MakeStructMapping(vehicleType)
+	vehiclePrimaryKeyMapping, _ = queries.BindMapping(vehicleType, vehicleMapping, vehiclePrimaryKeyColumns)
+	vehicleInsertCacheMut       sync.RWMutex
+	vehicleInsertCache          = make(map[string]insertCache)
+	vehicleUpdateCacheMut       sync.RWMutex
+	vehicleUpdateCache          = make(map[string]updateCache)
+	vehicleUpsertCacheMut       sync.RWMutex
+	vehicleUpsertCache          = make(map[string]insertCache)
 )
 
 var (
@@ -255,27 +255,27 @@ var (
 	_ = qmhelper.Where
 )
 
-var mintedVehicleAfterSelectHooks []MintedVehicleHook
+var vehicleAfterSelectHooks []VehicleHook
 
-var mintedVehicleBeforeInsertHooks []MintedVehicleHook
-var mintedVehicleAfterInsertHooks []MintedVehicleHook
+var vehicleBeforeInsertHooks []VehicleHook
+var vehicleAfterInsertHooks []VehicleHook
 
-var mintedVehicleBeforeUpdateHooks []MintedVehicleHook
-var mintedVehicleAfterUpdateHooks []MintedVehicleHook
+var vehicleBeforeUpdateHooks []VehicleHook
+var vehicleAfterUpdateHooks []VehicleHook
 
-var mintedVehicleBeforeDeleteHooks []MintedVehicleHook
-var mintedVehicleAfterDeleteHooks []MintedVehicleHook
+var vehicleBeforeDeleteHooks []VehicleHook
+var vehicleAfterDeleteHooks []VehicleHook
 
-var mintedVehicleBeforeUpsertHooks []MintedVehicleHook
-var mintedVehicleAfterUpsertHooks []MintedVehicleHook
+var vehicleBeforeUpsertHooks []VehicleHook
+var vehicleAfterUpsertHooks []VehicleHook
 
 // doAfterSelectHooks executes all "after Select" hooks.
-func (o *MintedVehicle) doAfterSelectHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *Vehicle) doAfterSelectHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range mintedVehicleAfterSelectHooks {
+	for _, hook := range vehicleAfterSelectHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -285,12 +285,12 @@ func (o *MintedVehicle) doAfterSelectHooks(ctx context.Context, exec boil.Contex
 }
 
 // doBeforeInsertHooks executes all "before insert" hooks.
-func (o *MintedVehicle) doBeforeInsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *Vehicle) doBeforeInsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range mintedVehicleBeforeInsertHooks {
+	for _, hook := range vehicleBeforeInsertHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -300,12 +300,12 @@ func (o *MintedVehicle) doBeforeInsertHooks(ctx context.Context, exec boil.Conte
 }
 
 // doAfterInsertHooks executes all "after Insert" hooks.
-func (o *MintedVehicle) doAfterInsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *Vehicle) doAfterInsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range mintedVehicleAfterInsertHooks {
+	for _, hook := range vehicleAfterInsertHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -315,12 +315,12 @@ func (o *MintedVehicle) doAfterInsertHooks(ctx context.Context, exec boil.Contex
 }
 
 // doBeforeUpdateHooks executes all "before Update" hooks.
-func (o *MintedVehicle) doBeforeUpdateHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *Vehicle) doBeforeUpdateHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range mintedVehicleBeforeUpdateHooks {
+	for _, hook := range vehicleBeforeUpdateHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -330,12 +330,12 @@ func (o *MintedVehicle) doBeforeUpdateHooks(ctx context.Context, exec boil.Conte
 }
 
 // doAfterUpdateHooks executes all "after Update" hooks.
-func (o *MintedVehicle) doAfterUpdateHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *Vehicle) doAfterUpdateHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range mintedVehicleAfterUpdateHooks {
+	for _, hook := range vehicleAfterUpdateHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -345,12 +345,12 @@ func (o *MintedVehicle) doAfterUpdateHooks(ctx context.Context, exec boil.Contex
 }
 
 // doBeforeDeleteHooks executes all "before Delete" hooks.
-func (o *MintedVehicle) doBeforeDeleteHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *Vehicle) doBeforeDeleteHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range mintedVehicleBeforeDeleteHooks {
+	for _, hook := range vehicleBeforeDeleteHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -360,12 +360,12 @@ func (o *MintedVehicle) doBeforeDeleteHooks(ctx context.Context, exec boil.Conte
 }
 
 // doAfterDeleteHooks executes all "after Delete" hooks.
-func (o *MintedVehicle) doAfterDeleteHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *Vehicle) doAfterDeleteHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range mintedVehicleAfterDeleteHooks {
+	for _, hook := range vehicleAfterDeleteHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -375,12 +375,12 @@ func (o *MintedVehicle) doAfterDeleteHooks(ctx context.Context, exec boil.Contex
 }
 
 // doBeforeUpsertHooks executes all "before Upsert" hooks.
-func (o *MintedVehicle) doBeforeUpsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *Vehicle) doBeforeUpsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range mintedVehicleBeforeUpsertHooks {
+	for _, hook := range vehicleBeforeUpsertHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -390,12 +390,12 @@ func (o *MintedVehicle) doBeforeUpsertHooks(ctx context.Context, exec boil.Conte
 }
 
 // doAfterUpsertHooks executes all "after Upsert" hooks.
-func (o *MintedVehicle) doAfterUpsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *Vehicle) doAfterUpsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range mintedVehicleAfterUpsertHooks {
+	for _, hook := range vehicleAfterUpsertHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -404,33 +404,33 @@ func (o *MintedVehicle) doAfterUpsertHooks(ctx context.Context, exec boil.Contex
 	return nil
 }
 
-// AddMintedVehicleHook registers your hook function for all future operations.
-func AddMintedVehicleHook(hookPoint boil.HookPoint, mintedVehicleHook MintedVehicleHook) {
+// AddVehicleHook registers your hook function for all future operations.
+func AddVehicleHook(hookPoint boil.HookPoint, vehicleHook VehicleHook) {
 	switch hookPoint {
 	case boil.AfterSelectHook:
-		mintedVehicleAfterSelectHooks = append(mintedVehicleAfterSelectHooks, mintedVehicleHook)
+		vehicleAfterSelectHooks = append(vehicleAfterSelectHooks, vehicleHook)
 	case boil.BeforeInsertHook:
-		mintedVehicleBeforeInsertHooks = append(mintedVehicleBeforeInsertHooks, mintedVehicleHook)
+		vehicleBeforeInsertHooks = append(vehicleBeforeInsertHooks, vehicleHook)
 	case boil.AfterInsertHook:
-		mintedVehicleAfterInsertHooks = append(mintedVehicleAfterInsertHooks, mintedVehicleHook)
+		vehicleAfterInsertHooks = append(vehicleAfterInsertHooks, vehicleHook)
 	case boil.BeforeUpdateHook:
-		mintedVehicleBeforeUpdateHooks = append(mintedVehicleBeforeUpdateHooks, mintedVehicleHook)
+		vehicleBeforeUpdateHooks = append(vehicleBeforeUpdateHooks, vehicleHook)
 	case boil.AfterUpdateHook:
-		mintedVehicleAfterUpdateHooks = append(mintedVehicleAfterUpdateHooks, mintedVehicleHook)
+		vehicleAfterUpdateHooks = append(vehicleAfterUpdateHooks, vehicleHook)
 	case boil.BeforeDeleteHook:
-		mintedVehicleBeforeDeleteHooks = append(mintedVehicleBeforeDeleteHooks, mintedVehicleHook)
+		vehicleBeforeDeleteHooks = append(vehicleBeforeDeleteHooks, vehicleHook)
 	case boil.AfterDeleteHook:
-		mintedVehicleAfterDeleteHooks = append(mintedVehicleAfterDeleteHooks, mintedVehicleHook)
+		vehicleAfterDeleteHooks = append(vehicleAfterDeleteHooks, vehicleHook)
 	case boil.BeforeUpsertHook:
-		mintedVehicleBeforeUpsertHooks = append(mintedVehicleBeforeUpsertHooks, mintedVehicleHook)
+		vehicleBeforeUpsertHooks = append(vehicleBeforeUpsertHooks, vehicleHook)
 	case boil.AfterUpsertHook:
-		mintedVehicleAfterUpsertHooks = append(mintedVehicleAfterUpsertHooks, mintedVehicleHook)
+		vehicleAfterUpsertHooks = append(vehicleAfterUpsertHooks, vehicleHook)
 	}
 }
 
-// One returns a single mintedVehicle record from the query.
-func (q mintedVehicleQuery) One(ctx context.Context, exec boil.ContextExecutor) (*MintedVehicle, error) {
-	o := &MintedVehicle{}
+// One returns a single vehicle record from the query.
+func (q vehicleQuery) One(ctx context.Context, exec boil.ContextExecutor) (*Vehicle, error) {
+	o := &Vehicle{}
 
 	queries.SetLimit(q.Query, 1)
 
@@ -439,7 +439,7 @@ func (q mintedVehicleQuery) One(ctx context.Context, exec boil.ContextExecutor) 
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, sql.ErrNoRows
 		}
-		return nil, errors.Wrap(err, "models: failed to execute a one query for minted_vehicles")
+		return nil, errors.Wrap(err, "models: failed to execute a one query for vehicles")
 	}
 
 	if err := o.doAfterSelectHooks(ctx, exec); err != nil {
@@ -449,16 +449,16 @@ func (q mintedVehicleQuery) One(ctx context.Context, exec boil.ContextExecutor) 
 	return o, nil
 }
 
-// All returns all MintedVehicle records from the query.
-func (q mintedVehicleQuery) All(ctx context.Context, exec boil.ContextExecutor) (MintedVehicleSlice, error) {
-	var o []*MintedVehicle
+// All returns all Vehicle records from the query.
+func (q vehicleQuery) All(ctx context.Context, exec boil.ContextExecutor) (VehicleSlice, error) {
+	var o []*Vehicle
 
 	err := q.Bind(ctx, exec, &o)
 	if err != nil {
-		return nil, errors.Wrap(err, "models: failed to assign all query results to MintedVehicle slice")
+		return nil, errors.Wrap(err, "models: failed to assign all query results to Vehicle slice")
 	}
 
-	if len(mintedVehicleAfterSelectHooks) != 0 {
+	if len(vehicleAfterSelectHooks) != 0 {
 		for _, obj := range o {
 			if err := obj.doAfterSelectHooks(ctx, exec); err != nil {
 				return o, err
@@ -469,8 +469,8 @@ func (q mintedVehicleQuery) All(ctx context.Context, exec boil.ContextExecutor) 
 	return o, nil
 }
 
-// Count returns the count of all MintedVehicle records in the query.
-func (q mintedVehicleQuery) Count(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
+// Count returns the count of all Vehicle records in the query.
+func (q vehicleQuery) Count(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
 	var count int64
 
 	queries.SetSelect(q.Query, nil)
@@ -478,14 +478,14 @@ func (q mintedVehicleQuery) Count(ctx context.Context, exec boil.ContextExecutor
 
 	err := q.Query.QueryRowContext(ctx, exec).Scan(&count)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to count minted_vehicles rows")
+		return 0, errors.Wrap(err, "models: failed to count vehicles rows")
 	}
 
 	return count, nil
 }
 
 // Exists checks if the row exists in the table.
-func (q mintedVehicleQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
+func (q vehicleQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
 	var count int64
 
 	queries.SetSelect(q.Query, nil)
@@ -494,58 +494,58 @@ func (q mintedVehicleQuery) Exists(ctx context.Context, exec boil.ContextExecuto
 
 	err := q.Query.QueryRowContext(ctx, exec).Scan(&count)
 	if err != nil {
-		return false, errors.Wrap(err, "models: failed to check if minted_vehicles exists")
+		return false, errors.Wrap(err, "models: failed to check if vehicles exists")
 	}
 
 	return count > 0, nil
 }
 
-// MintedVehicles retrieves all the records using an executor.
-func MintedVehicles(mods ...qm.QueryMod) mintedVehicleQuery {
-	mods = append(mods, qm.From("\"identity_api\".\"minted_vehicles\""))
+// Vehicles retrieves all the records using an executor.
+func Vehicles(mods ...qm.QueryMod) vehicleQuery {
+	mods = append(mods, qm.From("\"identity_api\".\"vehicles\""))
 	q := NewQuery(mods...)
 	if len(queries.GetSelect(q)) == 0 {
-		queries.SetSelect(q, []string{"\"identity_api\".\"minted_vehicles\".*"})
+		queries.SetSelect(q, []string{"\"identity_api\".\"vehicles\".*"})
 	}
 
-	return mintedVehicleQuery{q}
+	return vehicleQuery{q}
 }
 
-// FindMintedVehicle retrieves a single record by ID with an executor.
+// FindVehicle retrieves a single record by ID with an executor.
 // If selectCols is empty Find will return all columns.
-func FindMintedVehicle(ctx context.Context, exec boil.ContextExecutor, iD types.Decimal, selectCols ...string) (*MintedVehicle, error) {
-	mintedVehicleObj := &MintedVehicle{}
+func FindVehicle(ctx context.Context, exec boil.ContextExecutor, iD types.Decimal, selectCols ...string) (*Vehicle, error) {
+	vehicleObj := &Vehicle{}
 
 	sel := "*"
 	if len(selectCols) > 0 {
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from \"identity_api\".\"minted_vehicles\" where \"id\"=$1", sel,
+		"select %s from \"identity_api\".\"vehicles\" where \"id\"=$1", sel,
 	)
 
 	q := queries.Raw(query, iD)
 
-	err := q.Bind(ctx, exec, mintedVehicleObj)
+	err := q.Bind(ctx, exec, vehicleObj)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, sql.ErrNoRows
 		}
-		return nil, errors.Wrap(err, "models: unable to select from minted_vehicles")
+		return nil, errors.Wrap(err, "models: unable to select from vehicles")
 	}
 
-	if err = mintedVehicleObj.doAfterSelectHooks(ctx, exec); err != nil {
-		return mintedVehicleObj, err
+	if err = vehicleObj.doAfterSelectHooks(ctx, exec); err != nil {
+		return vehicleObj, err
 	}
 
-	return mintedVehicleObj, nil
+	return vehicleObj, nil
 }
 
 // Insert a single record using an executor.
 // See boil.Columns.InsertColumnSet documentation to understand column list inference for inserts.
-func (o *MintedVehicle) Insert(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) error {
+func (o *Vehicle) Insert(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) error {
 	if o == nil {
-		return errors.New("models: no minted_vehicles provided for insertion")
+		return errors.New("models: no vehicles provided for insertion")
 	}
 
 	var err error
@@ -554,33 +554,33 @@ func (o *MintedVehicle) Insert(ctx context.Context, exec boil.ContextExecutor, c
 		return err
 	}
 
-	nzDefaults := queries.NonZeroDefaultSet(mintedVehicleColumnsWithDefault, o)
+	nzDefaults := queries.NonZeroDefaultSet(vehicleColumnsWithDefault, o)
 
 	key := makeCacheKey(columns, nzDefaults)
-	mintedVehicleInsertCacheMut.RLock()
-	cache, cached := mintedVehicleInsertCache[key]
-	mintedVehicleInsertCacheMut.RUnlock()
+	vehicleInsertCacheMut.RLock()
+	cache, cached := vehicleInsertCache[key]
+	vehicleInsertCacheMut.RUnlock()
 
 	if !cached {
 		wl, returnColumns := columns.InsertColumnSet(
-			mintedVehicleAllColumns,
-			mintedVehicleColumnsWithDefault,
-			mintedVehicleColumnsWithoutDefault,
+			vehicleAllColumns,
+			vehicleColumnsWithDefault,
+			vehicleColumnsWithoutDefault,
 			nzDefaults,
 		)
 
-		cache.valueMapping, err = queries.BindMapping(mintedVehicleType, mintedVehicleMapping, wl)
+		cache.valueMapping, err = queries.BindMapping(vehicleType, vehicleMapping, wl)
 		if err != nil {
 			return err
 		}
-		cache.retMapping, err = queries.BindMapping(mintedVehicleType, mintedVehicleMapping, returnColumns)
+		cache.retMapping, err = queries.BindMapping(vehicleType, vehicleMapping, returnColumns)
 		if err != nil {
 			return err
 		}
 		if len(wl) != 0 {
-			cache.query = fmt.Sprintf("INSERT INTO \"identity_api\".\"minted_vehicles\" (\"%s\") %%sVALUES (%s)%%s", strings.Join(wl, "\",\""), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
+			cache.query = fmt.Sprintf("INSERT INTO \"identity_api\".\"vehicles\" (\"%s\") %%sVALUES (%s)%%s", strings.Join(wl, "\",\""), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
 		} else {
-			cache.query = "INSERT INTO \"identity_api\".\"minted_vehicles\" %sDEFAULT VALUES%s"
+			cache.query = "INSERT INTO \"identity_api\".\"vehicles\" %sDEFAULT VALUES%s"
 		}
 
 		var queryOutput, queryReturning string
@@ -608,49 +608,49 @@ func (o *MintedVehicle) Insert(ctx context.Context, exec boil.ContextExecutor, c
 	}
 
 	if err != nil {
-		return errors.Wrap(err, "models: unable to insert into minted_vehicles")
+		return errors.Wrap(err, "models: unable to insert into vehicles")
 	}
 
 	if !cached {
-		mintedVehicleInsertCacheMut.Lock()
-		mintedVehicleInsertCache[key] = cache
-		mintedVehicleInsertCacheMut.Unlock()
+		vehicleInsertCacheMut.Lock()
+		vehicleInsertCache[key] = cache
+		vehicleInsertCacheMut.Unlock()
 	}
 
 	return o.doAfterInsertHooks(ctx, exec)
 }
 
-// Update uses an executor to update the MintedVehicle.
+// Update uses an executor to update the Vehicle.
 // See boil.Columns.UpdateColumnSet documentation to understand column list inference for updates.
 // Update does not automatically update the record in case of default values. Use .Reload() to refresh the records.
-func (o *MintedVehicle) Update(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) (int64, error) {
+func (o *Vehicle) Update(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) (int64, error) {
 	var err error
 	if err = o.doBeforeUpdateHooks(ctx, exec); err != nil {
 		return 0, err
 	}
 	key := makeCacheKey(columns, nil)
-	mintedVehicleUpdateCacheMut.RLock()
-	cache, cached := mintedVehicleUpdateCache[key]
-	mintedVehicleUpdateCacheMut.RUnlock()
+	vehicleUpdateCacheMut.RLock()
+	cache, cached := vehicleUpdateCache[key]
+	vehicleUpdateCacheMut.RUnlock()
 
 	if !cached {
 		wl := columns.UpdateColumnSet(
-			mintedVehicleAllColumns,
-			mintedVehiclePrimaryKeyColumns,
+			vehicleAllColumns,
+			vehiclePrimaryKeyColumns,
 		)
 
 		if !columns.IsWhitelist() {
 			wl = strmangle.SetComplement(wl, []string{"created_at"})
 		}
 		if len(wl) == 0 {
-			return 0, errors.New("models: unable to update minted_vehicles, could not build whitelist")
+			return 0, errors.New("models: unable to update vehicles, could not build whitelist")
 		}
 
-		cache.query = fmt.Sprintf("UPDATE \"identity_api\".\"minted_vehicles\" SET %s WHERE %s",
+		cache.query = fmt.Sprintf("UPDATE \"identity_api\".\"vehicles\" SET %s WHERE %s",
 			strmangle.SetParamNames("\"", "\"", 1, wl),
-			strmangle.WhereClause("\"", "\"", len(wl)+1, mintedVehiclePrimaryKeyColumns),
+			strmangle.WhereClause("\"", "\"", len(wl)+1, vehiclePrimaryKeyColumns),
 		)
-		cache.valueMapping, err = queries.BindMapping(mintedVehicleType, mintedVehicleMapping, append(wl, mintedVehiclePrimaryKeyColumns...))
+		cache.valueMapping, err = queries.BindMapping(vehicleType, vehicleMapping, append(wl, vehiclePrimaryKeyColumns...))
 		if err != nil {
 			return 0, err
 		}
@@ -666,42 +666,42 @@ func (o *MintedVehicle) Update(ctx context.Context, exec boil.ContextExecutor, c
 	var result sql.Result
 	result, err = exec.ExecContext(ctx, cache.query, values...)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to update minted_vehicles row")
+		return 0, errors.Wrap(err, "models: unable to update vehicles row")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by update for minted_vehicles")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by update for vehicles")
 	}
 
 	if !cached {
-		mintedVehicleUpdateCacheMut.Lock()
-		mintedVehicleUpdateCache[key] = cache
-		mintedVehicleUpdateCacheMut.Unlock()
+		vehicleUpdateCacheMut.Lock()
+		vehicleUpdateCache[key] = cache
+		vehicleUpdateCacheMut.Unlock()
 	}
 
 	return rowsAff, o.doAfterUpdateHooks(ctx, exec)
 }
 
 // UpdateAll updates all rows with the specified column values.
-func (q mintedVehicleQuery) UpdateAll(ctx context.Context, exec boil.ContextExecutor, cols M) (int64, error) {
+func (q vehicleQuery) UpdateAll(ctx context.Context, exec boil.ContextExecutor, cols M) (int64, error) {
 	queries.SetUpdate(q.Query, cols)
 
 	result, err := q.Query.ExecContext(ctx, exec)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to update all for minted_vehicles")
+		return 0, errors.Wrap(err, "models: unable to update all for vehicles")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to retrieve rows affected for minted_vehicles")
+		return 0, errors.Wrap(err, "models: unable to retrieve rows affected for vehicles")
 	}
 
 	return rowsAff, nil
 }
 
 // UpdateAll updates all rows with the specified column values, using an executor.
-func (o MintedVehicleSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor, cols M) (int64, error) {
+func (o VehicleSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor, cols M) (int64, error) {
 	ln := int64(len(o))
 	if ln == 0 {
 		return 0, nil
@@ -723,13 +723,13 @@ func (o MintedVehicleSlice) UpdateAll(ctx context.Context, exec boil.ContextExec
 
 	// Append all of the primary key values for each column
 	for _, obj := range o {
-		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), mintedVehiclePrimaryKeyMapping)
+		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), vehiclePrimaryKeyMapping)
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := fmt.Sprintf("UPDATE \"identity_api\".\"minted_vehicles\" SET %s WHERE %s",
+	sql := fmt.Sprintf("UPDATE \"identity_api\".\"vehicles\" SET %s WHERE %s",
 		strmangle.SetParamNames("\"", "\"", 1, colNames),
-		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), len(colNames)+1, mintedVehiclePrimaryKeyColumns, len(o)))
+		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), len(colNames)+1, vehiclePrimaryKeyColumns, len(o)))
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -738,28 +738,28 @@ func (o MintedVehicleSlice) UpdateAll(ctx context.Context, exec boil.ContextExec
 	}
 	result, err := exec.ExecContext(ctx, sql, args...)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to update all in mintedVehicle slice")
+		return 0, errors.Wrap(err, "models: unable to update all in vehicle slice")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to retrieve rows affected all in update all mintedVehicle")
+		return 0, errors.Wrap(err, "models: unable to retrieve rows affected all in update all vehicle")
 	}
 	return rowsAff, nil
 }
 
 // Upsert attempts an insert using an executor, and does an update or ignore on conflict.
 // See boil.Columns documentation for how to properly use updateColumns and insertColumns.
-func (o *MintedVehicle) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns boil.Columns) error {
+func (o *Vehicle) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns boil.Columns) error {
 	if o == nil {
-		return errors.New("models: no minted_vehicles provided for upsert")
+		return errors.New("models: no vehicles provided for upsert")
 	}
 
 	if err := o.doBeforeUpsertHooks(ctx, exec); err != nil {
 		return err
 	}
 
-	nzDefaults := queries.NonZeroDefaultSet(mintedVehicleColumnsWithDefault, o)
+	nzDefaults := queries.NonZeroDefaultSet(vehicleColumnsWithDefault, o)
 
 	// Build cache key in-line uglily - mysql vs psql problems
 	buf := strmangle.GetBuffer()
@@ -789,42 +789,42 @@ func (o *MintedVehicle) Upsert(ctx context.Context, exec boil.ContextExecutor, u
 	key := buf.String()
 	strmangle.PutBuffer(buf)
 
-	mintedVehicleUpsertCacheMut.RLock()
-	cache, cached := mintedVehicleUpsertCache[key]
-	mintedVehicleUpsertCacheMut.RUnlock()
+	vehicleUpsertCacheMut.RLock()
+	cache, cached := vehicleUpsertCache[key]
+	vehicleUpsertCacheMut.RUnlock()
 
 	var err error
 
 	if !cached {
 		insert, ret := insertColumns.InsertColumnSet(
-			mintedVehicleAllColumns,
-			mintedVehicleColumnsWithDefault,
-			mintedVehicleColumnsWithoutDefault,
+			vehicleAllColumns,
+			vehicleColumnsWithDefault,
+			vehicleColumnsWithoutDefault,
 			nzDefaults,
 		)
 
 		update := updateColumns.UpdateColumnSet(
-			mintedVehicleAllColumns,
-			mintedVehiclePrimaryKeyColumns,
+			vehicleAllColumns,
+			vehiclePrimaryKeyColumns,
 		)
 
 		if updateOnConflict && len(update) == 0 {
-			return errors.New("models: unable to upsert minted_vehicles, could not build update column list")
+			return errors.New("models: unable to upsert vehicles, could not build update column list")
 		}
 
 		conflict := conflictColumns
 		if len(conflict) == 0 {
-			conflict = make([]string, len(mintedVehiclePrimaryKeyColumns))
-			copy(conflict, mintedVehiclePrimaryKeyColumns)
+			conflict = make([]string, len(vehiclePrimaryKeyColumns))
+			copy(conflict, vehiclePrimaryKeyColumns)
 		}
-		cache.query = buildUpsertQueryPostgres(dialect, "\"identity_api\".\"minted_vehicles\"", updateOnConflict, ret, update, conflict, insert)
+		cache.query = buildUpsertQueryPostgres(dialect, "\"identity_api\".\"vehicles\"", updateOnConflict, ret, update, conflict, insert)
 
-		cache.valueMapping, err = queries.BindMapping(mintedVehicleType, mintedVehicleMapping, insert)
+		cache.valueMapping, err = queries.BindMapping(vehicleType, vehicleMapping, insert)
 		if err != nil {
 			return err
 		}
 		if len(ret) != 0 {
-			cache.retMapping, err = queries.BindMapping(mintedVehicleType, mintedVehicleMapping, ret)
+			cache.retMapping, err = queries.BindMapping(vehicleType, vehicleMapping, ret)
 			if err != nil {
 				return err
 			}
@@ -852,31 +852,31 @@ func (o *MintedVehicle) Upsert(ctx context.Context, exec boil.ContextExecutor, u
 		_, err = exec.ExecContext(ctx, cache.query, vals...)
 	}
 	if err != nil {
-		return errors.Wrap(err, "models: unable to upsert minted_vehicles")
+		return errors.Wrap(err, "models: unable to upsert vehicles")
 	}
 
 	if !cached {
-		mintedVehicleUpsertCacheMut.Lock()
-		mintedVehicleUpsertCache[key] = cache
-		mintedVehicleUpsertCacheMut.Unlock()
+		vehicleUpsertCacheMut.Lock()
+		vehicleUpsertCache[key] = cache
+		vehicleUpsertCacheMut.Unlock()
 	}
 
 	return o.doAfterUpsertHooks(ctx, exec)
 }
 
-// Delete deletes a single MintedVehicle record with an executor.
+// Delete deletes a single Vehicle record with an executor.
 // Delete will match against the primary key column to find the record to delete.
-func (o *MintedVehicle) Delete(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
+func (o *Vehicle) Delete(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
 	if o == nil {
-		return 0, errors.New("models: no MintedVehicle provided for delete")
+		return 0, errors.New("models: no Vehicle provided for delete")
 	}
 
 	if err := o.doBeforeDeleteHooks(ctx, exec); err != nil {
 		return 0, err
 	}
 
-	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), mintedVehiclePrimaryKeyMapping)
-	sql := "DELETE FROM \"identity_api\".\"minted_vehicles\" WHERE \"id\"=$1"
+	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), vehiclePrimaryKeyMapping)
+	sql := "DELETE FROM \"identity_api\".\"vehicles\" WHERE \"id\"=$1"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -885,12 +885,12 @@ func (o *MintedVehicle) Delete(ctx context.Context, exec boil.ContextExecutor) (
 	}
 	result, err := exec.ExecContext(ctx, sql, args...)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to delete from minted_vehicles")
+		return 0, errors.Wrap(err, "models: unable to delete from vehicles")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by delete for minted_vehicles")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by delete for vehicles")
 	}
 
 	if err := o.doAfterDeleteHooks(ctx, exec); err != nil {
@@ -901,33 +901,33 @@ func (o *MintedVehicle) Delete(ctx context.Context, exec boil.ContextExecutor) (
 }
 
 // DeleteAll deletes all matching rows.
-func (q mintedVehicleQuery) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
+func (q vehicleQuery) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
 	if q.Query == nil {
-		return 0, errors.New("models: no mintedVehicleQuery provided for delete all")
+		return 0, errors.New("models: no vehicleQuery provided for delete all")
 	}
 
 	queries.SetDelete(q.Query)
 
 	result, err := q.Query.ExecContext(ctx, exec)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to delete all from minted_vehicles")
+		return 0, errors.Wrap(err, "models: unable to delete all from vehicles")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for minted_vehicles")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for vehicles")
 	}
 
 	return rowsAff, nil
 }
 
 // DeleteAll deletes all rows in the slice, using an executor.
-func (o MintedVehicleSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
+func (o VehicleSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
 	if len(o) == 0 {
 		return 0, nil
 	}
 
-	if len(mintedVehicleBeforeDeleteHooks) != 0 {
+	if len(vehicleBeforeDeleteHooks) != 0 {
 		for _, obj := range o {
 			if err := obj.doBeforeDeleteHooks(ctx, exec); err != nil {
 				return 0, err
@@ -937,12 +937,12 @@ func (o MintedVehicleSlice) DeleteAll(ctx context.Context, exec boil.ContextExec
 
 	var args []interface{}
 	for _, obj := range o {
-		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), mintedVehiclePrimaryKeyMapping)
+		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), vehiclePrimaryKeyMapping)
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := "DELETE FROM \"identity_api\".\"minted_vehicles\" WHERE " +
-		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, mintedVehiclePrimaryKeyColumns, len(o))
+	sql := "DELETE FROM \"identity_api\".\"vehicles\" WHERE " +
+		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, vehiclePrimaryKeyColumns, len(o))
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -951,15 +951,15 @@ func (o MintedVehicleSlice) DeleteAll(ctx context.Context, exec boil.ContextExec
 	}
 	result, err := exec.ExecContext(ctx, sql, args...)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to delete all from mintedVehicle slice")
+		return 0, errors.Wrap(err, "models: unable to delete all from vehicle slice")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for minted_vehicles")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for vehicles")
 	}
 
-	if len(mintedVehicleAfterDeleteHooks) != 0 {
+	if len(vehicleAfterDeleteHooks) != 0 {
 		for _, obj := range o {
 			if err := obj.doAfterDeleteHooks(ctx, exec); err != nil {
 				return 0, err
@@ -972,8 +972,8 @@ func (o MintedVehicleSlice) DeleteAll(ctx context.Context, exec boil.ContextExec
 
 // Reload refetches the object from the database
 // using the primary keys with an executor.
-func (o *MintedVehicle) Reload(ctx context.Context, exec boil.ContextExecutor) error {
-	ret, err := FindMintedVehicle(ctx, exec, o.ID)
+func (o *Vehicle) Reload(ctx context.Context, exec boil.ContextExecutor) error {
+	ret, err := FindVehicle(ctx, exec, o.ID)
 	if err != nil {
 		return err
 	}
@@ -984,26 +984,26 @@ func (o *MintedVehicle) Reload(ctx context.Context, exec boil.ContextExecutor) e
 
 // ReloadAll refetches every row with matching primary key column values
 // and overwrites the original object slice with the newly updated slice.
-func (o *MintedVehicleSlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor) error {
+func (o *VehicleSlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor) error {
 	if o == nil || len(*o) == 0 {
 		return nil
 	}
 
-	slice := MintedVehicleSlice{}
+	slice := VehicleSlice{}
 	var args []interface{}
 	for _, obj := range *o {
-		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), mintedVehiclePrimaryKeyMapping)
+		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), vehiclePrimaryKeyMapping)
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := "SELECT \"identity_api\".\"minted_vehicles\".* FROM \"identity_api\".\"minted_vehicles\" WHERE " +
-		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, mintedVehiclePrimaryKeyColumns, len(*o))
+	sql := "SELECT \"identity_api\".\"vehicles\".* FROM \"identity_api\".\"vehicles\" WHERE " +
+		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, vehiclePrimaryKeyColumns, len(*o))
 
 	q := queries.Raw(sql, args...)
 
 	err := q.Bind(ctx, exec, &slice)
 	if err != nil {
-		return errors.Wrap(err, "models: unable to reload all in MintedVehicleSlice")
+		return errors.Wrap(err, "models: unable to reload all in VehicleSlice")
 	}
 
 	*o = slice
@@ -1011,10 +1011,10 @@ func (o *MintedVehicleSlice) ReloadAll(ctx context.Context, exec boil.ContextExe
 	return nil
 }
 
-// MintedVehicleExists checks if the MintedVehicle row exists.
-func MintedVehicleExists(ctx context.Context, exec boil.ContextExecutor, iD types.Decimal) (bool, error) {
+// VehicleExists checks if the Vehicle row exists.
+func VehicleExists(ctx context.Context, exec boil.ContextExecutor, iD types.Decimal) (bool, error) {
 	var exists bool
-	sql := "select exists(select 1 from \"identity_api\".\"minted_vehicles\" where \"id\"=$1 limit 1)"
+	sql := "select exists(select 1 from \"identity_api\".\"vehicles\" where \"id\"=$1 limit 1)"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -1025,13 +1025,13 @@ func MintedVehicleExists(ctx context.Context, exec boil.ContextExecutor, iD type
 
 	err := row.Scan(&exists)
 	if err != nil {
-		return false, errors.Wrap(err, "models: unable to check if minted_vehicles exists")
+		return false, errors.Wrap(err, "models: unable to check if vehicles exists")
 	}
 
 	return exists, nil
 }
 
-// Exists checks if the MintedVehicle row exists.
-func (o *MintedVehicle) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
-	return MintedVehicleExists(ctx, exec, o.ID)
+// Exists checks if the Vehicle row exists.
+func (o *Vehicle) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
+	return VehicleExists(ctx, exec, o.ID)
 }
