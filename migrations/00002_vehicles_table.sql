@@ -2,7 +2,7 @@
 -- +goose StatementBegin
 
 CREATE TABLE vehicles(
-    id numeric(78, 0),
+    id int,
     owner_address bytea
         CONSTRAINT minted_vehicles_owner_address_check CHECK (length(owner_address) = 20),
     make         varchar(100) not null,

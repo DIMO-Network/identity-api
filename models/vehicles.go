@@ -19,18 +19,17 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"github.com/volatiletech/sqlboiler/v4/queries/qmhelper"
-	"github.com/volatiletech/sqlboiler/v4/types"
 	"github.com/volatiletech/strmangle"
 )
 
 // Vehicle is an object representing the database table.
 type Vehicle struct {
-	ID           types.Decimal `boil:"id" json:"id" toml:"id" yaml:"id"`
-	OwnerAddress null.Bytes    `boil:"owner_address" json:"owner_address,omitempty" toml:"owner_address" yaml:"owner_address,omitempty"`
-	Make         string        `boil:"make" json:"make" toml:"make" yaml:"make"`
-	Model        string        `boil:"model" json:"model" toml:"model" yaml:"model"`
-	Year         int           `boil:"year" json:"year" toml:"year" yaml:"year"`
-	MintTime     time.Time     `boil:"mint_time" json:"mint_time" toml:"mint_time" yaml:"mint_time"`
+	ID           int        `boil:"id" json:"id" toml:"id" yaml:"id"`
+	OwnerAddress null.Bytes `boil:"owner_address" json:"owner_address,omitempty" toml:"owner_address" yaml:"owner_address,omitempty"`
+	Make         string     `boil:"make" json:"make" toml:"make" yaml:"make"`
+	Model        string     `boil:"model" json:"model" toml:"model" yaml:"model"`
+	Year         int        `boil:"year" json:"year" toml:"year" yaml:"year"`
+	MintTime     time.Time  `boil:"mint_time" json:"mint_time" toml:"mint_time" yaml:"mint_time"`
 
 	R *vehicleR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L vehicleL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -70,25 +69,27 @@ var VehicleTableColumns = struct {
 
 // Generated where
 
-type whereHelpertypes_Decimal struct{ field string }
+type whereHelperint struct{ field string }
 
-func (w whereHelpertypes_Decimal) EQ(x types.Decimal) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.EQ, x)
+func (w whereHelperint) EQ(x int) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
+func (w whereHelperint) NEQ(x int) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
+func (w whereHelperint) LT(x int) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
+func (w whereHelperint) LTE(x int) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
+func (w whereHelperint) GT(x int) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
+func (w whereHelperint) GTE(x int) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
+func (w whereHelperint) IN(slice []int) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
 }
-func (w whereHelpertypes_Decimal) NEQ(x types.Decimal) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.NEQ, x)
-}
-func (w whereHelpertypes_Decimal) LT(x types.Decimal) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LT, x)
-}
-func (w whereHelpertypes_Decimal) LTE(x types.Decimal) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LTE, x)
-}
-func (w whereHelpertypes_Decimal) GT(x types.Decimal) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GT, x)
-}
-func (w whereHelpertypes_Decimal) GTE(x types.Decimal) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GTE, x)
+func (w whereHelperint) NIN(slice []int) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
 }
 
 type whereHelpernull_Bytes struct{ field string }
@@ -138,29 +139,6 @@ func (w whereHelperstring) NIN(slice []string) qm.QueryMod {
 	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
 }
 
-type whereHelperint struct{ field string }
-
-func (w whereHelperint) EQ(x int) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
-func (w whereHelperint) NEQ(x int) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
-func (w whereHelperint) LT(x int) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
-func (w whereHelperint) LTE(x int) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
-func (w whereHelperint) GT(x int) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
-func (w whereHelperint) GTE(x int) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
-func (w whereHelperint) IN(slice []int) qm.QueryMod {
-	values := make([]interface{}, 0, len(slice))
-	for _, value := range slice {
-		values = append(values, value)
-	}
-	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
-}
-func (w whereHelperint) NIN(slice []int) qm.QueryMod {
-	values := make([]interface{}, 0, len(slice))
-	for _, value := range slice {
-		values = append(values, value)
-	}
-	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
-}
-
 type whereHelpertime_Time struct{ field string }
 
 func (w whereHelpertime_Time) EQ(x time.Time) qm.QueryMod {
@@ -183,14 +161,14 @@ func (w whereHelpertime_Time) GTE(x time.Time) qm.QueryMod {
 }
 
 var VehicleWhere = struct {
-	ID           whereHelpertypes_Decimal
+	ID           whereHelperint
 	OwnerAddress whereHelpernull_Bytes
 	Make         whereHelperstring
 	Model        whereHelperstring
 	Year         whereHelperint
 	MintTime     whereHelpertime_Time
 }{
-	ID:           whereHelpertypes_Decimal{field: "\"identity_api\".\"vehicles\".\"id\""},
+	ID:           whereHelperint{field: "\"identity_api\".\"vehicles\".\"id\""},
 	OwnerAddress: whereHelpernull_Bytes{field: "\"identity_api\".\"vehicles\".\"owner_address\""},
 	Make:         whereHelperstring{field: "\"identity_api\".\"vehicles\".\"make\""},
 	Model:        whereHelperstring{field: "\"identity_api\".\"vehicles\".\"model\""},
@@ -513,7 +491,7 @@ func Vehicles(mods ...qm.QueryMod) vehicleQuery {
 
 // FindVehicle retrieves a single record by ID with an executor.
 // If selectCols is empty Find will return all columns.
-func FindVehicle(ctx context.Context, exec boil.ContextExecutor, iD types.Decimal, selectCols ...string) (*Vehicle, error) {
+func FindVehicle(ctx context.Context, exec boil.ContextExecutor, iD int, selectCols ...string) (*Vehicle, error) {
 	vehicleObj := &Vehicle{}
 
 	sel := "*"
@@ -1012,7 +990,7 @@ func (o *VehicleSlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor)
 }
 
 // VehicleExists checks if the Vehicle row exists.
-func VehicleExists(ctx context.Context, exec boil.ContextExecutor, iD types.Decimal) (bool, error) {
+func VehicleExists(ctx context.Context, exec boil.ContextExecutor, iD int) (bool, error) {
 	var exists bool
 	sql := "select exists(select 1 from \"identity_api\".\"vehicles\" where \"id\"=$1 limit 1)"
 

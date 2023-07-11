@@ -9,10 +9,8 @@ import (
 
 	ddgrpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	dgrpc "github.com/DIMO-Network/devices-api/pkg/grpc"
-	"github.com/ericlagergren/decimal"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
-	"github.com/volatiletech/sqlboiler/v4/types"
 
 	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/identity-api/models"
@@ -158,12 +156,12 @@ func (c *ContractsEventsConsumer) handleVehicleNodeMintedEvent(e *ContractEventD
 
 	ddf := deviceDef.DeviceDefinitions[0]
 
-	dm := models.MintedVehicle{
+	dm := models.Vehicle{
 		OwnerAddress: null.BytesFrom(args.Owner.Bytes()),
 		Make:         ddf.Type.Make,
 		Model:        ddf.Type.Model,
-		Year:         int16(ddf.Type.Year),
-		ID:           types.NewDecimal(new(decimal.Big).SetBigMantScale(args.TokenId, 0)),
+		Year:         int(ddf.Type.Year),
+		ID:           int(args.TokenId.Int64()),
 	}
 
 	if err := dm.Insert(c.ctx, c.db.DBS().Writer, boil.Infer()); err != nil {

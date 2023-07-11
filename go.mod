@@ -18,7 +18,6 @@ require (
 	github.com/rs/zerolog v1.29.1
 	github.com/vektah/gqlparser/v2 v2.5.4
 	github.com/volatiletech/null/v8 v8.1.2
-	github.com/volatiletech/sqlboiler v3.7.1+incompatible
 	github.com/volatiletech/sqlboiler/v4 v4.14.2
 	github.com/volatiletech/strmangle v0.0.4
 	google.golang.org/grpc v1.55.0
@@ -77,7 +76,6 @@ require (
 	github.com/valyala/fasthttp v1.47.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
 	github.com/volatiletech/inflect v0.0.1 // indirect
-	github.com/volatiletech/null v8.0.0+incompatible // indirect
 	github.com/volatiletech/randomize v0.0.1 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
 	go.opentelemetry.io/contrib/instrumentation/github.com/Shopify/sarama/otelsarama v0.31.0 // indirect
