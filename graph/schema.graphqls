@@ -12,8 +12,25 @@ type Vehicle {
   model: String!
   year: Int!
   mintTime: Time!
+  totalCount: Int
+  pageInfo: PageInfo
+}
+
+type PageInfo {
+  endCursor: String!
+  hasNextPage: Boolean
+  edges: [Edge]
+}
+
+type Edge {
+  node: Node
+  cursor: String
+}
+
+type Node {
+  id: String
 }
 
 type Query {
-  ownedVehicles(address: Address!): [Vehicle!]!
+  ownedVehicles(address: Address!, first: Int, after: String): [Vehicle!]!
 }
