@@ -109,6 +109,7 @@ func (c *ContractsEventsConsumer) processEvent(event *shared.CloudEvent[json.Raw
 		return nil
 	}
 
+	registryAddr := common.HexToAddress(c.settings.DIMORegistryAddr)
 	var data ContractEventData
 	if err := json.Unmarshal(event.Data, &data); err != nil {
 		return err
@@ -120,11 +121,15 @@ func (c *ContractsEventsConsumer) processEvent(event *shared.CloudEvent[json.Raw
 	}
 	switch data.EventName {
 	case VehicleNodeMinted.String():
-		c.log.Info().Str("event", data.EventName).Msg("Event received")
-		return c.handleVehicleNodeMintedEvent(&data)
+		if data.Contract == registryAddr {
+			c.log.Info().Str("event", data.EventName).Msg("Event received")
+			return c.handleVehicleNodeMintedEvent(&data)
+		}
 	case VehicleAttributeSet.String():
-		c.log.Info().Str("event", data.EventName).Msg("Event received")
-		return c.handleVehicleAttributeSetEvent(&data)
+		if data.Contract == registryAddr {
+			c.log.Info().Str("event", data.EventName).Msg("Event received")
+			return c.handleVehicleAttributeSetEvent(&data)
+		}
 	default:
 		c.log.Debug().Str("event", data.EventName).Msg("Handler not provided for event.")
 	}

@@ -9,4 +9,5 @@ type Settings struct {
 	KafkaBrokers        string      `yaml:"KAFKA_BROKERS"`
 	ContractsEventTopic string      `yaml:"CONTRACT_EVENT_TOPIC"`
 	DIMORegistryChainID int64       `yaml:"DIMO_REGISTRY_CHAIN_ID"`
+	DIMORegistryAddr    string      `yaml:"DIMO_REGISTRY_ADDR"`
 }
