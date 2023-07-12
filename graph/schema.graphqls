@@ -14,12 +14,12 @@ type Vehicle {
   mintTime: Time!
   totalCount: Int
   pageInfo: PageInfo
+  edges: [Edge]
 }
 
 type PageInfo {
   endCursor: String!
   hasNextPage: Boolean
-  edges: [Edge]
 }
 
 type Edge {

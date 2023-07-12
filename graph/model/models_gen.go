@@ -18,9 +18,8 @@ type Node struct {
 }
 
 type PageInfo struct {
-	EndCursor   string  `json:"endCursor"`
-	HasNextPage *bool   `json:"hasNextPage,omitempty"`
-	Edges       []*Edge `json:"edges,omitempty"`
+	EndCursor   string `json:"endCursor"`
+	HasNextPage *bool  `json:"hasNextPage,omitempty"`
 }
 
 type Vehicle struct {
@@ -32,4 +31,5 @@ type Vehicle struct {
 	MintTime   time.Time      `json:"mintTime"`
 	TotalCount *int           `json:"totalCount,omitempty"`
 	PageInfo   *PageInfo      `json:"pageInfo,omitempty"`
+	Edges      []*Edge        `json:"edges,omitempty"`
 }

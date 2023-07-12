@@ -14,3 +14,9 @@ make models
 ## Create migration
 
 `goose -dir migrations create <migration_name> sql`
+
+## graphQL generate new schema model
+
+```bash
+go generate ./...
+```

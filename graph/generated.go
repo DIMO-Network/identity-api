@@ -57,7 +57,6 @@ type ComplexityRoot struct {
 	}
 
 	PageInfo struct {
-		Edges       func(childComplexity int) int
 		EndCursor   func(childComplexity int) int
 		HasNextPage func(childComplexity int) int
 	}
@@ -67,6 +66,7 @@ type ComplexityRoot struct {
 	}
 
 	Vehicle struct {
+		Edges      func(childComplexity int) int
 		ID         func(childComplexity int) int
 		Make       func(childComplexity int) int
 		MintTime   func(childComplexity int) int
@@ -118,13 +118,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Node.ID(childComplexity), true
 
-	case "PageInfo.edges":
-		if e.complexity.PageInfo.Edges == nil {
-			break
-		}
-
-		return e.complexity.PageInfo.Edges(childComplexity), true
-
 	case "PageInfo.endCursor":
 		if e.complexity.PageInfo.EndCursor == nil {
 			break
@@ -150,6 +143,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.OwnedVehicles(childComplexity, args["address"].(common.Address), args["first"].(*int), args["after"].(*string)), true
+
+	case "Vehicle.edges":
+		if e.complexity.Vehicle.Edges == nil {
+			break
+		}
+
+		return e.complexity.Vehicle.Edges(childComplexity), true
 
 	case "Vehicle.id":
 		if e.complexity.Vehicle.ID == nil {
@@ -613,53 +613,6 @@ func (ec *executionContext) fieldContext_PageInfo_hasNextPage(ctx context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _PageInfo_edges(ctx context.Context, field graphql.CollectedField, obj *model.PageInfo) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PageInfo_edges(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Edges, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*model.Edge)
-	fc.Result = res
-	return ec.marshalOEdge2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐEdge(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_PageInfo_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "PageInfo",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "node":
-				return ec.fieldContext_Edge_node(ctx, field)
-			case "cursor":
-				return ec.fieldContext_Edge_cursor(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Edge", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Query_ownedVehicles(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_ownedVehicles(ctx, field)
 	if err != nil {
@@ -715,6 +668,8 @@ func (ec *executionContext) fieldContext_Query_ownedVehicles(ctx context.Context
 				return ec.fieldContext_Vehicle_totalCount(ctx, field)
 			case "pageInfo":
 				return ec.fieldContext_Vehicle_pageInfo(ctx, field)
+			case "edges":
+				return ec.fieldContext_Vehicle_edges(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
 		},
@@ -1207,10 +1162,55 @@ func (ec *executionContext) fieldContext_Vehicle_pageInfo(ctx context.Context, f
 				return ec.fieldContext_PageInfo_endCursor(ctx, field)
 			case "hasNextPage":
 				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
-			case "edges":
-				return ec.fieldContext_PageInfo_edges(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Vehicle_edges(ctx context.Context, field graphql.CollectedField, obj *model.Vehicle) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Vehicle_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Edge)
+	fc.Result = res
+	return ec.marshalOEdge2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐEdge(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Vehicle_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Vehicle",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "node":
+				return ec.fieldContext_Edge_node(ctx, field)
+			case "cursor":
+				return ec.fieldContext_Edge_cursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Edge", field.Name)
 		},
 	}
 	return fc, nil
@@ -3089,8 +3089,6 @@ func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "hasNextPage":
 			out.Values[i] = ec._PageInfo_hasNextPage(ctx, field, obj)
-		case "edges":
-			out.Values[i] = ec._PageInfo_edges(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3231,6 +3229,8 @@ func (ec *executionContext) _Vehicle(ctx context.Context, sel ast.SelectionSet, 
 			out.Values[i] = ec._Vehicle_totalCount(ctx, field, obj)
 		case "pageInfo":
 			out.Values[i] = ec._Vehicle_pageInfo(ctx, field, obj)
+		case "edges":
+			out.Values[i] = ec._Vehicle_edges(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
