@@ -9,6 +9,4 @@ type Settings struct {
 	KafkaBrokers        string      `yaml:"KAFKA_BROKERS"`
 	ContractsEventTopic string      `yaml:"CONTRACT_EVENT_TOPIC"`
 	DIMORegistryChainID int64       `yaml:"DIMO_REGISTRY_CHAIN_ID"`
-	DefinitionsGRPCAddr string      `yaml:"DEFINITIONS_GRPC_ADDR"`
-	DevicesApiGrpcAddr  string      `yaml:"DEVICES_API_GRPC_ADDR"`
 }

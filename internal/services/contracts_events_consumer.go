@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"strconv"
+	"strings"
 	"time"
 
-	ddgrpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
-	dgrpc "github.com/DIMO-Network/devices-api/pkg/grpc"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 
@@ -27,14 +27,13 @@ type ContractsEventsConsumer struct {
 	db       db.Store
 	log      *zerolog.Logger
 	settings *config.Settings
-	dSvc     dgrpc.UserDeviceServiceClient
-	ddFSvc   ddgrpc.DeviceDefinitionServiceClient
 }
 
 type EventName string
 
 const (
-	VehicleNodeMinted EventName = "VehicleNodeMinted"
+	VehicleNodeMinted   EventName = "VehicleNodeMinted"
+	VehicleAttributeSet EventName = "VehicleAttributeSet"
 )
 
 func (r EventName) String() string {
@@ -64,14 +63,18 @@ type VehicleNodeMintedData struct {
 	Owner   common.Address
 }
 
-func NewContractsEventsConsumer(ctx context.Context, pdb db.Store, log *zerolog.Logger, settings *config.Settings, dSvc dgrpc.UserDeviceServiceClient, ddFSvc ddgrpc.DeviceDefinitionServiceClient) *ContractsEventsConsumer {
+type VehicleAttributeSetData struct {
+	TokenId   *big.Int
+	Attribute string
+	Info      string
+}
+
+func NewContractsEventsConsumer(ctx context.Context, pdb db.Store, log *zerolog.Logger, settings *config.Settings) *ContractsEventsConsumer {
 	return &ContractsEventsConsumer{
 		ctx:      ctx,
 		db:       pdb,
 		log:      log,
 		settings: settings,
-		dSvc:     dSvc,
-		ddFSvc:   ddFSvc,
 	}
 }
 
@@ -119,6 +122,9 @@ func (c *ContractsEventsConsumer) processEvent(event *shared.CloudEvent[json.Raw
 	case VehicleNodeMinted.String():
 		c.log.Info().Str("event", data.EventName).Msg("Event received")
 		return c.handleVehicleNodeMintedEvent(&data)
+	case VehicleAttributeSet.String():
+		c.log.Info().Str("event", data.EventName).Msg("Event received")
+		return c.handleVehicleAttributeSetEvent(&data)
 	default:
 		c.log.Debug().Str("event", data.EventName).Msg("Handler not provided for event.")
 	}
@@ -132,39 +138,47 @@ func (c *ContractsEventsConsumer) handleVehicleNodeMintedEvent(e *ContractEventD
 		return err
 	}
 
-	device, err := c.dSvc.GetUserDeviceByTokenId(c.ctx, &dgrpc.GetUserDeviceByTokenIdRequest{
-		TokenId: args.TokenId.Int64(),
-	})
-	if err != nil {
-		return err
-	}
-
-	if device == nil {
-		return fmt.Errorf("could not find device with tokenID %d", args.TokenId)
-	}
-
-	deviceDef, err := c.ddFSvc.GetDeviceDefinitionByID(c.ctx, &ddgrpc.GetDeviceDefinitionRequest{
-		Ids: []string{device.DeviceDefinitionId},
-	})
-	if err != nil {
-		return err
-	}
-
-	if len(deviceDef.DeviceDefinitions) == 0 {
-		return fmt.Errorf("could not find device with tokenID %d", args.TokenId)
-	}
-
-	ddf := deviceDef.DeviceDefinitions[0]
-
 	dm := models.Vehicle{
 		OwnerAddress: null.BytesFrom(args.Owner.Bytes()),
-		Make:         ddf.Type.Make,
-		Model:        ddf.Type.Model,
-		Year:         int(ddf.Type.Year),
+		MintTime:     null.TimeFrom(e.Block.Time),
 		ID:           int(args.TokenId.Int64()),
 	}
 
-	if err := dm.Insert(c.ctx, c.db.DBS().Writer, boil.Infer()); err != nil {
+	if err := dm.Upsert(c.ctx, c.db.DBS().Writer, true, []string{models.VehicleColumns.ID},
+		boil.Whitelist(models.VehicleColumns.OwnerAddress, models.VehicleColumns.MintTime),
+		boil.Whitelist(models.VehicleColumns.ID, models.VehicleColumns.OwnerAddress, models.VehicleColumns.MintTime)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *ContractsEventsConsumer) handleVehicleAttributeSetEvent(e *ContractEventData) error {
+	var args VehicleAttributeSetData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	veh := models.Vehicle{ID: int(args.TokenId.Int64())}
+
+	switch args.Attribute {
+	case "Make":
+		veh.Make = null.StringFrom(args.Info)
+	case "Model":
+		veh.Model = null.StringFrom(args.Info)
+	case "Year":
+		year, err := strconv.Atoi(args.Info)
+		if err != nil {
+			return err
+		}
+		veh.Year = null.IntFrom(year)
+	default:
+		return nil
+	}
+
+	colToLower := strings.ToLower(args.Attribute)
+
+	if err := veh.Upsert(c.ctx, c.db.DBS().Writer, true, []string{models.VehicleColumns.ID}, boil.Whitelist(colToLower), boil.Whitelist(models.VehicleColumns.ID, colToLower)); err != nil {
 		return err
 	}
 

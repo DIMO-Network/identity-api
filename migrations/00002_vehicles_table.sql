@@ -3,12 +3,12 @@
 
 CREATE TABLE vehicles(
     id int,
-    owner_address bytea
+    owner_address bytea null
         CONSTRAINT minted_vehicles_owner_address_check CHECK (length(owner_address) = 20),
-    make         varchar(100) not null,
-    model        varchar(100) not null,
-    year         int    not null,
-    mint_time   timestamptz not null default current_timestamp,
+    make         varchar(100) null,
+    model        varchar(100) null,
+    year         int    null,
+    mint_time   timestamptz null,
 
     PRIMARY KEY (id)
 );
