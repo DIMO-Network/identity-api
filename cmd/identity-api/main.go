@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -55,7 +54,7 @@ func main() {
 
 	logger.Info().Msg(fmt.Sprintf("Server started on port:%d", settings.Port))
 
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", settings.Port), nil))
+	http.ListenAndServe(fmt.Sprintf(":%d", settings.Port), nil)
 }
 
 func startContractEventsConsumer(ctx context.Context, logger *zerolog.Logger, settings *config.Settings, dbs db.Store) {
