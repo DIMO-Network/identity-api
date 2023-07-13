@@ -21,8 +21,7 @@ import (
 )
 
 type ContractsEventsConsumer struct {
-	ctx      context.Context
-	db       db.Store
+	dbs      db.Store
 	log      *zerolog.Logger
 	settings *config.Settings
 }
@@ -67,9 +66,9 @@ type VehicleAttributeSetData struct {
 	Info      string
 }
 
-func NewContractsEventsConsumer(pdb db.Store, log *zerolog.Logger, settings *config.Settings) *ContractsEventsConsumer {
+func NewContractsEventsConsumer(dbs db.Store, log *zerolog.Logger, settings *config.Settings) *ContractsEventsConsumer {
 	return &ContractsEventsConsumer{
-		db:       pdb,
+		dbs:      dbs,
 		log:      log,
 		settings: settings,
 	}
@@ -120,7 +119,7 @@ func (c *ContractsEventsConsumer) handleVehicleNodeMintedEvent(e *ContractEventD
 		ID:           int(args.TokenId.Int64()),
 	}
 
-	if err := dm.Upsert(c.ctx, c.db.DBS().Writer, true, []string{models.VehicleColumns.ID},
+	if err := dm.Upsert(context.TODO(), c.dbs.DBS().Writer, true, []string{models.VehicleColumns.ID},
 		boil.Whitelist(models.VehicleColumns.OwnerAddress, models.VehicleColumns.MintTime),
 		boil.Whitelist(models.VehicleColumns.ID, models.VehicleColumns.OwnerAddress, models.VehicleColumns.MintTime)); err != nil {
 		return err
@@ -154,7 +153,7 @@ func (c *ContractsEventsConsumer) handleVehicleAttributeSetEvent(e *ContractEven
 
 	colToLower := strings.ToLower(args.Attribute)
 
-	if err := veh.Upsert(c.ctx, c.db.DBS().Writer, true, []string{models.VehicleColumns.ID}, boil.Whitelist(colToLower), boil.Whitelist(models.VehicleColumns.ID, colToLower)); err != nil {
+	if err := veh.Upsert(context.TODO(), c.dbs.DBS().Writer, true, []string{models.VehicleColumns.ID}, boil.Whitelist(colToLower), boil.Whitelist(models.VehicleColumns.ID, colToLower)); err != nil {
 		return err
 	}
 

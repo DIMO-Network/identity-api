@@ -41,13 +41,13 @@ func main() {
 		return
 	}
 
-	pdb := db.NewDbConnectionFromSettings(context.Background(), &settings.DB, true)
-	pdb.WaitForDB(logger)
+	dbs := db.NewDbConnectionFromSettings(context.Background(), &settings.DB, true)
+	dbs.WaitForDB(logger)
 
-	startContractEventsConsumer(ctx, &logger, &settings, pdb)
+	startContractEventsConsumer(ctx, &logger, &settings, dbs)
 
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{
-		DB: pdb,
+		DB: dbs,
 	}}))
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
@@ -58,14 +58,14 @@ func main() {
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", settings.Port), nil))
 }
 
-func startContractEventsConsumer(ctx context.Context, logger *zerolog.Logger, settings *config.Settings, pdb db.Store) {
+func startContractEventsConsumer(ctx context.Context, logger *zerolog.Logger, settings *config.Settings, dbs db.Store) {
 	kc := kafka.Config{
 		Brokers: strings.Split(settings.KafkaBrokers, ","),
 		Topic:   settings.ContractsEventTopic,
 		Group:   "identity-api",
 	}
 
-	cevConsumer := services.NewContractsEventsConsumer(pdb, logger, settings)
+	cevConsumer := services.NewContractsEventsConsumer(dbs, logger, settings)
 
 	if err := kafka.Consume(ctx, kc, cevConsumer.Process, logger); err != nil {
 		logger.Fatal().Err(err).Msg("Couldn't start event consumer.")
