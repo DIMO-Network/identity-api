@@ -89,20 +89,17 @@ func (c *ContractsEventsConsumer) Process(event *shared.CloudEvent[json.RawMessa
 		c.log.Debug().Str("event", data.EventName).Interface("event data", event).Msg("Handler not provided for event ===.")
 		return nil
 	}
-	switch data.EventName {
-	case VehicleNodeMinted.String():
-		if data.Contract == registryAddr {
-			c.log.Info().Str("event", data.EventName).Msg("Event received")
+
+	if data.Contract == registryAddr {
+		switch EventName(data.EventName) {
+		case VehicleNodeMinted:
 			return c.handleVehicleNodeMintedEvent(&data)
-		}
-	case VehicleAttributeSet.String():
-		if data.Contract == registryAddr {
-			c.log.Info().Str("event", data.EventName).Msg("Event received")
+		case VehicleAttributeSet:
 			return c.handleVehicleAttributeSetEvent(&data)
 		}
-	default:
-		c.log.Debug().Str("event", data.EventName).Msg("Handler not provided for event.")
 	}
+
+	c.log.Debug().Str("event", data.EventName).Msg("Handler not provided for event.")
 
 	return nil
 }
