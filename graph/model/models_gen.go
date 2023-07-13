@@ -14,7 +14,7 @@ type PageInfo struct {
 }
 
 type Vehicle struct {
-	ID       string         `json:"id"`
+	ID       int            `json:"id"`
 	Owner    common.Address `json:"owner"`
 	Make     string         `json:"make"`
 	Model    string         `json:"model"`

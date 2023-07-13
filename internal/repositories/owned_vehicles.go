@@ -3,7 +3,9 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"log"
+	"strconv"
+
+	b64 "encoding/base64"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/models"
@@ -25,23 +27,70 @@ func NewVehiclesRepo(ctx context.Context, pdb db.Store) VehiclesRepo {
 	}
 }
 
-/* func (v *VehiclesRepo) createVehiclesResponse(totalCount int) {
+func (v *VehiclesRepo) createVehiclesResponse(totalCount int64, vhs []models.Vehicle, hasNext bool) *gmodel.Vehicles {
+	lastItmID := vhs[len(vhs)-1].ID
+	endCursr := b64.StdEncoding.EncodeToString([]byte(strconv.Itoa(lastItmID)))
 
+	var vEdges []*gmodel.VehicleEdge
+	for _, v := range vhs {
+		crs := b64.StdEncoding.EncodeToString([]byte(strconv.Itoa(v.ID)))
+		cursor := &crs
+		edge := &gmodel.VehicleEdge{
+			Node: &gmodel.Vehicle{
+				ID:       v.ID,
+				Owner:    common.BytesToAddress(v.OwnerAddress.Bytes),
+				Make:     v.Make.String,
+				Model:    v.Model.String,
+				Year:     v.Year.Int,
+				MintTime: v.MintTime.Time,
+			},
+			Cursor: cursor,
+		}
 
-} */
+		vEdges = append(vEdges, edge)
+	}
 
-func (v *VehiclesRepo) GetOwnedVehicles(addr common.Address, first *int, after *string) ([]*gmodel.Vehicles, error) {
-	limit := *first
+	res := &gmodel.Vehicles{
+		TotalCount: &[]int{int(totalCount)}[0],
+		PageInfo: &gmodel.PageInfo{
+			HasNextPage: &hasNext,
+			EndCursor:   endCursr,
+		},
+		Edges: vEdges,
+	}
+
+	return res
+}
+
+func (v *VehiclesRepo) GetOwnedVehicles(addr common.Address, first *int, after *string) (*gmodel.Vehicles, error) {
+	tCount, err := models.Vehicles(
+		models.VehicleWhere.OwnerAddress.EQ(null.BytesFrom(addr.Bytes())),
+	).Count(v.ctx, v.pdb.DBS().Reader)
+	if err != nil {
+		return nil, err
+	}
+
+	if tCount == 0 {
+		return &gmodel.Vehicles{
+			TotalCount: &[]int{int(0)}[0],
+			Edges:      []*gmodel.VehicleEdge{},
+		}, nil
+	}
+
+	var limit int
 
 	if first == nil {
 		limit = 20
+	} else {
+		limit = *first
 	}
 	var queryMods []qm.QueryMod
 
 	queryMods = append(queryMods, models.VehicleWhere.OwnerAddress.EQ(null.BytesFrom(addr.Bytes())))
-	queryMods = append(queryMods, qm.Limit(limit))
+	// Used to determine if there are more values, if returned is not up to limit + 1 then we don't have anymore records
+	queryMods = append(queryMods, qm.Limit(limit+1))
 
-	/* if after != nil {
+	if after != nil {
 		lastCursor, err := b64.StdEncoding.DecodeString(*after)
 		if err != nil {
 			return nil, err
@@ -52,35 +101,33 @@ func (v *VehiclesRepo) GetOwnedVehicles(addr common.Address, first *int, after *
 			return nil, err
 		}
 		queryMods = append(queryMods, models.VehicleWhere.ID.GT(lastCursorVal))
-	} */
-	queryMods = append(queryMods, qm.OrderBy(fmt.Sprintf("%s DESC", models.VehicleColumns.ID)))
+	}
+	queryMods = append(queryMods, qm.OrderBy(fmt.Sprintf("%s ASC", models.VehicleColumns.ID)))
 
-	// all, err := models.Vehicles(queryMods...).All(v.ctx, v.pdb.DBS().Reader)
-
-	/* tCount, err := models.Vehicles(
-		models.VehicleWhere.OwnerAddress.EQ(null.BytesFrom(addr.Bytes())),
-	).Count(v.ctx, v.pdb.DBS().Reader) */
-	// TODO - return from here if tCount == 0
-	mv, err := models.Vehicles(
-		models.VehicleWhere.OwnerAddress.EQ(null.BytesFrom(addr.Bytes())),
-		// models.VehicleWhere.ID.GT(),
-		qm.OrderBy(fmt.Sprintf("%s DESC", models.VehicleColumns.ID)),
-	).All(v.ctx, v.pdb.DBS().Reader)
+	all, err := models.Vehicles(queryMods...).All(v.ctx, v.pdb.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}
-	log.Println(mv)
-	res := []*gmodel.Vehicles{}
-	/* for _, m := range mv {
-		res = append(res, &gmodel.Vehicle{
-			ID:       m.ID.String(),
-			Owner:    addr,
-			Make:     m.Make,
-			Model:    m.Model,
-			Year:     int(m.Year),
-			MintTime: m.MintTime,
-		})
-	} */
 
-	return res, nil
+	if len(all) == 0 {
+		return &gmodel.Vehicles{
+			TotalCount: &[]int{int(0)}[0],
+			Edges:      []*gmodel.VehicleEdge{},
+		}, nil
+
+	}
+
+	vhs := []models.Vehicle{}
+	for _, v := range all[:limit] {
+		vhs = append(vhs, models.Vehicle{
+			ID:           v.ID,
+			OwnerAddress: v.OwnerAddress,
+			Make:         v.Make,
+			Model:        v.Model,
+			Year:         v.Year,
+			MintTime:     v.MintTime,
+		})
+	}
+
+	return v.createVehiclesResponse(tCount, vhs, len(all) > limit), nil
 }

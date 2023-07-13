@@ -17,7 +17,7 @@ type PageInfo {
 }
 
 type Vehicle {
-  id: ID!
+  id: Int!
   owner: Address!
   make: String!
   model: String!
@@ -31,5 +31,5 @@ type VehicleEdge {
 }
 
 type Query {
-  ownedVehicles(address: Address!, first: Int, after: String): [Vehicles!]!
+  ownedVehicles(address: Address!, first: Int, after: String): Vehicles!
 }
