@@ -16,9 +16,7 @@ import (
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared"
 	"github.com/DIMO-Network/shared/db"
-	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 )
 
@@ -69,42 +67,15 @@ type VehicleAttributeSetData struct {
 	Info      string
 }
 
-func NewContractsEventsConsumer(ctx context.Context, pdb db.Store, log *zerolog.Logger, settings *config.Settings) *ContractsEventsConsumer {
+func NewContractsEventsConsumer(pdb db.Store, log *zerolog.Logger, settings *config.Settings) *ContractsEventsConsumer {
 	return &ContractsEventsConsumer{
-		ctx:      ctx,
 		db:       pdb,
 		log:      log,
 		settings: settings,
 	}
 }
 
-func (c *ContractsEventsConsumer) ProcessContractsEventsMessages(messages <-chan *message.Message) {
-	for msg := range messages {
-		err := c.processMessage(msg)
-		if err != nil {
-			c.log.Err(err).Msg("error processing contract events messages")
-		}
-	}
-}
-
-func (c *ContractsEventsConsumer) processMessage(msg *message.Message) error {
-	// Keep the pipeline moving no matter what.
-	defer func() { msg.Ack() }()
-
-	// Deletion messages. We're the only actor that produces these, so ignore them.
-	if msg.Payload == nil {
-		return nil
-	}
-
-	event := new(shared.CloudEvent[json.RawMessage])
-	if err := json.Unmarshal(msg.Payload, event); err != nil {
-		return errors.Wrap(err, "error parsing device event payload")
-	}
-
-	return c.processEvent(event)
-}
-
-func (c *ContractsEventsConsumer) processEvent(event *shared.CloudEvent[json.RawMessage]) error {
+func (c *ContractsEventsConsumer) Process(event *shared.CloudEvent[json.RawMessage]) error {
 	if event.Type != contractEventCEType {
 		return nil
 	}
