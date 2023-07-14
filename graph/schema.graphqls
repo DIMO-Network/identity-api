@@ -22,7 +22,18 @@ type AftermarketDevice {
   mintTime: Time!
 }
 
+type LinkedVehicleAndAD {
+  aftermarket_device_id: ID!
+  owner: Address!
+  beneficiary_address: Address!
+  vehicle_id: ID!
+  make: String!
+  model: String!
+  year: Int!
+}
+
 type Query {
   ownedVehicles(address: Address!): [Vehicle!]!
   aftermarketDevices(address: Address!): [AftermarketDevice!]!
+  linkedDevices(address: Address!): [LinkedVehicleAndAD!]!
 }

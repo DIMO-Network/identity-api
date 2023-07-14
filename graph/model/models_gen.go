@@ -16,6 +16,16 @@ type AftermarketDevice struct {
 	MintTime           time.Time      `json:"mintTime"`
 }
 
+type LinkedVehicleAndAd struct {
+	AftermarketDeviceID string         `json:"aftermarket_device_id"`
+	Owner               common.Address `json:"owner"`
+	BeneficiaryAddress  common.Address `json:"beneficiary_address"`
+	VehicleID           string         `json:"vehicle_id"`
+	Make                string         `json:"make"`
+	Model               string         `json:"model"`
+	Year                int            `json:"year"`
+}
+
 type Vehicle struct {
 	ID       string         `json:"id"`
 	Owner    common.Address `json:"owner"`

@@ -24,6 +24,12 @@ func (r *queryResolver) AftermarketDevices(ctx context.Context, address common.A
 	return adr.GetAftermarketDevices(address)
 }
 
+// LinkedDevices is the resolver for the linkedDevices field.
+func (r *queryResolver) LinkedDevices(ctx context.Context, address common.Address) ([]*model.LinkedVehicleAndAd, error) {
+	adr := repo.NewADRepo(ctx, r.DB)
+	return adr.GetLinkedDevices(address)
+}
+
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 

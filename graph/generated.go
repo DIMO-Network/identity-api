@@ -55,8 +55,19 @@ type ComplexityRoot struct {
 		VehicleID          func(childComplexity int) int
 	}
 
+	LinkedVehicleAndAD struct {
+		AftermarketDeviceID func(childComplexity int) int
+		BeneficiaryAddress  func(childComplexity int) int
+		Make                func(childComplexity int) int
+		Model               func(childComplexity int) int
+		Owner               func(childComplexity int) int
+		VehicleID           func(childComplexity int) int
+		Year                func(childComplexity int) int
+	}
+
 	Query struct {
 		AftermarketDevices func(childComplexity int, address common.Address) int
+		LinkedDevices      func(childComplexity int, address common.Address) int
 		OwnedVehicles      func(childComplexity int, address common.Address) int
 	}
 
@@ -73,6 +84,7 @@ type ComplexityRoot struct {
 type QueryResolver interface {
 	OwnedVehicles(ctx context.Context, address common.Address) ([]*model.Vehicle, error)
 	AftermarketDevices(ctx context.Context, address common.Address) ([]*model.AftermarketDevice, error)
+	LinkedDevices(ctx context.Context, address common.Address) ([]*model.LinkedVehicleAndAd, error)
 }
 
 type executableSchema struct {
@@ -125,6 +137,55 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.AftermarketDevice.VehicleID(childComplexity), true
 
+	case "LinkedVehicleAndAD.aftermarket_device_id":
+		if e.complexity.LinkedVehicleAndAD.AftermarketDeviceID == nil {
+			break
+		}
+
+		return e.complexity.LinkedVehicleAndAD.AftermarketDeviceID(childComplexity), true
+
+	case "LinkedVehicleAndAD.beneficiary_address":
+		if e.complexity.LinkedVehicleAndAD.BeneficiaryAddress == nil {
+			break
+		}
+
+		return e.complexity.LinkedVehicleAndAD.BeneficiaryAddress(childComplexity), true
+
+	case "LinkedVehicleAndAD.make":
+		if e.complexity.LinkedVehicleAndAD.Make == nil {
+			break
+		}
+
+		return e.complexity.LinkedVehicleAndAD.Make(childComplexity), true
+
+	case "LinkedVehicleAndAD.model":
+		if e.complexity.LinkedVehicleAndAD.Model == nil {
+			break
+		}
+
+		return e.complexity.LinkedVehicleAndAD.Model(childComplexity), true
+
+	case "LinkedVehicleAndAD.owner":
+		if e.complexity.LinkedVehicleAndAD.Owner == nil {
+			break
+		}
+
+		return e.complexity.LinkedVehicleAndAD.Owner(childComplexity), true
+
+	case "LinkedVehicleAndAD.vehicle_id":
+		if e.complexity.LinkedVehicleAndAD.VehicleID == nil {
+			break
+		}
+
+		return e.complexity.LinkedVehicleAndAD.VehicleID(childComplexity), true
+
+	case "LinkedVehicleAndAD.year":
+		if e.complexity.LinkedVehicleAndAD.Year == nil {
+			break
+		}
+
+		return e.complexity.LinkedVehicleAndAD.Year(childComplexity), true
+
 	case "Query.aftermarketDevices":
 		if e.complexity.Query.AftermarketDevices == nil {
 			break
@@ -136,6 +197,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.AftermarketDevices(childComplexity, args["address"].(common.Address)), true
+
+	case "Query.linkedDevices":
+		if e.complexity.Query.LinkedDevices == nil {
+			break
+		}
+
+		args, err := ec.field_Query_linkedDevices_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.LinkedDevices(childComplexity, args["address"].(common.Address)), true
 
 	case "Query.ownedVehicles":
 		if e.complexity.Query.OwnedVehicles == nil {
@@ -315,6 +388,21 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 }
 
 func (ec *executionContext) field_Query_aftermarketDevices_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 common.Address
+	if tmp, ok := rawArgs["address"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("address"))
+		arg0, err = ec.unmarshalNAddress2githubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["address"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_linkedDevices_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 common.Address
@@ -602,6 +690,314 @@ func (ec *executionContext) fieldContext_AftermarketDevice_mintTime(ctx context.
 	return fc, nil
 }
 
+func (ec *executionContext) _LinkedVehicleAndAD_aftermarket_device_id(ctx context.Context, field graphql.CollectedField, obj *model.LinkedVehicleAndAd) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LinkedVehicleAndAD_aftermarket_device_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AftermarketDeviceID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LinkedVehicleAndAD_aftermarket_device_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LinkedVehicleAndAD",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LinkedVehicleAndAD_owner(ctx context.Context, field graphql.CollectedField, obj *model.LinkedVehicleAndAd) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LinkedVehicleAndAD_owner(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Owner, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(common.Address)
+	fc.Result = res
+	return ec.marshalNAddress2githubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LinkedVehicleAndAD_owner(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LinkedVehicleAndAD",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Address does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LinkedVehicleAndAD_beneficiary_address(ctx context.Context, field graphql.CollectedField, obj *model.LinkedVehicleAndAd) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LinkedVehicleAndAD_beneficiary_address(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.BeneficiaryAddress, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(common.Address)
+	fc.Result = res
+	return ec.marshalNAddress2githubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LinkedVehicleAndAD_beneficiary_address(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LinkedVehicleAndAD",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Address does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LinkedVehicleAndAD_vehicle_id(ctx context.Context, field graphql.CollectedField, obj *model.LinkedVehicleAndAd) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LinkedVehicleAndAD_vehicle_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.VehicleID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LinkedVehicleAndAD_vehicle_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LinkedVehicleAndAD",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LinkedVehicleAndAD_make(ctx context.Context, field graphql.CollectedField, obj *model.LinkedVehicleAndAd) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LinkedVehicleAndAD_make(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Make, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LinkedVehicleAndAD_make(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LinkedVehicleAndAD",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LinkedVehicleAndAD_model(ctx context.Context, field graphql.CollectedField, obj *model.LinkedVehicleAndAd) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LinkedVehicleAndAD_model(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Model, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LinkedVehicleAndAD_model(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LinkedVehicleAndAD",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LinkedVehicleAndAD_year(ctx context.Context, field graphql.CollectedField, obj *model.LinkedVehicleAndAd) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LinkedVehicleAndAD_year(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Year, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LinkedVehicleAndAD_year(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LinkedVehicleAndAD",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_ownedVehicles(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_ownedVehicles(ctx, field)
 	if err != nil {
@@ -732,6 +1128,77 @@ func (ec *executionContext) fieldContext_Query_aftermarketDevices(ctx context.Co
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_aftermarketDevices_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_linkedDevices(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_linkedDevices(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().LinkedDevices(rctx, fc.Args["address"].(common.Address))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.LinkedVehicleAndAd)
+	fc.Result = res
+	return ec.marshalNLinkedVehicleAndAD2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐLinkedVehicleAndAdᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_linkedDevices(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "aftermarket_device_id":
+				return ec.fieldContext_LinkedVehicleAndAD_aftermarket_device_id(ctx, field)
+			case "owner":
+				return ec.fieldContext_LinkedVehicleAndAD_owner(ctx, field)
+			case "beneficiary_address":
+				return ec.fieldContext_LinkedVehicleAndAD_beneficiary_address(ctx, field)
+			case "vehicle_id":
+				return ec.fieldContext_LinkedVehicleAndAD_vehicle_id(ctx, field)
+			case "make":
+				return ec.fieldContext_LinkedVehicleAndAD_make(ctx, field)
+			case "model":
+				return ec.fieldContext_LinkedVehicleAndAD_model(ctx, field)
+			case "year":
+				return ec.fieldContext_LinkedVehicleAndAD_year(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type LinkedVehicleAndAD", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_linkedDevices_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -2971,6 +3438,75 @@ func (ec *executionContext) _AftermarketDevice(ctx context.Context, sel ast.Sele
 	return out
 }
 
+var linkedVehicleAndADImplementors = []string{"LinkedVehicleAndAD"}
+
+func (ec *executionContext) _LinkedVehicleAndAD(ctx context.Context, sel ast.SelectionSet, obj *model.LinkedVehicleAndAd) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, linkedVehicleAndADImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("LinkedVehicleAndAD")
+		case "aftermarket_device_id":
+			out.Values[i] = ec._LinkedVehicleAndAD_aftermarket_device_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "owner":
+			out.Values[i] = ec._LinkedVehicleAndAD_owner(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "beneficiary_address":
+			out.Values[i] = ec._LinkedVehicleAndAD_beneficiary_address(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "vehicle_id":
+			out.Values[i] = ec._LinkedVehicleAndAD_vehicle_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "make":
+			out.Values[i] = ec._LinkedVehicleAndAD_make(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "model":
+			out.Values[i] = ec._LinkedVehicleAndAD_model(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "year":
+			out.Values[i] = ec._LinkedVehicleAndAD_year(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var queryImplementors = []string{"Query"}
 
 func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -3022,6 +3558,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_aftermarketDevices(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "linkedDevices":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_linkedDevices(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -3567,6 +4125,60 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNLinkedVehicleAndAD2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐLinkedVehicleAndAdᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.LinkedVehicleAndAd) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNLinkedVehicleAndAD2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐLinkedVehicleAndAd(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNLinkedVehicleAndAD2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐLinkedVehicleAndAd(ctx context.Context, sel ast.SelectionSet, v *model.LinkedVehicleAndAd) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._LinkedVehicleAndAD(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
