@@ -1,24 +1,20 @@
 -- +goose Up
 -- +goose StatementBegin
-
 SET search_path = identity_api, public;
 
-CREATE TABLE vehicles(
-    id numeric(78, 0),
-    owner_address bytea
-        CONSTRAINT minted_vehicles_owner_address_check CHECK (length(owner_address) = 20),
-    make         varchar(100) not null,
-    model        varchar(100) not null,
-    year         int    not null,
-    mint_time   timestamptz not null default current_timestamp,
-
-    PRIMARY KEY (id)
+CREATE TABLE vehicles (
+    id int CONSTRAINT vehicles_pkey PRIMARY KEY,
+    owner_address bytea CONSTRAINT vehicles_owner_address_check CHECK (length(owner_address) = 20),
+    make varchar(100),
+    model varchar(100),
+    year int,
+    mint_time timestamptz
 );
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
+SET search_path = identity_api, public;
 
-drop table vehicles;
-
+DROP TABLE vehicles;
 -- +goose StatementEnd

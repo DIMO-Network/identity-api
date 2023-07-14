@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"strconv"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/models"
@@ -32,13 +33,14 @@ func (v *VehiclesCtrl) GetOwnedVehicles(addr common.Address) ([]*gmodel.Vehicle,
 
 	res := []*gmodel.Vehicle{}
 	for _, m := range mv {
+
 		res = append(res, &gmodel.Vehicle{
-			ID:       m.ID.String(),
+			ID:       strconv.Itoa(m.ID),
 			Owner:    addr,
-			Make:     m.Make,
-			Model:    m.Model,
-			Year:     int(m.Year),
-			MintTime: m.MintTime,
+			Make:     m.Make.String,
+			Model:    m.Model.String,
+			Year:     m.Year.Int,
+			MintTime: m.MintTime.Time,
 		})
 	}
 

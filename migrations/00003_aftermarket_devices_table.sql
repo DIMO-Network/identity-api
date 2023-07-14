@@ -20,6 +20,8 @@ CREATE TABLE aftermarket_devices(
 -- +goose Down
 -- +goose StatementBegin
 
-drop table vehicles;
+SET search_path = identity_api, public;
+
+drop table aftermarket_devices;
 
 -- +goose StatementEnd
