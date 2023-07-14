@@ -7,10 +7,10 @@ scalar Address
 
 type Vehicle {
   id: ID!
-  owner: Address!
-  make: String!
-  model: String!
-  year: Int!
+  owner: Address
+  make: String
+  model: String
+  year: Int
   mintTime: Time!
 }
 

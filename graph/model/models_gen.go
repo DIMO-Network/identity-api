@@ -9,10 +9,10 @@ import (
 )
 
 type Vehicle struct {
-	ID       string         `json:"id"`
-	Owner    common.Address `json:"owner"`
-	Make     string         `json:"make"`
-	Model    string         `json:"model"`
-	Year     int            `json:"year"`
-	MintTime time.Time      `json:"mintTime"`
+	ID       string          `json:"id"`
+	Owner    *common.Address `json:"owner,omitempty"`
+	Make     *string         `json:"make,omitempty"`
+	Model    *string         `json:"model,omitempty"`
+	Year     *int            `json:"year,omitempty"`
+	MintTime time.Time       `json:"mintTime"`
 }
