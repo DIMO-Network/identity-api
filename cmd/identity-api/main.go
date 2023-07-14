@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -13,11 +12,10 @@ import (
 
 	"github.com/DIMO-Network/identity-api/graph"
 	"github.com/DIMO-Network/identity-api/internal/config"
-	"github.com/DIMO-Network/identity-api/internal/kafka"
 	"github.com/DIMO-Network/identity-api/internal/services"
 	"github.com/DIMO-Network/shared"
 	"github.com/DIMO-Network/shared/db"
-	"github.com/Shopify/sarama"
+	"github.com/DIMO-Network/shared/kafka"
 	"github.com/rs/zerolog"
 )
 
@@ -42,13 +40,13 @@ func main() {
 		return
 	}
 
-	pdb := db.NewDbConnectionFromSettings(context.Background(), &settings.DB, true)
-	pdb.WaitForDB(logger)
+	dbs := db.NewDbConnectionFromSettings(context.Background(), &settings.DB, true)
+	dbs.WaitForDB(logger)
 
-	startContractEventsConsumer(ctx, logger, &settings, pdb)
+	startContractEventsConsumer(ctx, &logger, &settings, dbs)
 
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{
-		DB: pdb,
+		DB: dbs,
 	}}))
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
@@ -56,28 +54,21 @@ func main() {
 
 	logger.Info().Msg(fmt.Sprintf("Server started on port:%d", settings.Port))
 
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", settings.Port), nil))
+	http.ListenAndServe(fmt.Sprintf(":%d", settings.Port), nil)
 }
 
-func startContractEventsConsumer(ctx context.Context, logger zerolog.Logger, settings *config.Settings, pdb db.Store) {
-	clusterConfig := sarama.NewConfig()
-	clusterConfig.Version = sarama.V2_8_1_0
-	clusterConfig.Consumer.Offsets.Initial = sarama.OffsetNewest
-
-	cfg := &kafka.Config{
-		ClusterConfig:   clusterConfig,
-		BrokerAddresses: strings.Split(settings.KafkaBrokers, ","),
-		Topic:           settings.ContractsEventTopic,
-		GroupID:         "devices-identity",
-		MaxInFlight:     int64(5),
-	}
-	consumer, err := kafka.NewConsumer(cfg, &logger)
-	if err != nil {
-		logger.Fatal().Err(err).Msg("Could not start contract event consumer")
+func startContractEventsConsumer(ctx context.Context, logger *zerolog.Logger, settings *config.Settings, dbs db.Store) {
+	kc := kafka.Config{
+		Brokers: strings.Split(settings.KafkaBrokers, ","),
+		Topic:   settings.ContractsEventTopic,
+		Group:   "identity-api",
 	}
 
-	cevConsumer := services.NewContractsEventsConsumer(ctx, pdb, &logger, settings)
-	consumer.Start(context.Background(), cevConsumer.ProcessContractsEventsMessages)
+	cevConsumer := services.NewContractsEventsConsumer(dbs, logger, settings)
+
+	if err := kafka.Consume(ctx, kc, cevConsumer.Process, logger); err != nil {
+		logger.Fatal().Err(err).Msg("Couldn't start event consumer.")
+	}
 
 	logger.Info().Msg("Contracts events consumer started")
 }

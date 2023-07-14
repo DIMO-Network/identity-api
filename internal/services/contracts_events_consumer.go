@@ -16,15 +16,12 @@ import (
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared"
 	"github.com/DIMO-Network/shared/db"
-	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 )
 
 type ContractsEventsConsumer struct {
-	ctx      context.Context
-	db       db.Store
+	dbs      db.Store
 	log      *zerolog.Logger
 	settings *config.Settings
 }
@@ -69,42 +66,15 @@ type VehicleAttributeSetData struct {
 	Info      string
 }
 
-func NewContractsEventsConsumer(ctx context.Context, pdb db.Store, log *zerolog.Logger, settings *config.Settings) *ContractsEventsConsumer {
+func NewContractsEventsConsumer(dbs db.Store, log *zerolog.Logger, settings *config.Settings) *ContractsEventsConsumer {
 	return &ContractsEventsConsumer{
-		ctx:      ctx,
-		db:       pdb,
+		dbs:      dbs,
 		log:      log,
 		settings: settings,
 	}
 }
 
-func (c *ContractsEventsConsumer) ProcessContractsEventsMessages(messages <-chan *message.Message) {
-	for msg := range messages {
-		err := c.processMessage(msg)
-		if err != nil {
-			c.log.Err(err).Msg("error processing contract events messages")
-		}
-	}
-}
-
-func (c *ContractsEventsConsumer) processMessage(msg *message.Message) error {
-	// Keep the pipeline moving no matter what.
-	defer func() { msg.Ack() }()
-
-	// Deletion messages. We're the only actor that produces these, so ignore them.
-	if msg.Payload == nil {
-		return nil
-	}
-
-	event := new(shared.CloudEvent[json.RawMessage])
-	if err := json.Unmarshal(msg.Payload, event); err != nil {
-		return errors.Wrap(err, "error parsing device event payload")
-	}
-
-	return c.processEvent(event)
-}
-
-func (c *ContractsEventsConsumer) processEvent(event *shared.CloudEvent[json.RawMessage]) error {
+func (c *ContractsEventsConsumer) Process(event *shared.CloudEvent[json.RawMessage]) error {
 	if event.Type != contractEventCEType {
 		return nil
 	}
@@ -119,20 +89,17 @@ func (c *ContractsEventsConsumer) processEvent(event *shared.CloudEvent[json.Raw
 		c.log.Debug().Str("event", data.EventName).Interface("event data", event).Msg("Handler not provided for event ===.")
 		return nil
 	}
-	switch data.EventName {
-	case VehicleNodeMinted.String():
-		if data.Contract == registryAddr {
-			c.log.Info().Str("event", data.EventName).Msg("Event received")
+
+	if data.Contract == registryAddr {
+		switch EventName(data.EventName) {
+		case VehicleNodeMinted:
 			return c.handleVehicleNodeMintedEvent(&data)
-		}
-	case VehicleAttributeSet.String():
-		if data.Contract == registryAddr {
-			c.log.Info().Str("event", data.EventName).Msg("Event received")
+		case VehicleAttributeSet:
 			return c.handleVehicleAttributeSetEvent(&data)
 		}
-	default:
-		c.log.Debug().Str("event", data.EventName).Msg("Handler not provided for event.")
 	}
+
+	c.log.Debug().Str("event", data.EventName).Msg("Handler not provided for event.")
 
 	return nil
 }
@@ -149,7 +116,7 @@ func (c *ContractsEventsConsumer) handleVehicleNodeMintedEvent(e *ContractEventD
 		ID:           int(args.TokenId.Int64()),
 	}
 
-	if err := dm.Upsert(c.ctx, c.db.DBS().Writer, true, []string{models.VehicleColumns.ID},
+	if err := dm.Upsert(context.TODO(), c.dbs.DBS().Writer, true, []string{models.VehicleColumns.ID},
 		boil.Whitelist(models.VehicleColumns.OwnerAddress, models.VehicleColumns.MintTime),
 		boil.Whitelist(models.VehicleColumns.ID, models.VehicleColumns.OwnerAddress, models.VehicleColumns.MintTime)); err != nil {
 		return err
@@ -183,7 +150,7 @@ func (c *ContractsEventsConsumer) handleVehicleAttributeSetEvent(e *ContractEven
 
 	colToLower := strings.ToLower(args.Attribute)
 
-	if err := veh.Upsert(c.ctx, c.db.DBS().Writer, true, []string{models.VehicleColumns.ID}, boil.Whitelist(colToLower), boil.Whitelist(models.VehicleColumns.ID, colToLower)); err != nil {
+	if err := veh.Upsert(context.TODO(), c.dbs.DBS().Writer, true, []string{models.VehicleColumns.ID}, boil.Whitelist(colToLower), boil.Whitelist(models.VehicleColumns.ID, colToLower)); err != nil {
 		return err
 	}
 
