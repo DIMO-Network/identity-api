@@ -14,7 +14,3 @@ make models
 ## Create migration
 
 `goose -dir migrations create <migration_name> sql`
-
-## GraphQL
-
-Run `go generate ./...` anytime the schema changes to regenerate models from schema
