@@ -21,6 +21,7 @@ import (
 )
 
 type ContractsEventsConsumer struct {
+	ctx      context.Context
 	dbs      db.Store
 	log      *zerolog.Logger
 	settings *config.Settings
@@ -31,6 +32,7 @@ type EventName string
 const (
 	VehicleNodeMinted   EventName = "VehicleNodeMinted"
 	VehicleAttributeSet EventName = "VehicleAttributeSet"
+	Transfer            EventName = "Transfer"
 )
 
 func (r EventName) String() string {
@@ -66,8 +68,15 @@ type VehicleAttributeSetData struct {
 	Info      string
 }
 
-func NewContractsEventsConsumer(dbs db.Store, log *zerolog.Logger, settings *config.Settings) *ContractsEventsConsumer {
+type TransferEventData struct {
+	From    common.Address
+	To      common.Address
+	TokenId *big.Int
+}
+
+func NewContractsEventsConsumer(ctx context.Context, dbs db.Store, log *zerolog.Logger, settings *config.Settings) *ContractsEventsConsumer {
 	return &ContractsEventsConsumer{
+		ctx:      ctx,
 		dbs:      dbs,
 		log:      log,
 		settings: settings,
@@ -96,6 +105,8 @@ func (c *ContractsEventsConsumer) Process(event *shared.CloudEvent[json.RawMessa
 			return c.handleVehicleNodeMintedEvent(&data)
 		case VehicleAttributeSet:
 			return c.handleVehicleAttributeSetEvent(&data)
+		case Transfer:
+			return c.handleTransferEvent(&data)
 		}
 	}
 
@@ -153,6 +164,31 @@ func (c *ContractsEventsConsumer) handleVehicleAttributeSetEvent(e *ContractEven
 	if err := veh.Upsert(context.TODO(), c.dbs.DBS().Writer, true, []string{models.VehicleColumns.ID}, boil.Whitelist(colToLower), boil.Whitelist(models.VehicleColumns.ID, colToLower)); err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func (c *ContractsEventsConsumer) handleTransferEvent(e *ContractEventData) error {
+	logger := c.log.With().Str("EventName", Transfer.String()).Logger()
+
+	var args TransferEventData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	veh, err := models.Vehicles(
+		models.VehicleWhere.ID.EQ(int(args.TokenId.Int64())),
+	).One(c.ctx, c.dbs.DBS().Reader)
+	if err != nil {
+		return err
+	}
+
+	veh.OwnerAddress = null.BytesFrom(args.To.Bytes())
+	if _, err := veh.Update(c.ctx, c.dbs.DBS().Writer, boil.Infer()); err != nil {
+		return err
+	}
+
+	logger.Info().Str("TokenID", args.TokenId.String()).Msg("Event processed successfuly")
 
 	return nil
 }
