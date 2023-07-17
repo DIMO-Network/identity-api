@@ -14,5 +14,5 @@ type Vehicle struct {
 	Make     *string         `json:"make,omitempty"`
 	Model    *string         `json:"model,omitempty"`
 	Year     *int            `json:"year,omitempty"`
-	MintTime time.Time       `json:"mintTime"`
+	MintedAt time.Time       `json:"mintedAt"`
 }

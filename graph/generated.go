@@ -54,7 +54,7 @@ type ComplexityRoot struct {
 	Vehicle struct {
 		ID       func(childComplexity int) int
 		Make     func(childComplexity int) int
-		MintTime func(childComplexity int) int
+		MintedAt func(childComplexity int) int
 		Model    func(childComplexity int) int
 		Owner    func(childComplexity int) int
 		Year     func(childComplexity int) int
@@ -106,12 +106,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Vehicle.Make(childComplexity), true
 
-	case "Vehicle.mintTime":
-		if e.complexity.Vehicle.MintTime == nil {
+	case "Vehicle.mintedAt":
+		if e.complexity.Vehicle.MintedAt == nil {
 			break
 		}
 
-		return e.complexity.Vehicle.MintTime(childComplexity), true
+		return e.complexity.Vehicle.MintedAt(childComplexity), true
 
 	case "Vehicle.model":
 		if e.complexity.Vehicle.Model == nil {
@@ -359,8 +359,8 @@ func (ec *executionContext) fieldContext_Query_ownedVehicles(ctx context.Context
 				return ec.fieldContext_Vehicle_model(ctx, field)
 			case "year":
 				return ec.fieldContext_Vehicle_year(ctx, field)
-			case "mintTime":
-				return ec.fieldContext_Vehicle_mintTime(ctx, field)
+			case "mintedAt":
+				return ec.fieldContext_Vehicle_mintedAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
 		},
@@ -716,8 +716,8 @@ func (ec *executionContext) fieldContext_Vehicle_year(ctx context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Vehicle_mintTime(ctx context.Context, field graphql.CollectedField, obj *model.Vehicle) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Vehicle_mintTime(ctx, field)
+func (ec *executionContext) _Vehicle_mintedAt(ctx context.Context, field graphql.CollectedField, obj *model.Vehicle) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Vehicle_mintedAt(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -730,7 +730,7 @@ func (ec *executionContext) _Vehicle_mintTime(ctx context.Context, field graphql
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.MintTime, nil
+		return obj.MintedAt, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -747,7 +747,7 @@ func (ec *executionContext) _Vehicle_mintTime(ctx context.Context, field graphql
 	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Vehicle_mintTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Vehicle_mintedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Vehicle",
 		Field:      field,
@@ -2637,8 +2637,8 @@ func (ec *executionContext) _Vehicle(ctx context.Context, sel ast.SelectionSet, 
 			out.Values[i] = ec._Vehicle_model(ctx, field, obj)
 		case "year":
 			out.Values[i] = ec._Vehicle_year(ctx, field, obj)
-		case "mintTime":
-			out.Values[i] = ec._Vehicle_mintTime(ctx, field, obj)
+		case "mintedAt":
+			out.Values[i] = ec._Vehicle_mintedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

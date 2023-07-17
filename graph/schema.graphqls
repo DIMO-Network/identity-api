@@ -11,7 +11,7 @@ type Vehicle {
   make: String
   model: String
   year: Int
-  mintTime: Time!
+  mintedAt: Time!
 }
 
 type Query {
