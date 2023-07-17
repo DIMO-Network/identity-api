@@ -5,11 +5,11 @@ SET search_path = identity_api, public;
 
 CREATE TABLE aftermarket_devices(
     id int CONSTRAINT aftermarket_devices_pkey PRIMARY KEY,
-    "address" bytea not null,
-    "owner" bytea not null,
+    "address" bytea,
+    "owner" bytea,
     "serial" text,
     imei text,
-    minted_at timestamptz not null,
+    minted_at timestamptz,
     vehicle_id int,
 
     CONSTRAINT linked_ad_vehicle FOREIGN KEY (vehicle_id) REFERENCES vehicles (id)

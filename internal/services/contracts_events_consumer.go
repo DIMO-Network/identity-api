@@ -29,8 +29,10 @@ type ContractsEventsConsumer struct {
 type EventName string
 
 const (
-	VehicleNodeMinted   EventName = "VehicleNodeMinted"
-	VehicleAttributeSet EventName = "VehicleAttributeSet"
+	VehicleNodeMinted                  EventName = "VehicleNodeMinted"
+	VehicleAttributeSet                EventName = "VehicleAttributeSet"
+	AftermarketDeviceNodeMinted        EventName = "AftermarketDeviceNodeMinted"
+	AftermarketDeviceAttributeSetEvent EventName = "AftermarketDeviceAttributeSet"
 )
 
 func (r EventName) String() string {
@@ -66,6 +68,19 @@ type VehicleAttributeSetData struct {
 	Info      string
 }
 
+type AftermarketDeviceNodeMintedData struct {
+	ManufacturerID           *big.Int
+	TokenID                  *big.Int
+	AftermarketDeviceAddress common.Address
+	Owner                    common.Address
+}
+
+type AftermarketDeviceAttributeSetData struct {
+	TokenID   *big.Int
+	Attribute string
+	Info      string
+}
+
 func NewContractsEventsConsumer(dbs db.Store, log *zerolog.Logger, settings *config.Settings) *ContractsEventsConsumer {
 	return &ContractsEventsConsumer{
 		dbs:      dbs,
@@ -96,6 +111,10 @@ func (c *ContractsEventsConsumer) Process(event *shared.CloudEvent[json.RawMessa
 			return c.handleVehicleNodeMintedEvent(&data)
 		case VehicleAttributeSet:
 			return c.handleVehicleAttributeSetEvent(&data)
+		case AftermarketDeviceNodeMinted:
+			return c.handleAftermarketDeviceNodeMintedEvent(&data)
+		case AftermarketDeviceAttributeSetEvent:
+			return c.handleAftermarketDeviceAttributeSetEvent(&data)
 		}
 	}
 
@@ -112,13 +131,13 @@ func (c *ContractsEventsConsumer) handleVehicleNodeMintedEvent(e *ContractEventD
 
 	dm := models.Vehicle{
 		OwnerAddress: null.BytesFrom(args.Owner.Bytes()),
-		MintTime:     null.TimeFrom(e.Block.Time),
+		MintedAt:     null.TimeFrom(e.Block.Time),
 		ID:           int(args.TokenId.Int64()),
 	}
 
 	if err := dm.Upsert(context.TODO(), c.dbs.DBS().Writer, true, []string{models.VehicleColumns.ID},
-		boil.Whitelist(models.VehicleColumns.OwnerAddress, models.VehicleColumns.MintTime),
-		boil.Whitelist(models.VehicleColumns.ID, models.VehicleColumns.OwnerAddress, models.VehicleColumns.MintTime)); err != nil {
+		boil.Whitelist(models.VehicleColumns.OwnerAddress, models.VehicleColumns.MintedAt),
+		boil.Whitelist(models.VehicleColumns.ID, models.VehicleColumns.OwnerAddress, models.VehicleColumns.MintedAt)); err != nil {
 		return err
 	}
 
@@ -152,6 +171,68 @@ func (c *ContractsEventsConsumer) handleVehicleAttributeSetEvent(e *ContractEven
 
 	if err := veh.Upsert(context.TODO(), c.dbs.DBS().Writer, true, []string{models.VehicleColumns.ID}, boil.Whitelist(colToLower), boil.Whitelist(models.VehicleColumns.ID, colToLower)); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (c *ContractsEventsConsumer) handleAftermarketDeviceNodeMintedEvent(e *ContractEventData) error {
+	var args AftermarketDeviceNodeMintedData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	ad := models.AftermarketDevice{
+		ID:       int(args.TokenID.Int64()),
+		Address:  null.BytesFrom(args.AftermarketDeviceAddress.Bytes()),
+		Owner:    null.BytesFrom(args.Owner.Bytes()),
+		MintedAt: null.TimeFrom(e.Block.Time),
+	}
+
+	if err := ad.Upsert(context.Background(), c.dbs.DBS().Writer,
+		true,
+		[]string{models.AftermarketDeviceColumns.ID},
+		boil.Whitelist(models.AftermarketDeviceColumns.Owner, models.AftermarketDeviceColumns.MintedAt, models.AftermarketDeviceColumns.Address),
+		boil.Infer()); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *ContractsEventsConsumer) handleAftermarketDeviceAttributeSetEvent(e *ContractEventData) error {
+	var args AftermarketDeviceAttributeSetData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	ad := models.AftermarketDevice{
+		ID: int(args.TokenID.Int64()),
+	}
+
+	switch args.Attribute {
+	case "Serial":
+		ad.Serial = null.StringFrom(args.Info)
+		if err := ad.Upsert(
+			context.Background(),
+			c.dbs.DBS().Writer,
+			true,
+			[]string{models.AftermarketDeviceColumns.ID},
+			boil.Whitelist(models.AftermarketDeviceColumns.Serial, models.AftermarketDeviceColumns.Imei),
+			boil.Infer()); err != nil {
+			return err
+		}
+	case "IMEI":
+		ad.Imei = null.StringFrom(args.Info)
+		if err := ad.Upsert(
+			context.Background(),
+			c.dbs.DBS().Writer,
+			true,
+			[]string{models.AftermarketDeviceColumns.ID},
+			boil.Whitelist(models.AftermarketDeviceColumns.Imei),
+			boil.Infer()); err != nil {
+			return err
+		}
 	}
 
 	return nil

@@ -9,6 +9,7 @@ import (
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
@@ -30,7 +31,7 @@ func NewADRepo(ctx context.Context, pdb db.Store) AftermarketDevicesCtrl {
 
 func (ad *AftermarketDevicesCtrl) GetOwnedAftermarketDevices(addr common.Address, first *int, after *string) (*gmodel.AftermarketDeviceConnection, error) {
 	ownedADCount, err := models.AftermarketDevices(
-		models.AftermarketDeviceWhere.Owner.EQ(addr.Bytes()),
+		models.AftermarketDeviceWhere.Owner.EQ(null.BytesFrom(addr.Bytes())),
 	).Count(context.Background(), ad.pdb.DBS().Reader)
 	limit := defaultPageSize
 	if first != nil {
@@ -48,7 +49,7 @@ func (ad *AftermarketDevicesCtrl) GetOwnedAftermarketDevices(addr common.Address
 	}
 
 	queryMods := []qm.QueryMod{
-		models.AftermarketDeviceWhere.Owner.EQ(addr.Bytes()),
+		models.AftermarketDeviceWhere.Owner.EQ(null.BytesFrom(addr.Bytes())),
 		qm.Limit(limit + 1),
 		qm.OrderBy(models.AftermarketDeviceColumns.ID + " ASC"),
 	}
@@ -78,11 +79,11 @@ func (ad *AftermarketDevicesCtrl) GetOwnedAftermarketDevices(addr common.Address
 			&gmodel.AftermarketDeviceEdge{
 				Node: &gmodel.AftermarketDevice{
 					ID:        strconv.Itoa(d.ID),
-					Address:   common.BytesToAddress(d.Owner),
+					Address:   common.BytesToAddress(d.Owner.Bytes),
 					Owner:     addr,
 					Serial:    &d.Serial.String,
 					Imei:      &d.Imei.String,
-					MintedAt:  d.MintedAt,
+					MintedAt:  d.MintedAt.Time,
 					VehicleID: strconv.Itoa(d.VehicleID.Int),
 				},
 				Cursor: strconv.Itoa(d.ID),

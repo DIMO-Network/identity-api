@@ -25,11 +25,11 @@ import (
 // AftermarketDevice is an object representing the database table.
 type AftermarketDevice struct {
 	ID        int         `boil:"id" json:"id" toml:"id" yaml:"id"`
-	Address   []byte      `boil:"address" json:"address" toml:"address" yaml:"address"`
-	Owner     []byte      `boil:"owner" json:"owner" toml:"owner" yaml:"owner"`
+	Address   null.Bytes  `boil:"address" json:"address,omitempty" toml:"address" yaml:"address,omitempty"`
+	Owner     null.Bytes  `boil:"owner" json:"owner,omitempty" toml:"owner" yaml:"owner,omitempty"`
 	Serial    null.String `boil:"serial" json:"serial,omitempty" toml:"serial" yaml:"serial,omitempty"`
 	Imei      null.String `boil:"imei" json:"imei,omitempty" toml:"imei" yaml:"imei,omitempty"`
-	MintedAt  time.Time   `boil:"minted_at" json:"minted_at" toml:"minted_at" yaml:"minted_at"`
+	MintedAt  null.Time   `boil:"minted_at" json:"minted_at,omitempty" toml:"minted_at" yaml:"minted_at,omitempty"`
 	VehicleID null.Int    `boil:"vehicle_id" json:"vehicle_id,omitempty" toml:"vehicle_id" yaml:"vehicle_id,omitempty"`
 
 	R *aftermarketDeviceR `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -97,14 +97,29 @@ func (w whereHelperint) NIN(slice []int) qm.QueryMod {
 	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
 }
 
-type whereHelper__byte struct{ field string }
+type whereHelpernull_Bytes struct{ field string }
 
-func (w whereHelper__byte) EQ(x []byte) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
-func (w whereHelper__byte) NEQ(x []byte) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
-func (w whereHelper__byte) LT(x []byte) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
-func (w whereHelper__byte) LTE(x []byte) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
-func (w whereHelper__byte) GT(x []byte) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
-func (w whereHelper__byte) GTE(x []byte) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
+func (w whereHelpernull_Bytes) EQ(x null.Bytes) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
+}
+func (w whereHelpernull_Bytes) NEQ(x null.Bytes) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
+}
+func (w whereHelpernull_Bytes) LT(x null.Bytes) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpernull_Bytes) LTE(x null.Bytes) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpernull_Bytes) GT(x null.Bytes) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpernull_Bytes) GTE(x null.Bytes) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+
+func (w whereHelpernull_Bytes) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_Bytes) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
 type whereHelpernull_String struct{ field string }
 
@@ -144,26 +159,29 @@ func (w whereHelpernull_String) NIN(slice []string) qm.QueryMod {
 func (w whereHelpernull_String) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
 func (w whereHelpernull_String) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
-type whereHelpertime_Time struct{ field string }
+type whereHelpernull_Time struct{ field string }
 
-func (w whereHelpertime_Time) EQ(x time.Time) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.EQ, x)
+func (w whereHelpernull_Time) EQ(x null.Time) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
 }
-func (w whereHelpertime_Time) NEQ(x time.Time) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.NEQ, x)
+func (w whereHelpernull_Time) NEQ(x null.Time) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
 }
-func (w whereHelpertime_Time) LT(x time.Time) qm.QueryMod {
+func (w whereHelpernull_Time) LT(x null.Time) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.LT, x)
 }
-func (w whereHelpertime_Time) LTE(x time.Time) qm.QueryMod {
+func (w whereHelpernull_Time) LTE(x null.Time) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.LTE, x)
 }
-func (w whereHelpertime_Time) GT(x time.Time) qm.QueryMod {
+func (w whereHelpernull_Time) GT(x null.Time) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.GT, x)
 }
-func (w whereHelpertime_Time) GTE(x time.Time) qm.QueryMod {
+func (w whereHelpernull_Time) GTE(x null.Time) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.GTE, x)
 }
+
+func (w whereHelpernull_Time) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_Time) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
 type whereHelpernull_Int struct{ field string }
 
@@ -205,19 +223,19 @@ func (w whereHelpernull_Int) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNo
 
 var AftermarketDeviceWhere = struct {
 	ID        whereHelperint
-	Address   whereHelper__byte
-	Owner     whereHelper__byte
+	Address   whereHelpernull_Bytes
+	Owner     whereHelpernull_Bytes
 	Serial    whereHelpernull_String
 	Imei      whereHelpernull_String
-	MintedAt  whereHelpertime_Time
+	MintedAt  whereHelpernull_Time
 	VehicleID whereHelpernull_Int
 }{
 	ID:        whereHelperint{field: "\"identity_api\".\"aftermarket_devices\".\"id\""},
-	Address:   whereHelper__byte{field: "\"identity_api\".\"aftermarket_devices\".\"address\""},
-	Owner:     whereHelper__byte{field: "\"identity_api\".\"aftermarket_devices\".\"owner\""},
+	Address:   whereHelpernull_Bytes{field: "\"identity_api\".\"aftermarket_devices\".\"address\""},
+	Owner:     whereHelpernull_Bytes{field: "\"identity_api\".\"aftermarket_devices\".\"owner\""},
 	Serial:    whereHelpernull_String{field: "\"identity_api\".\"aftermarket_devices\".\"serial\""},
 	Imei:      whereHelpernull_String{field: "\"identity_api\".\"aftermarket_devices\".\"imei\""},
-	MintedAt:  whereHelpertime_Time{field: "\"identity_api\".\"aftermarket_devices\".\"minted_at\""},
+	MintedAt:  whereHelpernull_Time{field: "\"identity_api\".\"aftermarket_devices\".\"minted_at\""},
 	VehicleID: whereHelpernull_Int{field: "\"identity_api\".\"aftermarket_devices\".\"vehicle_id\""},
 }
 
@@ -250,8 +268,8 @@ type aftermarketDeviceL struct{}
 
 var (
 	aftermarketDeviceAllColumns            = []string{"id", "address", "owner", "serial", "imei", "minted_at", "vehicle_id"}
-	aftermarketDeviceColumnsWithoutDefault = []string{"id", "address", "owner", "minted_at"}
-	aftermarketDeviceColumnsWithDefault    = []string{"serial", "imei", "vehicle_id"}
+	aftermarketDeviceColumnsWithoutDefault = []string{"id"}
+	aftermarketDeviceColumnsWithDefault    = []string{"address", "owner", "serial", "imei", "minted_at", "vehicle_id"}
 	aftermarketDevicePrimaryKeyColumns     = []string{"id"}
 	aftermarketDeviceGeneratedColumns      = []string{}
 )
