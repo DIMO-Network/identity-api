@@ -16,13 +16,37 @@ type Vehicle {
 
 type AftermarketDevice {
   id: ID!
+  address: Address!
   owner: Address!
-  beneficiary_address: Address!
+  serial: String
+  imei: String
+  mintedAt: Time!
   vehicle_id: ID!
-  mintTime: Time!
+}
+
+type AftermarketDeviceConnection {
+  totalCount: Int!
+  edges: [AftermarketDeviceEdge!]
+  devices: [AftermarketDevice!]
+  pageInfo: PageInfo!
+}
+
+type AftermarketDeviceEdge {
+  cursor: ID!
+  node: AftermarketDevice
+}
+
+type PageInfo {
+  startCursor: ID!
+  endCursor: ID!
+  hasNextPage: Boolean!
 }
 
 type Query {
   ownedVehicles(address: Address!): [Vehicle!]!
-  aftermarketDevices(address: Address!): [AftermarketDevice!]!
+  ownedAftermarketDevices(
+    address: Address!
+    first: Int
+    after: ID
+  ): AftermarketDeviceConnection!
 }

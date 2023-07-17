@@ -4,15 +4,14 @@
 SET search_path = identity_api, public;
 
 CREATE TABLE aftermarket_devices(
-    id numeric(78, 0),
-    owner_address bytea
-        CONSTRAINT minted_vehicles_owner_address_check CHECK (length(owner_address) = 20),
-    beneficiary_address bytea
-        CONSTRAINT device_beneficiary_address_check CHECK (length(beneficiary_address) = 20),
-    vehicle_id int not null,
-    mint_time   timestamptz not null default current_timestamp,
+    id int CONSTRAINT aftermarket_devices_pkey PRIMARY KEY,
+    "address" bytea not null,
+    "owner" bytea not null,
+    "serial" text,
+    imei text,
+    minted_at timestamptz not null,
+    vehicle_id int,
 
-    PRIMARY KEY (id),
     CONSTRAINT linked_ad_vehicle FOREIGN KEY (vehicle_id) REFERENCES vehicles (id)
 );
 

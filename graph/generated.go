@@ -48,16 +48,36 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	AftermarketDevice struct {
-		BeneficiaryAddress func(childComplexity int) int
-		ID                 func(childComplexity int) int
-		MintTime           func(childComplexity int) int
-		Owner              func(childComplexity int) int
-		VehicleID          func(childComplexity int) int
+		Address   func(childComplexity int) int
+		ID        func(childComplexity int) int
+		Imei      func(childComplexity int) int
+		MintedAt  func(childComplexity int) int
+		Owner     func(childComplexity int) int
+		Serial    func(childComplexity int) int
+		VehicleID func(childComplexity int) int
+	}
+
+	AftermarketDeviceConnection struct {
+		Devices    func(childComplexity int) int
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	AftermarketDeviceEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	PageInfo struct {
+		EndCursor   func(childComplexity int) int
+		HasNextPage func(childComplexity int) int
+		StartCursor func(childComplexity int) int
 	}
 
 	Query struct {
-		AftermarketDevices func(childComplexity int, address common.Address) int
-		OwnedVehicles      func(childComplexity int, address common.Address) int
+		OwnedAftermarketDevices func(childComplexity int, address common.Address, first *int, after *string) int
+		OwnedVehicles           func(childComplexity int, address common.Address) int
 	}
 
 	Vehicle struct {
@@ -72,7 +92,7 @@ type ComplexityRoot struct {
 
 type QueryResolver interface {
 	OwnedVehicles(ctx context.Context, address common.Address) ([]*model.Vehicle, error)
-	AftermarketDevices(ctx context.Context, address common.Address) ([]*model.AftermarketDevice, error)
+	OwnedAftermarketDevices(ctx context.Context, address common.Address, first *int, after *string) (*model.AftermarketDeviceConnection, error)
 }
 
 type executableSchema struct {
@@ -90,12 +110,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	_ = ec
 	switch typeName + "." + field {
 
-	case "AftermarketDevice.beneficiary_address":
-		if e.complexity.AftermarketDevice.BeneficiaryAddress == nil {
+	case "AftermarketDevice.address":
+		if e.complexity.AftermarketDevice.Address == nil {
 			break
 		}
 
-		return e.complexity.AftermarketDevice.BeneficiaryAddress(childComplexity), true
+		return e.complexity.AftermarketDevice.Address(childComplexity), true
 
 	case "AftermarketDevice.id":
 		if e.complexity.AftermarketDevice.ID == nil {
@@ -104,12 +124,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.AftermarketDevice.ID(childComplexity), true
 
-	case "AftermarketDevice.mintTime":
-		if e.complexity.AftermarketDevice.MintTime == nil {
+	case "AftermarketDevice.imei":
+		if e.complexity.AftermarketDevice.Imei == nil {
 			break
 		}
 
-		return e.complexity.AftermarketDevice.MintTime(childComplexity), true
+		return e.complexity.AftermarketDevice.Imei(childComplexity), true
+
+	case "AftermarketDevice.mintedAt":
+		if e.complexity.AftermarketDevice.MintedAt == nil {
+			break
+		}
+
+		return e.complexity.AftermarketDevice.MintedAt(childComplexity), true
 
 	case "AftermarketDevice.owner":
 		if e.complexity.AftermarketDevice.Owner == nil {
@@ -118,6 +145,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.AftermarketDevice.Owner(childComplexity), true
 
+	case "AftermarketDevice.serial":
+		if e.complexity.AftermarketDevice.Serial == nil {
+			break
+		}
+
+		return e.complexity.AftermarketDevice.Serial(childComplexity), true
+
 	case "AftermarketDevice.vehicle_id":
 		if e.complexity.AftermarketDevice.VehicleID == nil {
 			break
@@ -125,17 +159,80 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.AftermarketDevice.VehicleID(childComplexity), true
 
-	case "Query.aftermarketDevices":
-		if e.complexity.Query.AftermarketDevices == nil {
+	case "AftermarketDeviceConnection.devices":
+		if e.complexity.AftermarketDeviceConnection.Devices == nil {
 			break
 		}
 
-		args, err := ec.field_Query_aftermarketDevices_args(context.TODO(), rawArgs)
+		return e.complexity.AftermarketDeviceConnection.Devices(childComplexity), true
+
+	case "AftermarketDeviceConnection.edges":
+		if e.complexity.AftermarketDeviceConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.AftermarketDeviceConnection.Edges(childComplexity), true
+
+	case "AftermarketDeviceConnection.pageInfo":
+		if e.complexity.AftermarketDeviceConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.AftermarketDeviceConnection.PageInfo(childComplexity), true
+
+	case "AftermarketDeviceConnection.totalCount":
+		if e.complexity.AftermarketDeviceConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.AftermarketDeviceConnection.TotalCount(childComplexity), true
+
+	case "AftermarketDeviceEdge.cursor":
+		if e.complexity.AftermarketDeviceEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.AftermarketDeviceEdge.Cursor(childComplexity), true
+
+	case "AftermarketDeviceEdge.node":
+		if e.complexity.AftermarketDeviceEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.AftermarketDeviceEdge.Node(childComplexity), true
+
+	case "PageInfo.endCursor":
+		if e.complexity.PageInfo.EndCursor == nil {
+			break
+		}
+
+		return e.complexity.PageInfo.EndCursor(childComplexity), true
+
+	case "PageInfo.hasNextPage":
+		if e.complexity.PageInfo.HasNextPage == nil {
+			break
+		}
+
+		return e.complexity.PageInfo.HasNextPage(childComplexity), true
+
+	case "PageInfo.startCursor":
+		if e.complexity.PageInfo.StartCursor == nil {
+			break
+		}
+
+		return e.complexity.PageInfo.StartCursor(childComplexity), true
+
+	case "Query.ownedAftermarketDevices":
+		if e.complexity.Query.OwnedAftermarketDevices == nil {
+			break
+		}
+
+		args, err := ec.field_Query_ownedAftermarketDevices_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.AftermarketDevices(childComplexity, args["address"].(common.Address)), true
+		return e.complexity.Query.OwnedAftermarketDevices(childComplexity, args["address"].(common.Address), args["first"].(*int), args["after"].(*string)), true
 
 	case "Query.ownedVehicles":
 		if e.complexity.Query.OwnedVehicles == nil {
@@ -314,7 +411,7 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_aftermarketDevices_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_ownedAftermarketDevices_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 common.Address
@@ -326,6 +423,24 @@ func (ec *executionContext) field_Query_aftermarketDevices_args(ctx context.Cont
 		}
 	}
 	args["address"] = arg0
+	var arg1 *int
+	if tmp, ok := rawArgs["first"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["first"] = arg1
+	var arg2 *string
+	if tmp, ok := rawArgs["after"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+		arg2, err = ec.unmarshalOID2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["after"] = arg2
 	return args, nil
 }
 
@@ -426,6 +541,50 @@ func (ec *executionContext) fieldContext_AftermarketDevice_id(ctx context.Contex
 	return fc, nil
 }
 
+func (ec *executionContext) _AftermarketDevice_address(ctx context.Context, field graphql.CollectedField, obj *model.AftermarketDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AftermarketDevice_address(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Address, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(common.Address)
+	fc.Result = res
+	return ec.marshalNAddress2githubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AftermarketDevice_address(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AftermarketDevice",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Address does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _AftermarketDevice_owner(ctx context.Context, field graphql.CollectedField, obj *model.AftermarketDevice) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_AftermarketDevice_owner(ctx, field)
 	if err != nil {
@@ -470,8 +629,8 @@ func (ec *executionContext) fieldContext_AftermarketDevice_owner(ctx context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _AftermarketDevice_beneficiary_address(ctx context.Context, field graphql.CollectedField, obj *model.AftermarketDevice) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_AftermarketDevice_beneficiary_address(ctx, field)
+func (ec *executionContext) _AftermarketDevice_serial(ctx context.Context, field graphql.CollectedField, obj *model.AftermarketDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AftermarketDevice_serial(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -484,7 +643,89 @@ func (ec *executionContext) _AftermarketDevice_beneficiary_address(ctx context.C
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.BeneficiaryAddress, nil
+		return obj.Serial, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AftermarketDevice_serial(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AftermarketDevice",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AftermarketDevice_imei(ctx context.Context, field graphql.CollectedField, obj *model.AftermarketDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AftermarketDevice_imei(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Imei, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AftermarketDevice_imei(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AftermarketDevice",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AftermarketDevice_mintedAt(ctx context.Context, field graphql.CollectedField, obj *model.AftermarketDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AftermarketDevice_mintedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MintedAt, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -496,19 +737,19 @@ func (ec *executionContext) _AftermarketDevice_beneficiary_address(ctx context.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(common.Address)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalNAddress2githubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, field.Selections, res)
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_AftermarketDevice_beneficiary_address(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_AftermarketDevice_mintedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AftermarketDevice",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Address does not have child fields")
+			return nil, errors.New("field of type Time does not have child fields")
 		},
 	}
 	return fc, nil
@@ -558,8 +799,8 @@ func (ec *executionContext) fieldContext_AftermarketDevice_vehicle_id(ctx contex
 	return fc, nil
 }
 
-func (ec *executionContext) _AftermarketDevice_mintTime(ctx context.Context, field graphql.CollectedField, obj *model.AftermarketDevice) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_AftermarketDevice_mintTime(ctx, field)
+func (ec *executionContext) _AftermarketDeviceConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.AftermarketDeviceConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AftermarketDeviceConnection_totalCount(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -572,7 +813,7 @@ func (ec *executionContext) _AftermarketDevice_mintTime(ctx context.Context, fie
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.MintTime, nil
+		return obj.TotalCount, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -584,19 +825,408 @@ func (ec *executionContext) _AftermarketDevice_mintTime(ctx context.Context, fie
 		}
 		return graphql.Null
 	}
-	res := resTmp.(time.Time)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_AftermarketDevice_mintTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_AftermarketDeviceConnection_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "AftermarketDevice",
+		Object:     "AftermarketDeviceConnection",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Time does not have child fields")
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AftermarketDeviceConnection_edges(ctx context.Context, field graphql.CollectedField, obj *model.AftermarketDeviceConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AftermarketDeviceConnection_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.AftermarketDeviceEdge)
+	fc.Result = res
+	return ec.marshalOAftermarketDeviceEdge2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDeviceEdgeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AftermarketDeviceConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AftermarketDeviceConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_AftermarketDeviceEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_AftermarketDeviceEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AftermarketDeviceEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AftermarketDeviceConnection_devices(ctx context.Context, field graphql.CollectedField, obj *model.AftermarketDeviceConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AftermarketDeviceConnection_devices(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Devices, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.AftermarketDevice)
+	fc.Result = res
+	return ec.marshalOAftermarketDevice2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDeviceᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AftermarketDeviceConnection_devices(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AftermarketDeviceConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_AftermarketDevice_id(ctx, field)
+			case "address":
+				return ec.fieldContext_AftermarketDevice_address(ctx, field)
+			case "owner":
+				return ec.fieldContext_AftermarketDevice_owner(ctx, field)
+			case "serial":
+				return ec.fieldContext_AftermarketDevice_serial(ctx, field)
+			case "imei":
+				return ec.fieldContext_AftermarketDevice_imei(ctx, field)
+			case "mintedAt":
+				return ec.fieldContext_AftermarketDevice_mintedAt(ctx, field)
+			case "vehicle_id":
+				return ec.fieldContext_AftermarketDevice_vehicle_id(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AftermarketDevice", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AftermarketDeviceConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.AftermarketDeviceConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AftermarketDeviceConnection_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AftermarketDeviceConnection_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AftermarketDeviceConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AftermarketDeviceEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.AftermarketDeviceEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AftermarketDeviceEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AftermarketDeviceEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AftermarketDeviceEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AftermarketDeviceEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.AftermarketDeviceEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AftermarketDeviceEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.AftermarketDevice)
+	fc.Result = res
+	return ec.marshalOAftermarketDevice2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDevice(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AftermarketDeviceEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AftermarketDeviceEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_AftermarketDevice_id(ctx, field)
+			case "address":
+				return ec.fieldContext_AftermarketDevice_address(ctx, field)
+			case "owner":
+				return ec.fieldContext_AftermarketDevice_owner(ctx, field)
+			case "serial":
+				return ec.fieldContext_AftermarketDevice_serial(ctx, field)
+			case "imei":
+				return ec.fieldContext_AftermarketDevice_imei(ctx, field)
+			case "mintedAt":
+				return ec.fieldContext_AftermarketDevice_mintedAt(ctx, field)
+			case "vehicle_id":
+				return ec.fieldContext_AftermarketDevice_vehicle_id(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AftermarketDevice", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PageInfo_startCursor(ctx context.Context, field graphql.CollectedField, obj *model.PageInfo) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PageInfo_startCursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.StartCursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PageInfo_startCursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PageInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PageInfo_endCursor(ctx context.Context, field graphql.CollectedField, obj *model.PageInfo) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PageInfo_endCursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.EndCursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PageInfo_endCursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PageInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PageInfo_hasNextPage(ctx context.Context, field graphql.CollectedField, obj *model.PageInfo) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.HasNextPage, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PageInfo_hasNextPage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PageInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -671,8 +1301,8 @@ func (ec *executionContext) fieldContext_Query_ownedVehicles(ctx context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_aftermarketDevices(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_aftermarketDevices(ctx, field)
+func (ec *executionContext) _Query_ownedAftermarketDevices(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_ownedAftermarketDevices(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -685,7 +1315,7 @@ func (ec *executionContext) _Query_aftermarketDevices(ctx context.Context, field
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().AftermarketDevices(rctx, fc.Args["address"].(common.Address))
+		return ec.resolvers.Query().OwnedAftermarketDevices(rctx, fc.Args["address"].(common.Address), fc.Args["first"].(*int), fc.Args["after"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -697,12 +1327,12 @@ func (ec *executionContext) _Query_aftermarketDevices(ctx context.Context, field
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.AftermarketDevice)
+	res := resTmp.(*model.AftermarketDeviceConnection)
 	fc.Result = res
-	return ec.marshalNAftermarketDevice2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDeviceᚄ(ctx, field.Selections, res)
+	return ec.marshalNAftermarketDeviceConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDeviceConnection(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_aftermarketDevices(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_ownedAftermarketDevices(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -710,18 +1340,16 @@ func (ec *executionContext) fieldContext_Query_aftermarketDevices(ctx context.Co
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_AftermarketDevice_id(ctx, field)
-			case "owner":
-				return ec.fieldContext_AftermarketDevice_owner(ctx, field)
-			case "beneficiary_address":
-				return ec.fieldContext_AftermarketDevice_beneficiary_address(ctx, field)
-			case "vehicle_id":
-				return ec.fieldContext_AftermarketDevice_vehicle_id(ctx, field)
-			case "mintTime":
-				return ec.fieldContext_AftermarketDevice_mintTime(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_AftermarketDeviceConnection_totalCount(ctx, field)
+			case "edges":
+				return ec.fieldContext_AftermarketDeviceConnection_edges(ctx, field)
+			case "devices":
+				return ec.fieldContext_AftermarketDeviceConnection_devices(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_AftermarketDeviceConnection_pageInfo(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type AftermarketDevice", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type AftermarketDeviceConnection", field.Name)
 		},
 	}
 	defer func() {
@@ -731,7 +1359,7 @@ func (ec *executionContext) fieldContext_Query_aftermarketDevices(ctx context.Co
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_aftermarketDevices_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_ownedAftermarketDevices_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -2928,13 +3556,22 @@ func (ec *executionContext) _AftermarketDevice(ctx context.Context, sel ast.Sele
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "address":
+			out.Values[i] = ec._AftermarketDevice_address(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "owner":
 			out.Values[i] = ec._AftermarketDevice_owner(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "beneficiary_address":
-			out.Values[i] = ec._AftermarketDevice_beneficiary_address(ctx, field, obj)
+		case "serial":
+			out.Values[i] = ec._AftermarketDevice_serial(ctx, field, obj)
+		case "imei":
+			out.Values[i] = ec._AftermarketDevice_imei(ctx, field, obj)
+		case "mintedAt":
+			out.Values[i] = ec._AftermarketDevice_mintedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -2943,8 +3580,141 @@ func (ec *executionContext) _AftermarketDevice(ctx context.Context, sel ast.Sele
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "mintTime":
-			out.Values[i] = ec._AftermarketDevice_mintTime(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var aftermarketDeviceConnectionImplementors = []string{"AftermarketDeviceConnection"}
+
+func (ec *executionContext) _AftermarketDeviceConnection(ctx context.Context, sel ast.SelectionSet, obj *model.AftermarketDeviceConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, aftermarketDeviceConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AftermarketDeviceConnection")
+		case "totalCount":
+			out.Values[i] = ec._AftermarketDeviceConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "edges":
+			out.Values[i] = ec._AftermarketDeviceConnection_edges(ctx, field, obj)
+		case "devices":
+			out.Values[i] = ec._AftermarketDeviceConnection_devices(ctx, field, obj)
+		case "pageInfo":
+			out.Values[i] = ec._AftermarketDeviceConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var aftermarketDeviceEdgeImplementors = []string{"AftermarketDeviceEdge"}
+
+func (ec *executionContext) _AftermarketDeviceEdge(ctx context.Context, sel ast.SelectionSet, obj *model.AftermarketDeviceEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, aftermarketDeviceEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AftermarketDeviceEdge")
+		case "cursor":
+			out.Values[i] = ec._AftermarketDeviceEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "node":
+			out.Values[i] = ec._AftermarketDeviceEdge_node(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var pageInfoImplementors = []string{"PageInfo"}
+
+func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet, obj *model.PageInfo) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, pageInfoImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PageInfo")
+		case "startCursor":
+			out.Values[i] = ec._PageInfo_startCursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "endCursor":
+			out.Values[i] = ec._PageInfo_endCursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "hasNextPage":
+			out.Values[i] = ec._PageInfo_hasNextPage(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -3012,7 +3782,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "aftermarketDevices":
+		case "ownedAftermarketDevices":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -3021,7 +3791,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_aftermarketDevices(ctx, field)
+				res = ec._Query_ownedAftermarketDevices(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -3470,50 +4240,6 @@ func (ec *executionContext) marshalNAddress2githubᚗcomᚋethereumᚋgoᚑether
 	return res
 }
 
-func (ec *executionContext) marshalNAftermarketDevice2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDeviceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.AftermarketDevice) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNAftermarketDevice2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDevice(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
 func (ec *executionContext) marshalNAftermarketDevice2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDevice(ctx context.Context, sel ast.SelectionSet, v *model.AftermarketDevice) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -3522,6 +4248,30 @@ func (ec *executionContext) marshalNAftermarketDevice2ᚖgithubᚗcomᚋDIMOᚑN
 		return graphql.Null
 	}
 	return ec._AftermarketDevice(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNAftermarketDeviceConnection2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDeviceConnection(ctx context.Context, sel ast.SelectionSet, v model.AftermarketDeviceConnection) graphql.Marshaler {
+	return ec._AftermarketDeviceConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAftermarketDeviceConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDeviceConnection(ctx context.Context, sel ast.SelectionSet, v *model.AftermarketDeviceConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AftermarketDeviceConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNAftermarketDeviceEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDeviceEdge(ctx context.Context, sel ast.SelectionSet, v *model.AftermarketDeviceEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AftermarketDeviceEdge(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
@@ -3567,6 +4317,16 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._PageInfo(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
@@ -3906,6 +4666,107 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
+func (ec *executionContext) marshalOAftermarketDevice2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDeviceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.AftermarketDevice) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNAftermarketDevice2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDevice(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalOAftermarketDevice2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDevice(ctx context.Context, sel ast.SelectionSet, v *model.AftermarketDevice) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._AftermarketDevice(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOAftermarketDeviceEdge2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDeviceEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.AftermarketDeviceEdge) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNAftermarketDeviceEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDeviceEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3929,6 +4790,38 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 		return graphql.Null
 	}
 	res := graphql.MarshalBoolean(*v)
+	return res
+}
+
+func (ec *executionContext) unmarshalOID2ᚖstring(ctx context.Context, v interface{}) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalID(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOID2ᚖstring(ctx context.Context, sel ast.SelectionSet, v *string) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalID(*v)
+	return res
+}
+
+func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalInt(*v)
 	return res
 }
 

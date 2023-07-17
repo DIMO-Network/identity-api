@@ -40,7 +40,7 @@ func (v *VehiclesCtrl) GetOwnedVehicles(addr common.Address) ([]*gmodel.Vehicle,
 			Make:     m.Make.String,
 			Model:    m.Model.String,
 			Year:     m.Year.Int,
-			MintTime: m.MintTime.Time,
+			MintTime: m.MintedAt.Time,
 		})
 	}
 
