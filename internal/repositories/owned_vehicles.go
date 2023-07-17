@@ -39,14 +39,17 @@ func (v *VehiclesRepo) createVehiclesResponse(totalCount int64, vehicles []model
 	for _, v := range vehicles {
 		crs := base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(v.ID)))
 		cursor := crs
+
+		owner := common.BytesToAddress(v.OwnerAddress.Bytes)
+
 		edge := &gmodel.VehicleEdge{
 			Node: &gmodel.Vehicle{
 				ID:       strconv.Itoa(v.ID),
-				Owner:    common.BytesToAddress(v.OwnerAddress.Bytes),
-				Make:     v.Make.String,
-				Model:    v.Model.String,
-				Year:     v.Year.Int,
-				MintTime: v.MintTime.Time,
+				Owner:    &owner,
+				Make:     v.Make.Ptr(),
+				Model:    v.Model.Ptr(),
+				Year:     v.Year.Ptr(),
+				MintedAt: v.MintedAt.Ptr(),
 			},
 			Cursor: cursor,
 		}
@@ -84,7 +87,7 @@ func (v *VehiclesRepo) GetOwnedVehicles(addr common.Address, first *int, after *
 	limit := defaultPageSize
 	if first != nil {
 		limit = *first
-		if limit == 0 {
+		if limit <= 0 {
 			return nil, errors.New("invalid value provided for number of vehicles to retrieve")
 		}
 	}
@@ -134,7 +137,7 @@ func (v *VehiclesRepo) GetOwnedVehicles(addr common.Address, first *int, after *
 			Make:         v.Make,
 			Model:        v.Model,
 			Year:         v.Year,
-			MintTime:     v.MintTime,
+			MintedAt:     v.MintedAt,
 		})
 	}
 
