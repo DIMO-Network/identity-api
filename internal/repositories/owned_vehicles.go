@@ -67,10 +67,6 @@ func (v *VehiclesRepo) createVehiclesResponse(totalCount int64, vehicles []model
 }
 
 func (v *VehiclesRepo) GetOwnedVehicles(addr common.Address, first *int, after *string) (*gmodel.VehicleConnection, error) {
-	if *first <= 0 {
-		return nil, errors.New("invalid value provided for number of vehicles to retrieve")
-	}
-
 	totalCount, err := models.Vehicles(
 		models.VehicleWhere.OwnerAddress.EQ(null.BytesFrom(addr.Bytes())),
 	).Count(v.ctx, v.pdb.DBS().Reader)
@@ -88,6 +84,9 @@ func (v *VehiclesRepo) GetOwnedVehicles(addr common.Address, first *int, after *
 	limit := defaultPageSize
 	if first != nil {
 		limit = *first
+		if limit == 0 {
+			return nil, errors.New("invalid value provided for number of vehicles to retrieve")
+		}
 	}
 
 	var queryMods []qm.QueryMod
@@ -117,14 +116,18 @@ func (v *VehiclesRepo) GetOwnedVehicles(addr common.Address, first *int, after *
 
 	if len(all) == 0 {
 		return &gmodel.VehicleConnection{
-			TotalCount: 0,
+			TotalCount: int(totalCount),
 			Edges:      []*gmodel.VehicleEdge{},
 		}, nil
+	}
 
+	vIterate := all
+	if len(all) > limit {
+		vIterate = all[:limit]
 	}
 
 	vehicles := []models.Vehicle{}
-	for _, v := range all[:limit] {
+	for _, v := range vIterate {
 		vehicles = append(vehicles, models.Vehicle{
 			ID:           v.ID,
 			OwnerAddress: v.OwnerAddress,
