@@ -8,6 +8,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+type PageInfo struct {
+	EndCursor   *string `json:"endCursor,omitempty"`
+	HasNextPage bool    `json:"hasNextPage"`
+}
+
 type Vehicle struct {
 	ID       string          `json:"id"`
 	Owner    *common.Address `json:"owner,omitempty"`
@@ -15,4 +20,15 @@ type Vehicle struct {
 	Model    *string         `json:"model,omitempty"`
 	Year     *int            `json:"year,omitempty"`
 	MintedAt *time.Time      `json:"mintedAt,omitempty"`
+}
+
+type VehicleConnection struct {
+	TotalCount int            `json:"totalCount"`
+	Edges      []*VehicleEdge `json:"edges"`
+	PageInfo   *PageInfo      `json:"pageInfo"`
+}
+
+type VehicleEdge struct {
+	Node   *Vehicle `json:"node"`
+	Cursor string   `json:"cursor"`
 }
