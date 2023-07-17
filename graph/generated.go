@@ -54,7 +54,7 @@ type ComplexityRoot struct {
 	Vehicle struct {
 		ID       func(childComplexity int) int
 		Make     func(childComplexity int) int
-		MintTime func(childComplexity int) int
+		MintedAt func(childComplexity int) int
 		Model    func(childComplexity int) int
 		Owner    func(childComplexity int) int
 		Year     func(childComplexity int) int
@@ -106,12 +106,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Vehicle.Make(childComplexity), true
 
-	case "Vehicle.mintTime":
-		if e.complexity.Vehicle.MintTime == nil {
+	case "Vehicle.mintedAt":
+		if e.complexity.Vehicle.MintedAt == nil {
 			break
 		}
 
-		return e.complexity.Vehicle.MintTime(childComplexity), true
+		return e.complexity.Vehicle.MintedAt(childComplexity), true
 
 	case "Vehicle.model":
 		if e.complexity.Vehicle.Model == nil {
@@ -359,8 +359,8 @@ func (ec *executionContext) fieldContext_Query_ownedVehicles(ctx context.Context
 				return ec.fieldContext_Vehicle_model(ctx, field)
 			case "year":
 				return ec.fieldContext_Vehicle_year(ctx, field)
-			case "mintTime":
-				return ec.fieldContext_Vehicle_mintTime(ctx, field)
+			case "mintedAt":
+				return ec.fieldContext_Vehicle_mintedAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
 		},
@@ -573,14 +573,11 @@ func (ec *executionContext) _Vehicle_owner(ctx context.Context, field graphql.Co
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(common.Address)
+	res := resTmp.(*common.Address)
 	fc.Result = res
-	return ec.marshalNAddress2githubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, field.Selections, res)
+	return ec.marshalOAddress2ᚖgithubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Vehicle_owner(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -617,14 +614,11 @@ func (ec *executionContext) _Vehicle_make(ctx context.Context, field graphql.Col
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Vehicle_make(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -661,14 +655,11 @@ func (ec *executionContext) _Vehicle_model(ctx context.Context, field graphql.Co
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Vehicle_model(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -705,14 +696,11 @@ func (ec *executionContext) _Vehicle_year(ctx context.Context, field graphql.Col
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(*int)
 	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Vehicle_year(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -728,8 +716,8 @@ func (ec *executionContext) fieldContext_Vehicle_year(ctx context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Vehicle_mintTime(ctx context.Context, field graphql.CollectedField, obj *model.Vehicle) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Vehicle_mintTime(ctx, field)
+func (ec *executionContext) _Vehicle_mintedAt(ctx context.Context, field graphql.CollectedField, obj *model.Vehicle) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Vehicle_mintedAt(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -742,24 +730,21 @@ func (ec *executionContext) _Vehicle_mintTime(ctx context.Context, field graphql
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.MintTime, nil
+		return obj.MintedAt, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(time.Time)
+	res := resTmp.(*time.Time)
 	fc.Result = res
-	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Vehicle_mintTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Vehicle_mintedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Vehicle",
 		Field:      field,
@@ -2643,29 +2628,14 @@ func (ec *executionContext) _Vehicle(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "owner":
 			out.Values[i] = ec._Vehicle_owner(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "make":
 			out.Values[i] = ec._Vehicle_make(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "model":
 			out.Values[i] = ec._Vehicle_model(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "year":
 			out.Values[i] = ec._Vehicle_year(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "mintTime":
-			out.Values[i] = ec._Vehicle_mintTime(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
+		case "mintedAt":
+			out.Values[i] = ec._Vehicle_mintedAt(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3060,21 +3030,6 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 	return res
 }
 
-func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
-	res, err := graphql.UnmarshalInt(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
-	res := graphql.MarshalInt(v)
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3082,21 +3037,6 @@ func (ec *executionContext) unmarshalNString2string(ctx context.Context, v inter
 
 func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
 	res := graphql.MarshalString(v)
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
-func (ec *executionContext) unmarshalNTime2timeᚐTime(ctx context.Context, v interface{}) (time.Time, error) {
-	res, err := graphql.UnmarshalTime(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel ast.SelectionSet, v time.Time) graphql.Marshaler {
-	res := graphql.MarshalTime(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -3412,6 +3352,22 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
+func (ec *executionContext) unmarshalOAddress2ᚖgithubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx context.Context, v interface{}) (*common.Address, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := types.UnmarshalAddress(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOAddress2ᚖgithubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx context.Context, sel ast.SelectionSet, v *common.Address) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := types.MarshalAddress(*v)
+	return res
+}
+
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3438,6 +3394,22 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
+func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalInt(*v)
+	return res
+}
+
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v interface{}) (*string, error) {
 	if v == nil {
 		return nil, nil
@@ -3451,6 +3423,22 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 		return graphql.Null
 	}
 	res := graphql.MarshalString(*v)
+	return res
+}
+
+func (ec *executionContext) unmarshalOTime2ᚖtimeᚐTime(ctx context.Context, v interface{}) (*time.Time, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalTime(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOTime2ᚖtimeᚐTime(ctx context.Context, sel ast.SelectionSet, v *time.Time) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalTime(*v)
 	return res
 }
 

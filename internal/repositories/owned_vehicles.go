@@ -36,11 +36,11 @@ func (v *VehiclesCtrl) GetOwnedVehicles(addr common.Address) ([]*gmodel.Vehicle,
 
 		res = append(res, &gmodel.Vehicle{
 			ID:       strconv.Itoa(m.ID),
-			Owner:    addr,
-			Make:     m.Make.String,
-			Model:    m.Model.String,
-			Year:     m.Year.Int,
-			MintTime: m.MintTime.Time,
+			Owner:    &addr,
+			Make:     m.Make.Ptr(),
+			Model:    m.Model.Ptr(),
+			Year:     m.Year.Ptr(),
+			MintedAt: m.MintedAt.Ptr(),
 		})
 	}
 
