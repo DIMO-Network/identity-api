@@ -9,12 +9,12 @@ import (
 )
 
 type PageInfo struct {
-	EndCursor   string `json:"endCursor"`
-	HasNextPage *bool  `json:"hasNextPage,omitempty"`
+	EndCursor   *string `json:"endCursor,omitempty"`
+	HasNextPage bool    `json:"hasNextPage"`
 }
 
 type Vehicle struct {
-	ID       int            `json:"id"`
+	ID       string         `json:"id"`
 	Owner    common.Address `json:"owner"`
 	Make     string         `json:"make"`
 	Model    string         `json:"model"`
@@ -22,13 +22,13 @@ type Vehicle struct {
 	MintTime time.Time      `json:"mintTime"`
 }
 
-type VehicleEdge struct {
-	Node   *Vehicle `json:"node,omitempty"`
-	Cursor *string  `json:"cursor,omitempty"`
+type VehicleConnection struct {
+	TotalCount int            `json:"totalCount"`
+	Edges      []*VehicleEdge `json:"edges"`
+	PageInfo   *PageInfo      `json:"pageInfo"`
 }
 
-type Vehicles struct {
-	TotalCount *int           `json:"totalCount,omitempty"`
-	Edges      []*VehicleEdge `json:"edges,omitempty"`
-	PageInfo   *PageInfo      `json:"pageInfo,omitempty"`
+type VehicleEdge struct {
+	Node   *Vehicle `json:"node"`
+	Cursor string   `json:"cursor"`
 }

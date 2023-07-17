@@ -2,10 +2,10 @@ package controllers
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"strconv"
 
-	b64 "encoding/base64"
+	"encoding/base64"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/models"
@@ -13,6 +13,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+)
+
+const (
+	defaultPageSize = 20
 )
 
 type VehiclesRepo struct {
@@ -27,17 +31,17 @@ func NewVehiclesRepo(ctx context.Context, pdb db.Store) VehiclesRepo {
 	}
 }
 
-func (v *VehiclesRepo) createVehiclesResponse(totalCount int64, vhs []models.Vehicle, hasNext bool) *gmodel.Vehicles {
-	lastItmID := vhs[len(vhs)-1].ID
-	endCursr := b64.StdEncoding.EncodeToString([]byte(strconv.Itoa(lastItmID)))
+func (v *VehiclesRepo) createVehiclesResponse(totalCount int64, vehicles []models.Vehicle, hasNext bool) *gmodel.VehicleConnection {
+	lastItmID := vehicles[len(vehicles)-1].ID
+	endCursr := base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(lastItmID)))
 
 	var vEdges []*gmodel.VehicleEdge
-	for _, v := range vhs {
-		crs := b64.StdEncoding.EncodeToString([]byte(strconv.Itoa(v.ID)))
-		cursor := &crs
+	for _, v := range vehicles {
+		crs := base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(v.ID)))
+		cursor := crs
 		edge := &gmodel.VehicleEdge{
 			Node: &gmodel.Vehicle{
-				ID:       v.ID,
+				ID:       strconv.Itoa(v.ID),
 				Owner:    common.BytesToAddress(v.OwnerAddress.Bytes),
 				Make:     v.Make.String,
 				Model:    v.Model.String,
@@ -50,11 +54,11 @@ func (v *VehiclesRepo) createVehiclesResponse(totalCount int64, vhs []models.Veh
 		vEdges = append(vEdges, edge)
 	}
 
-	res := &gmodel.Vehicles{
-		TotalCount: &[]int{int(totalCount)}[0],
+	res := &gmodel.VehicleConnection{
+		TotalCount: int(totalCount),
 		PageInfo: &gmodel.PageInfo{
-			HasNextPage: &hasNext,
-			EndCursor:   endCursr,
+			HasNextPage: hasNext,
+			EndCursor:   &endCursr,
 		},
 		Edges: vEdges,
 	}
@@ -62,28 +66,30 @@ func (v *VehiclesRepo) createVehiclesResponse(totalCount int64, vhs []models.Veh
 	return res
 }
 
-func (v *VehiclesRepo) GetOwnedVehicles(addr common.Address, first *int, after *string) (*gmodel.Vehicles, error) {
-	tCount, err := models.Vehicles(
+func (v *VehiclesRepo) GetOwnedVehicles(addr common.Address, first *int, after *string) (*gmodel.VehicleConnection, error) {
+	if *first <= 0 {
+		return nil, errors.New("invalid value provided for number of vehicles to retrieve")
+	}
+
+	totalCount, err := models.Vehicles(
 		models.VehicleWhere.OwnerAddress.EQ(null.BytesFrom(addr.Bytes())),
 	).Count(v.ctx, v.pdb.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}
 
-	if tCount == 0 {
-		return &gmodel.Vehicles{
-			TotalCount: &[]int{int(0)}[0],
+	if totalCount == 0 {
+		return &gmodel.VehicleConnection{
+			TotalCount: 0,
 			Edges:      []*gmodel.VehicleEdge{},
 		}, nil
 	}
 
-	var limit int
-
-	if first == nil {
-		limit = 20
-	} else {
+	limit := defaultPageSize
+	if first != nil {
 		limit = *first
 	}
+
 	var queryMods []qm.QueryMod
 
 	queryMods = append(queryMods, models.VehicleWhere.OwnerAddress.EQ(null.BytesFrom(addr.Bytes())))
@@ -91,7 +97,7 @@ func (v *VehiclesRepo) GetOwnedVehicles(addr common.Address, first *int, after *
 	queryMods = append(queryMods, qm.Limit(limit+1))
 
 	if after != nil {
-		lastCursor, err := b64.StdEncoding.DecodeString(*after)
+		lastCursor, err := base64.StdEncoding.DecodeString(*after)
 		if err != nil {
 			return nil, err
 		}
@@ -100,9 +106,9 @@ func (v *VehiclesRepo) GetOwnedVehicles(addr common.Address, first *int, after *
 		if err != nil {
 			return nil, err
 		}
-		queryMods = append(queryMods, models.VehicleWhere.ID.GT(lastCursorVal))
+		queryMods = append(queryMods, models.VehicleWhere.ID.LT(lastCursorVal))
 	}
-	queryMods = append(queryMods, qm.OrderBy(fmt.Sprintf("%s ASC", models.VehicleColumns.ID)))
+	queryMods = append(queryMods, qm.OrderBy(models.VehicleColumns.ID+" DESC"))
 
 	all, err := models.Vehicles(queryMods...).All(v.ctx, v.pdb.DBS().Reader)
 	if err != nil {
@@ -110,16 +116,16 @@ func (v *VehiclesRepo) GetOwnedVehicles(addr common.Address, first *int, after *
 	}
 
 	if len(all) == 0 {
-		return &gmodel.Vehicles{
-			TotalCount: &[]int{int(0)}[0],
+		return &gmodel.VehicleConnection{
+			TotalCount: 0,
 			Edges:      []*gmodel.VehicleEdge{},
 		}, nil
 
 	}
 
-	vhs := []models.Vehicle{}
+	vehicles := []models.Vehicle{}
 	for _, v := range all[:limit] {
-		vhs = append(vhs, models.Vehicle{
+		vehicles = append(vehicles, models.Vehicle{
 			ID:           v.ID,
 			OwnerAddress: v.OwnerAddress,
 			Make:         v.Make,
@@ -129,5 +135,5 @@ func (v *VehiclesRepo) GetOwnedVehicles(addr common.Address, first *int, after *
 		})
 	}
 
-	return v.createVehiclesResponse(tCount, vhs, len(all) > limit), nil
+	return v.createVehiclesResponse(totalCount, vehicles, len(all) > limit), nil
 }

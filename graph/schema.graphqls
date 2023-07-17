@@ -5,19 +5,19 @@
 scalar Time
 scalar Address
 
-type Vehicles {
-  totalCount: Int
-  edges: [VehicleEdge]
-  pageInfo: PageInfo
+type VehicleConnection {
+  totalCount: Int!
+  edges: [VehicleEdge!]!
+  pageInfo: PageInfo!
 }
 
 type PageInfo {
-  endCursor: String!
-  hasNextPage: Boolean
+  endCursor: String
+  hasNextPage: Boolean!
 }
 
 type Vehicle {
-  id: Int!
+  id: ID!
   owner: Address!
   make: String!
   model: String!
@@ -26,10 +26,14 @@ type Vehicle {
 }
 
 type VehicleEdge {
-  node: Vehicle
-  cursor: String
+  node: Vehicle!
+  cursor: String!
 }
 
 type Query {
-  ownedVehicles(address: Address!, first: Int, after: String): Vehicles!
+  ownedVehicles(
+    address: Address!
+    first: Int
+    after: String
+  ): VehicleConnection!
 }
