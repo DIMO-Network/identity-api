@@ -87,6 +87,7 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 	}
 
 	registryAddr := common.HexToAddress(c.settings.DIMORegistryAddr)
+	vehicleNFTAddr := common.HexToAddress(c.settings.VehicleNFTAddr)
 
 	var data ContractEventData
 	if err := json.Unmarshal(event.Data, &data); err != nil {
@@ -98,7 +99,7 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 		return nil
 	}
 
-	if data.Contract == registryAddr {
+	if data.Contract == registryAddr || data.Contract == vehicleNFTAddr {
 		switch EventName(data.EventName) {
 		case VehicleNodeMinted:
 			return c.handleVehicleNodeMintedEvent(ctx, &data)
