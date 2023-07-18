@@ -62,7 +62,7 @@ type VehicleNodeMintedData struct {
 }
 
 type VehicleAttributeSetData struct {
-	TokenId   *big.Int
+	TokenID   *big.Int
 	Attribute string
 	Info      string
 }
@@ -141,7 +141,7 @@ func (c *ContractsEventsConsumer) handleVehicleAttributeSetEvent(ctx context.Con
 		return err
 	}
 
-	veh := models.Vehicle{ID: int(args.TokenId.Int64())}
+	veh := models.Vehicle{ID: int(args.TokenID.Int64())}
 
 	switch args.Attribute {
 	case "Make":
