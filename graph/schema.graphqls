@@ -5,35 +5,63 @@
 scalar Time
 scalar Address
 
+type VehicleConnection {
+  totalCount: Int!
+  edges: [VehicleEdge!]!
+  pageInfo: PageInfo!
+}
+
 type Vehicle {
   id: ID!
-  owner: Address!
-  make: String!
-  model: String!
-  year: Int!
-  mintTime: Time!
+  owner: Address
+  make: String
+  model: String
+  year: Int
+  mintedAt: Time
+}
+
+type VehicleEdge {
+  node: Vehicle!
+  cursor: String!
 }
 
 type AftermarketDevice {
   id: ID!
+  address: Address!
   owner: Address!
-  beneficiary_address: Address!
+  serial: String
+  imei: String
+  mintedAt: Time!
   vehicle_id: ID!
-  mintTime: Time!
 }
 
-type LinkedVehicleAndAD {
-  aftermarket_device_id: ID!
-  owner: Address!
-  beneficiary_address: Address!
-  vehicle_id: ID!
-  make: String!
-  model: String!
-  year: Int!
+type AftermarketDeviceConnection {
+  totalCount: Int!
+  edges: [AftermarketDeviceEdge!]
+  devices: [AftermarketDevice!]
+  pageInfo: PageInfo!
+}
+
+type AftermarketDeviceEdge {
+  cursor: ID!
+  node: AftermarketDevice
+}
+
+type PageInfo {
+  startCursor: ID!
+  endCursor: ID!
+  hasNextPage: Boolean!
 }
 
 type Query {
-  ownedVehicles(address: Address!): [Vehicle!]!
-  aftermarketDevices(address: Address!): [AftermarketDevice!]!
-  linkedDevices(address: Address!): [LinkedVehicleAndAD!]!
+  ownedVehicles(
+    address: Address!
+    first: Int
+    after: String
+  ): VehicleConnection!
+  ownedAftermarketDevices(
+    address: Address!
+    first: Int
+    after: ID
+  ): AftermarketDeviceConnection!
 }

@@ -19,71 +19,82 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"github.com/volatiletech/sqlboiler/v4/queries/qmhelper"
-	"github.com/volatiletech/sqlboiler/v4/types"
 	"github.com/volatiletech/strmangle"
 )
 
 // AftermarketDevice is an object representing the database table.
 type AftermarketDevice struct {
-	ID                 types.Decimal `boil:"id" json:"id" toml:"id" yaml:"id"`
-	OwnerAddress       null.Bytes    `boil:"owner_address" json:"owner_address,omitempty" toml:"owner_address" yaml:"owner_address,omitempty"`
-	BeneficiaryAddress null.Bytes    `boil:"beneficiary_address" json:"beneficiary_address,omitempty" toml:"beneficiary_address" yaml:"beneficiary_address,omitempty"`
-	VehicleID          int           `boil:"vehicle_id" json:"vehicle_id" toml:"vehicle_id" yaml:"vehicle_id"`
-	MintTime           time.Time     `boil:"mint_time" json:"mint_time" toml:"mint_time" yaml:"mint_time"`
+	ID        int         `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Address   null.Bytes  `boil:"address" json:"address,omitempty" toml:"address" yaml:"address,omitempty"`
+	Owner     null.Bytes  `boil:"owner" json:"owner,omitempty" toml:"owner" yaml:"owner,omitempty"`
+	Serial    null.String `boil:"serial" json:"serial,omitempty" toml:"serial" yaml:"serial,omitempty"`
+	Imei      null.String `boil:"imei" json:"imei,omitempty" toml:"imei" yaml:"imei,omitempty"`
+	MintedAt  null.Time   `boil:"minted_at" json:"minted_at,omitempty" toml:"minted_at" yaml:"minted_at,omitempty"`
+	VehicleID null.Int    `boil:"vehicle_id" json:"vehicle_id,omitempty" toml:"vehicle_id" yaml:"vehicle_id,omitempty"`
 
 	R *aftermarketDeviceR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L aftermarketDeviceL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var AftermarketDeviceColumns = struct {
-	ID                 string
-	OwnerAddress       string
-	BeneficiaryAddress string
-	VehicleID          string
-	MintTime           string
+	ID        string
+	Address   string
+	Owner     string
+	Serial    string
+	Imei      string
+	MintedAt  string
+	VehicleID string
 }{
-	ID:                 "id",
-	OwnerAddress:       "owner_address",
-	BeneficiaryAddress: "beneficiary_address",
-	VehicleID:          "vehicle_id",
-	MintTime:           "mint_time",
+	ID:        "id",
+	Address:   "address",
+	Owner:     "owner",
+	Serial:    "serial",
+	Imei:      "imei",
+	MintedAt:  "minted_at",
+	VehicleID: "vehicle_id",
 }
 
 var AftermarketDeviceTableColumns = struct {
-	ID                 string
-	OwnerAddress       string
-	BeneficiaryAddress string
-	VehicleID          string
-	MintTime           string
+	ID        string
+	Address   string
+	Owner     string
+	Serial    string
+	Imei      string
+	MintedAt  string
+	VehicleID string
 }{
-	ID:                 "aftermarket_devices.id",
-	OwnerAddress:       "aftermarket_devices.owner_address",
-	BeneficiaryAddress: "aftermarket_devices.beneficiary_address",
-	VehicleID:          "aftermarket_devices.vehicle_id",
-	MintTime:           "aftermarket_devices.mint_time",
+	ID:        "aftermarket_devices.id",
+	Address:   "aftermarket_devices.address",
+	Owner:     "aftermarket_devices.owner",
+	Serial:    "aftermarket_devices.serial",
+	Imei:      "aftermarket_devices.imei",
+	MintedAt:  "aftermarket_devices.minted_at",
+	VehicleID: "aftermarket_devices.vehicle_id",
 }
 
 // Generated where
 
-type whereHelpertypes_Decimal struct{ field string }
+type whereHelperint struct{ field string }
 
-func (w whereHelpertypes_Decimal) EQ(x types.Decimal) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.EQ, x)
+func (w whereHelperint) EQ(x int) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
+func (w whereHelperint) NEQ(x int) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
+func (w whereHelperint) LT(x int) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
+func (w whereHelperint) LTE(x int) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
+func (w whereHelperint) GT(x int) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
+func (w whereHelperint) GTE(x int) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
+func (w whereHelperint) IN(slice []int) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
 }
-func (w whereHelpertypes_Decimal) NEQ(x types.Decimal) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.NEQ, x)
-}
-func (w whereHelpertypes_Decimal) LT(x types.Decimal) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LT, x)
-}
-func (w whereHelpertypes_Decimal) LTE(x types.Decimal) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LTE, x)
-}
-func (w whereHelpertypes_Decimal) GT(x types.Decimal) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GT, x)
-}
-func (w whereHelpertypes_Decimal) GTE(x types.Decimal) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GTE, x)
+func (w whereHelperint) NIN(slice []int) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
 }
 
 type whereHelpernull_Bytes struct{ field string }
@@ -110,22 +121,34 @@ func (w whereHelpernull_Bytes) GTE(x null.Bytes) qm.QueryMod {
 func (w whereHelpernull_Bytes) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
 func (w whereHelpernull_Bytes) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
-type whereHelperint struct{ field string }
+type whereHelpernull_String struct{ field string }
 
-func (w whereHelperint) EQ(x int) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
-func (w whereHelperint) NEQ(x int) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
-func (w whereHelperint) LT(x int) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
-func (w whereHelperint) LTE(x int) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
-func (w whereHelperint) GT(x int) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
-func (w whereHelperint) GTE(x int) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
-func (w whereHelperint) IN(slice []int) qm.QueryMod {
+func (w whereHelpernull_String) EQ(x null.String) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
+}
+func (w whereHelpernull_String) NEQ(x null.String) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
+}
+func (w whereHelpernull_String) LT(x null.String) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpernull_String) LTE(x null.String) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpernull_String) GT(x null.String) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpernull_String) GTE(x null.String) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+func (w whereHelpernull_String) IN(slice []string) qm.QueryMod {
 	values := make([]interface{}, 0, len(slice))
 	for _, value := range slice {
 		values = append(values, value)
 	}
 	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
 }
-func (w whereHelperint) NIN(slice []int) qm.QueryMod {
+func (w whereHelpernull_String) NIN(slice []string) qm.QueryMod {
 	values := make([]interface{}, 0, len(slice))
 	for _, value := range slice {
 		values = append(values, value)
@@ -133,39 +156,87 @@ func (w whereHelperint) NIN(slice []int) qm.QueryMod {
 	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
 }
 
-type whereHelpertime_Time struct{ field string }
+func (w whereHelpernull_String) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_String) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
-func (w whereHelpertime_Time) EQ(x time.Time) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.EQ, x)
+type whereHelpernull_Time struct{ field string }
+
+func (w whereHelpernull_Time) EQ(x null.Time) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
 }
-func (w whereHelpertime_Time) NEQ(x time.Time) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.NEQ, x)
+func (w whereHelpernull_Time) NEQ(x null.Time) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
 }
-func (w whereHelpertime_Time) LT(x time.Time) qm.QueryMod {
+func (w whereHelpernull_Time) LT(x null.Time) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.LT, x)
 }
-func (w whereHelpertime_Time) LTE(x time.Time) qm.QueryMod {
+func (w whereHelpernull_Time) LTE(x null.Time) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.LTE, x)
 }
-func (w whereHelpertime_Time) GT(x time.Time) qm.QueryMod {
+func (w whereHelpernull_Time) GT(x null.Time) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.GT, x)
 }
-func (w whereHelpertime_Time) GTE(x time.Time) qm.QueryMod {
+func (w whereHelpernull_Time) GTE(x null.Time) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.GTE, x)
 }
 
+func (w whereHelpernull_Time) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_Time) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
+
+type whereHelpernull_Int struct{ field string }
+
+func (w whereHelpernull_Int) EQ(x null.Int) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
+}
+func (w whereHelpernull_Int) NEQ(x null.Int) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
+}
+func (w whereHelpernull_Int) LT(x null.Int) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpernull_Int) LTE(x null.Int) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpernull_Int) GT(x null.Int) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpernull_Int) GTE(x null.Int) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+func (w whereHelpernull_Int) IN(slice []int) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
+}
+func (w whereHelpernull_Int) NIN(slice []int) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
+}
+
+func (w whereHelpernull_Int) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_Int) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
+
 var AftermarketDeviceWhere = struct {
-	ID                 whereHelpertypes_Decimal
-	OwnerAddress       whereHelpernull_Bytes
-	BeneficiaryAddress whereHelpernull_Bytes
-	VehicleID          whereHelperint
-	MintTime           whereHelpertime_Time
+	ID        whereHelperint
+	Address   whereHelpernull_Bytes
+	Owner     whereHelpernull_Bytes
+	Serial    whereHelpernull_String
+	Imei      whereHelpernull_String
+	MintedAt  whereHelpernull_Time
+	VehicleID whereHelpernull_Int
 }{
-	ID:                 whereHelpertypes_Decimal{field: "\"identity_api\".\"aftermarket_devices\".\"id\""},
-	OwnerAddress:       whereHelpernull_Bytes{field: "\"identity_api\".\"aftermarket_devices\".\"owner_address\""},
-	BeneficiaryAddress: whereHelpernull_Bytes{field: "\"identity_api\".\"aftermarket_devices\".\"beneficiary_address\""},
-	VehicleID:          whereHelperint{field: "\"identity_api\".\"aftermarket_devices\".\"vehicle_id\""},
-	MintTime:           whereHelpertime_Time{field: "\"identity_api\".\"aftermarket_devices\".\"mint_time\""},
+	ID:        whereHelperint{field: "\"identity_api\".\"aftermarket_devices\".\"id\""},
+	Address:   whereHelpernull_Bytes{field: "\"identity_api\".\"aftermarket_devices\".\"address\""},
+	Owner:     whereHelpernull_Bytes{field: "\"identity_api\".\"aftermarket_devices\".\"owner\""},
+	Serial:    whereHelpernull_String{field: "\"identity_api\".\"aftermarket_devices\".\"serial\""},
+	Imei:      whereHelpernull_String{field: "\"identity_api\".\"aftermarket_devices\".\"imei\""},
+	MintedAt:  whereHelpernull_Time{field: "\"identity_api\".\"aftermarket_devices\".\"minted_at\""},
+	VehicleID: whereHelpernull_Int{field: "\"identity_api\".\"aftermarket_devices\".\"vehicle_id\""},
 }
 
 // AftermarketDeviceRels is where relationship names are stored.
@@ -196,9 +267,9 @@ func (r *aftermarketDeviceR) GetVehicle() *Vehicle {
 type aftermarketDeviceL struct{}
 
 var (
-	aftermarketDeviceAllColumns            = []string{"id", "owner_address", "beneficiary_address", "vehicle_id", "mint_time"}
-	aftermarketDeviceColumnsWithoutDefault = []string{"id", "vehicle_id"}
-	aftermarketDeviceColumnsWithDefault    = []string{"owner_address", "beneficiary_address", "mint_time"}
+	aftermarketDeviceAllColumns            = []string{"id", "address", "owner", "serial", "imei", "minted_at", "vehicle_id"}
+	aftermarketDeviceColumnsWithoutDefault = []string{"id"}
+	aftermarketDeviceColumnsWithDefault    = []string{"address", "owner", "serial", "imei", "minted_at", "vehicle_id"}
 	aftermarketDevicePrimaryKeyColumns     = []string{"id"}
 	aftermarketDeviceGeneratedColumns      = []string{}
 )
@@ -525,7 +596,9 @@ func (aftermarketDeviceL) LoadVehicle(ctx context.Context, e boil.ContextExecuto
 		if object.R == nil {
 			object.R = &aftermarketDeviceR{}
 		}
-		args = append(args, object.VehicleID)
+		if !queries.IsNil(object.VehicleID) {
+			args = append(args, object.VehicleID)
+		}
 
 	} else {
 	Outer:
@@ -535,12 +608,14 @@ func (aftermarketDeviceL) LoadVehicle(ctx context.Context, e boil.ContextExecuto
 			}
 
 			for _, a := range args {
-				if a == obj.VehicleID {
+				if queries.Equal(a, obj.VehicleID) {
 					continue Outer
 				}
 			}
 
-			args = append(args, obj.VehicleID)
+			if !queries.IsNil(obj.VehicleID) {
+				args = append(args, obj.VehicleID)
+			}
 
 		}
 	}
@@ -598,7 +673,7 @@ func (aftermarketDeviceL) LoadVehicle(ctx context.Context, e boil.ContextExecuto
 
 	for _, local := range slice {
 		for _, foreign := range resultSlice {
-			if local.VehicleID == foreign.ID {
+			if queries.Equal(local.VehicleID, foreign.ID) {
 				local.R.Vehicle = foreign
 				if foreign.R == nil {
 					foreign.R = &vehicleR{}
@@ -639,7 +714,7 @@ func (o *AftermarketDevice) SetVehicle(ctx context.Context, exec boil.ContextExe
 		return errors.Wrap(err, "failed to update local table")
 	}
 
-	o.VehicleID = related.ID
+	queries.Assign(&o.VehicleID, related.ID)
 	if o.R == nil {
 		o.R = &aftermarketDeviceR{
 			Vehicle: related,
@@ -659,6 +734,39 @@ func (o *AftermarketDevice) SetVehicle(ctx context.Context, exec boil.ContextExe
 	return nil
 }
 
+// RemoveVehicle relationship.
+// Sets o.R.Vehicle to nil.
+// Removes o from all passed in related items' relationships struct.
+func (o *AftermarketDevice) RemoveVehicle(ctx context.Context, exec boil.ContextExecutor, related *Vehicle) error {
+	var err error
+
+	queries.SetScanner(&o.VehicleID, nil)
+	if _, err = o.Update(ctx, exec, boil.Whitelist("vehicle_id")); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	if o.R != nil {
+		o.R.Vehicle = nil
+	}
+	if related == nil || related.R == nil {
+		return nil
+	}
+
+	for i, ri := range related.R.AftermarketDevices {
+		if queries.Equal(o.VehicleID, ri.VehicleID) {
+			continue
+		}
+
+		ln := len(related.R.AftermarketDevices)
+		if ln > 1 && i < ln-1 {
+			related.R.AftermarketDevices[i] = related.R.AftermarketDevices[ln-1]
+		}
+		related.R.AftermarketDevices = related.R.AftermarketDevices[:ln-1]
+		break
+	}
+	return nil
+}
+
 // AftermarketDevices retrieves all the records using an executor.
 func AftermarketDevices(mods ...qm.QueryMod) aftermarketDeviceQuery {
 	mods = append(mods, qm.From("\"identity_api\".\"aftermarket_devices\""))
@@ -672,7 +780,7 @@ func AftermarketDevices(mods ...qm.QueryMod) aftermarketDeviceQuery {
 
 // FindAftermarketDevice retrieves a single record by ID with an executor.
 // If selectCols is empty Find will return all columns.
-func FindAftermarketDevice(ctx context.Context, exec boil.ContextExecutor, iD types.Decimal, selectCols ...string) (*AftermarketDevice, error) {
+func FindAftermarketDevice(ctx context.Context, exec boil.ContextExecutor, iD int, selectCols ...string) (*AftermarketDevice, error) {
 	aftermarketDeviceObj := &AftermarketDevice{}
 
 	sel := "*"
@@ -1171,7 +1279,7 @@ func (o *AftermarketDeviceSlice) ReloadAll(ctx context.Context, exec boil.Contex
 }
 
 // AftermarketDeviceExists checks if the AftermarketDevice row exists.
-func AftermarketDeviceExists(ctx context.Context, exec boil.ContextExecutor, iD types.Decimal) (bool, error) {
+func AftermarketDeviceExists(ctx context.Context, exec boil.ContextExecutor, iD int) (bool, error) {
 	var exists bool
 	sql := "select exists(select 1 from \"identity_api\".\"aftermarket_devices\" where \"id\"=$1 limit 1)"
 

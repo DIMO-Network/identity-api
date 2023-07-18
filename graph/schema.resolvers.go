@@ -13,15 +13,15 @@ import (
 )
 
 // OwnedVehicles is the resolver for the ownedVehicles field.
-func (r *queryResolver) OwnedVehicles(ctx context.Context, address common.Address) ([]*model.Vehicle, error) {
+func (r *queryResolver) OwnedVehicles(ctx context.Context, address common.Address, first *int, after *string) (*model.VehicleConnection, error) {
 	vr := repo.NewVehiclesRepo(ctx, r.DB)
-	return vr.GetOwnedVehicles(address)
+	return vr.GetOwnedVehicles(address, first, after)
 }
 
-// AftermarketDevices is the resolver for the aftermarketDevices field.
-func (r *queryResolver) AftermarketDevices(ctx context.Context, address common.Address) ([]*model.AftermarketDevice, error) {
+// OwnedAftermarketDevices is the resolver for the ownedAftermarketDevices field.
+func (r *queryResolver) OwnedAftermarketDevices(ctx context.Context, address common.Address, first *int, after *string) (*model.AftermarketDeviceConnection, error) {
 	adr := repo.NewADRepo(ctx, r.DB)
-	return adr.GetAftermarketDevices(address)
+	return adr.GetOwnedAftermarketDevices(address, first, after)
 }
 
 // LinkedDevices is the resolver for the linkedDevices field.

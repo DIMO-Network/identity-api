@@ -9,11 +9,31 @@ import (
 )
 
 type AftermarketDevice struct {
-	ID                 string         `json:"id"`
-	Owner              common.Address `json:"owner"`
-	BeneficiaryAddress common.Address `json:"beneficiary_address"`
-	VehicleID          string         `json:"vehicle_id"`
-	MintTime           time.Time      `json:"mintTime"`
+	ID        string         `json:"id"`
+	Address   common.Address `json:"address"`
+	Owner     common.Address `json:"owner"`
+	Serial    *string        `json:"serial,omitempty"`
+	Imei      *string        `json:"imei,omitempty"`
+	MintedAt  time.Time      `json:"mintedAt"`
+	VehicleID string         `json:"vehicle_id"`
+}
+
+type AftermarketDeviceConnection struct {
+	TotalCount int                      `json:"totalCount"`
+	Edges      []*AftermarketDeviceEdge `json:"edges,omitempty"`
+	Devices    []*AftermarketDevice     `json:"devices,omitempty"`
+	PageInfo   *PageInfo                `json:"pageInfo"`
+}
+
+type AftermarketDeviceEdge struct {
+	Cursor string             `json:"cursor"`
+	Node   *AftermarketDevice `json:"node,omitempty"`
+}
+
+type PageInfo struct {
+	StartCursor string `json:"startCursor"`
+	EndCursor   string `json:"endCursor"`
+	HasNextPage bool   `json:"hasNextPage"`
 }
 
 type LinkedVehicleAndAd struct {
@@ -27,10 +47,21 @@ type LinkedVehicleAndAd struct {
 }
 
 type Vehicle struct {
-	ID       string         `json:"id"`
-	Owner    common.Address `json:"owner"`
-	Make     string         `json:"make"`
-	Model    string         `json:"model"`
-	Year     int            `json:"year"`
-	MintTime time.Time      `json:"mintTime"`
+	ID       string          `json:"id"`
+	Owner    *common.Address `json:"owner,omitempty"`
+	Make     *string         `json:"make,omitempty"`
+	Model    *string         `json:"model,omitempty"`
+	Year     *int            `json:"year,omitempty"`
+	MintedAt *time.Time      `json:"mintedAt,omitempty"`
+}
+
+type VehicleConnection struct {
+	TotalCount int            `json:"totalCount"`
+	Edges      []*VehicleEdge `json:"edges"`
+	PageInfo   *PageInfo      `json:"pageInfo"`
+}
+
+type VehicleEdge struct {
+	Node   *Vehicle `json:"node"`
+	Cursor string   `json:"cursor"`
 }
