@@ -10,4 +10,5 @@ type Settings struct {
 	ContractsEventTopic string      `yaml:"CONTRACT_EVENT_TOPIC"`
 	DIMORegistryChainID int64       `yaml:"DIMO_REGISTRY_CHAIN_ID"`
 	DIMORegistryAddr    string      `yaml:"DIMO_REGISTRY_ADDR"`
+	VehicleNFTAddr      string      `yaml:"DIMO_VEHICLE_NFT_ADDR"`
 }
