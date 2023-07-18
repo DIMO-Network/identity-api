@@ -64,7 +64,7 @@ func startContractEventsConsumer(ctx context.Context, logger *zerolog.Logger, se
 		Group:   "identity-api",
 	}
 
-	cevConsumer := services.NewContractsEventsConsumer(ctx, dbs, logger, settings)
+	cevConsumer := services.NewContractsEventsConsumer(dbs, logger, settings)
 
 	if err := kafka.Consume(ctx, kc, cevConsumer.Process, logger); err != nil {
 		logger.Fatal().Err(err).Msg("Couldn't start event consumer.")
