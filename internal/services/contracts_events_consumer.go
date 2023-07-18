@@ -101,11 +101,11 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 	if data.Contract == registryAddr {
 		switch EventName(data.EventName) {
 		case VehicleNodeMinted:
-			return c.handleVehicleNodeMintedEvent(&data)
+			return c.handleVehicleNodeMintedEvent(ctx, &data)
 		case VehicleAttributeSet:
 			return c.handleVehicleAttributeSetEvent(ctx, &data)
 		case Transfer:
-			return c.handleTransferEvent(ctx, &data)
+			return c.handleVehicleTransferEvent(ctx, &data)
 		}
 	}
 
@@ -114,7 +114,7 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 	return nil
 }
 
-func (c *ContractsEventsConsumer) handleVehicleNodeMintedEvent(e *ContractEventData) error {
+func (c *ContractsEventsConsumer) handleVehicleNodeMintedEvent(ctx context.Context, e *ContractEventData) error {
 	var args VehicleNodeMintedData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
 		return err
@@ -126,7 +126,7 @@ func (c *ContractsEventsConsumer) handleVehicleNodeMintedEvent(e *ContractEventD
 		ID:           int(args.TokenId.Int64()),
 	}
 
-	if err := dm.Upsert(context.TODO(), c.dbs.DBS().Writer, true, []string{models.VehicleColumns.ID},
+	if err := dm.Upsert(ctx, c.dbs.DBS().Writer, true, []string{models.VehicleColumns.ID},
 		boil.Whitelist(models.VehicleColumns.OwnerAddress, models.VehicleColumns.MintedAt),
 		boil.Whitelist(models.VehicleColumns.ID, models.VehicleColumns.OwnerAddress, models.VehicleColumns.MintedAt)); err != nil {
 		return err
@@ -167,7 +167,7 @@ func (c *ContractsEventsConsumer) handleVehicleAttributeSetEvent(ctx context.Con
 	return nil
 }
 
-func (c *ContractsEventsConsumer) handleTransferEvent(ctx context.Context, e *ContractEventData) error {
+func (c *ContractsEventsConsumer) handleVehicleTransferEvent(ctx context.Context, e *ContractEventData) error {
 	logger := c.log.With().Str("EventName", Transfer.String()).Logger()
 
 	var args TransferEventData
@@ -175,15 +175,14 @@ func (c *ContractsEventsConsumer) handleTransferEvent(ctx context.Context, e *Co
 		return err
 	}
 
-	veh, err := models.Vehicles(
-		models.VehicleWhere.ID.EQ(int(args.TokenId.Int64())),
-	).One(ctx, c.dbs.DBS().Reader)
+	veh, err := models.FindVehicle(ctx, c.dbs.DBS().Reader, int(args.TokenId.Int64()))
 	if err != nil {
 		return err
 	}
 
 	veh.OwnerAddress = null.BytesFrom(args.To.Bytes())
-	if _, err := veh.Update(ctx, c.dbs.DBS().Writer, boil.Infer()); err != nil {
+
+	if _, err := veh.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.VehicleColumns.OwnerAddress)); err != nil {
 		return err
 	}
 
