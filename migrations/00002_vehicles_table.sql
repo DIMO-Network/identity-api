@@ -13,5 +13,4 @@ CREATE TABLE vehicles (
 -- +goose Down
 -- +goose StatementBegin
 DROP TABLE vehicles;
-
 -- +goose StatementEnd
