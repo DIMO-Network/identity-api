@@ -1,4 +1,4 @@
-package controllers
+package repositories
 
 import (
 	"context"
@@ -83,15 +83,15 @@ func TestAftermarketDeviceNodeMintSingleResponse(t *testing.T) {
 	err = json.Unmarshal(m.Value, &e)
 	assert.NoError(t, err)
 
-	err = contractEventConsumer.Process(&e)
+	err = contractEventConsumer.Process(ctx, &e)
 	assert.NoError(t, err)
 
 	ad, err := models.AftermarketDevices(models.AftermarketDeviceWhere.ID.EQ(int(aftermarketDeviceNodeMintedArgs.TokenID.Int64()))).One(ctx, pdb.DBS().Reader)
 	assert.NoError(t, err)
 	assert.Equal(t, ad.Address.Bytes, aftermarketDeviceNodeMintedArgs.Owner.Bytes())
 
-	adController := NewADRepo(ctx, pdb)
-	res, err := adController.GetOwnedAftermarketDevices(aftermarketDeviceNodeMintedArgs.Owner, nil, nil)
+	adController := NewVehiclesRepo(pdb)
+	res, err := adController.GetOwnedAftermarketDevices(ctx, aftermarketDeviceNodeMintedArgs.Owner, nil, nil)
 	assert.NoError(t, err)
 
 	assert.Equal(t, res.Edges[0].Node.Address, aftermarketDeviceNodeMintedArgs.Owner)
@@ -114,10 +114,10 @@ func TestAftermarketDeviceNodeMintMultiResponse(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
-	adController := NewADRepo(ctx, pdb)
+	adController := NewVehiclesRepo(pdb)
 	first := 2
 	after := "2"
-	res, err := adController.GetOwnedAftermarketDevices(aftermarketDeviceNodeMintedArgs.Owner, &first, &after)
+	res, err := adController.GetOwnedAftermarketDevices(ctx, aftermarketDeviceNodeMintedArgs.Owner, &first, &after)
 	assert.NoError(t, err)
 
 	a, err := strconv.Atoi(after)

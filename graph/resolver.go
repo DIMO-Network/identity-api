@@ -1,8 +1,6 @@
 package graph
 
-import (
-	"github.com/DIMO-Network/shared/db"
-)
+import "github.com/DIMO-Network/identity-api/internal/repositories"
 
 //go:generate go run github.com/99designs/gqlgen generate
 
@@ -11,5 +9,5 @@ import (
 // It serves as dependency injection for your app, add any dependencies you require here.
 
 type Resolver struct {
-	DB db.Store
+	Repo repositories.VehiclesRepo
 }

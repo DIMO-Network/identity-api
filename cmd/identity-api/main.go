@@ -12,6 +12,7 @@ import (
 
 	"github.com/DIMO-Network/identity-api/graph"
 	"github.com/DIMO-Network/identity-api/internal/config"
+	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/internal/services"
 	"github.com/DIMO-Network/shared"
 	"github.com/DIMO-Network/shared/db"
@@ -45,14 +46,16 @@ func main() {
 
 	startContractEventsConsumer(ctx, &logger, &settings, dbs)
 
+	repo := repositories.NewVehiclesRepo(dbs)
+
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{
-		DB: dbs,
+		Repo: repo,
 	}}))
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", srv)
 
-	logger.Info().Msg(fmt.Sprintf("Server started on port:%d", settings.Port))
+	logger.Info().Msgf("Server started on port: %d", settings.Port)
 
 	http.ListenAndServe(fmt.Sprintf(":%d", settings.Port), nil)
 }

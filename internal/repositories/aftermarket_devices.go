@@ -1,4 +1,4 @@
-package controllers
+package repositories
 
 import (
 	"context"
@@ -7,28 +7,15 @@ import (
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/models"
-	"github.com/DIMO-Network/shared/db"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
-type AftermarketDevicesCtrl struct {
-	ctx context.Context
-	pdb db.Store
-}
-
-func NewADRepo(ctx context.Context, pdb db.Store) AftermarketDevicesCtrl {
-	return AftermarketDevicesCtrl{
-		ctx: ctx,
-		pdb: pdb,
-	}
-}
-
-func (ad *AftermarketDevicesCtrl) GetOwnedAftermarketDevices(addr common.Address, first *int, after *string) (*gmodel.AftermarketDeviceConnection, error) {
+func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr common.Address, first *int, after *string) (*gmodel.AftermarketDeviceConnection, error) {
 	ownedADCount, err := models.AftermarketDevices(
 		models.AftermarketDeviceWhere.Owner.EQ(null.BytesFrom(addr.Bytes())),
-	).Count(context.Background(), ad.pdb.DBS().Reader)
+	).Count(context.Background(), v.pdb.DBS().Reader)
 	limit := defaultPageSize
 	if first != nil {
 		if *first == 0 {
@@ -59,7 +46,7 @@ func (ad *AftermarketDevicesCtrl) GetOwnedAftermarketDevices(addr common.Address
 		queryMods = append(queryMods, models.AftermarketDeviceWhere.ID.GT(searchAfter))
 	}
 
-	ads, err := models.AftermarketDevices(queryMods...).All(ad.ctx, ad.pdb.DBS().Reader)
+	ads, err := models.AftermarketDevices(queryMods...).All(ctx, v.pdb.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}

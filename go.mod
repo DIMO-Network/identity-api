@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/99designs/gqlgen v0.17.34
-	github.com/DIMO-Network/shared v0.10.1
+	github.com/DIMO-Network/shared v0.10.2
 	github.com/Shopify/sarama v1.38.1
 	github.com/docker/go-connections v0.4.0
 	github.com/ethereum/go-ethereum v1.12.0
@@ -18,7 +18,6 @@ require (
 	github.com/testcontainers/testcontainers-go v0.21.0
 	github.com/vektah/gqlparser/v2 v2.5.4
 	github.com/volatiletech/null/v8 v8.1.2
-	github.com/volatiletech/sqlboiler v3.7.1+incompatible
 	github.com/volatiletech/sqlboiler/v4 v4.14.2
 	github.com/volatiletech/strmangle v0.0.4
 )
