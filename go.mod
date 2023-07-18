@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/99designs/gqlgen v0.17.34
-	github.com/DIMO-Network/shared v0.10.1
+	github.com/DIMO-Network/shared v0.10.2
 	github.com/ethereum/go-ethereum v1.12.0
 	github.com/friendsofgo/errors v0.9.2
 	github.com/pressly/goose/v3 v3.11.2

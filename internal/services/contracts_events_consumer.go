@@ -21,7 +21,6 @@ import (
 )
 
 type ContractsEventsConsumer struct {
-	ctx      context.Context
 	dbs      db.Store
 	log      *zerolog.Logger
 	settings *config.Settings
@@ -74,21 +73,21 @@ type TransferEventData struct {
 	TokenId *big.Int
 }
 
-func NewContractsEventsConsumer(ctx context.Context, dbs db.Store, log *zerolog.Logger, settings *config.Settings) *ContractsEventsConsumer {
+func NewContractsEventsConsumer(dbs db.Store, log *zerolog.Logger, settings *config.Settings) *ContractsEventsConsumer {
 	return &ContractsEventsConsumer{
-		ctx:      ctx,
 		dbs:      dbs,
 		log:      log,
 		settings: settings,
 	}
 }
 
-func (c *ContractsEventsConsumer) Process(event *shared.CloudEvent[json.RawMessage]) error {
+func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.CloudEvent[json.RawMessage]) error {
 	if event.Type != contractEventCEType {
 		return nil
 	}
 
 	registryAddr := common.HexToAddress(c.settings.DIMORegistryAddr)
+
 	var data ContractEventData
 	if err := json.Unmarshal(event.Data, &data); err != nil {
 		return err
@@ -104,9 +103,9 @@ func (c *ContractsEventsConsumer) Process(event *shared.CloudEvent[json.RawMessa
 		case VehicleNodeMinted:
 			return c.handleVehicleNodeMintedEvent(&data)
 		case VehicleAttributeSet:
-			return c.handleVehicleAttributeSetEvent(&data)
+			return c.handleVehicleAttributeSetEvent(ctx, &data)
 		case Transfer:
-			return c.handleTransferEvent(&data)
+			return c.handleTransferEvent(ctx, &data)
 		}
 	}
 
@@ -136,7 +135,7 @@ func (c *ContractsEventsConsumer) handleVehicleNodeMintedEvent(e *ContractEventD
 	return nil
 }
 
-func (c *ContractsEventsConsumer) handleVehicleAttributeSetEvent(e *ContractEventData) error {
+func (c *ContractsEventsConsumer) handleVehicleAttributeSetEvent(ctx context.Context, e *ContractEventData) error {
 	var args VehicleAttributeSetData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
 		return err
@@ -161,14 +160,14 @@ func (c *ContractsEventsConsumer) handleVehicleAttributeSetEvent(e *ContractEven
 
 	colToLower := strings.ToLower(args.Attribute)
 
-	if err := veh.Upsert(context.TODO(), c.dbs.DBS().Writer, true, []string{models.VehicleColumns.ID}, boil.Whitelist(colToLower), boil.Whitelist(models.VehicleColumns.ID, colToLower)); err != nil {
+	if err := veh.Upsert(ctx, c.dbs.DBS().Writer, true, []string{models.VehicleColumns.ID}, boil.Whitelist(colToLower), boil.Whitelist(models.VehicleColumns.ID, colToLower)); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (c *ContractsEventsConsumer) handleTransferEvent(e *ContractEventData) error {
+func (c *ContractsEventsConsumer) handleTransferEvent(ctx context.Context, e *ContractEventData) error {
 	logger := c.log.With().Str("EventName", Transfer.String()).Logger()
 
 	var args TransferEventData
@@ -178,13 +177,13 @@ func (c *ContractsEventsConsumer) handleTransferEvent(e *ContractEventData) erro
 
 	veh, err := models.Vehicles(
 		models.VehicleWhere.ID.EQ(int(args.TokenId.Int64())),
-	).One(c.ctx, c.dbs.DBS().Reader)
+	).One(ctx, c.dbs.DBS().Reader)
 	if err != nil {
 		return err
 	}
 
 	veh.OwnerAddress = null.BytesFrom(args.To.Bytes())
-	if _, err := veh.Update(c.ctx, c.dbs.DBS().Writer, boil.Infer()); err != nil {
+	if _, err := veh.Update(ctx, c.dbs.DBS().Writer, boil.Infer()); err != nil {
 		return err
 	}
 
