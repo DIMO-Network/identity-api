@@ -1,4 +1,4 @@
-package controllers
+package repositories
 
 import (
 	"context"
@@ -20,13 +20,11 @@ const (
 )
 
 type VehiclesRepo struct {
-	ctx context.Context
 	pdb db.Store
 }
 
-func NewVehiclesRepo(ctx context.Context, pdb db.Store) VehiclesRepo {
+func NewVehiclesRepo(pdb db.Store) VehiclesRepo {
 	return VehiclesRepo{
-		ctx: ctx,
 		pdb: pdb,
 	}
 }
@@ -69,10 +67,10 @@ func (v *VehiclesRepo) createVehiclesResponse(totalCount int64, vehicles []model
 	return res
 }
 
-func (v *VehiclesRepo) GetOwnedVehicles(addr common.Address, first *int, after *string) (*gmodel.VehicleConnection, error) {
+func (v *VehiclesRepo) GetOwnedVehicles(ctx context.Context, addr common.Address, first *int, after *string) (*gmodel.VehicleConnection, error) {
 	totalCount, err := models.Vehicles(
 		models.VehicleWhere.OwnerAddress.EQ(null.BytesFrom(addr.Bytes())),
-	).Count(v.ctx, v.pdb.DBS().Reader)
+	).Count(ctx, v.pdb.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}
@@ -92,11 +90,12 @@ func (v *VehiclesRepo) GetOwnedVehicles(addr common.Address, first *int, after *
 		}
 	}
 
-	var queryMods []qm.QueryMod
-
-	queryMods = append(queryMods, models.VehicleWhere.OwnerAddress.EQ(null.BytesFrom(addr.Bytes())))
-	// Used to determine if there are more values, if returned is not up to limit + 1 then we don't have anymore records
-	queryMods = append(queryMods, qm.Limit(limit+1))
+	queryMods := []qm.QueryMod{
+		models.VehicleWhere.OwnerAddress.EQ(null.BytesFrom(addr.Bytes())),
+		// Use limit + 1 here to check if there's a next page.
+		qm.Limit(limit + 1),
+		qm.OrderBy(models.VehicleColumns.ID + " DESC"),
+	}
 
 	if after != nil {
 		lastCursor, err := base64.StdEncoding.DecodeString(*after)
@@ -110,9 +109,8 @@ func (v *VehiclesRepo) GetOwnedVehicles(addr common.Address, first *int, after *
 		}
 		queryMods = append(queryMods, models.VehicleWhere.ID.LT(lastCursorVal))
 	}
-	queryMods = append(queryMods, qm.OrderBy(models.VehicleColumns.ID+" DESC"))
 
-	all, err := models.Vehicles(queryMods...).All(v.ctx, v.pdb.DBS().Reader)
+	all, err := models.Vehicles(queryMods...).All(ctx, v.pdb.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}
