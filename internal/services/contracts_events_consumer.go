@@ -99,12 +99,18 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 		return nil
 	}
 
-	if data.Contract == registryAddr || data.Contract == vehicleNFTAddr {
-		switch EventName(data.EventName) {
+	eventName := EventName(data.EventName)
+
+	switch data.Contract {
+	case registryAddr:
+		switch eventName {
 		case VehicleNodeMinted:
 			return c.handleVehicleNodeMintedEvent(ctx, &data)
 		case VehicleAttributeSet:
 			return c.handleVehicleAttributeSetEvent(ctx, &data)
+		}
+	case vehicleNFTAddr:
+		switch eventName {
 		case Transfer:
 			return c.handleVehicleTransferEvent(ctx, &data)
 		}
