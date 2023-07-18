@@ -70,7 +70,7 @@ type VehicleAttributeSetData struct {
 type TransferEventData struct {
 	From    common.Address
 	To      common.Address
-	TokenId *big.Int
+	TokenID *big.Int
 }
 
 func NewContractsEventsConsumer(dbs db.Store, log *zerolog.Logger, settings *config.Settings) *ContractsEventsConsumer {
@@ -175,7 +175,7 @@ func (c *ContractsEventsConsumer) handleVehicleTransferEvent(ctx context.Context
 		return err
 	}
 
-	veh, err := models.FindVehicle(ctx, c.dbs.DBS().Reader, int(args.TokenId.Int64()))
+	veh, err := models.FindVehicle(ctx, c.dbs.DBS().Reader, int(args.TokenID.Int64()))
 	if err != nil {
 		return err
 	}
@@ -186,7 +186,7 @@ func (c *ContractsEventsConsumer) handleVehicleTransferEvent(ctx context.Context
 		return err
 	}
 
-	logger.Info().Str("TokenID", args.TokenId.String()).Msg("Event processed successfuly")
+	logger.Info().Str("TokenID", args.TokenID.String()).Msg("Event processed successfuly")
 
 	return nil
 }
