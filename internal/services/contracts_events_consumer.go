@@ -127,7 +127,7 @@ func (c *ContractsEventsConsumer) handleVehicleNodeMintedEvent(ctx context.Conte
 
 	veh, err := models.Vehicles(
 		models.VehicleWhere.ID.EQ(int(args.TokenId.Int64())),
-		models.VehicleWhere.OwnerAddress.EQ(null.BytesFrom(args.Owner.Bytes())),
+		models.VehicleWhere.OwnerAddress.EQ(args.Owner.Bytes()),
 	).One(ctx, c.dbs.DBS().Writer)
 	if err != nil {
 		return err
@@ -187,7 +187,12 @@ func (c *ContractsEventsConsumer) handleVehicleTransferEvent(ctx context.Context
 		return err
 	}
 
-	vehicle := models.Vehicle{ID: int(args.TokenID.Int64()), OwnerAddress: null.BytesFrom(args.To.Bytes())}
+	if args.From != common.HexToAddress("0") {
+		logger.Debug().Interface("arguments", args).Msg("Invalid Transfer event, the event has a non zero FROM address")
+		return nil
+	}
+
+	vehicle := models.Vehicle{ID: int(args.TokenID.Int64()), OwnerAddress: args.To.Bytes()}
 	if err := vehicle.Upsert(ctx, c.dbs.DBS().Writer, true, []string{models.VehicleColumns.ID}, boil.Whitelist(models.VehicleColumns.ID), boil.Whitelist(models.VehicleColumns.ID, models.VehicleColumns.OwnerAddress)); err != nil {
 		return err
 	}

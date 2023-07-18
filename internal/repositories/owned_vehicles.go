@@ -11,7 +11,6 @@ import (
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
@@ -38,7 +37,7 @@ func (v *VehiclesRepo) createVehiclesResponse(totalCount int64, vehicles []model
 		crs := base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(v.ID)))
 		cursor := crs
 
-		owner := common.BytesToAddress(v.OwnerAddress.Bytes)
+		owner := common.BytesToAddress(v.OwnerAddress)
 
 		edge := &gmodel.VehicleEdge{
 			Node: &gmodel.Vehicle{
@@ -69,7 +68,7 @@ func (v *VehiclesRepo) createVehiclesResponse(totalCount int64, vehicles []model
 
 func (v *VehiclesRepo) GetOwnedVehicles(ctx context.Context, addr common.Address, first *int, after *string) (*gmodel.VehicleConnection, error) {
 	totalCount, err := models.Vehicles(
-		models.VehicleWhere.OwnerAddress.EQ(null.BytesFrom(addr.Bytes())),
+		models.VehicleWhere.OwnerAddress.EQ(addr.Bytes()),
 	).Count(ctx, v.pdb.DBS().Reader)
 	if err != nil {
 		return nil, err
@@ -91,7 +90,7 @@ func (v *VehiclesRepo) GetOwnedVehicles(ctx context.Context, addr common.Address
 	}
 
 	queryMods := []qm.QueryMod{
-		models.VehicleWhere.OwnerAddress.EQ(null.BytesFrom(addr.Bytes())),
+		models.VehicleWhere.OwnerAddress.EQ(addr.Bytes()),
 		// Use limit + 1 here to check if there's a next page.
 		qm.Limit(limit + 1),
 		qm.OrderBy(models.VehicleColumns.ID + " DESC"),
