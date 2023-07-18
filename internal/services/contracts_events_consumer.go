@@ -218,7 +218,7 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceAttributeSetEvent(e *Co
 			c.dbs.DBS().Writer,
 			true,
 			[]string{models.AftermarketDeviceColumns.ID},
-			boil.Whitelist(models.AftermarketDeviceColumns.Serial, models.AftermarketDeviceColumns.Imei),
+			boil.Whitelist(models.AftermarketDeviceColumns.Serial),
 			boil.Infer()); err != nil {
 			return err
 		}

@@ -5,13 +5,24 @@
 scalar Time
 scalar Address
 
+type VehicleConnection {
+  totalCount: Int!
+  edges: [VehicleEdge!]!
+  pageInfo: PageInfo!
+}
+
 type Vehicle {
   id: ID!
-  owner: Address!
-  make: String!
-  model: String!
-  year: Int!
-  mintTime: Time!
+  owner: Address
+  make: String
+  model: String
+  year: Int
+  mintedAt: Time
+}
+
+type VehicleEdge {
+  node: Vehicle!
+  cursor: String!
 }
 
 type AftermarketDevice {
@@ -43,7 +54,11 @@ type PageInfo {
 }
 
 type Query {
-  ownedVehicles(address: Address!): [Vehicle!]!
+  ownedVehicles(
+    address: Address!
+    first: Int
+    after: String
+  ): VehicleConnection!
   ownedAftermarketDevices(
     address: Address!
     first: Int

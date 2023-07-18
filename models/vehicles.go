@@ -29,7 +29,7 @@ type Vehicle struct {
 	Make         null.String `boil:"make" json:"make,omitempty" toml:"make" yaml:"make,omitempty"`
 	Model        null.String `boil:"model" json:"model,omitempty" toml:"model" yaml:"model,omitempty"`
 	Year         null.Int    `boil:"year" json:"year,omitempty" toml:"year" yaml:"year,omitempty"`
-	MintTime     null.Time   `boil:"mint_time" json:"mint_time,omitempty" toml:"mint_time" yaml:"mint_time,omitempty"`
+	MintedAt     null.Time   `boil:"minted_at" json:"minted_at,omitempty" toml:"minted_at" yaml:"minted_at,omitempty"`
 
 	R *vehicleR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L vehicleL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -41,14 +41,14 @@ var VehicleColumns = struct {
 	Make         string
 	Model        string
 	Year         string
-	MintTime     string
+	MintedAt     string
 }{
 	ID:           "id",
 	OwnerAddress: "owner_address",
 	Make:         "make",
 	Model:        "model",
 	Year:         "year",
-	MintTime:     "mint_time",
+	MintedAt:     "minted_at",
 }
 
 var VehicleTableColumns = struct {
@@ -57,117 +57,17 @@ var VehicleTableColumns = struct {
 	Make         string
 	Model        string
 	Year         string
-	MintTime     string
+	MintedAt     string
 }{
 	ID:           "vehicles.id",
 	OwnerAddress: "vehicles.owner_address",
 	Make:         "vehicles.make",
 	Model:        "vehicles.model",
 	Year:         "vehicles.year",
-	MintTime:     "vehicles.mint_time",
+	MintedAt:     "vehicles.minted_at",
 }
 
 // Generated where
-
-type whereHelpernull_String struct{ field string }
-
-func (w whereHelpernull_String) EQ(x null.String) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, false, x)
-}
-func (w whereHelpernull_String) NEQ(x null.String) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, true, x)
-}
-func (w whereHelpernull_String) LT(x null.String) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LT, x)
-}
-func (w whereHelpernull_String) LTE(x null.String) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LTE, x)
-}
-func (w whereHelpernull_String) GT(x null.String) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GT, x)
-}
-func (w whereHelpernull_String) GTE(x null.String) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GTE, x)
-}
-func (w whereHelpernull_String) IN(slice []string) qm.QueryMod {
-	values := make([]interface{}, 0, len(slice))
-	for _, value := range slice {
-		values = append(values, value)
-	}
-	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
-}
-func (w whereHelpernull_String) NIN(slice []string) qm.QueryMod {
-	values := make([]interface{}, 0, len(slice))
-	for _, value := range slice {
-		values = append(values, value)
-	}
-	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
-}
-
-func (w whereHelpernull_String) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
-func (w whereHelpernull_String) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
-
-type whereHelpernull_Int struct{ field string }
-
-func (w whereHelpernull_Int) EQ(x null.Int) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, false, x)
-}
-func (w whereHelpernull_Int) NEQ(x null.Int) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, true, x)
-}
-func (w whereHelpernull_Int) LT(x null.Int) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LT, x)
-}
-func (w whereHelpernull_Int) LTE(x null.Int) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LTE, x)
-}
-func (w whereHelpernull_Int) GT(x null.Int) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GT, x)
-}
-func (w whereHelpernull_Int) GTE(x null.Int) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GTE, x)
-}
-func (w whereHelpernull_Int) IN(slice []int) qm.QueryMod {
-	values := make([]interface{}, 0, len(slice))
-	for _, value := range slice {
-		values = append(values, value)
-	}
-	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
-}
-func (w whereHelpernull_Int) NIN(slice []int) qm.QueryMod {
-	values := make([]interface{}, 0, len(slice))
-	for _, value := range slice {
-		values = append(values, value)
-	}
-	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
-}
-
-func (w whereHelpernull_Int) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
-func (w whereHelpernull_Int) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
-
-type whereHelpernull_Time struct{ field string }
-
-func (w whereHelpernull_Time) EQ(x null.Time) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, false, x)
-}
-func (w whereHelpernull_Time) NEQ(x null.Time) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, true, x)
-}
-func (w whereHelpernull_Time) LT(x null.Time) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LT, x)
-}
-func (w whereHelpernull_Time) LTE(x null.Time) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LTE, x)
-}
-func (w whereHelpernull_Time) GT(x null.Time) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GT, x)
-}
-func (w whereHelpernull_Time) GTE(x null.Time) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GTE, x)
-}
-
-func (w whereHelpernull_Time) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
-func (w whereHelpernull_Time) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
 var VehicleWhere = struct {
 	ID           whereHelperint
@@ -175,14 +75,14 @@ var VehicleWhere = struct {
 	Make         whereHelpernull_String
 	Model        whereHelpernull_String
 	Year         whereHelpernull_Int
-	MintTime     whereHelpernull_Time
+	MintedAt     whereHelpernull_Time
 }{
 	ID:           whereHelperint{field: "\"identity_api\".\"vehicles\".\"id\""},
 	OwnerAddress: whereHelpernull_Bytes{field: "\"identity_api\".\"vehicles\".\"owner_address\""},
 	Make:         whereHelpernull_String{field: "\"identity_api\".\"vehicles\".\"make\""},
 	Model:        whereHelpernull_String{field: "\"identity_api\".\"vehicles\".\"model\""},
 	Year:         whereHelpernull_Int{field: "\"identity_api\".\"vehicles\".\"year\""},
-	MintTime:     whereHelpernull_Time{field: "\"identity_api\".\"vehicles\".\"mint_time\""},
+	MintedAt:     whereHelpernull_Time{field: "\"identity_api\".\"vehicles\".\"minted_at\""},
 }
 
 // VehicleRels is where relationship names are stored.
@@ -213,9 +113,9 @@ func (r *vehicleR) GetAftermarketDevices() AftermarketDeviceSlice {
 type vehicleL struct{}
 
 var (
-	vehicleAllColumns            = []string{"id", "owner_address", "make", "model", "year", "mint_time"}
+	vehicleAllColumns            = []string{"id", "owner_address", "make", "model", "year", "minted_at"}
 	vehicleColumnsWithoutDefault = []string{"id"}
-	vehicleColumnsWithDefault    = []string{"owner_address", "make", "model", "year", "mint_time"}
+	vehicleColumnsWithDefault    = []string{"owner_address", "make", "model", "year", "minted_at"}
 	vehiclePrimaryKeyColumns     = []string{"id"}
 	vehicleGeneratedColumns      = []string{}
 )
@@ -554,7 +454,7 @@ func (vehicleL) LoadAftermarketDevices(ctx context.Context, e boil.ContextExecut
 			}
 
 			for _, a := range args {
-				if a == obj.ID {
+				if queries.Equal(a, obj.ID) {
 					continue Outer
 				}
 			}
@@ -612,7 +512,7 @@ func (vehicleL) LoadAftermarketDevices(ctx context.Context, e boil.ContextExecut
 
 	for _, foreign := range resultSlice {
 		for _, local := range slice {
-			if local.ID == foreign.VehicleID {
+			if queries.Equal(local.ID, foreign.VehicleID) {
 				local.R.AftermarketDevices = append(local.R.AftermarketDevices, foreign)
 				if foreign.R == nil {
 					foreign.R = &aftermarketDeviceR{}
@@ -634,7 +534,7 @@ func (o *Vehicle) AddAftermarketDevices(ctx context.Context, exec boil.ContextEx
 	var err error
 	for _, rel := range related {
 		if insert {
-			rel.VehicleID = o.ID
+			queries.Assign(&rel.VehicleID, o.ID)
 			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
 				return errors.Wrap(err, "failed to insert into foreign table")
 			}
@@ -655,7 +555,7 @@ func (o *Vehicle) AddAftermarketDevices(ctx context.Context, exec boil.ContextEx
 				return errors.Wrap(err, "failed to update foreign table")
 			}
 
-			rel.VehicleID = o.ID
+			queries.Assign(&rel.VehicleID, o.ID)
 		}
 	}
 
@@ -676,6 +576,80 @@ func (o *Vehicle) AddAftermarketDevices(ctx context.Context, exec boil.ContextEx
 			rel.R.Vehicle = o
 		}
 	}
+	return nil
+}
+
+// SetAftermarketDevices removes all previously related items of the
+// vehicle replacing them completely with the passed
+// in related items, optionally inserting them as new records.
+// Sets o.R.Vehicle's AftermarketDevices accordingly.
+// Replaces o.R.AftermarketDevices with related.
+// Sets related.R.Vehicle's AftermarketDevices accordingly.
+func (o *Vehicle) SetAftermarketDevices(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*AftermarketDevice) error {
+	query := "update \"identity_api\".\"aftermarket_devices\" set \"vehicle_id\" = null where \"vehicle_id\" = $1"
+	values := []interface{}{o.ID}
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, query)
+		fmt.Fprintln(writer, values)
+	}
+	_, err := exec.ExecContext(ctx, query, values...)
+	if err != nil {
+		return errors.Wrap(err, "failed to remove relationships before set")
+	}
+
+	if o.R != nil {
+		for _, rel := range o.R.AftermarketDevices {
+			queries.SetScanner(&rel.VehicleID, nil)
+			if rel.R == nil {
+				continue
+			}
+
+			rel.R.Vehicle = nil
+		}
+		o.R.AftermarketDevices = nil
+	}
+
+	return o.AddAftermarketDevices(ctx, exec, insert, related...)
+}
+
+// RemoveAftermarketDevices relationships from objects passed in.
+// Removes related items from R.AftermarketDevices (uses pointer comparison, removal does not keep order)
+// Sets related.R.Vehicle.
+func (o *Vehicle) RemoveAftermarketDevices(ctx context.Context, exec boil.ContextExecutor, related ...*AftermarketDevice) error {
+	if len(related) == 0 {
+		return nil
+	}
+
+	var err error
+	for _, rel := range related {
+		queries.SetScanner(&rel.VehicleID, nil)
+		if rel.R != nil {
+			rel.R.Vehicle = nil
+		}
+		if _, err = rel.Update(ctx, exec, boil.Whitelist("vehicle_id")); err != nil {
+			return err
+		}
+	}
+	if o.R == nil {
+		return nil
+	}
+
+	for _, rel := range related {
+		for i, ri := range o.R.AftermarketDevices {
+			if rel != ri {
+				continue
+			}
+
+			ln := len(o.R.AftermarketDevices)
+			if ln > 1 && i < ln-1 {
+				o.R.AftermarketDevices[i] = o.R.AftermarketDevices[ln-1]
+			}
+			o.R.AftermarketDevices = o.R.AftermarketDevices[:ln-1]
+			break
+		}
+	}
+
 	return nil
 }
 

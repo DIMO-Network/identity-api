@@ -4,9 +4,7 @@ go 1.20
 
 require (
 	github.com/99designs/gqlgen v0.17.34
-	github.com/DIMO-Network/devices-api v1.17.7
 	github.com/DIMO-Network/shared v0.10.1
-	github.com/ericlagergren/decimal v0.0.0-20211103172832-aca2edc11f73
 	github.com/ethereum/go-ethereum v1.12.0
 	github.com/friendsofgo/errors v0.9.2
 	github.com/pressly/goose/v3 v3.11.2
@@ -15,7 +13,6 @@ require (
 	github.com/volatiletech/null/v8 v8.1.2
 	github.com/volatiletech/sqlboiler/v4 v4.14.2
 	github.com/volatiletech/strmangle v0.0.4
-	google.golang.org/grpc v1.55.0
 )
 
 require (
@@ -80,6 +77,7 @@ require (
 	golang.org/x/tools v0.9.3 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1 // indirect
+	google.golang.org/grpc v1.55.0 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

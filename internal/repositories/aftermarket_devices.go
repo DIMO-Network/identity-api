@@ -13,10 +13,6 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
-const (
-	defaultPageSize = 20
-)
-
 type AftermarketDevicesCtrl struct {
 	ctx context.Context
 	pdb db.Store
