@@ -9,13 +9,14 @@ import (
 )
 
 type AftermarketDevice struct {
-	ID        string         `json:"id"`
-	Address   common.Address `json:"address"`
-	Owner     common.Address `json:"owner"`
-	Serial    *string        `json:"serial,omitempty"`
-	Imei      *string        `json:"imei,omitempty"`
-	MintedAt  time.Time      `json:"mintedAt"`
-	VehicleID string         `json:"vehicle_id"`
+	ID                string         `json:"id"`
+	Address           common.Address `json:"address"`
+	Owner             common.Address `json:"owner"`
+	Serial            *string        `json:"serial,omitempty"`
+	Imei              *string        `json:"imei,omitempty"`
+	MintedAt          time.Time      `json:"mintedAt"`
+	VehicleID         string         `json:"vehicle_id"`
+	VehicleConnection *Vehicle       `json:"vehicleConnection,omitempty"`
 }
 
 type AftermarketDeviceConnection struct {
@@ -34,16 +35,6 @@ type PageInfo struct {
 	StartCursor string `json:"startCursor"`
 	EndCursor   string `json:"endCursor"`
 	HasNextPage bool   `json:"hasNextPage"`
-}
-
-type LinkedVehicleAndAd struct {
-	AftermarketDeviceID string         `json:"aftermarket_device_id"`
-	Owner               common.Address `json:"owner"`
-	BeneficiaryAddress  common.Address `json:"beneficiary_address"`
-	VehicleID           string         `json:"vehicle_id"`
-	Make                string         `json:"make"`
-	Model               string         `json:"model"`
-	Year                int            `json:"year"`
 }
 
 type Vehicle struct {

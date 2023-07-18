@@ -33,6 +33,7 @@ type AftermarketDevice {
   imei: String
   mintedAt: Time!
   vehicle_id: ID!
+  vehicleConnection: Vehicle
 }
 
 type AftermarketDeviceConnection {

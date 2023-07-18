@@ -33,6 +33,7 @@ func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr comm
 
 	queryMods := []qm.QueryMod{
 		models.AftermarketDeviceWhere.Owner.EQ(null.BytesFrom(addr.Bytes())),
+		qm.Load(models.AftermarketDeviceRels.Vehicle),
 		qm.Limit(limit + 1),
 		qm.OrderBy(models.AftermarketDeviceColumns.ID + " ASC"),
 	}
@@ -58,16 +59,28 @@ func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr comm
 
 	var adEdges []*gmodel.AftermarketDeviceEdge
 	for _, d := range ads {
+
+		vConn := gmodel.Vehicle{}
+		if d.R.Vehicle != nil {
+			vConn.ID = strconv.Itoa(d.R.Vehicle.ID)
+			vConn.Owner = &addr
+			vConn.Make = d.R.Vehicle.Make.Ptr()
+			vConn.Model = d.R.Vehicle.Model.Ptr()
+			vConn.Year = d.R.Vehicle.Year.Ptr()
+			vConn.MintedAt = d.R.Vehicle.MintedAt.Ptr()
+		}
+
 		adEdges = append(adEdges,
 			&gmodel.AftermarketDeviceEdge{
 				Node: &gmodel.AftermarketDevice{
-					ID:        strconv.Itoa(d.ID),
-					Address:   common.BytesToAddress(d.Owner.Bytes),
-					Owner:     addr,
-					Serial:    &d.Serial.String,
-					Imei:      &d.Imei.String,
-					MintedAt:  d.MintedAt.Time,
-					VehicleID: strconv.Itoa(d.VehicleID.Int),
+					ID:                strconv.Itoa(d.ID),
+					Address:           common.BytesToAddress(d.Owner.Bytes),
+					Owner:             addr,
+					Serial:            &d.Serial.String,
+					Imei:              &d.Imei.String,
+					MintedAt:          d.MintedAt.Time,
+					VehicleID:         strconv.Itoa(d.VehicleID.Int),
+					VehicleConnection: &vConn,
 				},
 				Cursor: strconv.Itoa(d.ID),
 			},
@@ -82,30 +95,6 @@ func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr comm
 			StartCursor: adEdges[0].Node.ID,
 		},
 		Edges: adEdges,
-	}
-
-	return res, nil
-}
-
-func (ad *AftermarketDevicesCtrl) GetLinkedDevices(addr common.Address) ([]*gmodel.LinkedVehicleAndAd, error) {
-	ads, err := models.AftermarketDevices(
-		models.AftermarketDeviceWhere.Owner.EQ(null.BytesFrom(addr.Bytes())),
-		qm.Load(models.AftermarketDeviceRels.Vehicle),
-	).All(ad.ctx, ad.pdb.DBS().Reader)
-	if err != nil {
-		return nil, err
-	}
-
-	res := []*gmodel.LinkedVehicleAndAd{}
-	for _, d := range ads {
-		res = append(res, &gmodel.LinkedVehicleAndAd{
-			AftermarketDeviceID: d.ID.String(),
-			Owner:               common.BytesToAddress(d.Owner.Bytes),
-			VehicleID:           strconv.Itoa(d.R.Vehicle.ID),
-			Make:                d.R.Vehicle.Make.String,
-			Model:               d.R.Vehicle.Model.String,
-			Year:                d.R.Vehicle.Year.Int,
-		})
 	}
 
 	return res, nil
