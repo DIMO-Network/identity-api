@@ -29,7 +29,7 @@ type Vehicle struct {
 	Make         null.String `boil:"make" json:"make,omitempty" toml:"make" yaml:"make,omitempty"`
 	Model        null.String `boil:"model" json:"model,omitempty" toml:"model" yaml:"model,omitempty"`
 	Year         null.Int    `boil:"year" json:"year,omitempty" toml:"year" yaml:"year,omitempty"`
-	MintTime     null.Time   `boil:"mint_time" json:"mint_time,omitempty" toml:"mint_time" yaml:"mint_time,omitempty"`
+	MintedAt     null.Time   `boil:"minted_at" json:"minted_at,omitempty" toml:"minted_at" yaml:"minted_at,omitempty"`
 
 	R *vehicleR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L vehicleL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -41,14 +41,14 @@ var VehicleColumns = struct {
 	Make         string
 	Model        string
 	Year         string
-	MintTime     string
+	MintedAt     string
 }{
 	ID:           "id",
 	OwnerAddress: "owner_address",
 	Make:         "make",
 	Model:        "model",
 	Year:         "year",
-	MintTime:     "mint_time",
+	MintedAt:     "minted_at",
 }
 
 var VehicleTableColumns = struct {
@@ -57,14 +57,14 @@ var VehicleTableColumns = struct {
 	Make         string
 	Model        string
 	Year         string
-	MintTime     string
+	MintedAt     string
 }{
 	ID:           "vehicles.id",
 	OwnerAddress: "vehicles.owner_address",
 	Make:         "vehicles.make",
 	Model:        "vehicles.model",
 	Year:         "vehicles.year",
-	MintTime:     "vehicles.mint_time",
+	MintedAt:     "vehicles.minted_at",
 }
 
 // Generated where
@@ -222,14 +222,14 @@ var VehicleWhere = struct {
 	Make         whereHelpernull_String
 	Model        whereHelpernull_String
 	Year         whereHelpernull_Int
-	MintTime     whereHelpernull_Time
+	MintedAt     whereHelpernull_Time
 }{
 	ID:           whereHelperint{field: "\"identity_api\".\"vehicles\".\"id\""},
 	OwnerAddress: whereHelpernull_Bytes{field: "\"identity_api\".\"vehicles\".\"owner_address\""},
 	Make:         whereHelpernull_String{field: "\"identity_api\".\"vehicles\".\"make\""},
 	Model:        whereHelpernull_String{field: "\"identity_api\".\"vehicles\".\"model\""},
 	Year:         whereHelpernull_Int{field: "\"identity_api\".\"vehicles\".\"year\""},
-	MintTime:     whereHelpernull_Time{field: "\"identity_api\".\"vehicles\".\"mint_time\""},
+	MintedAt:     whereHelpernull_Time{field: "\"identity_api\".\"vehicles\".\"minted_at\""},
 }
 
 // VehicleRels is where relationship names are stored.
@@ -249,9 +249,9 @@ func (*vehicleR) NewStruct() *vehicleR {
 type vehicleL struct{}
 
 var (
-	vehicleAllColumns            = []string{"id", "owner_address", "make", "model", "year", "mint_time"}
+	vehicleAllColumns            = []string{"id", "owner_address", "make", "model", "year", "minted_at"}
 	vehicleColumnsWithoutDefault = []string{"id"}
-	vehicleColumnsWithDefault    = []string{"owner_address", "make", "model", "year", "mint_time"}
+	vehicleColumnsWithDefault    = []string{"owner_address", "make", "model", "year", "minted_at"}
 	vehiclePrimaryKeyColumns     = []string{"id"}
 	vehicleGeneratedColumns      = []string{}
 )

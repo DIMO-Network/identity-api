@@ -13,9 +13,9 @@ import (
 )
 
 // OwnedVehicles is the resolver for the ownedVehicles field.
-func (r *queryResolver) OwnedVehicles(ctx context.Context, address common.Address) ([]*model.Vehicle, error) {
+func (r *queryResolver) OwnedVehicles(ctx context.Context, address common.Address, first *int, after *string) (*model.VehicleConnection, error) {
 	vr := repo.NewVehiclesRepo(ctx, r.DB)
-	return vr.GetOwnedVehicles(address)
+	return vr.GetOwnedVehicles(address, first, after)
 }
 
 // Query returns QueryResolver implementation.

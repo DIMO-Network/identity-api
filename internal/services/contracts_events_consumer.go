@@ -123,13 +123,13 @@ func (c *ContractsEventsConsumer) handleVehicleNodeMintedEvent(e *ContractEventD
 
 	dm := models.Vehicle{
 		OwnerAddress: null.BytesFrom(args.Owner.Bytes()),
-		MintTime:     null.TimeFrom(e.Block.Time),
+		MintedAt:     null.TimeFrom(e.Block.Time),
 		ID:           int(args.TokenId.Int64()),
 	}
 
 	if err := dm.Upsert(context.TODO(), c.dbs.DBS().Writer, true, []string{models.VehicleColumns.ID},
-		boil.Whitelist(models.VehicleColumns.OwnerAddress, models.VehicleColumns.MintTime),
-		boil.Whitelist(models.VehicleColumns.ID, models.VehicleColumns.OwnerAddress, models.VehicleColumns.MintTime)); err != nil {
+		boil.Whitelist(models.VehicleColumns.OwnerAddress, models.VehicleColumns.MintedAt),
+		boil.Whitelist(models.VehicleColumns.ID, models.VehicleColumns.OwnerAddress, models.VehicleColumns.MintedAt)); err != nil {
 		return err
 	}
 
