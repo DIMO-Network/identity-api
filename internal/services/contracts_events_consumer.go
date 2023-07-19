@@ -33,6 +33,8 @@ const (
 	VehicleAttributeSet                EventName = "VehicleAttributeSet"
 	AftermarketDeviceNodeMinted        EventName = "AftermarketDeviceNodeMinted"
 	AftermarketDeviceAttributeSetEvent EventName = "AftermarketDeviceAttributeSet"
+	AftermarketDevicePairedEvent       EventName = "AftermarketDevicePaired"
+	AftermarketDeviceUnpairedEvent     EventName = "AftermarketDeviceUnpaired"
 	Transfer                           EventName = "Transfer"
 )
 
@@ -81,6 +83,13 @@ type AftermarketDeviceAttributeSetData struct {
 	Attribute string
 	Info      string
 }
+
+type AftermarketDevicePairData struct {
+	AftermarketDeviceNode *big.Int
+	VehicleNode           *big.Int
+	Owner                 common.Address
+}
+
 type TransferEventData struct {
 	From    common.Address
 	To      common.Address
@@ -123,9 +132,13 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 		case VehicleAttributeSet:
 			return c.handleVehicleAttributeSetEvent(ctx, &data)
 		case AftermarketDeviceNodeMinted:
-			return c.handleAftermarketDeviceNodeMintedEvent(&data)
+			return c.handleAftermarketDeviceNodeMintedEvent(ctx, &data)
 		case AftermarketDeviceAttributeSetEvent:
-			return c.handleAftermarketDeviceAttributeSetEvent(&data)
+			return c.handleAftermarketDeviceAttributeSetEvent(ctx, &data)
+		case AftermarketDevicePairedEvent:
+			return c.handleAftermarketDevicePairedEvent(ctx, &data)
+		case AftermarketDeviceUnpairedEvent:
+			return c.handleAftermarketDeviceUnpairedEvent(ctx, &data)
 		}
 	case vehicleNFTAddr:
 		switch eventName {
@@ -216,7 +229,7 @@ func (c *ContractsEventsConsumer) handleVehicleTransferEvent(ctx context.Context
 	return nil
 }
 
-func (c *ContractsEventsConsumer) handleAftermarketDeviceNodeMintedEvent(e *ContractEventData) error {
+func (c *ContractsEventsConsumer) handleAftermarketDeviceNodeMintedEvent(ctx context.Context, e *ContractEventData) error {
 	var args AftermarketDeviceNodeMintedData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
 		return err
@@ -229,7 +242,7 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceNodeMintedEvent(e *Cont
 		MintedAt: null.TimeFrom(e.Block.Time),
 	}
 
-	if err := ad.Upsert(context.Background(), c.dbs.DBS().Writer,
+	if err := ad.Upsert(ctx, c.dbs.DBS().Writer,
 		true,
 		[]string{models.AftermarketDeviceColumns.ID},
 		boil.Infer(),
@@ -240,7 +253,7 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceNodeMintedEvent(e *Cont
 	return nil
 }
 
-func (c *ContractsEventsConsumer) handleAftermarketDeviceAttributeSetEvent(e *ContractEventData) error {
+func (c *ContractsEventsConsumer) handleAftermarketDeviceAttributeSetEvent(ctx context.Context, e *ContractEventData) error {
 	var args AftermarketDeviceAttributeSetData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
 		return err
@@ -254,7 +267,7 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceAttributeSetEvent(e *Co
 	case "Serial":
 		ad.Serial = null.StringFrom(args.Info)
 		if err := ad.Upsert(
-			context.Background(),
+			ctx,
 			c.dbs.DBS().Writer,
 			true,
 			[]string{models.AftermarketDeviceColumns.ID},
@@ -265,7 +278,7 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceAttributeSetEvent(e *Co
 	case "IMEI":
 		ad.Imei = null.StringFrom(args.Info)
 		if err := ad.Upsert(
-			context.Background(),
+			ctx,
 			c.dbs.DBS().Writer,
 			true,
 			[]string{models.AftermarketDeviceColumns.ID},
@@ -273,6 +286,58 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceAttributeSetEvent(e *Co
 			boil.Infer()); err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (c *ContractsEventsConsumer) handleAftermarketDevicePairedEvent(ctx context.Context, e *ContractEventData) error {
+	var args AftermarketDevicePairData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	ad := models.AftermarketDevice{
+		ID:        int(args.AftermarketDeviceNode.Int64()),
+		VehicleID: null.IntFrom(int(args.VehicleNode.Int64())),
+		Owner:     null.BytesFrom(args.Owner.Bytes()),
+	}
+
+	if err := ad.Upsert(
+		ctx,
+		c.dbs.DBS().Writer,
+		true,
+		[]string{models.AftermarketDeviceColumns.ID},
+		boil.Whitelist(models.AftermarketDeviceColumns.VehicleID, models.AftermarketDeviceColumns.Owner),
+		boil.Infer(),
+	); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *ContractsEventsConsumer) handleAftermarketDeviceUnpairedEvent(ctx context.Context, e *ContractEventData) error {
+	var args AftermarketDevicePairData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	ad := models.AftermarketDevice{
+		ID:        int(args.AftermarketDeviceNode.Int64()),
+		VehicleID: null.Int{},
+		Owner:     null.Bytes{},
+	}
+
+	if err := ad.Upsert(
+		ctx,
+		c.dbs.DBS().Writer,
+		true,
+		[]string{models.AftermarketDeviceColumns.ID},
+		boil.Whitelist(models.AftermarketDeviceColumns.VehicleID, models.AftermarketDeviceColumns.Owner),
+		boil.Infer(),
+	); err != nil {
+		return err
 	}
 
 	return nil
