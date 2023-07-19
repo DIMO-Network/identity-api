@@ -94,7 +94,7 @@ func TestAftermarketDeviceNodeMintSingleResponse(t *testing.T) {
 	res, err := adController.GetOwnedAftermarketDevices(ctx, aftermarketDeviceNodeMintedArgs.Owner, nil, nil)
 	assert.NoError(t, err)
 
-	assert.Equal(t, res.Edges[0].Node.Address, aftermarketDeviceNodeMintedArgs.Owner)
+	assert.Equal(t, *res.Edges[0].Node.Address, aftermarketDeviceNodeMintedArgs.Owner)
 }
 
 func TestAftermarketDeviceNodeMintMultiResponse(t *testing.T) {
@@ -116,7 +116,7 @@ func TestAftermarketDeviceNodeMintMultiResponse(t *testing.T) {
 
 	adController := NewVehiclesRepo(pdb)
 	first := 2
-	after := "2"
+	after := "4"
 	res, err := adController.GetOwnedAftermarketDevices(ctx, aftermarketDeviceNodeMintedArgs.Owner, &first, &after)
 	assert.NoError(t, err)
 
@@ -124,7 +124,7 @@ func TestAftermarketDeviceNodeMintMultiResponse(t *testing.T) {
 	assert.NoError(t, err)
 
 	for i := 0; i < first; i++ {
-		a++
+		a--
 		assert.Equal(t, res.Edges[i].Node.ID, fmt.Sprintf("%d", a))
 	}
 

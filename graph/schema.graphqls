@@ -41,7 +41,7 @@ type AftermarketDeviceConnection {
 }
 
 type AftermarketDeviceEdge {
-  cursor: ID!
+  cursor: String!
   node: AftermarketDevice!
 }
 
