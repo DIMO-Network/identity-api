@@ -59,6 +59,6 @@ type Query {
   ownedAftermarketDevices(
     address: Address!
     first: Int
-    after: ID
+    after: String
   ): AftermarketDeviceConnection!
 }
