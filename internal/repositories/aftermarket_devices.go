@@ -30,8 +30,9 @@ func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr comm
 
 	if ownedADCount == 0 {
 		return &gmodel.AftermarketDeviceConnection{
-			TotalCount: 0,
+			TotalCount: int(ownedADCount),
 			Edges:      []*gmodel.AftermarketDeviceEdge{},
+			PageInfo:   &gmodel.PageInfo{},
 		}, nil
 	}
 
@@ -59,7 +60,7 @@ func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr comm
 
 	hasNextPage := len(ads) > limit
 	if hasNextPage {
-		ads = ads[:len(ads)-1]
+		ads = ads[:limit]
 	}
 
 	var adEdges []*gmodel.AftermarketDeviceEdge

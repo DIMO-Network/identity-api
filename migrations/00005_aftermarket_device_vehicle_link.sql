@@ -2,7 +2,7 @@
 -- +goose StatementBegin
 
 ALTER TABLE aftermarket_devices
-ADD COLUMN vehicle_id int;
+ADD COLUMN vehicle_id int UNIQUE;
 
 ALTER TABLE aftermarket_devices
 ADD CONSTRAINT ad_vehicle_link FOREIGN KEY (vehicle_id) REFERENCES vehicles (id);

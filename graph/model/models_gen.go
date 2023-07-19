@@ -15,7 +15,7 @@ type AftermarketDevice struct {
 	Serial            *string         `json:"serial,omitempty"`
 	Imei              *string         `json:"imei,omitempty"`
 	MintedAt          *time.Time      `json:"mintedAt,omitempty"`
-	VehicleID         *string         `json:"vehicle_id,omitempty"`
+	VehicleID         *string         `json:"vehicleId,omitempty"`
 	VehicleConnection *Vehicle        `json:"vehicleConnection,omitempty"`
 }
 
@@ -36,12 +36,14 @@ type PageInfo struct {
 }
 
 type Vehicle struct {
-	ID       string          `json:"id"`
-	Owner    *common.Address `json:"owner,omitempty"`
-	Make     *string         `json:"make,omitempty"`
-	Model    *string         `json:"model,omitempty"`
-	Year     *int            `json:"year,omitempty"`
-	MintedAt *time.Time      `json:"mintedAt,omitempty"`
+	ID                          string             `json:"id"`
+	Owner                       *common.Address    `json:"owner,omitempty"`
+	Make                        *string            `json:"make,omitempty"`
+	Model                       *string            `json:"model,omitempty"`
+	Year                        *int               `json:"year,omitempty"`
+	MintedAt                    *time.Time         `json:"mintedAt,omitempty"`
+	AftermarketDevice           *string            `json:"aftermarketDevice,omitempty"`
+	AftermarketDeviceConnection *AftermarketDevice `json:"aftermarketDeviceConnection,omitempty"`
 }
 
 type VehicleConnection struct {

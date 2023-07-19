@@ -667,7 +667,7 @@ func (aftermarketDeviceL) LoadVehicle(ctx context.Context, e boil.ContextExecuto
 		if foreign.R == nil {
 			foreign.R = &vehicleR{}
 		}
-		foreign.R.AftermarketDevices = append(foreign.R.AftermarketDevices, object)
+		foreign.R.AftermarketDevice = object
 		return nil
 	}
 
@@ -678,7 +678,7 @@ func (aftermarketDeviceL) LoadVehicle(ctx context.Context, e boil.ContextExecuto
 				if foreign.R == nil {
 					foreign.R = &vehicleR{}
 				}
-				foreign.R.AftermarketDevices = append(foreign.R.AftermarketDevices, local)
+				foreign.R.AftermarketDevice = local
 				break
 			}
 		}
@@ -689,7 +689,7 @@ func (aftermarketDeviceL) LoadVehicle(ctx context.Context, e boil.ContextExecuto
 
 // SetVehicle of the aftermarketDevice to the related item.
 // Sets o.R.Vehicle to related.
-// Adds o to related.R.AftermarketDevices.
+// Adds o to related.R.AftermarketDevice.
 func (o *AftermarketDevice) SetVehicle(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Vehicle) error {
 	var err error
 	if insert {
@@ -725,10 +725,10 @@ func (o *AftermarketDevice) SetVehicle(ctx context.Context, exec boil.ContextExe
 
 	if related.R == nil {
 		related.R = &vehicleR{
-			AftermarketDevices: AftermarketDeviceSlice{o},
+			AftermarketDevice: o,
 		}
 	} else {
-		related.R.AftermarketDevices = append(related.R.AftermarketDevices, o)
+		related.R.AftermarketDevice = o
 	}
 
 	return nil
@@ -752,18 +752,7 @@ func (o *AftermarketDevice) RemoveVehicle(ctx context.Context, exec boil.Context
 		return nil
 	}
 
-	for i, ri := range related.R.AftermarketDevices {
-		if queries.Equal(o.VehicleID, ri.VehicleID) {
-			continue
-		}
-
-		ln := len(related.R.AftermarketDevices)
-		if ln > 1 && i < ln-1 {
-			related.R.AftermarketDevices[i] = related.R.AftermarketDevices[ln-1]
-		}
-		related.R.AftermarketDevices = related.R.AftermarketDevices[:ln-1]
-		break
-	}
+	related.R.AftermarketDevice = nil
 	return nil
 }
 

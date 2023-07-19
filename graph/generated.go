@@ -80,12 +80,14 @@ type ComplexityRoot struct {
 	}
 
 	Vehicle struct {
-		ID       func(childComplexity int) int
-		Make     func(childComplexity int) int
-		MintedAt func(childComplexity int) int
-		Model    func(childComplexity int) int
-		Owner    func(childComplexity int) int
-		Year     func(childComplexity int) int
+		AftermarketDevice           func(childComplexity int) int
+		AftermarketDeviceConnection func(childComplexity int) int
+		ID                          func(childComplexity int) int
+		Make                        func(childComplexity int) int
+		MintedAt                    func(childComplexity int) int
+		Model                       func(childComplexity int) int
+		Owner                       func(childComplexity int) int
+		Year                        func(childComplexity int) int
 	}
 
 	VehicleConnection struct {
@@ -169,7 +171,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.AftermarketDevice.VehicleConnection(childComplexity), true
 
-	case "AftermarketDevice.vehicle_id":
+	case "AftermarketDevice.vehicleId":
 		if e.complexity.AftermarketDevice.VehicleID == nil {
 			break
 		}
@@ -248,6 +250,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.OwnedVehicles(childComplexity, args["address"].(common.Address), args["first"].(*int), args["after"].(*string)), true
+
+	case "Vehicle.aftermarketDevice":
+		if e.complexity.Vehicle.AftermarketDevice == nil {
+			break
+		}
+
+		return e.complexity.Vehicle.AftermarketDevice(childComplexity), true
+
+	case "Vehicle.aftermarketDeviceConnection":
+		if e.complexity.Vehicle.AftermarketDeviceConnection == nil {
+			break
+		}
+
+		return e.complexity.Vehicle.AftermarketDeviceConnection(childComplexity), true
 
 	case "Vehicle.id":
 		if e.complexity.Vehicle.ID == nil {
@@ -802,8 +818,8 @@ func (ec *executionContext) fieldContext_AftermarketDevice_mintedAt(ctx context.
 	return fc, nil
 }
 
-func (ec *executionContext) _AftermarketDevice_vehicle_id(ctx context.Context, field graphql.CollectedField, obj *model.AftermarketDevice) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_AftermarketDevice_vehicle_id(ctx, field)
+func (ec *executionContext) _AftermarketDevice_vehicleId(ctx context.Context, field graphql.CollectedField, obj *model.AftermarketDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AftermarketDevice_vehicleId(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -830,7 +846,7 @@ func (ec *executionContext) _AftermarketDevice_vehicle_id(ctx context.Context, f
 	return ec.marshalOID2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_AftermarketDevice_vehicle_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_AftermarketDevice_vehicleId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AftermarketDevice",
 		Field:      field,
@@ -891,6 +907,10 @@ func (ec *executionContext) fieldContext_AftermarketDevice_vehicleConnection(ctx
 				return ec.fieldContext_Vehicle_year(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_Vehicle_mintedAt(ctx, field)
+			case "aftermarketDevice":
+				return ec.fieldContext_Vehicle_aftermarketDevice(ctx, field)
+			case "aftermarketDeviceConnection":
+				return ec.fieldContext_Vehicle_aftermarketDeviceConnection(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
 		},
@@ -1137,8 +1157,8 @@ func (ec *executionContext) fieldContext_AftermarketDeviceEdge_node(ctx context.
 				return ec.fieldContext_AftermarketDevice_imei(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_AftermarketDevice_mintedAt(ctx, field)
-			case "vehicle_id":
-				return ec.fieldContext_AftermarketDevice_vehicle_id(ctx, field)
+			case "vehicleId":
+				return ec.fieldContext_AftermarketDevice_vehicleId(ctx, field)
 			case "vehicleConnection":
 				return ec.fieldContext_AftermarketDevice_vehicleConnection(ctx, field)
 			}
@@ -1737,6 +1757,106 @@ func (ec *executionContext) fieldContext_Vehicle_mintedAt(ctx context.Context, f
 	return fc, nil
 }
 
+func (ec *executionContext) _Vehicle_aftermarketDevice(ctx context.Context, field graphql.CollectedField, obj *model.Vehicle) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Vehicle_aftermarketDevice(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AftermarketDevice, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOID2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Vehicle_aftermarketDevice(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Vehicle",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Vehicle_aftermarketDeviceConnection(ctx context.Context, field graphql.CollectedField, obj *model.Vehicle) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Vehicle_aftermarketDeviceConnection(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AftermarketDeviceConnection, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.AftermarketDevice)
+	fc.Result = res
+	return ec.marshalOAftermarketDevice2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDevice(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Vehicle_aftermarketDeviceConnection(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Vehicle",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_AftermarketDevice_id(ctx, field)
+			case "address":
+				return ec.fieldContext_AftermarketDevice_address(ctx, field)
+			case "owner":
+				return ec.fieldContext_AftermarketDevice_owner(ctx, field)
+			case "serial":
+				return ec.fieldContext_AftermarketDevice_serial(ctx, field)
+			case "imei":
+				return ec.fieldContext_AftermarketDevice_imei(ctx, field)
+			case "mintedAt":
+				return ec.fieldContext_AftermarketDevice_mintedAt(ctx, field)
+			case "vehicleId":
+				return ec.fieldContext_AftermarketDevice_vehicleId(ctx, field)
+			case "vehicleConnection":
+				return ec.fieldContext_AftermarketDevice_vehicleConnection(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AftermarketDevice", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _VehicleConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.VehicleConnection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_VehicleConnection_totalCount(ctx, field)
 	if err != nil {
@@ -1932,6 +2052,10 @@ func (ec *executionContext) fieldContext_VehicleEdge_node(ctx context.Context, f
 				return ec.fieldContext_Vehicle_year(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_Vehicle_mintedAt(ctx, field)
+			case "aftermarketDevice":
+				return ec.fieldContext_Vehicle_aftermarketDevice(ctx, field)
+			case "aftermarketDeviceConnection":
+				return ec.fieldContext_Vehicle_aftermarketDeviceConnection(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
 		},
@@ -3790,8 +3914,8 @@ func (ec *executionContext) _AftermarketDevice(ctx context.Context, sel ast.Sele
 			out.Values[i] = ec._AftermarketDevice_imei(ctx, field, obj)
 		case "mintedAt":
 			out.Values[i] = ec._AftermarketDevice_mintedAt(ctx, field, obj)
-		case "vehicle_id":
-			out.Values[i] = ec._AftermarketDevice_vehicle_id(ctx, field, obj)
+		case "vehicleId":
+			out.Values[i] = ec._AftermarketDevice_vehicleId(ctx, field, obj)
 		case "vehicleConnection":
 			out.Values[i] = ec._AftermarketDevice_vehicleConnection(ctx, field, obj)
 		default:
@@ -4071,6 +4195,10 @@ func (ec *executionContext) _Vehicle(ctx context.Context, sel ast.SelectionSet, 
 			out.Values[i] = ec._Vehicle_year(ctx, field, obj)
 		case "mintedAt":
 			out.Values[i] = ec._Vehicle_mintedAt(ctx, field, obj)
+		case "aftermarketDevice":
+			out.Values[i] = ec._Vehicle_aftermarketDevice(ctx, field, obj)
+		case "aftermarketDeviceConnection":
+			out.Values[i] = ec._Vehicle_aftermarketDeviceConnection(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5021,6 +5149,13 @@ func (ec *executionContext) marshalOAddress2ᚖgithubᚗcomᚋethereumᚋgoᚑet
 	}
 	res := types.MarshalAddress(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOAftermarketDevice2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDevice(ctx context.Context, sel ast.SelectionSet, v *model.AftermarketDevice) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._AftermarketDevice(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {

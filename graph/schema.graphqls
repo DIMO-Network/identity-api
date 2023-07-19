@@ -18,6 +18,8 @@ type Vehicle {
   model: String
   year: Int
   mintedAt: Time
+  aftermarketDevice: ID
+  aftermarketDeviceConnection: AftermarketDevice
 }
 
 type VehicleEdge {
@@ -32,7 +34,7 @@ type AftermarketDevice {
   serial: String
   imei: String
   mintedAt: Time
-  vehicle_id: ID
+  vehicleId: ID
   vehicleConnection: Vehicle
 }
 

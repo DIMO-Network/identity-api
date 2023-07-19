@@ -87,14 +87,14 @@ var VehicleWhere = struct {
 
 // VehicleRels is where relationship names are stored.
 var VehicleRels = struct {
-	AftermarketDevices string
+	AftermarketDevice string
 }{
-	AftermarketDevices: "AftermarketDevices",
+	AftermarketDevice: "AftermarketDevice",
 }
 
 // vehicleR is where relationships are stored.
 type vehicleR struct {
-	AftermarketDevices AftermarketDeviceSlice `boil:"AftermarketDevices" json:"AftermarketDevices" toml:"AftermarketDevices" yaml:"AftermarketDevices"`
+	AftermarketDevice *AftermarketDevice `boil:"AftermarketDevice" json:"AftermarketDevice" toml:"AftermarketDevice" yaml:"AftermarketDevice"`
 }
 
 // NewStruct creates a new relationship struct
@@ -102,11 +102,11 @@ func (*vehicleR) NewStruct() *vehicleR {
 	return &vehicleR{}
 }
 
-func (r *vehicleR) GetAftermarketDevices() AftermarketDeviceSlice {
+func (r *vehicleR) GetAftermarketDevice() *AftermarketDevice {
 	if r == nil {
 		return nil
 	}
-	return r.AftermarketDevices
+	return r.AftermarketDevice
 }
 
 // vehicleL is where Load methods for each relationship are stored.
@@ -398,23 +398,20 @@ func (q vehicleQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (bo
 	return count > 0, nil
 }
 
-// AftermarketDevices retrieves all the aftermarket_device's AftermarketDevices with an executor.
-func (o *Vehicle) AftermarketDevices(mods ...qm.QueryMod) aftermarketDeviceQuery {
-	var queryMods []qm.QueryMod
-	if len(mods) != 0 {
-		queryMods = append(queryMods, mods...)
+// AftermarketDevice pointed to by the foreign key.
+func (o *Vehicle) AftermarketDevice(mods ...qm.QueryMod) aftermarketDeviceQuery {
+	queryMods := []qm.QueryMod{
+		qm.Where("\"vehicle_id\" = ?", o.ID),
 	}
 
-	queryMods = append(queryMods,
-		qm.Where("\"identity_api\".\"aftermarket_devices\".\"vehicle_id\"=?", o.ID),
-	)
+	queryMods = append(queryMods, mods...)
 
 	return AftermarketDevices(queryMods...)
 }
 
-// LoadAftermarketDevices allows an eager lookup of values, cached into the
-// loaded structs of the objects. This is for a 1-M or N-M relationship.
-func (vehicleL) LoadAftermarketDevices(ctx context.Context, e boil.ContextExecutor, singular bool, maybeVehicle interface{}, mods queries.Applicator) error {
+// LoadAftermarketDevice allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-1 relationship.
+func (vehicleL) LoadAftermarketDevice(ctx context.Context, e boil.ContextExecutor, singular bool, maybeVehicle interface{}, mods queries.Applicator) error {
 	var slice []*Vehicle
 	var object *Vehicle
 
@@ -477,16 +474,16 @@ func (vehicleL) LoadAftermarketDevices(ctx context.Context, e boil.ContextExecut
 
 	results, err := query.QueryContext(ctx, e)
 	if err != nil {
-		return errors.Wrap(err, "failed to eager load aftermarket_devices")
+		return errors.Wrap(err, "failed to eager load AftermarketDevice")
 	}
 
 	var resultSlice []*AftermarketDevice
 	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice aftermarket_devices")
+		return errors.Wrap(err, "failed to bind eager loaded slice AftermarketDevice")
 	}
 
 	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results in eager load on aftermarket_devices")
+		return errors.Wrap(err, "failed to close results of eager load for aftermarket_devices")
 	}
 	if err = results.Err(); err != nil {
 		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for aftermarket_devices")
@@ -499,21 +496,24 @@ func (vehicleL) LoadAftermarketDevices(ctx context.Context, e boil.ContextExecut
 			}
 		}
 	}
-	if singular {
-		object.R.AftermarketDevices = resultSlice
-		for _, foreign := range resultSlice {
-			if foreign.R == nil {
-				foreign.R = &aftermarketDeviceR{}
-			}
-			foreign.R.Vehicle = object
-		}
+
+	if len(resultSlice) == 0 {
 		return nil
 	}
 
-	for _, foreign := range resultSlice {
-		for _, local := range slice {
+	if singular {
+		foreign := resultSlice[0]
+		object.R.AftermarketDevice = foreign
+		if foreign.R == nil {
+			foreign.R = &aftermarketDeviceR{}
+		}
+		foreign.R.Vehicle = object
+	}
+
+	for _, local := range slice {
+		for _, foreign := range resultSlice {
 			if queries.Equal(local.ID, foreign.VehicleID) {
-				local.R.AftermarketDevices = append(local.R.AftermarketDevices, foreign)
+				local.R.AftermarketDevice = foreign
 				if foreign.R == nil {
 					foreign.R = &aftermarketDeviceR{}
 				}
@@ -526,129 +526,76 @@ func (vehicleL) LoadAftermarketDevices(ctx context.Context, e boil.ContextExecut
 	return nil
 }
 
-// AddAftermarketDevices adds the given related objects to the existing relationships
-// of the vehicle, optionally inserting them as new records.
-// Appends related to o.R.AftermarketDevices.
-// Sets related.R.Vehicle appropriately.
-func (o *Vehicle) AddAftermarketDevices(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*AftermarketDevice) error {
+// SetAftermarketDevice of the vehicle to the related item.
+// Sets o.R.AftermarketDevice to related.
+// Adds o to related.R.Vehicle.
+func (o *Vehicle) SetAftermarketDevice(ctx context.Context, exec boil.ContextExecutor, insert bool, related *AftermarketDevice) error {
 	var err error
-	for _, rel := range related {
-		if insert {
-			queries.Assign(&rel.VehicleID, o.ID)
-			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
-				return errors.Wrap(err, "failed to insert into foreign table")
-			}
-		} else {
-			updateQuery := fmt.Sprintf(
-				"UPDATE \"identity_api\".\"aftermarket_devices\" SET %s WHERE %s",
-				strmangle.SetParamNames("\"", "\"", 1, []string{"vehicle_id"}),
-				strmangle.WhereClause("\"", "\"", 2, aftermarketDevicePrimaryKeyColumns),
-			)
-			values := []interface{}{o.ID, rel.ID}
 
-			if boil.IsDebug(ctx) {
-				writer := boil.DebugWriterFrom(ctx)
-				fmt.Fprintln(writer, updateQuery)
-				fmt.Fprintln(writer, values)
-			}
-			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
-				return errors.Wrap(err, "failed to update foreign table")
-			}
+	if insert {
+		queries.Assign(&related.VehicleID, o.ID)
 
-			queries.Assign(&rel.VehicleID, o.ID)
+		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
+			return errors.Wrap(err, "failed to insert into foreign table")
 		}
+	} else {
+		updateQuery := fmt.Sprintf(
+			"UPDATE \"identity_api\".\"aftermarket_devices\" SET %s WHERE %s",
+			strmangle.SetParamNames("\"", "\"", 1, []string{"vehicle_id"}),
+			strmangle.WhereClause("\"", "\"", 2, aftermarketDevicePrimaryKeyColumns),
+		)
+		values := []interface{}{o.ID, related.ID}
+
+		if boil.IsDebug(ctx) {
+			writer := boil.DebugWriterFrom(ctx)
+			fmt.Fprintln(writer, updateQuery)
+			fmt.Fprintln(writer, values)
+		}
+		if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+			return errors.Wrap(err, "failed to update foreign table")
+		}
+
+		queries.Assign(&related.VehicleID, o.ID)
 	}
 
 	if o.R == nil {
 		o.R = &vehicleR{
-			AftermarketDevices: related,
+			AftermarketDevice: related,
 		}
 	} else {
-		o.R.AftermarketDevices = append(o.R.AftermarketDevices, related...)
+		o.R.AftermarketDevice = related
 	}
 
-	for _, rel := range related {
-		if rel.R == nil {
-			rel.R = &aftermarketDeviceR{
-				Vehicle: o,
-			}
-		} else {
-			rel.R.Vehicle = o
+	if related.R == nil {
+		related.R = &aftermarketDeviceR{
+			Vehicle: o,
 		}
+	} else {
+		related.R.Vehicle = o
 	}
 	return nil
 }
 
-// SetAftermarketDevices removes all previously related items of the
-// vehicle replacing them completely with the passed
-// in related items, optionally inserting them as new records.
-// Sets o.R.Vehicle's AftermarketDevices accordingly.
-// Replaces o.R.AftermarketDevices with related.
-// Sets related.R.Vehicle's AftermarketDevices accordingly.
-func (o *Vehicle) SetAftermarketDevices(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*AftermarketDevice) error {
-	query := "update \"identity_api\".\"aftermarket_devices\" set \"vehicle_id\" = null where \"vehicle_id\" = $1"
-	values := []interface{}{o.ID}
-	if boil.IsDebug(ctx) {
-		writer := boil.DebugWriterFrom(ctx)
-		fmt.Fprintln(writer, query)
-		fmt.Fprintln(writer, values)
-	}
-	_, err := exec.ExecContext(ctx, query, values...)
-	if err != nil {
-		return errors.Wrap(err, "failed to remove relationships before set")
+// RemoveAftermarketDevice relationship.
+// Sets o.R.AftermarketDevice to nil.
+// Removes o from all passed in related items' relationships struct.
+func (o *Vehicle) RemoveAftermarketDevice(ctx context.Context, exec boil.ContextExecutor, related *AftermarketDevice) error {
+	var err error
+
+	queries.SetScanner(&related.VehicleID, nil)
+	if _, err = related.Update(ctx, exec, boil.Whitelist("vehicle_id")); err != nil {
+		return errors.Wrap(err, "failed to update local table")
 	}
 
 	if o.R != nil {
-		for _, rel := range o.R.AftermarketDevices {
-			queries.SetScanner(&rel.VehicleID, nil)
-			if rel.R == nil {
-				continue
-			}
-
-			rel.R.Vehicle = nil
-		}
-		o.R.AftermarketDevices = nil
+		o.R.AftermarketDevice = nil
 	}
 
-	return o.AddAftermarketDevices(ctx, exec, insert, related...)
-}
-
-// RemoveAftermarketDevices relationships from objects passed in.
-// Removes related items from R.AftermarketDevices (uses pointer comparison, removal does not keep order)
-// Sets related.R.Vehicle.
-func (o *Vehicle) RemoveAftermarketDevices(ctx context.Context, exec boil.ContextExecutor, related ...*AftermarketDevice) error {
-	if len(related) == 0 {
+	if related == nil || related.R == nil {
 		return nil
 	}
 
-	var err error
-	for _, rel := range related {
-		queries.SetScanner(&rel.VehicleID, nil)
-		if rel.R != nil {
-			rel.R.Vehicle = nil
-		}
-		if _, err = rel.Update(ctx, exec, boil.Whitelist("vehicle_id")); err != nil {
-			return err
-		}
-	}
-	if o.R == nil {
-		return nil
-	}
-
-	for _, rel := range related {
-		for i, ri := range o.R.AftermarketDevices {
-			if rel != ri {
-				continue
-			}
-
-			ln := len(o.R.AftermarketDevices)
-			if ln > 1 && i < ln-1 {
-				o.R.AftermarketDevices[i] = o.R.AftermarketDevices[ln-1]
-			}
-			o.R.AftermarketDevices = o.R.AftermarketDevices[:ln-1]
-			break
-		}
-	}
+	related.R.Vehicle = nil
 
 	return nil
 }
