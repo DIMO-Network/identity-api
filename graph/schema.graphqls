@@ -27,29 +27,26 @@ type VehicleEdge {
 
 type AftermarketDevice {
   id: ID!
-  address: Address!
-  owner: Address!
+  address: Address
+  owner: Address
   serial: String
   imei: String
-  mintedAt: Time!
-  vehicle_id: ID!
+  mintedAt: Time
 }
 
 type AftermarketDeviceConnection {
   totalCount: Int!
-  edges: [AftermarketDeviceEdge!]
-  devices: [AftermarketDevice!]
+  edges: [AftermarketDeviceEdge!]!
   pageInfo: PageInfo!
 }
 
 type AftermarketDeviceEdge {
   cursor: ID!
-  node: AftermarketDevice
+  node: AftermarketDevice!
 }
 
 type PageInfo {
-  startCursor: ID!
-  endCursor: ID!
+  endCursor: String
   hasNextPage: Boolean!
 }
 

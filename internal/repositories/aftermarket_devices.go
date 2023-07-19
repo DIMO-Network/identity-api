@@ -58,16 +58,16 @@ func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr comm
 
 	var adEdges []*gmodel.AftermarketDeviceEdge
 	for _, d := range ads {
+		adAddr := common.BytesToAddress(d.Owner.Bytes)
 		adEdges = append(adEdges,
 			&gmodel.AftermarketDeviceEdge{
 				Node: &gmodel.AftermarketDevice{
-					ID:        strconv.Itoa(d.ID),
-					Address:   common.BytesToAddress(d.Owner.Bytes),
-					Owner:     addr,
-					Serial:    &d.Serial.String,
-					Imei:      &d.Imei.String,
-					MintedAt:  d.MintedAt.Time,
-					VehicleID: strconv.Itoa(d.VehicleID.Int),
+					ID:       strconv.Itoa(d.ID),
+					Address:  &adAddr,
+					Owner:    &addr,
+					Serial:   &d.Serial.String,
+					Imei:     &d.Imei.String,
+					MintedAt: &d.MintedAt.Time,
 				},
 				Cursor: strconv.Itoa(d.ID),
 			},
@@ -78,8 +78,7 @@ func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr comm
 		TotalCount: int(ownedADCount),
 		PageInfo: &gmodel.PageInfo{
 			HasNextPage: hasNextPage,
-			EndCursor:   adEdges[len(adEdges)-1].Node.ID,
-			StartCursor: adEdges[0].Node.ID,
+			EndCursor:   &adEdges[len(adEdges)-1].Node.ID,
 		},
 		Edges: adEdges,
 	}
