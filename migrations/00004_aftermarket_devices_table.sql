@@ -1,18 +1,13 @@
 -- +goose Up
 -- +goose StatementBegin
 
-SET search_path = identity_api, public;
-
 CREATE TABLE aftermarket_devices(
     id int CONSTRAINT aftermarket_devices_pkey PRIMARY KEY,
-    "address" bytea,
-    "owner" bytea,
+    "address" bytea CONSTRAINT ad_address_check CHECK (length("address") = 20),
+    "owner" bytea CONSTRAINT ad_owner_address_check CHECK (length("owner") = 20),
     "serial" text,
     imei text,
-    minted_at timestamptz,
-    vehicle_id int,
-
-    CONSTRAINT linked_ad_vehicle FOREIGN KEY (vehicle_id) REFERENCES vehicles (id)
+    minted_at timestamptz
 );
 
 -- +goose StatementEnd
@@ -20,8 +15,6 @@ CREATE TABLE aftermarket_devices(
 -- +goose Down
 -- +goose StatementBegin
 
-SET search_path = identity_api, public;
-
-drop table aftermarket_devices;
+DROP TABLE aftermarket_devices;
 
 -- +goose StatementEnd

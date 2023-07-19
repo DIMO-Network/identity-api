@@ -16,9 +16,13 @@ func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr comm
 	ownedADCount, err := models.AftermarketDevices(
 		models.AftermarketDeviceWhere.Owner.EQ(null.BytesFrom(addr.Bytes())),
 	).Count(context.Background(), v.pdb.DBS().Reader)
+	if err != nil {
+		return nil, err
+	}
+
 	limit := defaultPageSize
 	if first != nil {
-		if *first == 0 {
+		if *first < 1 {
 			return nil, errors.New("invalid pagination parameter provided")
 		}
 		limit = *first
@@ -34,17 +38,18 @@ func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr comm
 	queryMods := []qm.QueryMod{
 		models.AftermarketDeviceWhere.Owner.EQ(null.BytesFrom(addr.Bytes())),
 		qm.Load(models.AftermarketDeviceRels.Vehicle),
+		// Use limit + 1 here to check if there's a next page.
 		qm.Limit(limit + 1),
-		qm.OrderBy(models.AftermarketDeviceColumns.ID + " ASC"),
+		qm.OrderBy(models.AftermarketDeviceColumns.ID + " DESC"),
 	}
 
 	if after != nil {
-		searchAfter, err := strconv.Atoi(*after)
+		searchAfter, err := strconv.Atoi(string([]byte(*after)))
 		if err != nil {
 			return nil, err
 		}
 
-		queryMods = append(queryMods, models.AftermarketDeviceWhere.ID.GT(searchAfter))
+		queryMods = append(queryMods, models.AftermarketDeviceWhere.ID.LT(searchAfter))
 	}
 
 	ads, err := models.AftermarketDevices(queryMods...).All(ctx, v.pdb.DBS().Reader)
@@ -59,28 +64,44 @@ func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr comm
 
 	var adEdges []*gmodel.AftermarketDeviceEdge
 	for _, d := range ads {
+		var vehicle gmodel.Vehicle
+		var vehicleID *string
+		var deviceOwnerAddr, deviceAddr *common.Address
 
-		vConn := gmodel.Vehicle{}
+		if d.Address.Ptr() != nil {
+			deviceAddr = (*common.Address)(*d.Address.Ptr())
+		}
+		if d.Owner.Ptr() != nil {
+			deviceOwnerAddr = (*common.Address)(*d.Owner.Ptr())
+		}
+		if d.VehicleID.Ptr() != nil {
+			s := strconv.Itoa(d.VehicleID.Int)
+			vehicleID = &s
+		}
 		if d.R.Vehicle != nil {
-			vConn.ID = strconv.Itoa(d.R.Vehicle.ID)
-			vConn.Owner = &addr
-			vConn.Make = d.R.Vehicle.Make.Ptr()
-			vConn.Model = d.R.Vehicle.Model.Ptr()
-			vConn.Year = d.R.Vehicle.Year.Ptr()
-			vConn.MintedAt = d.R.Vehicle.MintedAt.Ptr()
+			var vehicleOwnerAddr *common.Address
+			if d.R.Vehicle.OwnerAddress.Ptr() != nil {
+				vehicleOwnerAddr = (*common.Address)(*d.R.Vehicle.OwnerAddress.Ptr())
+			}
+			vehicle.ID = strconv.Itoa(d.R.Vehicle.ID)
+			vehicle.Owner = vehicleOwnerAddr
+			vehicle.Make = d.R.Vehicle.Make.Ptr()
+			vehicle.Model = d.R.Vehicle.Model.Ptr()
+			vehicle.Year = d.R.Vehicle.Year.Ptr()
+			vehicle.MintedAt = d.R.Vehicle.MintedAt.Ptr()
 		}
 
 		adEdges = append(adEdges,
 			&gmodel.AftermarketDeviceEdge{
 				Node: &gmodel.AftermarketDevice{
 					ID:                strconv.Itoa(d.ID),
-					Address:           common.BytesToAddress(d.Owner.Bytes),
-					Owner:             addr,
-					Serial:            &d.Serial.String,
-					Imei:              &d.Imei.String,
-					MintedAt:          d.MintedAt.Time,
-					VehicleID:         strconv.Itoa(d.VehicleID.Int),
-					VehicleConnection: &vConn,
+					Address:           deviceAddr,
+					Owner:             deviceOwnerAddr,
+					Serial:            d.Serial.Ptr(),
+					Imei:              d.Imei.Ptr(),
+					MintedAt:          d.MintedAt.Ptr(),
+					VehicleID:         vehicleID,
+					VehicleConnection: &vehicle,
 				},
 				Cursor: strconv.Itoa(d.ID),
 			},
@@ -89,13 +110,16 @@ func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr comm
 
 	res := &gmodel.AftermarketDeviceConnection{
 		TotalCount: int(ownedADCount),
+		Edges:      adEdges,
 		PageInfo: &gmodel.PageInfo{
 			HasNextPage: hasNextPage,
-			EndCursor:   adEdges[len(adEdges)-1].Node.ID,
-			StartCursor: adEdges[0].Node.ID,
 		},
-		Edges: adEdges,
 	}
 
+	if len(ads) == 0 {
+		return res, nil
+	}
+
+	res.PageInfo.EndCursor = &adEdges[len(adEdges)-1].Node.ID
 	return res, nil
 }

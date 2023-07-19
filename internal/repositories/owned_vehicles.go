@@ -59,7 +59,7 @@ func (v *VehiclesRepo) createVehiclesResponse(totalCount int64, vehicles []model
 		TotalCount: int(totalCount),
 		PageInfo: &gmodel.PageInfo{
 			HasNextPage: hasNext,
-			EndCursor:   endCursr,
+			EndCursor:   &endCursr,
 		},
 		Edges: vEdges,
 	}

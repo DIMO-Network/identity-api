@@ -232,7 +232,7 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceNodeMintedEvent(e *Cont
 	if err := ad.Upsert(context.Background(), c.dbs.DBS().Writer,
 		true,
 		[]string{models.AftermarketDeviceColumns.ID},
-		boil.Whitelist(models.AftermarketDeviceColumns.Owner, models.AftermarketDeviceColumns.MintedAt, models.AftermarketDeviceColumns.Address),
+		boil.Infer(),
 		boil.Infer()); err != nil {
 		return err
 	}
