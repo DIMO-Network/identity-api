@@ -35,6 +35,7 @@ const (
 	AftermarketDeviceAttributeSetEvent EventName = "AftermarketDeviceAttributeSet"
 	AftermarketDevicePairedEvent       EventName = "AftermarketDevicePaired"
 	AftermarketDeviceUnpairedEvent     EventName = "AftermarketDeviceUnpaired"
+	AftermarketDeviceTransferredEvent  EventName = "AftermarketDeviceTransferred"
 	Transfer                           EventName = "Transfer"
 )
 
@@ -96,6 +97,12 @@ type TransferEventData struct {
 	TokenID *big.Int
 }
 
+type AftermarketDeviceTransferredEventData struct {
+	OldOwner              common.Address
+	NewOwner              common.Address
+	AftermarketDeviceNode *big.Int
+}
+
 func NewContractsEventsConsumer(dbs db.Store, log *zerolog.Logger, settings *config.Settings) *ContractsEventsConsumer {
 	return &ContractsEventsConsumer{
 		dbs:      dbs,
@@ -139,6 +146,8 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 			return c.handleAftermarketDevicePairedEvent(ctx, &data)
 		case AftermarketDeviceUnpairedEvent:
 			return c.handleAftermarketDeviceUnpairedEvent(ctx, &data)
+		case AftermarketDeviceTransferredEvent:
+			return c.handleAftermarketDeviceTransferredEvent(ctx, &data)
 		}
 	case vehicleNFTAddr:
 		switch eventName {
@@ -342,4 +351,25 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceUnpairedEvent(ctx conte
 	}
 
 	return nil
+}
+
+func (c *ContractsEventsConsumer) handleAftermarketDeviceTransferredEvent(ctx context.Context, e *ContractEventData) error {
+	var args AftermarketDeviceTransferredEventData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	ad := models.AftermarketDevice{
+		ID:    int(args.AftermarketDeviceNode.Int64()),
+		Owner: null.BytesFrom(args.NewOwner.Bytes()),
+	}
+
+	return ad.Upsert(
+		ctx,
+		c.dbs.DBS().Writer,
+		true,
+		[]string{models.AftermarketDeviceColumns.ID},
+		boil.Whitelist(models.AftermarketDeviceColumns.ID, models.AftermarketDeviceColumns.Owner),
+		boil.Infer(),
+	)
 }
