@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"strconv"
 
@@ -30,8 +31,9 @@ func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr comm
 
 	if ownedADCount == 0 {
 		return &gmodel.AftermarketDeviceConnection{
-			TotalCount: 0,
+			TotalCount: int(ownedADCount),
 			Edges:      []*gmodel.AftermarketDeviceEdge{},
+			PageInfo:   &gmodel.PageInfo{},
 		}, nil
 	}
 
@@ -80,7 +82,7 @@ func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr comm
 					Imei:     d.Imei.Ptr(),
 					MintedAt: d.MintedAt.Ptr(),
 				},
-				Cursor: strconv.Itoa(d.ID),
+				Cursor: base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(d.ID))),
 			},
 		)
 	}
@@ -97,6 +99,7 @@ func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr comm
 		return res, nil
 	}
 
-	res.PageInfo.EndCursor = &adEdges[len(adEdges)-1].Node.ID
+	endC := base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(ads[len(ads)-1].ID)))
+	res.PageInfo.EndCursor = &endC
 	return res, nil
 }
