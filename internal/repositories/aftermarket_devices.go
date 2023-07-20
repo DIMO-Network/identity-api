@@ -16,7 +16,7 @@ import (
 func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr common.Address, first *int, after *string) (*gmodel.AftermarketDeviceConnection, error) {
 	ownedADCount, err := models.AftermarketDevices(
 		models.AftermarketDeviceWhere.Owner.EQ(null.BytesFrom(addr.Bytes())),
-	).Count(context.Background(), v.pdb.DBS().Reader)
+	).Count(ctx, v.pdb.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}
@@ -45,9 +45,24 @@ func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr comm
 	}
 
 	if after != nil {
-		searchAfter, err := strconv.Atoi(string([]byte(*after)))
+		var searchAfter int
+		searchAfter, err = strconv.Atoi(*after)
 		if err != nil {
-			return nil, err
+			if errors.Is(err, strconv.ErrSyntax) {
+				sB, err := base64.StdEncoding.DecodeString(*after)
+				if err != nil {
+					return nil, err
+				}
+
+				sa, err := strconv.Atoi(string(sB))
+				if err != nil {
+					return nil, err
+				}
+
+				searchAfter = sa
+			} else {
+				return nil, err
+			}
 		}
 
 		queryMods = append(queryMods, models.AftermarketDeviceWhere.ID.LT(searchAfter))
@@ -99,7 +114,6 @@ func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr comm
 		return res, nil
 	}
 
-	endC := base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(ads[len(ads)-1].ID)))
-	res.PageInfo.EndCursor = &endC
+	res.PageInfo.EndCursor = &adEdges[len(adEdges)-1].Cursor
 	return res, nil
 }
