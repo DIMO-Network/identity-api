@@ -124,3 +124,36 @@ func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr comm
 	res.PageInfo.EndCursor = &adEdges[len(adEdges)-1].Node.ID
 	return res, nil
 }
+
+func (v *VehiclesRepo) GetLinkedAftermarketDeviceByVehicleID(ctx context.Context, vehicleID string) (*gmodel.AftermarketDevice, error) {
+	vID, err := strconv.Atoi(vehicleID)
+	if err != nil {
+		return nil, err
+	}
+
+	aftermarketDevice, err := models.AftermarketDevices(
+		models.AftermarketDeviceWhere.VehicleID.EQ(null.IntFrom(vID)),
+	).One(ctx, v.pdb.DBS().Reader)
+	if err != nil {
+		return nil, err
+	}
+
+	var deviceAddr, deviceOwnerAddr *common.Address
+	if aftermarketDevice.Owner.Ptr() != nil {
+		deviceOwnerAddr = (*common.Address)(*aftermarketDevice.Owner.Ptr())
+	}
+	if aftermarketDevice.Address.Ptr() != nil {
+		deviceAddr = (*common.Address)(*aftermarketDevice.Address.Ptr())
+	}
+
+	res := &gmodel.AftermarketDevice{
+		ID:       strconv.Itoa(aftermarketDevice.ID),
+		Address:  deviceAddr,
+		Owner:    deviceOwnerAddr,
+		Serial:   aftermarketDevice.Serial.Ptr(),
+		Imei:     aftermarketDevice.Imei.Ptr(),
+		MintedAt: aftermarketDevice.MintedAt.Ptr(),
+	}
+
+	return res, nil
+}

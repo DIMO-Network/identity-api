@@ -11,6 +11,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+// VehicleConnection is the resolver for the vehicleConnection field.
+func (r *aftermarketDeviceResolver) VehicleConnection(ctx context.Context, obj *model.AftermarketDevice) (*model.Vehicle, error) {
+	return r.Repo.GetLinkedVehicleByID(ctx, *obj.VehicleID)
+}
+
 // OwnedVehicles is the resolver for the ownedVehicles field.
 func (r *queryResolver) OwnedVehicles(ctx context.Context, address common.Address, first *int, after *string) (*model.VehicleConnection, error) {
 	return r.Repo.GetOwnedVehicles(ctx, address, first, after)
@@ -21,7 +26,22 @@ func (r *queryResolver) OwnedAftermarketDevices(ctx context.Context, address com
 	return r.Repo.GetOwnedAftermarketDevices(ctx, address, first, after)
 }
 
+// AftermarketDeviceConnection is the resolver for the aftermarketDeviceConnection field.
+func (r *vehicleResolver) AftermarketDeviceConnection(ctx context.Context, obj *model.Vehicle) (*model.AftermarketDevice, error) {
+	return r.Repo.GetLinkedAftermarketDeviceByVehicleID(ctx, obj.ID)
+}
+
+// AftermarketDevice returns AftermarketDeviceResolver implementation.
+func (r *Resolver) AftermarketDevice() AftermarketDeviceResolver {
+	return &aftermarketDeviceResolver{r}
+}
+
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
+// Vehicle returns VehicleResolver implementation.
+func (r *Resolver) Vehicle() VehicleResolver { return &vehicleResolver{r} }
+
+type aftermarketDeviceResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type vehicleResolver struct{ *Resolver }

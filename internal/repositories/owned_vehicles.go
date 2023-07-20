@@ -136,3 +136,33 @@ func (v *VehiclesRepo) GetOwnedVehicles(ctx context.Context, addr common.Address
 
 	return res, nil
 }
+
+func (v *VehiclesRepo) GetLinkedVehicleByID(ctx context.Context, vehicleID string) (*gmodel.Vehicle, error) {
+	vID, err := strconv.Atoi(vehicleID)
+	if err != nil {
+		return nil, err
+	}
+
+	vehicle, err := models.Vehicles(
+		models.VehicleWhere.ID.EQ(vID),
+	).One(ctx, v.pdb.DBS().Reader)
+	if err != nil {
+		return nil, err
+	}
+
+	var owner *common.Address
+	if vehicle.OwnerAddress.Ptr() != nil {
+		owner = (*common.Address)(*vehicle.OwnerAddress.Ptr())
+	}
+
+	res := &gmodel.Vehicle{
+		ID:       strconv.Itoa(vehicle.ID),
+		Owner:    owner,
+		Make:     vehicle.Make.Ptr(),
+		Model:    vehicle.Model.Ptr(),
+		Year:     vehicle.Year.Ptr(),
+		MintedAt: vehicle.MintedAt.Ptr(),
+	}
+
+	return res, nil
+}

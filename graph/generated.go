@@ -40,7 +40,9 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	AftermarketDevice() AftermarketDeviceResolver
 	Query() QueryResolver
+	Vehicle() VehicleResolver
 }
 
 type DirectiveRoot struct {
@@ -102,9 +104,15 @@ type ComplexityRoot struct {
 	}
 }
 
+type AftermarketDeviceResolver interface {
+	VehicleConnection(ctx context.Context, obj *model.AftermarketDevice) (*model.Vehicle, error)
+}
 type QueryResolver interface {
 	OwnedVehicles(ctx context.Context, address common.Address, first *int, after *string) (*model.VehicleConnection, error)
 	OwnedAftermarketDevices(ctx context.Context, address common.Address, first *int, after *string) (*model.AftermarketDeviceConnection, error)
+}
+type VehicleResolver interface {
+	AftermarketDeviceConnection(ctx context.Context, obj *model.Vehicle) (*model.AftermarketDevice, error)
 }
 
 type executableSchema struct {
@@ -873,7 +881,7 @@ func (ec *executionContext) _AftermarketDevice_vehicleConnection(ctx context.Con
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.VehicleConnection, nil
+		return ec.resolvers.AftermarketDevice().VehicleConnection(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -891,8 +899,8 @@ func (ec *executionContext) fieldContext_AftermarketDevice_vehicleConnection(ctx
 	fc = &graphql.FieldContext{
 		Object:     "AftermarketDevice",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -1812,7 +1820,7 @@ func (ec *executionContext) _Vehicle_aftermarketDeviceConnection(ctx context.Con
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.AftermarketDeviceConnection, nil
+		return ec.resolvers.Vehicle().AftermarketDeviceConnection(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1830,8 +1838,8 @@ func (ec *executionContext) fieldContext_Vehicle_aftermarketDeviceConnection(ctx
 	fc = &graphql.FieldContext{
 		Object:     "Vehicle",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -3902,7 +3910,7 @@ func (ec *executionContext) _AftermarketDevice(ctx context.Context, sel ast.Sele
 		case "id":
 			out.Values[i] = ec._AftermarketDevice_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "address":
 			out.Values[i] = ec._AftermarketDevice_address(ctx, field, obj)
@@ -3917,7 +3925,38 @@ func (ec *executionContext) _AftermarketDevice(ctx context.Context, sel ast.Sele
 		case "vehicleId":
 			out.Values[i] = ec._AftermarketDevice_vehicleId(ctx, field, obj)
 		case "vehicleConnection":
-			out.Values[i] = ec._AftermarketDevice_vehicleConnection(ctx, field, obj)
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AftermarketDevice_vehicleConnection(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -4183,7 +4222,7 @@ func (ec *executionContext) _Vehicle(ctx context.Context, sel ast.SelectionSet, 
 		case "id":
 			out.Values[i] = ec._Vehicle_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "owner":
 			out.Values[i] = ec._Vehicle_owner(ctx, field, obj)
@@ -4198,7 +4237,38 @@ func (ec *executionContext) _Vehicle(ctx context.Context, sel ast.SelectionSet, 
 		case "aftermarketDevice":
 			out.Values[i] = ec._Vehicle_aftermarketDevice(ctx, field, obj)
 		case "aftermarketDeviceConnection":
-			out.Values[i] = ec._Vehicle_aftermarketDeviceConnection(ctx, field, obj)
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Vehicle_aftermarketDeviceConnection(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

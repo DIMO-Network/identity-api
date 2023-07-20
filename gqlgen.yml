@@ -87,3 +87,11 @@ models:
       - github.com/99designs/gqlgen/graphql.Int32
   Address:
     model: github.com/DIMO-Network/identity-api/graph/types.Address
+  AftermarketDevice:
+    fields:
+      vehicleConnection:
+        resolver: true
+  Vehicle:
+    fields:
+      aftermarketDeviceConnection:
+        resolver: true
