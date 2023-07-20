@@ -45,24 +45,14 @@ func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr comm
 	}
 
 	if after != nil {
-		var searchAfter int
-		searchAfter, err = strconv.Atoi(*after)
+		sB, err := base64.StdEncoding.DecodeString(*after)
 		if err != nil {
-			if errors.Is(err, strconv.ErrSyntax) {
-				sB, err := base64.StdEncoding.DecodeString(*after)
-				if err != nil {
-					return nil, err
-				}
+			return nil, err
+		}
 
-				sa, err := strconv.Atoi(string(sB))
-				if err != nil {
-					return nil, err
-				}
-
-				searchAfter = sa
-			} else {
-				return nil, err
-			}
+		searchAfter, err := strconv.Atoi(string(sB))
+		if err != nil {
+			return nil, err
 		}
 
 		queryMods = append(queryMods, models.AftermarketDeviceWhere.ID.LT(searchAfter))
@@ -81,10 +71,10 @@ func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr comm
 	var adEdges []*gmodel.AftermarketDeviceEdge
 	for _, d := range ads {
 		var ownerAddr, deviceAddr *common.Address
-		if d.Address.Ptr() != nil {
+		if d.Address.Valid {
 			deviceAddr = (*common.Address)(*d.Address.Ptr())
 		}
-		if d.Owner.Ptr() != nil {
+		if d.Owner.Valid {
 			ownerAddr = (*common.Address)(*d.Owner.Ptr())
 		}
 		adEdges = append(adEdges,
