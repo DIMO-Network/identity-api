@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"database/sql"
 	"encoding/base64"
 	"errors"
 	"strconv"
@@ -12,6 +13,14 @@ import (
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
+
+func bytesToAddr(addrB null.Bytes) *common.Address {
+	var addr *common.Address
+	if addrB.Valid {
+		addr = (*common.Address)(*addrB.Ptr())
+	}
+	return addr
+}
 
 func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr common.Address, first *int, after *string) (*gmodel.AftermarketDeviceConnection, error) {
 	ownedADCount, err := models.AftermarketDevices(
@@ -72,22 +81,9 @@ func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr comm
 	var adEdges []*gmodel.AftermarketDeviceEdge
 	for _, d := range ads {
 		var vehicle gmodel.Vehicle
-		var vehicleID *string
-		var ownerAddr, deviceAddr *common.Address
-		if d.Address.Valid {
-			deviceAddr = (*common.Address)(*d.Address.Ptr())
-		}
-		if d.Owner.Valid {
-			ownerAddr = (*common.Address)(*d.Owner.Ptr())
-		}
-
 		if d.R.Vehicle != nil {
-			var vehicleOwnerAddr *common.Address
-			if d.R.Vehicle.OwnerAddress.Ptr() != nil {
-				vehicleOwnerAddr = (*common.Address)(*d.R.Vehicle.OwnerAddress.Ptr())
-			}
 			vehicle.ID = strconv.Itoa(d.R.Vehicle.ID)
-			vehicle.Owner = vehicleOwnerAddr
+			vehicle.Owner = bytesToAddr(d.R.Vehicle.OwnerAddress)
 			vehicle.Make = d.R.Vehicle.Make.Ptr()
 			vehicle.Model = d.R.Vehicle.Model.Ptr()
 			vehicle.Year = d.R.Vehicle.Year.Ptr()
@@ -97,14 +93,13 @@ func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr comm
 		adEdges = append(adEdges,
 			&gmodel.AftermarketDeviceEdge{
 				Node: &gmodel.AftermarketDevice{
-					ID:                strconv.Itoa(d.ID),
-					Address:           deviceAddr,
-					Owner:             ownerAddr,
-					Serial:            d.Serial.Ptr(),
-					Imei:              d.Imei.Ptr(),
-					MintedAt:          d.MintedAt.Ptr(),
-					VehicleID:         vehicleID,
-					VehicleConnection: &vehicle,
+					ID:       strconv.Itoa(d.ID),
+					Address:  bytesToAddr(d.Address),
+					Owner:    bytesToAddr(d.Owner),
+					Serial:   d.Serial.Ptr(),
+					Imei:     d.Imei.Ptr(),
+					MintedAt: d.MintedAt.Ptr(),
+					Vehicle:  &vehicle,
 				},
 				Cursor: base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(d.ID))),
 			},
@@ -133,28 +128,23 @@ func (v *VehiclesRepo) GetLinkedAftermarketDeviceByVehicleID(ctx context.Context
 		return nil, err
 	}
 
-	aftermarketDevice, err := models.AftermarketDevices(
+	ad, err := models.AftermarketDevices(
 		models.AftermarketDeviceWhere.VehicleID.EQ(null.IntFrom(vID)),
 	).One(ctx, v.pdb.DBS().Reader)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
 		return nil, err
 	}
 
-	var deviceAddr, deviceOwnerAddr *common.Address
-	if aftermarketDevice.Owner.Ptr() != nil {
-		deviceOwnerAddr = (*common.Address)(*aftermarketDevice.Owner.Ptr())
-	}
-	if aftermarketDevice.Address.Ptr() != nil {
-		deviceAddr = (*common.Address)(*aftermarketDevice.Address.Ptr())
-	}
-
 	res := &gmodel.AftermarketDevice{
-		ID:       strconv.Itoa(aftermarketDevice.ID),
-		Address:  deviceAddr,
-		Owner:    deviceOwnerAddr,
-		Serial:   aftermarketDevice.Serial.Ptr(),
-		Imei:     aftermarketDevice.Imei.Ptr(),
-		MintedAt: aftermarketDevice.MintedAt.Ptr(),
+		ID:       strconv.Itoa(ad.ID),
+		Address:  bytesToAddr(ad.Address),
+		Owner:    bytesToAddr(ad.Address),
+		Serial:   ad.Serial.Ptr(),
+		Imei:     ad.Imei.Ptr(),
+		MintedAt: ad.MintedAt.Ptr(),
 	}
 
 	return res, nil

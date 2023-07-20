@@ -89,9 +89,9 @@ models:
     model: github.com/DIMO-Network/identity-api/graph/types.Address
   AftermarketDevice:
     fields:
-      vehicleConnection:
+      vehicle:
         resolver: true
   Vehicle:
     fields:
-      aftermarketDeviceConnection:
+      aftermarketDevice:
         resolver: true
