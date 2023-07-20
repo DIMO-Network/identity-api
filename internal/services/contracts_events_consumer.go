@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/segmentio/ksuid"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 
@@ -31,6 +32,7 @@ type EventName string
 const (
 	VehicleAttributeSet EventName = "VehicleAttributeSet"
 	Transfer            EventName = "Transfer"
+	PrivilegeSet        EventName = "PrivilegeSet"
 )
 
 func (r EventName) String() string {
@@ -65,6 +67,13 @@ type TransferEventData struct {
 	From    common.Address
 	To      common.Address
 	TokenID *big.Int
+}
+
+type PrivilegeSetData struct {
+	TokenId *big.Int
+	PrivId  *big.Int
+	User    common.Address
+	Expires *big.Int
 }
 
 func NewContractsEventsConsumer(dbs db.Store, log *zerolog.Logger, settings *config.Settings) *ContractsEventsConsumer {
@@ -102,6 +111,10 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 	case vehicleNFTAddr:
 		if eventName == Transfer {
 			return c.handleVehicleTransferEvent(ctx, &data)
+		}
+
+		if eventName == PrivilegeSet {
+			return c.handlePrivilegeSetEvent(ctx, &data)
 		}
 	}
 
@@ -170,6 +183,35 @@ func (c *ContractsEventsConsumer) handleVehicleTransferEvent(ctx context.Context
 	}
 
 	logger.Info().Str("TokenID", args.TokenID.String()).Msg("Event processed successfuly")
+
+	return nil
+}
+
+func (c *ContractsEventsConsumer) handlePrivilegeSetEvent(ctx context.Context, e *ContractEventData) error {
+	logger := c.log.With().Str("EventName", Transfer.String()).Logger()
+
+	var args PrivilegeSetData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	privilege := models.Privilege{
+		ID:               ksuid.New().String(),
+		TokenID:          int(args.TokenId.Int64()),
+		PrivilegeID:      int(args.PrivId.Int64()),
+		GrantedToAddress: args.User.Bytes(),
+		SetAt:            e.Block.Time,
+		ExpiresAt:        time.Unix(args.Expires.Int64(), 0),
+	}
+
+	if err := privilege.Insert(ctx, c.dbs.DBS().Writer, boil.Infer()); err != nil {
+		return err
+	}
+
+	logger.Info().
+		Str("PrivilegeID", args.PrivId.String()).
+		Str("TokenID", args.TokenId.String()).
+		Msg("Event processed successfuly")
 
 	return nil
 }

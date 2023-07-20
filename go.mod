@@ -9,6 +9,7 @@ require (
 	github.com/friendsofgo/errors v0.9.2
 	github.com/pressly/goose/v3 v3.11.2
 	github.com/rs/zerolog v1.29.1
+	github.com/segmentio/ksuid v1.0.4
 	github.com/vektah/gqlparser/v2 v2.5.4
 	github.com/volatiletech/null/v8 v8.1.2
 	github.com/volatiletech/sqlboiler/v4 v4.14.2
