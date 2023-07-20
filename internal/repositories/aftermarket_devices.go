@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"strconv"
 
@@ -15,7 +16,7 @@ import (
 func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr common.Address, first *int, after *string) (*gmodel.AftermarketDeviceConnection, error) {
 	ownedADCount, err := models.AftermarketDevices(
 		models.AftermarketDeviceWhere.Owner.EQ(null.BytesFrom(addr.Bytes())),
-	).Count(context.Background(), v.pdb.DBS().Reader)
+	).Count(ctx, v.pdb.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +46,12 @@ func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr comm
 	}
 
 	if after != nil {
-		searchAfter, err := strconv.Atoi(string([]byte(*after)))
+		sB, err := base64.StdEncoding.DecodeString(*after)
+		if err != nil {
+			return nil, err
+		}
+
+		searchAfter, err := strconv.Atoi(string(sB))
 		if err != nil {
 			return nil, err
 		}
@@ -67,18 +73,14 @@ func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr comm
 	for _, d := range ads {
 		var vehicle gmodel.Vehicle
 		var vehicleID *string
-		var deviceOwnerAddr, deviceAddr *common.Address
-
-		if d.Address.Ptr() != nil {
+		var ownerAddr, deviceAddr *common.Address
+		if d.Address.Valid {
 			deviceAddr = (*common.Address)(*d.Address.Ptr())
 		}
-		if d.Owner.Ptr() != nil {
-			deviceOwnerAddr = (*common.Address)(*d.Owner.Ptr())
+		if d.Owner.Valid {
+			ownerAddr = (*common.Address)(*d.Owner.Ptr())
 		}
-		if d.VehicleID.Ptr() != nil {
-			s := strconv.Itoa(d.VehicleID.Int)
-			vehicleID = &s
-		}
+
 		if d.R.Vehicle != nil {
 			var vehicleOwnerAddr *common.Address
 			if d.R.Vehicle.OwnerAddress.Ptr() != nil {
@@ -97,14 +99,14 @@ func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr comm
 				Node: &gmodel.AftermarketDevice{
 					ID:                strconv.Itoa(d.ID),
 					Address:           deviceAddr,
-					Owner:             deviceOwnerAddr,
+					Owner:             ownerAddr,
 					Serial:            d.Serial.Ptr(),
 					Imei:              d.Imei.Ptr(),
 					MintedAt:          d.MintedAt.Ptr(),
 					VehicleID:         vehicleID,
 					VehicleConnection: &vehicle,
 				},
-				Cursor: strconv.Itoa(d.ID),
+				Cursor: base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(d.ID))),
 			},
 		)
 	}
@@ -121,7 +123,7 @@ func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr comm
 		return res, nil
 	}
 
-	res.PageInfo.EndCursor = &adEdges[len(adEdges)-1].Node.ID
+	res.PageInfo.EndCursor = &adEdges[len(adEdges)-1].Cursor
 	return res, nil
 }
 

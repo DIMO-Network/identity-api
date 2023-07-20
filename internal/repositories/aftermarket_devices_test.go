@@ -2,11 +2,11 @@ package repositories
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"math/big"
 	"os"
-	"strconv"
 	"testing"
 	"time"
 
@@ -116,16 +116,14 @@ func TestAftermarketDeviceNodeMintMultiResponse(t *testing.T) {
 
 	adController := NewVehiclesRepo(pdb)
 	first := 2
-	after := "4"
-	res, err := adController.GetOwnedAftermarketDevices(ctx, aftermarketDeviceNodeMintedArgs.Owner, &first, &after)
-	assert.NoError(t, err)
-
-	a, err := strconv.Atoi(after)
+	after := 4
+	afterEncoded := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%d", after)))
+	res, err := adController.GetOwnedAftermarketDevices(ctx, aftermarketDeviceNodeMintedArgs.Owner, &first, &afterEncoded)
 	assert.NoError(t, err)
 
 	for i := 0; i < first; i++ {
-		a--
-		assert.Equal(t, res.Edges[i].Node.ID, fmt.Sprintf("%d", a))
+		after--
+		assert.Equal(t, res.Edges[i].Node.ID, fmt.Sprintf("%d", after))
 	}
 
 }

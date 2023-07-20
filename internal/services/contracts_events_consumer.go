@@ -245,8 +245,9 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceNodeMintedEvent(ctx con
 	if err := ad.Upsert(ctx, c.dbs.DBS().Writer,
 		true,
 		[]string{models.AftermarketDeviceColumns.ID},
-		boil.Infer(),
-		boil.Infer()); err != nil {
+		boil.Whitelist(models.AftermarketDeviceColumns.ID, models.AftermarketDeviceColumns.Address, models.AftermarketDeviceColumns.Owner, models.AftermarketDeviceColumns.MintedAt),
+		boil.Whitelist(models.AftermarketDeviceColumns.ID, models.AftermarketDeviceColumns.Address, models.AftermarketDeviceColumns.Owner, models.AftermarketDeviceColumns.MintedAt),
+	); err != nil {
 		return err
 	}
 
