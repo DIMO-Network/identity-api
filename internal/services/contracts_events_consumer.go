@@ -29,7 +29,6 @@ type ContractsEventsConsumer struct {
 type EventName string
 
 const (
-	VehicleNodeMinted   EventName = "VehicleNodeMinted"
 	VehicleAttributeSet EventName = "VehicleAttributeSet"
 	Transfer            EventName = "Transfer"
 )
@@ -54,11 +53,6 @@ type Block struct {
 	Number *big.Int    `json:"number,omitempty"`
 	Hash   common.Hash `json:"hash,omitempty"`
 	Time   time.Time   `json:"time,omitempty"`
-}
-
-type VehicleNodeMintedData struct {
-	TokenId *big.Int
-	Owner   common.Address
 }
 
 type VehicleAttributeSetData struct {
@@ -98,46 +92,20 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 		c.log.Debug().Str("event", data.EventName).Interface("event data", event).Msg("Handler not provided for event ===.")
 		return nil
 	}
+	eventName := EventName(data.EventName)
 
 	switch data.Contract {
 	case registryAddr:
-		if EventName(data.EventName) == VehicleNodeMinted {
-			return c.handleVehicleNodeMintedEvent(ctx, &data)
-		}
-
-		if EventName(data.EventName) == VehicleAttributeSet {
+		if eventName == VehicleAttributeSet {
 			return c.handleVehicleAttributeSetEvent(ctx, &data)
 		}
 	case vehicleNFTAddr:
-		if EventName(data.EventName) == Transfer {
+		if eventName == Transfer {
 			return c.handleVehicleTransferEvent(ctx, &data)
 		}
 	}
 
 	c.log.Debug().Str("event", data.EventName).Msg("Handler not provided for event.")
-
-	return nil
-}
-
-func (c *ContractsEventsConsumer) handleVehicleNodeMintedEvent(ctx context.Context, e *ContractEventData) error {
-	var args VehicleNodeMintedData
-	if err := json.Unmarshal(e.Arguments, &args); err != nil {
-		return err
-	}
-
-	veh, err := models.Vehicles(
-		models.VehicleWhere.ID.EQ(int(args.TokenId.Int64())),
-		models.VehicleWhere.OwnerAddress.EQ(args.Owner.Bytes()),
-	).One(ctx, c.dbs.DBS().Writer)
-	if err != nil {
-		return err
-	}
-
-	veh.MintedAt = null.TimeFrom(e.Block.Time)
-
-	if _, err := veh.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.VehicleColumns.MintedAt)); err != nil {
-		return err
-	}
 
 	return nil
 }
@@ -187,13 +155,16 @@ func (c *ContractsEventsConsumer) handleVehicleTransferEvent(ctx context.Context
 		return err
 	}
 
-	if args.From != common.HexToAddress("0") {
-		logger.Debug().Interface("arguments", args).Msg("Invalid Transfer event, the event has a non zero FROM address")
-		return nil
-	}
+	var vehicle models.Vehicle
+	vehicle.ID = int(args.TokenID.Int64())
+	vehicle.OwnerAddress = args.To.Bytes()
+	vehicle.MintedAt = e.Block.Time
 
-	vehicle := models.Vehicle{ID: int(args.TokenID.Int64()), OwnerAddress: args.To.Bytes()}
-	if err := vehicle.Upsert(ctx, c.dbs.DBS().Writer, true, []string{models.VehicleColumns.ID}, boil.Whitelist(models.VehicleColumns.ID), boil.Whitelist(models.VehicleColumns.ID, models.VehicleColumns.OwnerAddress)); err != nil {
+	if err := vehicle.Upsert(ctx,
+		c.dbs.DBS().Writer, true,
+		[]string{models.VehicleColumns.ID},
+		boil.Whitelist(models.VehicleColumns.OwnerAddress),
+		boil.Whitelist(models.VehicleColumns.ID, models.VehicleColumns.OwnerAddress, models.VehicleColumns.MintedAt)); err != nil {
 		return err
 	}
 

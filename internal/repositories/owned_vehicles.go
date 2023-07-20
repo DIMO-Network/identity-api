@@ -46,7 +46,7 @@ func (v *VehiclesRepo) createVehiclesResponse(totalCount int64, vehicles []model
 				Make:     v.Make.Ptr(),
 				Model:    v.Model.Ptr(),
 				Year:     v.Year.Ptr(),
-				MintedAt: v.MintedAt.Ptr(),
+				MintedAt: &v.MintedAt,
 			},
 			Cursor: cursor,
 		}

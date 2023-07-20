@@ -29,7 +29,7 @@ type Vehicle struct {
 	Make         null.String `boil:"make" json:"make,omitempty" toml:"make" yaml:"make,omitempty"`
 	Model        null.String `boil:"model" json:"model,omitempty" toml:"model" yaml:"model,omitempty"`
 	Year         null.Int    `boil:"year" json:"year,omitempty" toml:"year" yaml:"year,omitempty"`
-	MintedAt     null.Time   `boil:"minted_at" json:"minted_at,omitempty" toml:"minted_at" yaml:"minted_at,omitempty"`
+	MintedAt     time.Time   `boil:"minted_at" json:"minted_at" toml:"minted_at" yaml:"minted_at"`
 
 	R *vehicleR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L vehicleL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -177,29 +177,26 @@ func (w whereHelpernull_Int) NIN(slice []int) qm.QueryMod {
 func (w whereHelpernull_Int) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
 func (w whereHelpernull_Int) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
-type whereHelpernull_Time struct{ field string }
+type whereHelpertime_Time struct{ field string }
 
-func (w whereHelpernull_Time) EQ(x null.Time) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, false, x)
+func (w whereHelpertime_Time) EQ(x time.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.EQ, x)
 }
-func (w whereHelpernull_Time) NEQ(x null.Time) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, true, x)
+func (w whereHelpertime_Time) NEQ(x time.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.NEQ, x)
 }
-func (w whereHelpernull_Time) LT(x null.Time) qm.QueryMod {
+func (w whereHelpertime_Time) LT(x time.Time) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.LT, x)
 }
-func (w whereHelpernull_Time) LTE(x null.Time) qm.QueryMod {
+func (w whereHelpertime_Time) LTE(x time.Time) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.LTE, x)
 }
-func (w whereHelpernull_Time) GT(x null.Time) qm.QueryMod {
+func (w whereHelpertime_Time) GT(x time.Time) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.GT, x)
 }
-func (w whereHelpernull_Time) GTE(x null.Time) qm.QueryMod {
+func (w whereHelpertime_Time) GTE(x time.Time) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.GTE, x)
 }
-
-func (w whereHelpernull_Time) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
-func (w whereHelpernull_Time) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
 var VehicleWhere = struct {
 	ID           whereHelperint
@@ -207,14 +204,14 @@ var VehicleWhere = struct {
 	Make         whereHelpernull_String
 	Model        whereHelpernull_String
 	Year         whereHelpernull_Int
-	MintedAt     whereHelpernull_Time
+	MintedAt     whereHelpertime_Time
 }{
 	ID:           whereHelperint{field: "\"identity_api\".\"vehicles\".\"id\""},
 	OwnerAddress: whereHelper__byte{field: "\"identity_api\".\"vehicles\".\"owner_address\""},
 	Make:         whereHelpernull_String{field: "\"identity_api\".\"vehicles\".\"make\""},
 	Model:        whereHelpernull_String{field: "\"identity_api\".\"vehicles\".\"model\""},
 	Year:         whereHelpernull_Int{field: "\"identity_api\".\"vehicles\".\"year\""},
-	MintedAt:     whereHelpernull_Time{field: "\"identity_api\".\"vehicles\".\"minted_at\""},
+	MintedAt:     whereHelpertime_Time{field: "\"identity_api\".\"vehicles\".\"minted_at\""},
 }
 
 // VehicleRels is where relationship names are stored.
@@ -235,8 +232,8 @@ type vehicleL struct{}
 
 var (
 	vehicleAllColumns            = []string{"id", "owner_address", "make", "model", "year", "minted_at"}
-	vehicleColumnsWithoutDefault = []string{"id", "owner_address"}
-	vehicleColumnsWithDefault    = []string{"make", "model", "year", "minted_at"}
+	vehicleColumnsWithoutDefault = []string{"id", "owner_address", "minted_at"}
+	vehicleColumnsWithDefault    = []string{"make", "model", "year"}
 	vehiclePrimaryKeyColumns     = []string{"id"}
 	vehicleGeneratedColumns      = []string{}
 )
