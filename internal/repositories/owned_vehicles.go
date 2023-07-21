@@ -42,11 +42,11 @@ func (v *VehiclesRepo) createVehiclesResponse(totalCount int64, vehicles []model
 		edge := &gmodel.VehicleEdge{
 			Node: &gmodel.Vehicle{
 				ID:       strconv.Itoa(v.ID),
-				Owner:    &owner,
+				Owner:    owner,
 				Make:     v.Make.Ptr(),
 				Model:    v.Model.Ptr(),
 				Year:     v.Year.Ptr(),
-				MintedAt: &v.MintedAt,
+				MintedAt: v.MintedAt,
 			},
 			Cursor: cursor,
 		}
