@@ -18,11 +18,11 @@ type PageInfo {
 
 type Vehicle {
   id: ID!
-  owner: Address
+  owner: Address!
   make: String
   model: String
   year: Int
-  mintedAt: Time
+  mintedAt: Time!
 }
 
 type VehicleEdge {
