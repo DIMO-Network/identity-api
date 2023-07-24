@@ -25,11 +25,11 @@ import (
 // Vehicle is an object representing the database table.
 type Vehicle struct {
 	ID           int         `boil:"id" json:"id" toml:"id" yaml:"id"`
-	OwnerAddress null.Bytes  `boil:"owner_address" json:"owner_address,omitempty" toml:"owner_address" yaml:"owner_address,omitempty"`
+	OwnerAddress []byte      `boil:"owner_address" json:"owner_address" toml:"owner_address" yaml:"owner_address"`
 	Make         null.String `boil:"make" json:"make,omitempty" toml:"make" yaml:"make,omitempty"`
 	Model        null.String `boil:"model" json:"model,omitempty" toml:"model" yaml:"model,omitempty"`
 	Year         null.Int    `boil:"year" json:"year,omitempty" toml:"year" yaml:"year,omitempty"`
-	MintedAt     null.Time   `boil:"minted_at" json:"minted_at,omitempty" toml:"minted_at" yaml:"minted_at,omitempty"`
+	MintedAt     time.Time   `boil:"minted_at" json:"minted_at" toml:"minted_at" yaml:"minted_at"`
 
 	R *vehicleR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L vehicleL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -69,6 +69,15 @@ var VehicleTableColumns = struct {
 
 // Generated where
 
+type whereHelper__byte struct{ field string }
+
+func (w whereHelper__byte) EQ(x []byte) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
+func (w whereHelper__byte) NEQ(x []byte) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
+func (w whereHelper__byte) LT(x []byte) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
+func (w whereHelper__byte) LTE(x []byte) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
+func (w whereHelper__byte) GT(x []byte) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
+func (w whereHelper__byte) GTE(x []byte) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
+
 type whereHelpernull_Int struct{ field string }
 
 func (w whereHelpernull_Int) EQ(x null.Int) qm.QueryMod {
@@ -107,20 +116,41 @@ func (w whereHelpernull_Int) NIN(slice []int) qm.QueryMod {
 func (w whereHelpernull_Int) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
 func (w whereHelpernull_Int) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
+type whereHelpertime_Time struct{ field string }
+
+func (w whereHelpertime_Time) EQ(x time.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.EQ, x)
+}
+func (w whereHelpertime_Time) NEQ(x time.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.NEQ, x)
+}
+func (w whereHelpertime_Time) LT(x time.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpertime_Time) LTE(x time.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpertime_Time) GT(x time.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpertime_Time) GTE(x time.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+
 var VehicleWhere = struct {
 	ID           whereHelperint
-	OwnerAddress whereHelpernull_Bytes
+	OwnerAddress whereHelper__byte
 	Make         whereHelpernull_String
 	Model        whereHelpernull_String
 	Year         whereHelpernull_Int
-	MintedAt     whereHelpernull_Time
+	MintedAt     whereHelpertime_Time
 }{
 	ID:           whereHelperint{field: "\"identity_api\".\"vehicles\".\"id\""},
-	OwnerAddress: whereHelpernull_Bytes{field: "\"identity_api\".\"vehicles\".\"owner_address\""},
+	OwnerAddress: whereHelper__byte{field: "\"identity_api\".\"vehicles\".\"owner_address\""},
 	Make:         whereHelpernull_String{field: "\"identity_api\".\"vehicles\".\"make\""},
 	Model:        whereHelpernull_String{field: "\"identity_api\".\"vehicles\".\"model\""},
 	Year:         whereHelpernull_Int{field: "\"identity_api\".\"vehicles\".\"year\""},
-	MintedAt:     whereHelpernull_Time{field: "\"identity_api\".\"vehicles\".\"minted_at\""},
+	MintedAt:     whereHelpertime_Time{field: "\"identity_api\".\"vehicles\".\"minted_at\""},
 }
 
 // VehicleRels is where relationship names are stored.
@@ -141,8 +171,8 @@ type vehicleL struct{}
 
 var (
 	vehicleAllColumns            = []string{"id", "owner_address", "make", "model", "year", "minted_at"}
-	vehicleColumnsWithoutDefault = []string{"id"}
-	vehicleColumnsWithDefault    = []string{"owner_address", "make", "model", "year", "minted_at"}
+	vehicleColumnsWithoutDefault = []string{"id", "owner_address", "minted_at"}
+	vehicleColumnsWithDefault    = []string{"make", "model", "year"}
 	vehiclePrimaryKeyColumns     = []string{"id"}
 	vehicleGeneratedColumns      = []string{}
 )
