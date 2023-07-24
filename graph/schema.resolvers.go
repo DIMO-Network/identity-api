@@ -29,7 +29,7 @@ func (r *queryResolver) OwnedAftermarketDevices(ctx context.Context, address com
 
 // AftermarketDevice is the resolver for the aftermarketDevice field.
 func (r *vehicleResolver) AftermarketDevice(ctx context.Context, obj *model.Vehicle) (*model.AftermarketDevice, error) {
-	return r.Repo.GetLinkedAftermarketDeviceByVehicleID(ctx, obj.ID)
+	return loader.GetAftermarketDeviceByVehicleID(ctx, obj.ID)
 }
 
 // AftermarketDevice returns AftermarketDeviceResolver implementation.
