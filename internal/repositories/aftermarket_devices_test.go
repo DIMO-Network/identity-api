@@ -2,7 +2,6 @@ package repositories
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"math/big"
@@ -52,9 +51,10 @@ func TestAftermarketDeviceNodeMintSingleResponse(t *testing.T) {
 	ctx := context.Background()
 	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", test.DBSettings.Name).Logger()
 
-	settings, err := shared.LoadConfig[config.Settings](test.SettingsPath)
-	settings.DB = test.DBSettings
-	assert.NoError(t, err)
+	settings := config.Settings{
+		DIMORegistryAddr:    "0x4de1bcf2b7e851e31216fc07989caa902a604784",
+		DIMORegistryChainID: 80001,
+	}
 
 	config := mocks.NewTestConfig()
 	consumer := mocks.NewConsumer(t, config)
@@ -99,9 +99,7 @@ func TestAftermarketDeviceNodeMintSingleResponse(t *testing.T) {
 
 func TestAftermarketDeviceNodeMintMultiResponse(t *testing.T) {
 	ctx := context.Background()
-	settings, err := shared.LoadConfig[config.Settings](test.SettingsPath)
-	settings.DB = test.DBSettings
-	assert.NoError(t, err)
+
 	pdb, _ := test.StartContainerDatabase(ctx, t, test.MigrationsDirRelPath)
 
 	for i := 1; i < 6; i++ {
@@ -110,20 +108,24 @@ func TestAftermarketDeviceNodeMintMultiResponse(t *testing.T) {
 			Owner: null.BytesFrom(aftermarketDeviceNodeMintedArgs.Owner.Bytes()),
 		}
 
-		err = ad.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+		err := ad.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 		assert.NoError(t, err)
 	}
 
+	// 6 5 4 3 2 1
+	//     ^
+	//     |
+	//     after this
+
 	adController := NewVehiclesRepo(pdb)
 	first := 2
-	after := 4
-	afterEncoded := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%d", after)))
-	res, err := adController.GetOwnedAftermarketDevices(ctx, aftermarketDeviceNodeMintedArgs.Owner, &first, &afterEncoded)
+	after := "NA==" // 4
+	res, err := adController.GetOwnedAftermarketDevices(ctx, aftermarketDeviceNodeMintedArgs.Owner, &first, &after)
 	assert.NoError(t, err)
 
-	for i := 0; i < first; i++ {
-		after--
-		assert.Equal(t, res.Edges[i].Node.ID, fmt.Sprintf("%d", after))
-	}
+	fmt.Println(res)
 
+	assert.Len(t, res.Edges, 2)
+	assert.Equal(t, "3", res.Edges[0].Node.ID)
+	assert.Equal(t, "2", res.Edges[1].Node.ID)
 }

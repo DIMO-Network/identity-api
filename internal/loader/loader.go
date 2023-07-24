@@ -97,11 +97,11 @@ func (v *VehicleLoader) BatchGetLinkedVehicleByAftermarketID(ctx context.Context
 		if vehicle.R.Vehicle != nil {
 			v := &model.Vehicle{
 				ID:       strconv.Itoa(vehicle.R.Vehicle.ID),
-				Owner:    repositories.BytesToAddr(vehicle.R.Vehicle.OwnerAddress),
+				Owner:    *repositories.BytesToAddr(vehicle.R.Vehicle.OwnerAddress),
 				Make:     vehicle.R.Vehicle.Make.Ptr(),
 				Model:    vehicle.R.Vehicle.Model.Ptr(),
 				Year:     vehicle.R.Vehicle.Year.Ptr(),
-				MintedAt: vehicle.R.Vehicle.MintedAt.Ptr(),
+				MintedAt: vehicle.R.Vehicle.MintedAt.Time,
 			}
 			results[keyOrder[vehicle.ID]] = &dataloader.Result[*model.Vehicle]{Data: v, Error: nil}
 			delete(keyOrder, vehicle.ID)

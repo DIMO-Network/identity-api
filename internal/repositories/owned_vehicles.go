@@ -91,15 +91,14 @@ func (v *VehiclesRepo) GetOwnedVehicles(ctx context.Context, addr common.Address
 
 	var vEdges []*gmodel.VehicleEdge
 	for _, v := range vehicles {
-		owner := common.BytesToAddress(v.OwnerAddress.Bytes)
 		edge := &gmodel.VehicleEdge{
 			Node: &gmodel.Vehicle{
 				ID:       strconv.Itoa(v.ID),
-				Owner:    &owner,
+				Owner:    *BytesToAddr(v.OwnerAddress),
 				Make:     v.Make.Ptr(),
 				Model:    v.Model.Ptr(),
 				Year:     v.Year.Ptr(),
-				MintedAt: v.MintedAt.Ptr(),
+				MintedAt: v.MintedAt.Time,
 			},
 			Cursor: base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(v.ID))),
 		}
@@ -157,11 +156,11 @@ func (v *VehiclesRepo) GetLinkedVehicleByID(ctx context.Context, aftermarketDevI
 
 	res := &gmodel.Vehicle{
 		ID:       strconv.Itoa(ad.R.Vehicle.ID),
-		Owner:    BytesToAddr(ad.R.Vehicle.OwnerAddress),
+		Owner:    *BytesToAddr(ad.R.Vehicle.OwnerAddress),
 		Make:     ad.R.Vehicle.Make.Ptr(),
 		Model:    ad.R.Vehicle.Model.Ptr(),
 		Year:     ad.R.Vehicle.Year.Ptr(),
-		MintedAt: ad.R.Vehicle.MintedAt.Ptr(),
+		MintedAt: ad.R.Vehicle.MintedAt.Time,
 	}
 
 	return res, nil

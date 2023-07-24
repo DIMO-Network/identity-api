@@ -60,11 +60,6 @@ type Block struct {
 	Time   time.Time   `json:"time,omitempty"`
 }
 
-type VehicleNodeMintedData struct {
-	TokenId *big.Int
-	Owner   common.Address
-}
-
 type VehicleAttributeSetData struct {
 	TokenID   *big.Int
 	Attribute string
@@ -121,14 +116,11 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 		c.log.Debug().Str("event", data.EventName).Interface("event data", event).Msg("Handler not provided for event ===.")
 		return nil
 	}
-
 	eventName := EventName(data.EventName)
 
 	switch data.Contract {
 	case registryAddr:
 		switch eventName {
-		case VehicleNodeMinted:
-			return c.handleVehicleNodeMintedEvent(ctx, &data)
 		case VehicleAttributeSet:
 			return c.handleVehicleAttributeSetEvent(ctx, &data)
 		case AftermarketDeviceNodeMinted:
@@ -141,34 +133,12 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 			return c.handleAftermarketDeviceUnpairedEvent(ctx, &data)
 		}
 	case vehicleNFTAddr:
-		switch eventName {
-		case Transfer:
+		if eventName == Transfer {
 			return c.handleVehicleTransferEvent(ctx, &data)
 		}
 	}
 
 	c.log.Debug().Str("event", data.EventName).Msg("Handler not provided for event.")
-
-	return nil
-}
-
-func (c *ContractsEventsConsumer) handleVehicleNodeMintedEvent(ctx context.Context, e *ContractEventData) error {
-	var args VehicleNodeMintedData
-	if err := json.Unmarshal(e.Arguments, &args); err != nil {
-		return err
-	}
-
-	dm := models.Vehicle{
-		OwnerAddress: null.BytesFrom(args.Owner.Bytes()),
-		MintedAt:     null.TimeFrom(e.Block.Time),
-		ID:           int(args.TokenId.Int64()),
-	}
-
-	if err := dm.Upsert(ctx, c.dbs.DBS().Writer, true, []string{models.VehicleColumns.ID},
-		boil.Whitelist(models.VehicleColumns.OwnerAddress, models.VehicleColumns.MintedAt),
-		boil.Whitelist(models.VehicleColumns.ID, models.VehicleColumns.OwnerAddress, models.VehicleColumns.MintedAt)); err != nil {
-		return err
-	}
 
 	return nil
 }
@@ -179,7 +149,12 @@ func (c *ContractsEventsConsumer) handleVehicleAttributeSetEvent(ctx context.Con
 		return err
 	}
 
-	veh := models.Vehicle{ID: int(args.TokenID.Int64())}
+	veh, err := models.Vehicles(
+		models.VehicleWhere.ID.EQ(int(args.TokenID.Int64())),
+	).One(ctx, c.dbs.DBS().Writer)
+	if err != nil {
+		return err
+	}
 
 	switch args.Attribute {
 	case "Make":
@@ -198,7 +173,7 @@ func (c *ContractsEventsConsumer) handleVehicleAttributeSetEvent(ctx context.Con
 
 	colToLower := strings.ToLower(args.Attribute)
 
-	if err := veh.Upsert(ctx, c.dbs.DBS().Writer, true, []string{models.VehicleColumns.ID}, boil.Whitelist(colToLower), boil.Whitelist(models.VehicleColumns.ID, colToLower)); err != nil {
+	if _, err := veh.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(colToLower)); err != nil {
 		return err
 	}
 
@@ -213,14 +188,17 @@ func (c *ContractsEventsConsumer) handleVehicleTransferEvent(ctx context.Context
 		return err
 	}
 
-	veh, err := models.FindVehicle(ctx, c.dbs.DBS().Reader, int(args.TokenID.Int64()))
-	if err != nil {
-		return err
+	vehicle := models.Vehicle{
+		ID:           int(args.TokenID.Int64()),
+		OwnerAddress: null.BytesFrom(args.To.Bytes()),
+		MintedAt:     null.TimeFrom(e.Block.Time),
 	}
 
-	veh.OwnerAddress = null.BytesFrom(args.To.Bytes())
-
-	if _, err := veh.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.VehicleColumns.OwnerAddress)); err != nil {
+	if err := vehicle.Upsert(ctx,
+		c.dbs.DBS().Writer, true,
+		[]string{models.VehicleColumns.ID},
+		boil.Whitelist(models.VehicleColumns.OwnerAddress),
+		boil.Whitelist(models.VehicleColumns.ID, models.VehicleColumns.OwnerAddress, models.VehicleColumns.MintedAt)); err != nil {
 		return err
 	}
 
