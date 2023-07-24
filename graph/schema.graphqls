@@ -11,11 +11,6 @@ type VehicleConnection {
   pageInfo: PageInfo!
 }
 
-type PageInfo {
-  endCursor: String
-  hasNextPage: Boolean!
-}
-
 type Vehicle {
   id: ID!
   owner: Address!
@@ -30,10 +25,40 @@ type VehicleEdge {
   cursor: String!
 }
 
+type AftermarketDevice {
+  id: ID!
+  address: Address
+  owner: Address
+  serial: String
+  imei: String
+  mintedAt: Time
+}
+
+type AftermarketDeviceConnection {
+  totalCount: Int!
+  edges: [AftermarketDeviceEdge!]!
+  pageInfo: PageInfo!
+}
+
+type AftermarketDeviceEdge {
+  cursor: String!
+  node: AftermarketDevice!
+}
+
+type PageInfo {
+  endCursor: String
+  hasNextPage: Boolean!
+}
+
 type Query {
   ownedVehicles(
     address: Address!
     first: Int
     after: String
   ): VehicleConnection!
+  ownedAftermarketDevices(
+    address: Address!
+    first: Int
+    after: String
+  ): AftermarketDeviceConnection!
 }

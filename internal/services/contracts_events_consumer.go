@@ -29,8 +29,10 @@ type ContractsEventsConsumer struct {
 type EventName string
 
 const (
-	VehicleAttributeSet EventName = "VehicleAttributeSet"
-	Transfer            EventName = "Transfer"
+	VehicleAttributeSet                EventName = "VehicleAttributeSet"
+	AftermarketDeviceNodeMinted        EventName = "AftermarketDeviceNodeMinted"
+	AftermarketDeviceAttributeSetEvent EventName = "AftermarketDeviceAttributeSet"
+	Transfer                           EventName = "Transfer"
 )
 
 func (r EventName) String() string {
@@ -61,6 +63,18 @@ type VehicleAttributeSetData struct {
 	Info      string
 }
 
+type AftermarketDeviceNodeMintedData struct {
+	ManufacturerID           *big.Int
+	TokenID                  *big.Int
+	AftermarketDeviceAddress common.Address
+	Owner                    common.Address
+}
+
+type AftermarketDeviceAttributeSetData struct {
+	TokenID   *big.Int
+	Attribute string
+	Info      string
+}
 type TransferEventData struct {
 	From    common.Address
 	To      common.Address
@@ -96,8 +110,13 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 
 	switch data.Contract {
 	case registryAddr:
-		if eventName == VehicleAttributeSet {
+		switch eventName {
+		case VehicleAttributeSet:
 			return c.handleVehicleAttributeSetEvent(ctx, &data)
+		case AftermarketDeviceAttributeSetEvent:
+			return c.handleAftermarketDeviceAttributeSetEvent(&data)
+		case AftermarketDeviceNodeMinted:
+			return c.handleAftermarketDeviceNodeMintedEvent(&data)
 		}
 	case vehicleNFTAddr:
 		if eventName == Transfer {
@@ -170,6 +189,69 @@ func (c *ContractsEventsConsumer) handleVehicleTransferEvent(ctx context.Context
 	}
 
 	logger.Info().Str("TokenID", args.TokenID.String()).Msg("Event processed successfuly")
+
+	return nil
+}
+
+func (c *ContractsEventsConsumer) handleAftermarketDeviceNodeMintedEvent(e *ContractEventData) error {
+	var args AftermarketDeviceNodeMintedData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	ad := models.AftermarketDevice{
+		ID:       int(args.TokenID.Int64()),
+		Address:  null.BytesFrom(args.AftermarketDeviceAddress.Bytes()),
+		Owner:    null.BytesFrom(args.Owner.Bytes()),
+		MintedAt: null.TimeFrom(e.Block.Time),
+	}
+
+	if err := ad.Upsert(context.Background(), c.dbs.DBS().Writer,
+		true,
+		[]string{models.AftermarketDeviceColumns.ID},
+		boil.Whitelist(models.AftermarketDeviceColumns.ID, models.AftermarketDeviceColumns.Address, models.AftermarketDeviceColumns.Owner, models.AftermarketDeviceColumns.MintedAt),
+		boil.Whitelist(models.AftermarketDeviceColumns.ID, models.AftermarketDeviceColumns.Address, models.AftermarketDeviceColumns.Owner, models.AftermarketDeviceColumns.MintedAt),
+	); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *ContractsEventsConsumer) handleAftermarketDeviceAttributeSetEvent(e *ContractEventData) error {
+	var args AftermarketDeviceAttributeSetData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	ad := models.AftermarketDevice{
+		ID: int(args.TokenID.Int64()),
+	}
+
+	switch args.Attribute {
+	case "Serial":
+		ad.Serial = null.StringFrom(args.Info)
+		if err := ad.Upsert(
+			context.Background(),
+			c.dbs.DBS().Writer,
+			true,
+			[]string{models.AftermarketDeviceColumns.ID},
+			boil.Whitelist(models.AftermarketDeviceColumns.Serial),
+			boil.Infer()); err != nil {
+			return err
+		}
+	case "IMEI":
+		ad.Imei = null.StringFrom(args.Info)
+		if err := ad.Upsert(
+			context.Background(),
+			c.dbs.DBS().Writer,
+			true,
+			[]string{models.AftermarketDeviceColumns.ID},
+			boil.Whitelist(models.AftermarketDeviceColumns.Imei),
+			boil.Infer()); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
