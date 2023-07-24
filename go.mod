@@ -11,6 +11,8 @@ require (
 	github.com/friendsofgo/errors v0.9.2
 	github.com/gofiber/fiber/v2 v2.47.0
 	github.com/golang-jwt/jwt/v5 v5.0.0
+	github.com/graph-gophers/dataloader v5.0.0+incompatible
+	github.com/graph-gophers/dataloader/v7 v7.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/pressly/goose/v3 v3.11.2
 	github.com/rs/zerolog v1.29.1
@@ -20,6 +22,11 @@ require (
 	github.com/volatiletech/null/v8 v8.1.2
 	github.com/volatiletech/sqlboiler/v4 v4.14.2
 	github.com/volatiletech/strmangle v0.0.4
+)
+
+require (
+	github.com/opentracing/opentracing-go v1.2.0 // indirect
+	golang.org/x/time v0.3.0 // indirect
 )
 
 require (
@@ -99,7 +106,6 @@ require (
 	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/sys v0.9.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
-	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.9.3 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1 // indirect

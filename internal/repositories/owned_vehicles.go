@@ -157,7 +157,7 @@ func (v *VehiclesRepo) GetLinkedVehicleByID(ctx context.Context, aftermarketDevI
 
 	res := &gmodel.Vehicle{
 		ID:       strconv.Itoa(ad.R.Vehicle.ID),
-		Owner:    bytesToAddr(ad.R.Vehicle.OwnerAddress),
+		Owner:    BytesToAddr(ad.R.Vehicle.OwnerAddress),
 		Make:     ad.R.Vehicle.Make.Ptr(),
 		Model:    ad.R.Vehicle.Model.Ptr(),
 		Year:     ad.R.Vehicle.Year.Ptr(),

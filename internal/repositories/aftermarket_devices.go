@@ -14,7 +14,7 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
-func bytesToAddr(addrB null.Bytes) *common.Address {
+func BytesToAddr(addrB null.Bytes) *common.Address {
 	var addr *common.Address
 	if addrB.Valid {
 		addr = (*common.Address)(*addrB.Ptr())
@@ -83,7 +83,7 @@ func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr comm
 		var vehicle gmodel.Vehicle
 		if d.R.Vehicle != nil {
 			vehicle.ID = strconv.Itoa(d.R.Vehicle.ID)
-			vehicle.Owner = bytesToAddr(d.R.Vehicle.OwnerAddress)
+			vehicle.Owner = BytesToAddr(d.R.Vehicle.OwnerAddress)
 			vehicle.Make = d.R.Vehicle.Make.Ptr()
 			vehicle.Model = d.R.Vehicle.Model.Ptr()
 			vehicle.Year = d.R.Vehicle.Year.Ptr()
@@ -94,8 +94,8 @@ func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr comm
 			&gmodel.AftermarketDeviceEdge{
 				Node: &gmodel.AftermarketDevice{
 					ID:       strconv.Itoa(d.ID),
-					Address:  bytesToAddr(d.Address),
-					Owner:    bytesToAddr(d.Owner),
+					Address:  BytesToAddr(d.Address),
+					Owner:    BytesToAddr(d.Owner),
 					Serial:   d.Serial.Ptr(),
 					Imei:     d.Imei.Ptr(),
 					MintedAt: d.MintedAt.Ptr(),
@@ -140,8 +140,8 @@ func (v *VehiclesRepo) GetLinkedAftermarketDeviceByVehicleID(ctx context.Context
 
 	res := &gmodel.AftermarketDevice{
 		ID:       strconv.Itoa(ad.ID),
-		Address:  bytesToAddr(ad.Address),
-		Owner:    bytesToAddr(ad.Address),
+		Address:  BytesToAddr(ad.Address),
+		Owner:    BytesToAddr(ad.Address),
 		Serial:   ad.Serial.Ptr(),
 		Imei:     ad.Imei.Ptr(),
 		MintedAt: ad.MintedAt.Ptr(),
