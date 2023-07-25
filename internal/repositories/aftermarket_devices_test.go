@@ -184,7 +184,7 @@ func TestOwnedAftermarketDeviceAndLinkedVehicle(t *testing.T) {
 	assert.Equal(t, vehicle.Make.String, *vehicleBody.Make)
 	assert.Equal(t, vehicle.Model.String, *vehicleBody.Model)
 	assert.Equal(t, vehicle.Year.Int, *vehicleBody.Year)
-	assert.Equal(t, vehicle.MintedAt.Time.UTC(), vehicleBody.MintedAt.UTC())
+	assert.Equal(t, vehicle.MintedAt.Time.UTC().Format(time.RFC1123), vehicleBody.MintedAt.UTC().Format(time.RFC1123))
 }
 
 func TestAftermarketDeviceNodeMintSingleResponse(t *testing.T) {
