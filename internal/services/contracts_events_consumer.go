@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/segmentio/ksuid"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 
@@ -33,6 +34,7 @@ const (
 	AftermarketDeviceNodeMinted        EventName = "AftermarketDeviceNodeMinted"
 	AftermarketDeviceAttributeSetEvent EventName = "AftermarketDeviceAttributeSet"
 	Transfer                           EventName = "Transfer"
+	PrivilegeSet                       EventName = "PrivilegeSet"
 )
 
 func (r EventName) String() string {
@@ -81,6 +83,13 @@ type TransferEventData struct {
 	TokenID *big.Int
 }
 
+type PrivilegeSetData struct {
+	TokenId *big.Int
+	PrivId  *big.Int
+	User    common.Address
+	Expires *big.Int
+}
+
 func NewContractsEventsConsumer(dbs db.Store, log *zerolog.Logger, settings *config.Settings) *ContractsEventsConsumer {
 	return &ContractsEventsConsumer{
 		dbs:      dbs,
@@ -103,10 +112,12 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 	}
 
 	if event.Source != fmt.Sprintf("chain/%d", c.settings.DIMORegistryChainID) {
-		c.log.Debug().Str("event", data.EventName).Interface("event data", event).Msg("Handler not provided for event ===.")
+		c.log.Debug().Str("event", data.EventName).Interface("event data", event).Msg("Handler not provided for event.")
 		return nil
 	}
 	eventName := EventName(data.EventName)
+
+	c.log.Info().Str("Event", string(eventName)).Str("Contract", data.Contract.Hex()).Msg("Event Received")
 
 	switch data.Contract {
 	case registryAddr:
@@ -119,8 +130,11 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 			return c.handleAftermarketDeviceNodeMintedEvent(&data)
 		}
 	case vehicleNFTAddr:
-		if eventName == Transfer {
+		switch eventName {
+		case Transfer:
 			return c.handleVehicleTransferEvent(ctx, &data)
+		case PrivilegeSet:
+			return c.handlePrivilegeSetEvent(ctx, &data)
 		}
 	}
 
@@ -252,6 +266,35 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceAttributeSetEvent(e *Co
 			return err
 		}
 	}
+
+	return nil
+}
+
+func (c *ContractsEventsConsumer) handlePrivilegeSetEvent(ctx context.Context, e *ContractEventData) error {
+	logger := c.log.With().Str("EventName", Transfer.String()).Logger()
+
+	var args PrivilegeSetData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	privilege := models.Privilege{
+		ID:               ksuid.New().String(),
+		TokenID:          int(args.TokenId.Int64()),
+		PrivilegeID:      int(args.PrivId.Int64()),
+		GrantedToAddress: args.User.Bytes(),
+		GrantedAt:        e.Block.Time,
+		ExpiresAt:        time.Unix(args.Expires.Int64(), 0),
+	}
+
+	if err := privilege.Insert(ctx, c.dbs.DBS().Writer, boil.Infer()); err != nil {
+		return err
+	}
+
+	logger.Info().
+		Str("PrivilegeID", args.PrivId.String()).
+		Str("TokenID", args.TokenId.String()).
+		Msg("Event processed successfuly")
 
 	return nil
 }

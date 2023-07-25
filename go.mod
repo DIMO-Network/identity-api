@@ -14,6 +14,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/pressly/goose/v3 v3.11.2
 	github.com/rs/zerolog v1.29.1
+	github.com/segmentio/ksuid v1.0.4
 	github.com/stretchr/testify v1.8.4
 	github.com/testcontainers/testcontainers-go v0.21.0
 	github.com/vektah/gqlparser/v2 v2.5.4

@@ -18,6 +18,7 @@ type Vehicle {
   model: String
   year: Int
   mintedAt: Time!
+  privileges: [Privilege]
 }
 
 type VehicleEdge {
@@ -48,6 +49,13 @@ type AftermarketDeviceEdge {
 type PageInfo {
   endCursor: String
   hasNextPage: Boolean!
+}
+
+type Privilege {
+  id: Int!
+  grantedToAddress: Address!
+  grantedAt: Time!
+  expiresAt: Time!
 }
 
 type Query {

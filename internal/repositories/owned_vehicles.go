@@ -28,7 +28,7 @@ func NewVehiclesRepo(pdb db.Store) VehiclesRepo {
 	}
 }
 
-func (v *VehiclesRepo) createVehiclesResponse(totalCount int64, vehicles []models.Vehicle, hasNext bool) *gmodel.VehicleConnection {
+func (v *VehiclesRepo) createVehiclesResponse(totalCount int64, vehicles models.VehicleSlice, hasNext bool) *gmodel.VehicleConnection {
 	lastItmID := vehicles[len(vehicles)-1].ID
 	endCursr := base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(lastItmID)))
 
@@ -38,15 +38,26 @@ func (v *VehiclesRepo) createVehiclesResponse(totalCount int64, vehicles []model
 		cursor := crs
 
 		owner := common.BytesToAddress(v.OwnerAddress)
+		privs := []*gmodel.Privilege{}
+
+		for _, p := range v.R.TokenPrivileges {
+			privs = append(privs, &gmodel.Privilege{
+				ID:               p.PrivilegeID,
+				GrantedToAddress: common.BytesToAddress(p.GrantedToAddress),
+				GrantedAt:        p.GrantedAt,
+				ExpiresAt:        p.ExpiresAt,
+			})
+		}
 
 		edge := &gmodel.VehicleEdge{
 			Node: &gmodel.Vehicle{
-				ID:       strconv.Itoa(v.ID),
-				Owner:    owner,
-				Make:     v.Make.Ptr(),
-				Model:    v.Model.Ptr(),
-				Year:     v.Year.Ptr(),
-				MintedAt: v.MintedAt,
+				ID:         strconv.Itoa(v.ID),
+				Owner:      owner,
+				Make:       v.Make.Ptr(),
+				Model:      v.Model.Ptr(),
+				Year:       v.Year.Ptr(),
+				MintedAt:   v.MintedAt,
+				Privileges: privs,
 			},
 			Cursor: cursor,
 		}
@@ -94,6 +105,7 @@ func (v *VehiclesRepo) GetOwnedVehicles(ctx context.Context, addr common.Address
 		// Use limit + 1 here to check if there's a next page.
 		qm.Limit(limit + 1),
 		qm.OrderBy(models.VehicleColumns.ID + " DESC"),
+		qm.Load(models.VehicleRels.TokenPrivileges),
 	}
 
 	if after != nil {
@@ -126,17 +138,5 @@ func (v *VehiclesRepo) GetOwnedVehicles(ctx context.Context, addr common.Address
 		vIterate = all[:limit]
 	}
 
-	vehicles := []models.Vehicle{}
-	for _, v := range vIterate {
-		vehicles = append(vehicles, models.Vehicle{
-			ID:           v.ID,
-			OwnerAddress: v.OwnerAddress,
-			Make:         v.Make,
-			Model:        v.Model,
-			Year:         v.Year,
-			MintedAt:     v.MintedAt,
-		})
-	}
-
-	return v.createVehiclesResponse(totalCount, vehicles, len(all) > limit), nil
+	return v.createVehiclesResponse(totalCount, vIterate, len(all) > limit), nil
 }
