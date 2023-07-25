@@ -2,7 +2,6 @@ package loader
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
@@ -66,10 +65,6 @@ func (ad *AftermarketDeviceLoader) BatchGetLinkedAftermarketDeviceByVehicleID(ct
 		}
 		results[keyOrder[device.VehicleID.Int]] = &dataloader.Result[*model.AftermarketDevice]{Data: v, Error: nil}
 		delete(keyOrder, device.VehicleID.Int)
-	}
-
-	for k, v := range keyOrder {
-		results[v] = &dataloader.Result[*model.AftermarketDevice]{Data: nil, Error: fmt.Errorf("aftermarket device associated with vehicle id %d not found", k)}
 	}
 
 	return results

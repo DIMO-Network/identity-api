@@ -2,7 +2,6 @@ package loader
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
@@ -46,7 +45,7 @@ func (v *VehicleLoader) BatchGetLinkedVehicleByAftermarketID(ctx context.Context
 		adIDs = append(adIDs, k)
 	}
 
-	vehicles, err := models.AftermarketDevices(
+	adVehicleLink, err := models.AftermarketDevices(
 		models.AftermarketDeviceWhere.ID.IN(adIDs),
 		qm.Load(models.AftermarketDeviceRels.Vehicle),
 	).All(ctx, v.db.DBS().Reader)
@@ -57,23 +56,23 @@ func (v *VehicleLoader) BatchGetLinkedVehicleByAftermarketID(ctx context.Context
 		return results
 	}
 
-	for _, vehicle := range vehicles {
-		if vehicle.R.Vehicle != nil {
-			v := &model.Vehicle{
-				ID:       strconv.Itoa(vehicle.R.Vehicle.ID),
-				Owner:    *repositories.BytesToAddr(vehicle.R.Vehicle.OwnerAddress),
-				Make:     vehicle.R.Vehicle.Make.Ptr(),
-				Model:    vehicle.R.Vehicle.Model.Ptr(),
-				Year:     vehicle.R.Vehicle.Year.Ptr(),
-				MintedAt: vehicle.R.Vehicle.MintedAt.Time,
-			}
-			results[keyOrder[vehicle.ID]] = &dataloader.Result[*model.Vehicle]{Data: v, Error: nil}
-			delete(keyOrder, vehicle.ID)
+	for _, device := range adVehicleLink {
+		if device.R.Vehicle == nil {
+			results[keyOrder[device.ID]] = &dataloader.Result[*model.Vehicle]{Data: nil, Error: nil}
+			continue
 		}
-	}
 
-	for k, v := range keyOrder {
-		results[v] = &dataloader.Result[*model.Vehicle]{Data: nil, Error: fmt.Errorf("vehicle associated with aftermarket id %d not found", k)}
+		v := &model.Vehicle{
+			ID:       strconv.Itoa(device.R.Vehicle.ID),
+			Owner:    *repositories.BytesToAddr(device.R.Vehicle.OwnerAddress),
+			Make:     device.R.Vehicle.Make.Ptr(),
+			Model:    device.R.Vehicle.Model.Ptr(),
+			Year:     device.R.Vehicle.Year.Ptr(),
+			MintedAt: device.R.Vehicle.MintedAt.Time,
+		}
+		results[keyOrder[device.ID]] = &dataloader.Result[*model.Vehicle]{Data: v, Error: nil}
+		delete(keyOrder, device.ID)
+
 	}
 
 	return results

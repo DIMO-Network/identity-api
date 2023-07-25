@@ -23,7 +23,11 @@ require (
 	github.com/volatiletech/strmangle v0.0.4
 )
 
-require golang.org/x/time v0.3.0 // indirect
+require (
+	github.com/tidwall/match v1.1.1 // indirect
+	github.com/tidwall/pretty v1.2.0 // indirect
+	golang.org/x/time v0.3.0 // indirect
+)
 
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
@@ -88,6 +92,7 @@ require (
 	github.com/savsgio/gotils v0.0.0-20230208104028-c358bd845dee // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
+	github.com/tidwall/gjson v1.14.4
 	github.com/tinylib/msgp v1.1.8 // indirect
 	github.com/urfave/cli/v2 v2.25.5 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
