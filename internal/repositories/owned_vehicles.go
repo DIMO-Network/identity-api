@@ -91,15 +91,14 @@ func (v *VehiclesRepo) GetOwnedVehicles(ctx context.Context, addr common.Address
 
 	var vEdges []*gmodel.VehicleEdge
 	for _, v := range vehicles {
-		owner := common.BytesToAddress(v.OwnerAddress.Bytes)
 		edge := &gmodel.VehicleEdge{
 			Node: &gmodel.Vehicle{
 				ID:       strconv.Itoa(v.ID),
-				Owner:    &owner,
+				Owner:    *BytesToAddr(v.OwnerAddress),
 				Make:     v.Make.Ptr(),
 				Model:    v.Model.Ptr(),
 				Year:     v.Year.Ptr(),
-				MintedAt: v.MintedAt.Ptr(),
+				MintedAt: v.MintedAt.Time,
 			},
 			Cursor: base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(v.ID))),
 		}
@@ -113,7 +112,7 @@ func (v *VehiclesRepo) GetOwnedVehicles(ctx context.Context, addr common.Address
 				deviceOwnerAddr = (*common.Address)(*v.R.AftermarketDevice.Owner.Ptr())
 			}
 
-			edge.Node.AftermarketDeviceConnection = &gmodel.AftermarketDevice{
+			edge.Node.AftermarketDevice = &gmodel.AftermarketDevice{
 				ID:       strconv.Itoa(v.R.AftermarketDevice.ID),
 				Address:  deviceAddr,
 				Owner:    deviceOwnerAddr,
@@ -137,31 +136,31 @@ func (v *VehiclesRepo) GetOwnedVehicles(ctx context.Context, addr common.Address
 	return res, nil
 }
 
-func (v *VehiclesRepo) GetLinkedVehicleByID(ctx context.Context, vehicleID string) (*gmodel.Vehicle, error) {
-	vID, err := strconv.Atoi(vehicleID)
+func (v *VehiclesRepo) GetLinkedVehicleByID(ctx context.Context, aftermarketDevID string) (*gmodel.Vehicle, error) {
+	adID, err := strconv.Atoi(aftermarketDevID)
 	if err != nil {
 		return nil, err
 	}
 
-	vehicle, err := models.Vehicles(
-		models.VehicleWhere.ID.EQ(vID),
+	ad, err := models.AftermarketDevices(
+		models.AftermarketDeviceWhere.ID.EQ(adID),
+		qm.Load(models.AftermarketDeviceRels.Vehicle),
 	).One(ctx, v.pdb.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}
 
-	var owner *common.Address
-	if vehicle.OwnerAddress.Ptr() != nil {
-		owner = (*common.Address)(*vehicle.OwnerAddress.Ptr())
+	if ad.R.Vehicle == nil {
+		return nil, nil
 	}
 
 	res := &gmodel.Vehicle{
-		ID:       strconv.Itoa(vehicle.ID),
-		Owner:    owner,
-		Make:     vehicle.Make.Ptr(),
-		Model:    vehicle.Model.Ptr(),
-		Year:     vehicle.Year.Ptr(),
-		MintedAt: vehicle.MintedAt.Ptr(),
+		ID:       strconv.Itoa(ad.R.Vehicle.ID),
+		Owner:    *BytesToAddr(ad.R.Vehicle.OwnerAddress),
+		Make:     ad.R.Vehicle.Make.Ptr(),
+		Model:    ad.R.Vehicle.Model.Ptr(),
+		Year:     ad.R.Vehicle.Year.Ptr(),
+		MintedAt: ad.R.Vehicle.MintedAt.Time,
 	}
 
 	return res, nil

@@ -8,12 +8,13 @@ import (
 	"context"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
+	"github.com/DIMO-Network/identity-api/internal/loader"
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// VehicleConnection is the resolver for the vehicleConnection field.
-func (r *aftermarketDeviceResolver) VehicleConnection(ctx context.Context, obj *model.AftermarketDevice) (*model.Vehicle, error) {
-	return r.Repo.GetLinkedVehicleByID(ctx, *obj.VehicleID)
+// Vehicle is the resolver for the vehicle field.
+func (r *aftermarketDeviceResolver) Vehicle(ctx context.Context, obj *model.AftermarketDevice) (*model.Vehicle, error) {
+	return loader.GetLinkedVehicleByID(ctx, obj.ID)
 }
 
 // OwnedVehicles is the resolver for the ownedVehicles field.
@@ -26,9 +27,9 @@ func (r *queryResolver) OwnedAftermarketDevices(ctx context.Context, address com
 	return r.Repo.GetOwnedAftermarketDevices(ctx, address, first, after)
 }
 
-// AftermarketDeviceConnection is the resolver for the aftermarketDeviceConnection field.
-func (r *vehicleResolver) AftermarketDeviceConnection(ctx context.Context, obj *model.Vehicle) (*model.AftermarketDevice, error) {
-	return r.Repo.GetLinkedAftermarketDeviceByVehicleID(ctx, obj.ID)
+// AftermarketDevice is the resolver for the aftermarketDevice field.
+func (r *vehicleResolver) AftermarketDevice(ctx context.Context, obj *model.Vehicle) (*model.AftermarketDevice, error) {
+	return loader.GetAftermarketDeviceByVehicleID(ctx, obj.ID)
 }
 
 // AftermarketDevice returns AftermarketDeviceResolver implementation.

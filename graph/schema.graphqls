@@ -13,13 +13,12 @@ type VehicleConnection {
 
 type Vehicle {
   id: ID!
-  owner: Address
+  owner: Address!
   make: String
   model: String
   year: Int
-  mintedAt: Time
-  aftermarketDevice: ID
-  aftermarketDeviceConnection: AftermarketDevice
+  mintedAt: Time!
+  aftermarketDevice: AftermarketDevice
 }
 
 type VehicleEdge {
@@ -34,8 +33,7 @@ type AftermarketDevice {
   serial: String
   imei: String
   mintedAt: Time
-  vehicleId: ID
-  vehicleConnection: Vehicle
+  vehicle: Vehicle
 }
 
 type AftermarketDeviceConnection {

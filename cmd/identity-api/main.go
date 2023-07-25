@@ -12,6 +12,7 @@ import (
 
 	"github.com/DIMO-Network/identity-api/graph"
 	"github.com/DIMO-Network/identity-api/internal/config"
+	"github.com/DIMO-Network/identity-api/internal/loader"
 	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/internal/services"
 	"github.com/DIMO-Network/shared"
@@ -48,16 +49,21 @@ func main() {
 
 	repo := repositories.NewVehiclesRepo(dbs)
 
-	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{
+	s := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{
 		Repo: repo,
 	}}))
+
+	srv := loader.Middleware(dbs, s)
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", srv)
 
 	logger.Info().Msgf("Server started on port: %d", settings.Port)
 
-	http.ListenAndServe(fmt.Sprintf(":%d", settings.Port), nil)
+	if err := http.ListenAndServe(fmt.Sprintf(":%d", settings.Port), nil); err != nil {
+		logger.Fatal().Msgf("failed to start identity api: %v\n", err)
+	}
+
 }
 
 func startContractEventsConsumer(ctx context.Context, logger *zerolog.Logger, settings *config.Settings, dbs db.Store) {
