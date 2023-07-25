@@ -4,9 +4,11 @@
 package models
 
 var TableNames = struct {
-	Privileges string
-	Vehicles   string
+	AftermarketDevices string
+	Privileges         string
+	Vehicles           string
 }{
-	Privileges: "privileges",
-	Vehicles:   "vehicles",
+	AftermarketDevices: "aftermarket_devices",
+	Privileges:         "privileges",
+	Vehicles:           "vehicles",
 }
