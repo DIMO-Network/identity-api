@@ -24,47 +24,57 @@ import (
 
 // AftermarketDevice is an object representing the database table.
 type AftermarketDevice struct {
-	ID       int         `boil:"id" json:"id" toml:"id" yaml:"id"`
-	Address  null.Bytes  `boil:"address" json:"address,omitempty" toml:"address" yaml:"address,omitempty"`
-	Owner    []byte      `boil:"owner" json:"owner" toml:"owner" yaml:"owner"`
-	Serial   null.String `boil:"serial" json:"serial,omitempty" toml:"serial" yaml:"serial,omitempty"`
-	Imei     null.String `boil:"imei" json:"imei,omitempty" toml:"imei" yaml:"imei,omitempty"`
-	MintedAt time.Time   `boil:"minted_at" json:"minted_at" toml:"minted_at" yaml:"minted_at"`
+	ID          int         `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Address     null.Bytes  `boil:"address" json:"address,omitempty" toml:"address" yaml:"address,omitempty"`
+	Owner       []byte      `boil:"owner" json:"owner" toml:"owner" yaml:"owner"`
+	Serial      null.String `boil:"serial" json:"serial,omitempty" toml:"serial" yaml:"serial,omitempty"`
+	Imei        null.String `boil:"imei" json:"imei,omitempty" toml:"imei" yaml:"imei,omitempty"`
+	MintedAt    time.Time   `boil:"minted_at" json:"minted_at" toml:"minted_at" yaml:"minted_at"`
+	VehicleID   null.Int    `boil:"vehicle_id" json:"vehicle_id,omitempty" toml:"vehicle_id" yaml:"vehicle_id,omitempty"`
+	Beneficiary null.Bytes  `boil:"beneficiary" json:"beneficiary,omitempty" toml:"beneficiary" yaml:"beneficiary,omitempty"`
 
 	R *aftermarketDeviceR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L aftermarketDeviceL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var AftermarketDeviceColumns = struct {
-	ID       string
-	Address  string
-	Owner    string
-	Serial   string
-	Imei     string
-	MintedAt string
+	ID          string
+	Address     string
+	Owner       string
+	Serial      string
+	Imei        string
+	MintedAt    string
+	VehicleID   string
+	Beneficiary string
 }{
-	ID:       "id",
-	Address:  "address",
-	Owner:    "owner",
-	Serial:   "serial",
-	Imei:     "imei",
-	MintedAt: "minted_at",
+	ID:          "id",
+	Address:     "address",
+	Owner:       "owner",
+	Serial:      "serial",
+	Imei:        "imei",
+	MintedAt:    "minted_at",
+	VehicleID:   "vehicle_id",
+	Beneficiary: "beneficiary",
 }
 
 var AftermarketDeviceTableColumns = struct {
-	ID       string
-	Address  string
-	Owner    string
-	Serial   string
-	Imei     string
-	MintedAt string
+	ID          string
+	Address     string
+	Owner       string
+	Serial      string
+	Imei        string
+	MintedAt    string
+	VehicleID   string
+	Beneficiary string
 }{
-	ID:       "aftermarket_devices.id",
-	Address:  "aftermarket_devices.address",
-	Owner:    "aftermarket_devices.owner",
-	Serial:   "aftermarket_devices.serial",
-	Imei:     "aftermarket_devices.imei",
-	MintedAt: "aftermarket_devices.minted_at",
+	ID:          "aftermarket_devices.id",
+	Address:     "aftermarket_devices.address",
+	Owner:       "aftermarket_devices.owner",
+	Serial:      "aftermarket_devices.serial",
+	Imei:        "aftermarket_devices.imei",
+	MintedAt:    "aftermarket_devices.minted_at",
+	VehicleID:   "aftermarket_devices.vehicle_id",
+	Beneficiary: "aftermarket_devices.beneficiary",
 }
 
 // Generated where
@@ -184,28 +194,74 @@ func (w whereHelpertime_Time) GTE(x time.Time) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.GTE, x)
 }
 
+type whereHelpernull_Int struct{ field string }
+
+func (w whereHelpernull_Int) EQ(x null.Int) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
+}
+func (w whereHelpernull_Int) NEQ(x null.Int) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
+}
+func (w whereHelpernull_Int) LT(x null.Int) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpernull_Int) LTE(x null.Int) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpernull_Int) GT(x null.Int) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpernull_Int) GTE(x null.Int) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+func (w whereHelpernull_Int) IN(slice []int) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
+}
+func (w whereHelpernull_Int) NIN(slice []int) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
+}
+
+func (w whereHelpernull_Int) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_Int) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
+
 var AftermarketDeviceWhere = struct {
-	ID       whereHelperint
-	Address  whereHelpernull_Bytes
-	Owner    whereHelper__byte
-	Serial   whereHelpernull_String
-	Imei     whereHelpernull_String
-	MintedAt whereHelpertime_Time
+	ID          whereHelperint
+	Address     whereHelpernull_Bytes
+	Owner       whereHelper__byte
+	Serial      whereHelpernull_String
+	Imei        whereHelpernull_String
+	MintedAt    whereHelpertime_Time
+	VehicleID   whereHelpernull_Int
+	Beneficiary whereHelpernull_Bytes
 }{
-	ID:       whereHelperint{field: "\"identity_api\".\"aftermarket_devices\".\"id\""},
-	Address:  whereHelpernull_Bytes{field: "\"identity_api\".\"aftermarket_devices\".\"address\""},
-	Owner:    whereHelper__byte{field: "\"identity_api\".\"aftermarket_devices\".\"owner\""},
-	Serial:   whereHelpernull_String{field: "\"identity_api\".\"aftermarket_devices\".\"serial\""},
-	Imei:     whereHelpernull_String{field: "\"identity_api\".\"aftermarket_devices\".\"imei\""},
-	MintedAt: whereHelpertime_Time{field: "\"identity_api\".\"aftermarket_devices\".\"minted_at\""},
+	ID:          whereHelperint{field: "\"identity_api\".\"aftermarket_devices\".\"id\""},
+	Address:     whereHelpernull_Bytes{field: "\"identity_api\".\"aftermarket_devices\".\"address\""},
+	Owner:       whereHelper__byte{field: "\"identity_api\".\"aftermarket_devices\".\"owner\""},
+	Serial:      whereHelpernull_String{field: "\"identity_api\".\"aftermarket_devices\".\"serial\""},
+	Imei:        whereHelpernull_String{field: "\"identity_api\".\"aftermarket_devices\".\"imei\""},
+	MintedAt:    whereHelpertime_Time{field: "\"identity_api\".\"aftermarket_devices\".\"minted_at\""},
+	VehicleID:   whereHelpernull_Int{field: "\"identity_api\".\"aftermarket_devices\".\"vehicle_id\""},
+	Beneficiary: whereHelpernull_Bytes{field: "\"identity_api\".\"aftermarket_devices\".\"beneficiary\""},
 }
 
 // AftermarketDeviceRels is where relationship names are stored.
 var AftermarketDeviceRels = struct {
-}{}
+	Vehicle string
+}{
+	Vehicle: "Vehicle",
+}
 
 // aftermarketDeviceR is where relationships are stored.
 type aftermarketDeviceR struct {
+	Vehicle *Vehicle `boil:"Vehicle" json:"Vehicle" toml:"Vehicle" yaml:"Vehicle"`
 }
 
 // NewStruct creates a new relationship struct
@@ -213,13 +269,20 @@ func (*aftermarketDeviceR) NewStruct() *aftermarketDeviceR {
 	return &aftermarketDeviceR{}
 }
 
+func (r *aftermarketDeviceR) GetVehicle() *Vehicle {
+	if r == nil {
+		return nil
+	}
+	return r.Vehicle
+}
+
 // aftermarketDeviceL is where Load methods for each relationship are stored.
 type aftermarketDeviceL struct{}
 
 var (
-	aftermarketDeviceAllColumns            = []string{"id", "address", "owner", "serial", "imei", "minted_at"}
+	aftermarketDeviceAllColumns            = []string{"id", "address", "owner", "serial", "imei", "minted_at", "vehicle_id", "beneficiary"}
 	aftermarketDeviceColumnsWithoutDefault = []string{"id", "owner", "minted_at"}
-	aftermarketDeviceColumnsWithDefault    = []string{"address", "serial", "imei"}
+	aftermarketDeviceColumnsWithDefault    = []string{"address", "serial", "imei", "vehicle_id", "beneficiary"}
 	aftermarketDevicePrimaryKeyColumns     = []string{"id"}
 	aftermarketDeviceGeneratedColumns      = []string{}
 )
@@ -500,6 +563,210 @@ func (q aftermarketDeviceQuery) Exists(ctx context.Context, exec boil.ContextExe
 	}
 
 	return count > 0, nil
+}
+
+// Vehicle pointed to by the foreign key.
+func (o *AftermarketDevice) Vehicle(mods ...qm.QueryMod) vehicleQuery {
+	queryMods := []qm.QueryMod{
+		qm.Where("\"id\" = ?", o.VehicleID),
+	}
+
+	queryMods = append(queryMods, mods...)
+
+	return Vehicles(queryMods...)
+}
+
+// LoadVehicle allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for an N-1 relationship.
+func (aftermarketDeviceL) LoadVehicle(ctx context.Context, e boil.ContextExecutor, singular bool, maybeAftermarketDevice interface{}, mods queries.Applicator) error {
+	var slice []*AftermarketDevice
+	var object *AftermarketDevice
+
+	if singular {
+		var ok bool
+		object, ok = maybeAftermarketDevice.(*AftermarketDevice)
+		if !ok {
+			object = new(AftermarketDevice)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeAftermarketDevice)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeAftermarketDevice))
+			}
+		}
+	} else {
+		s, ok := maybeAftermarketDevice.(*[]*AftermarketDevice)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeAftermarketDevice)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeAftermarketDevice))
+			}
+		}
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &aftermarketDeviceR{}
+		}
+		if !queries.IsNil(object.VehicleID) {
+			args = append(args, object.VehicleID)
+		}
+
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &aftermarketDeviceR{}
+			}
+
+			for _, a := range args {
+				if queries.Equal(a, obj.VehicleID) {
+					continue Outer
+				}
+			}
+
+			if !queries.IsNil(obj.VehicleID) {
+				args = append(args, obj.VehicleID)
+			}
+
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`identity_api.vehicles`),
+		qm.WhereIn(`identity_api.vehicles.id in ?`, args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load Vehicle")
+	}
+
+	var resultSlice []*Vehicle
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice Vehicle")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results of eager load for vehicles")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for vehicles")
+	}
+
+	if len(vehicleAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+
+	if len(resultSlice) == 0 {
+		return nil
+	}
+
+	if singular {
+		foreign := resultSlice[0]
+		object.R.Vehicle = foreign
+		if foreign.R == nil {
+			foreign.R = &vehicleR{}
+		}
+		foreign.R.AftermarketDevice = object
+		return nil
+	}
+
+	for _, local := range slice {
+		for _, foreign := range resultSlice {
+			if queries.Equal(local.VehicleID, foreign.ID) {
+				local.R.Vehicle = foreign
+				if foreign.R == nil {
+					foreign.R = &vehicleR{}
+				}
+				foreign.R.AftermarketDevice = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// SetVehicle of the aftermarketDevice to the related item.
+// Sets o.R.Vehicle to related.
+// Adds o to related.R.AftermarketDevice.
+func (o *AftermarketDevice) SetVehicle(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Vehicle) error {
+	var err error
+	if insert {
+		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
+			return errors.Wrap(err, "failed to insert into foreign table")
+		}
+	}
+
+	updateQuery := fmt.Sprintf(
+		"UPDATE \"identity_api\".\"aftermarket_devices\" SET %s WHERE %s",
+		strmangle.SetParamNames("\"", "\"", 1, []string{"vehicle_id"}),
+		strmangle.WhereClause("\"", "\"", 2, aftermarketDevicePrimaryKeyColumns),
+	)
+	values := []interface{}{related.ID, o.ID}
+
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, updateQuery)
+		fmt.Fprintln(writer, values)
+	}
+	if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	queries.Assign(&o.VehicleID, related.ID)
+	if o.R == nil {
+		o.R = &aftermarketDeviceR{
+			Vehicle: related,
+		}
+	} else {
+		o.R.Vehicle = related
+	}
+
+	if related.R == nil {
+		related.R = &vehicleR{
+			AftermarketDevice: o,
+		}
+	} else {
+		related.R.AftermarketDevice = o
+	}
+
+	return nil
+}
+
+// RemoveVehicle relationship.
+// Sets o.R.Vehicle to nil.
+// Removes o from all passed in related items' relationships struct.
+func (o *AftermarketDevice) RemoveVehicle(ctx context.Context, exec boil.ContextExecutor, related *Vehicle) error {
+	var err error
+
+	queries.SetScanner(&o.VehicleID, nil)
+	if _, err = o.Update(ctx, exec, boil.Whitelist("vehicle_id")); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	if o.R != nil {
+		o.R.Vehicle = nil
+	}
+	if related == nil || related.R == nil {
+		return nil
+	}
+
+	related.R.AftermarketDevice = nil
+	return nil
 }
 
 // AftermarketDevices retrieves all the records using an executor.

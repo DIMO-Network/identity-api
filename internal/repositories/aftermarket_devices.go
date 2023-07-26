@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"database/sql"
 	"encoding/base64"
 	"errors"
 	"strconv"
@@ -23,7 +24,7 @@ func BytesToAddr(addrB null.Bytes) *common.Address {
 
 func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr common.Address, first *int, after *string) (*gmodel.AftermarketDeviceConnection, error) {
 	ownedADCount, err := models.AftermarketDevices(
-		models.AftermarketDeviceWhere.Owner.EQ(addr.Bytes()),
+	// models.AftermarketDeviceWhere.Owner.EQ(addr.Bytes()),
 	).Count(ctx, v.pdb.DBS().Reader)
 	if err != nil {
 		return nil, err
@@ -47,6 +48,7 @@ func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr comm
 
 	queryMods := []qm.QueryMod{
 		models.AftermarketDeviceWhere.Owner.EQ(addr.Bytes()),
+		qm.Load(models.AftermarketDeviceRels.Vehicle),
 		// Use limit + 1 here to check if there's a next page.
 		qm.Limit(limit + 1),
 		qm.OrderBy(models.AftermarketDeviceColumns.ID + " DESC"),
@@ -73,20 +75,32 @@ func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr comm
 
 	hasNextPage := len(ads) > limit
 	if hasNextPage {
-		ads = ads[:len(ads)-1]
+		ads = ads[:limit]
 	}
 
 	var adEdges []*gmodel.AftermarketDeviceEdge
 	for _, d := range ads {
+		var vehicle gmodel.Vehicle
+		if d.R.Vehicle != nil {
+			vehicle.ID = strconv.Itoa(d.R.Vehicle.ID)
+			vehicle.Owner = common.BytesToAddress(d.R.Vehicle.OwnerAddress)
+			vehicle.Make = d.R.Vehicle.Make.Ptr()
+			vehicle.Model = d.R.Vehicle.Model.Ptr()
+			vehicle.Year = d.R.Vehicle.Year.Ptr()
+			vehicle.MintedAt = d.R.Vehicle.MintedAt
+		}
+
 		adEdges = append(adEdges,
 			&gmodel.AftermarketDeviceEdge{
 				Node: &gmodel.AftermarketDevice{
-					ID:       strconv.Itoa(d.ID),
-					Address:  BytesToAddr(d.Address),
-					Owner:    common.BytesToAddress(d.Owner),
-					Serial:   d.Serial.Ptr(),
-					Imei:     d.Imei.Ptr(),
-					MintedAt: d.MintedAt,
+					ID:          strconv.Itoa(d.ID),
+					Address:     BytesToAddr(d.Address),
+					Owner:       common.BytesToAddress(d.Owner),
+					Serial:      d.Serial.Ptr(),
+					Imei:        d.Imei.Ptr(),
+					MintedAt:    d.MintedAt,
+					Vehicle:     &vehicle,
+					Beneficiary: BytesToAddr(d.Beneficiary),
 				},
 				Cursor: base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(d.ID))),
 			},
@@ -106,5 +120,34 @@ func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr comm
 	}
 
 	res.PageInfo.EndCursor = &adEdges[len(adEdges)-1].Cursor
+	return res, nil
+}
+
+func (v *VehiclesRepo) GetLinkedAftermarketDeviceByVehicleID(ctx context.Context, vehicleID string) (*gmodel.AftermarketDevice, error) {
+	vID, err := strconv.Atoi(vehicleID)
+	if err != nil {
+		return nil, err
+	}
+
+	ad, err := models.AftermarketDevices(
+		models.AftermarketDeviceWhere.VehicleID.EQ(null.IntFrom(vID)),
+	).One(ctx, v.pdb.DBS().Reader)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	res := &gmodel.AftermarketDevice{
+		ID:          strconv.Itoa(ad.ID),
+		Address:     BytesToAddr(ad.Address),
+		Owner:       common.BytesToAddress(ad.Address.Bytes),
+		Serial:      ad.Serial.Ptr(),
+		Imei:        ad.Imei.Ptr(),
+		MintedAt:    ad.MintedAt,
+		Beneficiary: BytesToAddr(ad.Beneficiary),
+	}
+
 	return res, nil
 }

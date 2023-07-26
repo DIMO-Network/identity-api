@@ -9,12 +9,14 @@ import (
 )
 
 type AftermarketDevice struct {
-	ID       string          `json:"id"`
-	Address  *common.Address `json:"address,omitempty"`
-	Owner    common.Address  `json:"owner"`
-	Serial   *string         `json:"serial,omitempty"`
-	Imei     *string         `json:"imei,omitempty"`
-	MintedAt time.Time       `json:"mintedAt"`
+	ID          string          `json:"id"`
+	Address     *common.Address `json:"address,omitempty"`
+	Owner       common.Address  `json:"owner"`
+	Serial      *string         `json:"serial,omitempty"`
+	Imei        *string         `json:"imei,omitempty"`
+	MintedAt    time.Time       `json:"mintedAt"`
+	Vehicle     *Vehicle        `json:"vehicle,omitempty"`
+	Beneficiary *common.Address `json:"beneficiary,omitempty"`
 }
 
 type AftermarketDeviceConnection struct {
@@ -34,12 +36,13 @@ type PageInfo struct {
 }
 
 type Vehicle struct {
-	ID       string         `json:"id"`
-	Owner    common.Address `json:"owner"`
-	Make     *string        `json:"make,omitempty"`
-	Model    *string        `json:"model,omitempty"`
-	Year     *int           `json:"year,omitempty"`
-	MintedAt time.Time      `json:"mintedAt"`
+	ID                string             `json:"id"`
+	Owner             common.Address     `json:"owner"`
+	Make              *string            `json:"make,omitempty"`
+	Model             *string            `json:"model,omitempty"`
+	Year              *int               `json:"year,omitempty"`
+	MintedAt          time.Time          `json:"mintedAt"`
+	AftermarketDevice *AftermarketDevice `json:"aftermarketDevice,omitempty"`
 }
 
 type VehicleConnection struct {

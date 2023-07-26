@@ -8,8 +8,14 @@ import (
 	"context"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
+	"github.com/DIMO-Network/identity-api/internal/loader"
 	"github.com/ethereum/go-ethereum/common"
 )
+
+// Vehicle is the resolver for the vehicle field.
+func (r *aftermarketDeviceResolver) Vehicle(ctx context.Context, obj *model.AftermarketDevice) (*model.Vehicle, error) {
+	return loader.GetLinkedVehicleByID(ctx, obj.ID)
+}
 
 // OwnedVehicles is the resolver for the ownedVehicles field.
 func (r *queryResolver) OwnedVehicles(ctx context.Context, address common.Address, first *int, after *string) (*model.VehicleConnection, error) {
@@ -21,7 +27,22 @@ func (r *queryResolver) OwnedAftermarketDevices(ctx context.Context, address com
 	return r.Repo.GetOwnedAftermarketDevices(ctx, address, first, after)
 }
 
+// AftermarketDevice is the resolver for the aftermarketDevice field.
+func (r *vehicleResolver) AftermarketDevice(ctx context.Context, obj *model.Vehicle) (*model.AftermarketDevice, error) {
+	return loader.GetAftermarketDeviceByVehicleID(ctx, obj.ID)
+}
+
+// AftermarketDevice returns AftermarketDeviceResolver implementation.
+func (r *Resolver) AftermarketDevice() AftermarketDeviceResolver {
+	return &aftermarketDeviceResolver{r}
+}
+
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
+// Vehicle returns VehicleResolver implementation.
+func (r *Resolver) Vehicle() VehicleResolver { return &vehicleResolver{r} }
+
+type aftermarketDeviceResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type vehicleResolver struct{ *Resolver }

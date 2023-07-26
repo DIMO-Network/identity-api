@@ -28,44 +28,6 @@ func NewVehiclesRepo(pdb db.Store) VehiclesRepo {
 	}
 }
 
-func (v *VehiclesRepo) createVehiclesResponse(totalCount int64, vehicles []models.Vehicle, hasNext bool) *gmodel.VehicleConnection {
-	lastItmID := vehicles[len(vehicles)-1].ID
-	endCursr := base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(lastItmID)))
-
-	var vEdges []*gmodel.VehicleEdge
-	for _, v := range vehicles {
-		crs := base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(v.ID)))
-		cursor := crs
-
-		owner := common.BytesToAddress(v.OwnerAddress)
-
-		edge := &gmodel.VehicleEdge{
-			Node: &gmodel.Vehicle{
-				ID:       strconv.Itoa(v.ID),
-				Owner:    owner,
-				Make:     v.Make.Ptr(),
-				Model:    v.Model.Ptr(),
-				Year:     v.Year.Ptr(),
-				MintedAt: v.MintedAt,
-			},
-			Cursor: cursor,
-		}
-
-		vEdges = append(vEdges, edge)
-	}
-
-	res := &gmodel.VehicleConnection{
-		TotalCount: int(totalCount),
-		PageInfo: &gmodel.PageInfo{
-			HasNextPage: hasNext,
-			EndCursor:   &endCursr,
-		},
-		Edges: vEdges,
-	}
-
-	return res
-}
-
 func (v *VehiclesRepo) GetOwnedVehicles(ctx context.Context, addr common.Address, first *int, after *string) (*gmodel.VehicleConnection, error) {
 	totalCount, err := models.Vehicles(
 		models.VehicleWhere.OwnerAddress.EQ(addr.Bytes()),
@@ -91,52 +53,107 @@ func (v *VehiclesRepo) GetOwnedVehicles(ctx context.Context, addr common.Address
 
 	queryMods := []qm.QueryMod{
 		models.VehicleWhere.OwnerAddress.EQ(addr.Bytes()),
+		qm.Load(models.VehicleRels.AftermarketDevice),
 		// Use limit + 1 here to check if there's a next page.
 		qm.Limit(limit + 1),
 		qm.OrderBy(models.VehicleColumns.ID + " DESC"),
 	}
 
 	if after != nil {
-		lastCursor, err := base64.StdEncoding.DecodeString(*after)
+		searchAfter, err := strconv.Atoi(string([]byte(*after)))
 		if err != nil {
 			return nil, err
 		}
 
-		lastCursorVal, err := strconv.Atoi(string(lastCursor))
-		if err != nil {
-			return nil, err
-		}
-		queryMods = append(queryMods, models.VehicleWhere.ID.LT(lastCursorVal))
+		queryMods = append(queryMods, models.VehicleWhere.ID.LT(searchAfter))
 	}
 
-	all, err := models.Vehicles(queryMods...).All(ctx, v.pdb.DBS().Reader)
+	vehicles, err := models.Vehicles(queryMods...).All(ctx, v.pdb.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(all) == 0 {
+	if len(vehicles) == 0 {
 		return &gmodel.VehicleConnection{
 			TotalCount: int(totalCount),
 			Edges:      []*gmodel.VehicleEdge{},
 		}, nil
 	}
 
-	vIterate := all
-	if len(all) > limit {
-		vIterate = all[:limit]
+	hasNextPage := len(vehicles) > limit
+	if hasNextPage {
+		vehicles = vehicles[:limit]
 	}
 
-	vehicles := []models.Vehicle{}
-	for _, v := range vIterate {
-		vehicles = append(vehicles, models.Vehicle{
-			ID:           v.ID,
-			OwnerAddress: v.OwnerAddress,
-			Make:         v.Make,
-			Model:        v.Model,
-			Year:         v.Year,
-			MintedAt:     v.MintedAt,
-		})
+	lastItmID := vehicles[len(vehicles)-1].ID
+	endCursr := base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(lastItmID)))
+
+	var vEdges []*gmodel.VehicleEdge
+	for _, v := range vehicles {
+		edge := &gmodel.VehicleEdge{
+			Node: &gmodel.Vehicle{
+				ID:       strconv.Itoa(v.ID),
+				Owner:    common.BytesToAddress(v.OwnerAddress),
+				Make:     v.Make.Ptr(),
+				Model:    v.Model.Ptr(),
+				Year:     v.Year.Ptr(),
+				MintedAt: v.MintedAt,
+			},
+			Cursor: base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(v.ID))),
+		}
+
+		if v.R.AftermarketDevice != nil {
+			edge.Node.AftermarketDevice = &gmodel.AftermarketDevice{
+				ID:      strconv.Itoa(v.R.AftermarketDevice.ID),
+				Address: BytesToAddr(v.R.AftermarketDevice.Address),
+				// Owner:       BytesToAddr(v.R.AftermarketDevice.Owner),
+				Serial: v.R.AftermarketDevice.Serial.Ptr(),
+				Imei:   v.R.AftermarketDevice.Imei.Ptr(),
+				// MintedAt:    v.R.AftermarketDevice.MintedAt.Ptr(),
+				Beneficiary: BytesToAddr(v.R.AftermarketDevice.Beneficiary),
+			}
+		}
+		vEdges = append(vEdges, edge)
 	}
 
-	return v.createVehiclesResponse(totalCount, vehicles, len(all) > limit), nil
+	res := &gmodel.VehicleConnection{
+		TotalCount: int(totalCount),
+		PageInfo: &gmodel.PageInfo{
+			HasNextPage: hasNextPage,
+			EndCursor:   &endCursr,
+		},
+		Edges: vEdges,
+	}
+
+	return res, nil
+}
+
+func (v *VehiclesRepo) GetLinkedVehicleByID(ctx context.Context, aftermarketDevID string) (*gmodel.Vehicle, error) {
+	adID, err := strconv.Atoi(aftermarketDevID)
+	if err != nil {
+		return nil, err
+	}
+
+	ad, err := models.AftermarketDevices(
+		models.AftermarketDeviceWhere.ID.EQ(adID),
+		qm.Load(models.AftermarketDeviceRels.Vehicle),
+	).One(ctx, v.pdb.DBS().Reader)
+	if err != nil {
+		return nil, err
+	}
+
+	if ad.R.Vehicle == nil {
+		return nil, nil
+	}
+
+	res := &gmodel.Vehicle{
+		ID:       strconv.Itoa(ad.R.Vehicle.ID),
+		Owner:    common.BytesToAddress(ad.R.Vehicle.OwnerAddress),
+		Make:     ad.R.Vehicle.Make.Ptr(),
+		Model:    ad.R.Vehicle.Model.Ptr(),
+		Year:     ad.R.Vehicle.Year.Ptr(),
+		MintedAt: ad.R.Vehicle.MintedAt,
+	}
+
+	return res, nil
 }
