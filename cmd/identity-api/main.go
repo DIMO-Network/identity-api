@@ -61,7 +61,7 @@ func main() {
 	logger.Info().Msgf("Server started on port: %d", settings.Port)
 
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", settings.Port), nil); err != nil {
-		logger.Fatal().Msgf("failed to start identity api: %v\n", err)
+		logger.Fatal().Err(err).Msg("Listener terminated.")
 	}
 
 }

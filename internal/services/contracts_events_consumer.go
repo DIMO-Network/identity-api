@@ -29,7 +29,6 @@ type ContractsEventsConsumer struct {
 type EventName string
 
 const (
-	VehicleNodeMinted                  EventName = "VehicleNodeMinted"
 	VehicleAttributeSet                EventName = "VehicleAttributeSet"
 	AftermarketDeviceNodeMinted        EventName = "AftermarketDeviceNodeMinted"
 	AftermarketDeviceAttributeSetEvent EventName = "AftermarketDeviceAttributeSet"
