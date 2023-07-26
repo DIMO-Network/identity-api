@@ -5,9 +5,9 @@ import (
 	"strconv"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
-	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/graph-gophers/dataloader/v7"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
@@ -64,11 +64,11 @@ func (v *VehicleLoader) BatchGetLinkedVehicleByAftermarketID(ctx context.Context
 
 		v := &model.Vehicle{
 			ID:       strconv.Itoa(device.R.Vehicle.ID),
-			Owner:    *repositories.BytesToAddr(device.R.Vehicle.OwnerAddress),
+			Owner:    common.BytesToAddress(device.R.Vehicle.OwnerAddress),
 			Make:     device.R.Vehicle.Make.Ptr(),
 			Model:    device.R.Vehicle.Model.Ptr(),
 			Year:     device.R.Vehicle.Year.Ptr(),
-			MintedAt: device.R.Vehicle.MintedAt.Time,
+			MintedAt: device.R.Vehicle.MintedAt,
 		}
 		results[keyOrder[device.ID]] = &dataloader.Result[*model.Vehicle]{Data: v, Error: nil}
 		delete(keyOrder, device.ID)

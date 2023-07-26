@@ -83,11 +83,11 @@ func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr comm
 		var vehicle gmodel.Vehicle
 		if d.R.Vehicle != nil {
 			vehicle.ID = strconv.Itoa(d.R.Vehicle.ID)
-			vehicle.Owner = *BytesToAddr(d.R.Vehicle.OwnerAddress)
+			vehicle.Owner = common.BytesToAddress(d.R.Vehicle.OwnerAddress)
 			vehicle.Make = d.R.Vehicle.Make.Ptr()
 			vehicle.Model = d.R.Vehicle.Model.Ptr()
 			vehicle.Year = d.R.Vehicle.Year.Ptr()
-			vehicle.MintedAt = d.R.Vehicle.MintedAt.Time
+			vehicle.MintedAt = d.R.Vehicle.MintedAt
 		}
 
 		adEdges = append(adEdges,

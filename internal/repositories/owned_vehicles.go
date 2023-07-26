@@ -11,7 +11,6 @@ import (
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
@@ -31,7 +30,7 @@ func NewVehiclesRepo(pdb db.Store) VehiclesRepo {
 
 func (v *VehiclesRepo) GetOwnedVehicles(ctx context.Context, addr common.Address, first *int, after *string) (*gmodel.VehicleConnection, error) {
 	totalCount, err := models.Vehicles(
-		models.VehicleWhere.OwnerAddress.EQ(null.BytesFrom(addr.Bytes())),
+		models.VehicleWhere.OwnerAddress.EQ(addr.Bytes()),
 	).Count(ctx, v.pdb.DBS().Reader)
 	if err != nil {
 		return nil, err
@@ -53,7 +52,7 @@ func (v *VehiclesRepo) GetOwnedVehicles(ctx context.Context, addr common.Address
 	}
 
 	queryMods := []qm.QueryMod{
-		models.VehicleWhere.OwnerAddress.EQ(null.BytesFrom(addr.Bytes())),
+		models.VehicleWhere.OwnerAddress.EQ(addr.Bytes()),
 		qm.Load(models.VehicleRels.AftermarketDevice),
 		// Use limit + 1 here to check if there's a next page.
 		qm.Limit(limit + 1),
@@ -94,11 +93,11 @@ func (v *VehiclesRepo) GetOwnedVehicles(ctx context.Context, addr common.Address
 		edge := &gmodel.VehicleEdge{
 			Node: &gmodel.Vehicle{
 				ID:       strconv.Itoa(v.ID),
-				Owner:    *BytesToAddr(v.OwnerAddress),
+				Owner:    common.BytesToAddress(v.OwnerAddress),
 				Make:     v.Make.Ptr(),
 				Model:    v.Model.Ptr(),
 				Year:     v.Year.Ptr(),
-				MintedAt: v.MintedAt.Time,
+				MintedAt: v.MintedAt,
 			},
 			Cursor: base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(v.ID))),
 		}
@@ -156,11 +155,11 @@ func (v *VehiclesRepo) GetLinkedVehicleByID(ctx context.Context, aftermarketDevI
 
 	res := &gmodel.Vehicle{
 		ID:       strconv.Itoa(ad.R.Vehicle.ID),
-		Owner:    *BytesToAddr(ad.R.Vehicle.OwnerAddress),
+		Owner:    common.BytesToAddress(ad.R.Vehicle.OwnerAddress),
 		Make:     ad.R.Vehicle.Make.Ptr(),
 		Model:    ad.R.Vehicle.Model.Ptr(),
 		Year:     ad.R.Vehicle.Year.Ptr(),
-		MintedAt: ad.R.Vehicle.MintedAt.Time,
+		MintedAt: ad.R.Vehicle.MintedAt,
 	}
 
 	return res, nil

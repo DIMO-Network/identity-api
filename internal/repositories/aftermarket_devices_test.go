@@ -71,11 +71,11 @@ var aftermarketDevice = models.AftermarketDevice{
 
 var vehicle = models.Vehicle{
 	ID:           11,
-	OwnerAddress: null.BytesFrom(common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4").Bytes()),
+	OwnerAddress: common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 	Make:         null.StringFrom("Ford"),
 	Model:        null.StringFrom("Bronco"),
 	Year:         null.IntFrom(2022),
-	MintedAt:     null.TimeFrom(time.Now()),
+	MintedAt:     time.Now(),
 }
 
 func createTestServerAndDB(ctx context.Context, t *testing.T, aftermarketDevices []models.AftermarketDevice, vehicles []models.Vehicle) *httptest.Server {
@@ -180,11 +180,11 @@ func TestOwnedAftermarketDeviceAndLinkedVehicle(t *testing.T) {
 	assert.Equal(t, aftermarketDevice.Imei.String, *adBody.Imei)
 
 	assert.Equal(t, strconv.Itoa(vehicle.ID), vehicleBody.ID)
-	assert.Equal(t, common.BytesToAddress(vehicle.OwnerAddress.Bytes), vehicleBody.Owner)
+	assert.Equal(t, common.BytesToAddress(vehicle.OwnerAddress), vehicleBody.Owner)
 	assert.Equal(t, vehicle.Make.String, *vehicleBody.Make)
 	assert.Equal(t, vehicle.Model.String, *vehicleBody.Model)
 	assert.Equal(t, vehicle.Year.Int, *vehicleBody.Year)
-	assert.Equal(t, vehicle.MintedAt.Time.UTC().Format(time.RFC1123), vehicleBody.MintedAt.UTC().Format(time.RFC1123))
+	assert.Equal(t, vehicle.MintedAt.UTC().Format(time.RFC1123), vehicleBody.MintedAt.UTC().Format(time.RFC1123))
 }
 
 func TestAftermarketDeviceNodeMintSingleResponse(t *testing.T) {

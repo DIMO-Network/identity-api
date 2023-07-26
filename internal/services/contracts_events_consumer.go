@@ -190,8 +190,8 @@ func (c *ContractsEventsConsumer) handleVehicleTransferEvent(ctx context.Context
 
 	vehicle := models.Vehicle{
 		ID:           int(args.TokenID.Int64()),
-		OwnerAddress: null.BytesFrom(args.To.Bytes()),
-		MintedAt:     null.TimeFrom(e.Block.Time),
+		OwnerAddress: args.To.Bytes(),
+		MintedAt:     e.Block.Time,
 	}
 
 	if err := vehicle.Upsert(ctx,
