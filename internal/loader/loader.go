@@ -9,7 +9,6 @@ import (
 	"github.com/graph-gophers/dataloader/v7"
 )
 
-type loaderKey struct{}
 type loadersString string
 
 const (
