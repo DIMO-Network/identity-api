@@ -11,10 +11,10 @@ import (
 type AftermarketDevice struct {
 	ID       string          `json:"id"`
 	Address  *common.Address `json:"address,omitempty"`
-	Owner    *common.Address `json:"owner,omitempty"`
+	Owner    common.Address  `json:"owner"`
 	Serial   *string         `json:"serial,omitempty"`
 	Imei     *string         `json:"imei,omitempty"`
-	MintedAt *time.Time      `json:"mintedAt,omitempty"`
+	MintedAt time.Time       `json:"mintedAt"`
 }
 
 type AftermarketDeviceConnection struct {

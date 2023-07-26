@@ -28,10 +28,10 @@ type VehicleEdge {
 type AftermarketDevice {
   id: ID!
   address: Address
-  owner: Address
+  owner: Address!
   serial: String
   imei: String
-  mintedAt: Time
+  mintedAt: Time!
 }
 
 type AftermarketDeviceConnection {

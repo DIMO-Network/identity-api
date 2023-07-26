@@ -13,6 +13,14 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
+func BytesToAddr(addrB null.Bytes) *common.Address {
+	var addr *common.Address
+	if addrB.Valid {
+		addr = (*common.Address)(*addrB.Ptr())
+	}
+	return addr
+}
+
 func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr common.Address, first *int, after *string) (*gmodel.AftermarketDeviceConnection, error) {
 	ownedADCount, err := models.AftermarketDevices(
 		models.AftermarketDeviceWhere.Owner.EQ(null.BytesFrom(addr.Bytes())),
@@ -70,22 +78,15 @@ func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr comm
 
 	var adEdges []*gmodel.AftermarketDeviceEdge
 	for _, d := range ads {
-		var ownerAddr, deviceAddr *common.Address
-		if d.Address.Valid {
-			deviceAddr = (*common.Address)(*d.Address.Ptr())
-		}
-		if d.Owner.Valid {
-			ownerAddr = (*common.Address)(*d.Owner.Ptr())
-		}
 		adEdges = append(adEdges,
 			&gmodel.AftermarketDeviceEdge{
 				Node: &gmodel.AftermarketDevice{
 					ID:       strconv.Itoa(d.ID),
-					Address:  deviceAddr,
-					Owner:    ownerAddr,
+					Address:  BytesToAddr(d.Address),
+					Owner:    common.BytesToAddress(d.Owner.Bytes),
 					Serial:   d.Serial.Ptr(),
 					Imei:     d.Imei.Ptr(),
-					MintedAt: d.MintedAt.Ptr(),
+					MintedAt: d.MintedAt.Time,
 				},
 				Cursor: base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(d.ID))),
 			},
