@@ -181,11 +181,9 @@ func TestOwnedAftermarketDeviceAndLinkedVehicle(t *testing.T) {
 
 	assert.Equal(t, strconv.Itoa(vehicle.ID), vehicleBody.ID)
 	assert.Equal(t, common.BytesToAddress(vehicle.OwnerAddress), vehicleBody.Owner)
-	assert.Equal(t, common.BytesToAddress(vehicle.OwnerAddress), vehicleBody.Owner)
 	assert.Equal(t, vehicle.Make.String, *vehicleBody.Make)
 	assert.Equal(t, vehicle.Model.String, *vehicleBody.Model)
 	assert.Equal(t, vehicle.Year.Int, *vehicleBody.Year)
-	assert.Equal(t, vehicle.MintedAt.UTC().Format(time.RFC1123), vehicleBody.MintedAt.UTC().Format(time.RFC1123))
 	assert.Equal(t, vehicle.MintedAt.UTC().Format(time.RFC1123), vehicleBody.MintedAt.UTC().Format(time.RFC1123))
 }
 
