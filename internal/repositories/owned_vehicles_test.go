@@ -37,10 +37,6 @@ func (o *OwnedVehiclesRepoTestSuite) SetupSuite() {
 		DIMORegistryChainID: 80001,
 	}
 	o.repo = NewVehiclesRepo(o.pdb)
-	/* c := client.New(handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{
-		Repo: ov,
-	}}))) */
-
 }
 
 // TearDownTest after each test truncate tables
