@@ -189,6 +189,7 @@ func (c *ContractsEventsConsumer) handleVehicleTransferEvent(ctx context.Context
 		MintedAt:     e.Block.Time,
 	}
 
+	// Insert is the mint case.
 	if err := vehicle.Upsert(
 		ctx,
 		c.dbs.DBS().Writer,
@@ -278,21 +279,10 @@ func (c *ContractsEventsConsumer) handleAftermarketDevicePairedEvent(ctx context
 	ad := models.AftermarketDevice{
 		ID:        int(args.AftermarketDeviceNode.Int64()),
 		VehicleID: null.IntFrom(int(args.VehicleNode.Int64())),
-		Owner:     null.BytesFrom(args.Owner.Bytes()),
 	}
 
-	if err := ad.Upsert(
-		ctx,
-		c.dbs.DBS().Writer,
-		true,
-		[]string{models.AftermarketDeviceColumns.ID},
-		boil.Whitelist(models.AftermarketDeviceColumns.VehicleID, models.AftermarketDeviceColumns.Owner),
-		boil.Infer(),
-	); err != nil {
-		return err
-	}
-
-	return nil
+	_, err := ad.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.AftermarketDeviceColumns.VehicleID))
+	return err
 }
 
 func (c *ContractsEventsConsumer) handleAftermarketDeviceUnpairedEvent(ctx context.Context, e *ContractEventData) error {
@@ -301,22 +291,8 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceUnpairedEvent(ctx conte
 		return err
 	}
 
-	ad := models.AftermarketDevice{
-		ID:        int(args.AftermarketDeviceNode.Int64()),
-		VehicleID: null.Int{},
-		Owner:     null.Bytes{},
-	}
+	ad := models.AftermarketDevice{ID: int(args.AftermarketDeviceNode.Int64())}
 
-	if err := ad.Upsert(
-		ctx,
-		c.dbs.DBS().Writer,
-		true,
-		[]string{models.AftermarketDeviceColumns.ID},
-		boil.Whitelist(models.AftermarketDeviceColumns.VehicleID, models.AftermarketDeviceColumns.Owner),
-		boil.Infer(),
-	); err != nil {
-		return err
-	}
-
-	return nil
+	_, err := ad.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.AftermarketDeviceColumns.VehicleID))
+	return err
 }
