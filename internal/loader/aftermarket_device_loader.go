@@ -8,6 +8,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/graph-gophers/dataloader/v7"
 )
 
@@ -56,12 +57,12 @@ func (ad *AftermarketDeviceLoader) BatchGetLinkedAftermarketDeviceByVehicleID(ct
 
 	for _, device := range devices {
 		v := &model.AftermarketDevice{
-			ID:      strconv.Itoa(device.ID),
-			Address: repositories.BytesToAddr(device.Address),
-			// Owner:       repositories.BytesToAddr(device.Owner),
-			Serial: device.Serial.Ptr(),
-			Imei:   device.Imei.Ptr(),
-			// MintedAt:    device.MintedAt.Ptr(),
+			ID:          strconv.Itoa(device.ID),
+			Address:     repositories.BytesToAddr(device.Address),
+			Owner:       common.BytesToAddress(device.Owner),
+			Serial:      device.Serial.Ptr(),
+			Imei:        device.Imei.Ptr(),
+			MintedAt:    device.MintedAt,
 			Beneficiary: repositories.BytesToAddr(device.Beneficiary),
 		}
 		results[keyOrder[device.VehicleID.Int]] = &dataloader.Result[*model.AftermarketDevice]{Data: v, Error: nil}
