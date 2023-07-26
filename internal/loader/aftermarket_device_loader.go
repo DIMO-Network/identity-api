@@ -56,12 +56,13 @@ func (ad *AftermarketDeviceLoader) BatchGetLinkedAftermarketDeviceByVehicleID(ct
 
 	for _, device := range devices {
 		v := &model.AftermarketDevice{
-			ID:       strconv.Itoa(device.ID),
-			Address:  repositories.BytesToAddr(device.Address),
-			Owner:    repositories.BytesToAddr(device.Owner),
-			Serial:   device.Serial.Ptr(),
-			Imei:     device.Imei.Ptr(),
-			MintedAt: device.MintedAt.Ptr(),
+			ID:          strconv.Itoa(device.ID),
+			Address:     repositories.BytesToAddr(device.Address),
+			Owner:       repositories.BytesToAddr(device.Owner),
+			Serial:      device.Serial.Ptr(),
+			Imei:        device.Imei.Ptr(),
+			MintedAt:    device.MintedAt.Ptr(),
+			Beneficiary: repositories.BytesToAddr(device.Beneficiary),
 		}
 		results[keyOrder[device.VehicleID.Int]] = &dataloader.Result[*model.AftermarketDevice]{Data: v, Error: nil}
 		delete(keyOrder, device.VehicleID.Int)

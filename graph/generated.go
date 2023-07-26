@@ -50,13 +50,14 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	AftermarketDevice struct {
-		Address  func(childComplexity int) int
-		ID       func(childComplexity int) int
-		Imei     func(childComplexity int) int
-		MintedAt func(childComplexity int) int
-		Owner    func(childComplexity int) int
-		Serial   func(childComplexity int) int
-		Vehicle  func(childComplexity int) int
+		Address     func(childComplexity int) int
+		Beneficiary func(childComplexity int) int
+		ID          func(childComplexity int) int
+		Imei        func(childComplexity int) int
+		MintedAt    func(childComplexity int) int
+		Owner       func(childComplexity int) int
+		Serial      func(childComplexity int) int
+		Vehicle     func(childComplexity int) int
 	}
 
 	AftermarketDeviceConnection struct {
@@ -134,6 +135,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.AftermarketDevice.Address(childComplexity), true
+
+	case "AftermarketDevice.beneficiary":
+		if e.complexity.AftermarketDevice.Beneficiary == nil {
+			break
+		}
+
+		return e.complexity.AftermarketDevice.Beneficiary(childComplexity), true
 
 	case "AftermarketDevice.id":
 		if e.complexity.AftermarketDevice.ID == nil {
@@ -867,6 +875,47 @@ func (ec *executionContext) fieldContext_AftermarketDevice_vehicle(ctx context.C
 	return fc, nil
 }
 
+func (ec *executionContext) _AftermarketDevice_beneficiary(ctx context.Context, field graphql.CollectedField, obj *model.AftermarketDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AftermarketDevice_beneficiary(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Beneficiary, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*common.Address)
+	fc.Result = res
+	return ec.marshalOAddress2ᚖgithubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AftermarketDevice_beneficiary(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AftermarketDevice",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Address does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _AftermarketDeviceConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.AftermarketDeviceConnection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_AftermarketDeviceConnection_totalCount(ctx, field)
 	if err != nil {
@@ -1108,6 +1157,8 @@ func (ec *executionContext) fieldContext_AftermarketDeviceEdge_node(ctx context.
 				return ec.fieldContext_AftermarketDevice_mintedAt(ctx, field)
 			case "vehicle":
 				return ec.fieldContext_AftermarketDevice_vehicle(ctx, field)
+			case "beneficiary":
+				return ec.fieldContext_AftermarketDevice_beneficiary(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type AftermarketDevice", field.Name)
 		},
@@ -1760,6 +1811,8 @@ func (ec *executionContext) fieldContext_Vehicle_aftermarketDevice(ctx context.C
 				return ec.fieldContext_AftermarketDevice_mintedAt(ctx, field)
 			case "vehicle":
 				return ec.fieldContext_AftermarketDevice_vehicle(ctx, field)
+			case "beneficiary":
+				return ec.fieldContext_AftermarketDevice_beneficiary(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type AftermarketDevice", field.Name)
 		},
@@ -3855,6 +3908,8 @@ func (ec *executionContext) _AftermarketDevice(ctx context.Context, sel ast.Sele
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "beneficiary":
+			out.Values[i] = ec._AftermarketDevice_beneficiary(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

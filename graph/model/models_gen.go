@@ -9,13 +9,14 @@ import (
 )
 
 type AftermarketDevice struct {
-	ID       string          `json:"id"`
-	Address  *common.Address `json:"address,omitempty"`
-	Owner    *common.Address `json:"owner,omitempty"`
-	Serial   *string         `json:"serial,omitempty"`
-	Imei     *string         `json:"imei,omitempty"`
-	MintedAt *time.Time      `json:"mintedAt,omitempty"`
-	Vehicle  *Vehicle        `json:"vehicle,omitempty"`
+	ID          string          `json:"id"`
+	Address     *common.Address `json:"address,omitempty"`
+	Owner       *common.Address `json:"owner,omitempty"`
+	Serial      *string         `json:"serial,omitempty"`
+	Imei        *string         `json:"imei,omitempty"`
+	MintedAt    *time.Time      `json:"mintedAt,omitempty"`
+	Vehicle     *Vehicle        `json:"vehicle,omitempty"`
+	Beneficiary *common.Address `json:"beneficiary,omitempty"`
 }
 
 type AftermarketDeviceConnection struct {

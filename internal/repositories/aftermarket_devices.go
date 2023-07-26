@@ -93,13 +93,14 @@ func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr comm
 		adEdges = append(adEdges,
 			&gmodel.AftermarketDeviceEdge{
 				Node: &gmodel.AftermarketDevice{
-					ID:       strconv.Itoa(d.ID),
-					Address:  BytesToAddr(d.Address),
-					Owner:    BytesToAddr(d.Owner),
-					Serial:   d.Serial.Ptr(),
-					Imei:     d.Imei.Ptr(),
-					MintedAt: d.MintedAt.Ptr(),
-					Vehicle:  &vehicle,
+					ID:          strconv.Itoa(d.ID),
+					Address:     BytesToAddr(d.Address),
+					Owner:       BytesToAddr(d.Owner),
+					Serial:      d.Serial.Ptr(),
+					Imei:        d.Imei.Ptr(),
+					MintedAt:    d.MintedAt.Ptr(),
+					Vehicle:     &vehicle,
+					Beneficiary: BytesToAddr(d.Beneficiary),
 				},
 				Cursor: base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(d.ID))),
 			},
@@ -139,12 +140,13 @@ func (v *VehiclesRepo) GetLinkedAftermarketDeviceByVehicleID(ctx context.Context
 	}
 
 	res := &gmodel.AftermarketDevice{
-		ID:       strconv.Itoa(ad.ID),
-		Address:  BytesToAddr(ad.Address),
-		Owner:    BytesToAddr(ad.Address),
-		Serial:   ad.Serial.Ptr(),
-		Imei:     ad.Imei.Ptr(),
-		MintedAt: ad.MintedAt.Ptr(),
+		ID:          strconv.Itoa(ad.ID),
+		Address:     BytesToAddr(ad.Address),
+		Owner:       BytesToAddr(ad.Address),
+		Serial:      ad.Serial.Ptr(),
+		Imei:        ad.Imei.Ptr(),
+		MintedAt:    ad.MintedAt.Ptr(),
+		Beneficiary: BytesToAddr(ad.Beneficiary),
 	}
 
 	return res, nil

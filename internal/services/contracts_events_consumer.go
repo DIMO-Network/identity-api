@@ -31,7 +31,7 @@ type EventName string
 const (
 	VehicleNodeMinted                  EventName = "VehicleNodeMinted"
 	VehicleAttributeSet                EventName = "VehicleAttributeSet"
-	AftermarketDeviceNodeMinted        EventName = "AftermarketDeviceNodeMinted"
+	AftermarketDeviceNodeMintedEvent   EventName = "AftermarketDeviceNodeMinted"
 	AftermarketDeviceAttributeSetEvent EventName = "AftermarketDeviceAttributeSet"
 	AftermarketDevicePairedEvent       EventName = "AftermarketDevicePaired"
 	AftermarketDeviceUnpairedEvent     EventName = "AftermarketDeviceUnpaired"
@@ -131,13 +131,12 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 		return nil
 	}
 	eventName := EventName(data.EventName)
-
 	switch data.Contract {
 	case registryAddr:
 		switch eventName {
 		case VehicleAttributeSet:
 			return c.handleVehicleAttributeSetEvent(ctx, &data)
-		case AftermarketDeviceNodeMinted:
+		case AftermarketDeviceNodeMintedEvent:
 			return c.handleAftermarketDeviceNodeMintedEvent(ctx, &data)
 		case AftermarketDeviceAttributeSetEvent:
 			return c.handleAftermarketDeviceAttributeSetEvent(ctx, &data)
@@ -232,17 +231,18 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceNodeMintedEvent(ctx con
 	}
 
 	ad := models.AftermarketDevice{
-		ID:       int(args.TokenID.Int64()),
-		Address:  null.BytesFrom(args.AftermarketDeviceAddress.Bytes()),
-		Owner:    null.BytesFrom(args.Owner.Bytes()),
-		MintedAt: null.TimeFrom(e.Block.Time),
+		ID:          int(args.TokenID.Int64()),
+		Address:     null.BytesFrom(args.AftermarketDeviceAddress.Bytes()),
+		Owner:       null.BytesFrom(args.Owner.Bytes()),
+		Beneficiary: null.BytesFrom(args.Owner.Bytes()),
+		MintedAt:    null.TimeFrom(e.Block.Time),
 	}
 
 	if err := ad.Upsert(ctx, c.dbs.DBS().Writer,
 		true,
 		[]string{models.AftermarketDeviceColumns.ID},
-		boil.Whitelist(models.AftermarketDeviceColumns.ID, models.AftermarketDeviceColumns.Address, models.AftermarketDeviceColumns.Owner, models.AftermarketDeviceColumns.MintedAt),
-		boil.Whitelist(models.AftermarketDeviceColumns.ID, models.AftermarketDeviceColumns.Address, models.AftermarketDeviceColumns.Owner, models.AftermarketDeviceColumns.MintedAt),
+		boil.Whitelist(models.AftermarketDeviceColumns.ID, models.AftermarketDeviceColumns.Address, models.AftermarketDeviceColumns.Owner, models.AftermarketDeviceColumns.MintedAt, models.AftermarketDeviceColumns.Beneficiary),
+		boil.Whitelist(models.AftermarketDeviceColumns.ID, models.AftermarketDeviceColumns.Address, models.AftermarketDeviceColumns.Owner, models.AftermarketDeviceColumns.MintedAt, models.AftermarketDeviceColumns.Beneficiary),
 	); err != nil {
 		return err
 	}
@@ -295,9 +295,10 @@ func (c *ContractsEventsConsumer) handleAftermarketDevicePairedEvent(ctx context
 	}
 
 	ad := models.AftermarketDevice{
-		ID:        int(args.AftermarketDeviceNode.Int64()),
-		VehicleID: null.IntFrom(int(args.VehicleNode.Int64())),
-		Owner:     null.BytesFrom(args.Owner.Bytes()),
+		ID:          int(args.AftermarketDeviceNode.Int64()),
+		VehicleID:   null.IntFrom(int(args.VehicleNode.Int64())),
+		Owner:       null.BytesFrom(args.Owner.Bytes()),
+		Beneficiary: null.BytesFrom(args.Owner.Bytes()),
 	}
 
 	if err := ad.Upsert(
@@ -321,9 +322,10 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceUnpairedEvent(ctx conte
 	}
 
 	ad := models.AftermarketDevice{
-		ID:        int(args.AftermarketDeviceNode.Int64()),
-		VehicleID: null.Int{},
-		Owner:     null.Bytes{},
+		ID:          int(args.AftermarketDeviceNode.Int64()),
+		VehicleID:   null.Int{},
+		Owner:       null.Bytes{},
+		Beneficiary: null.Bytes{},
 	}
 
 	if err := ad.Upsert(
@@ -349,7 +351,8 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceTransferredEvent(ctx co
 	ad := models.AftermarketDevice{
 		ID:          int(args.AftermarketDeviceNode.Int64()),
 		Owner:       null.BytesFrom(args.NewOwner.Bytes()),
-		Beneficiary: null.Bytes{},
+		Beneficiary: null.BytesFrom(args.NewOwner.Bytes()),
+		VehicleID:   null.Int{},
 	}
 
 	return ad.Upsert(
@@ -357,8 +360,8 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceTransferredEvent(ctx co
 		c.dbs.DBS().Writer,
 		true,
 		[]string{models.AftermarketDeviceColumns.ID},
-		boil.Whitelist(models.AftermarketDeviceColumns.ID, models.AftermarketDeviceColumns.Owner, models.AftermarketDeviceColumns.Beneficiary),
-		boil.Whitelist(models.AftermarketDeviceColumns.ID, models.AftermarketDeviceColumns.Owner, models.AftermarketDeviceColumns.Beneficiary),
+		boil.Whitelist(models.AftermarketDeviceColumns.ID, models.AftermarketDeviceColumns.Owner, models.AftermarketDeviceColumns.VehicleID, models.AftermarketDeviceColumns.Beneficiary),
+		boil.Whitelist(models.AftermarketDeviceColumns.ID, models.AftermarketDeviceColumns.Owner, models.AftermarketDeviceColumns.VehicleID, models.AftermarketDeviceColumns.Beneficiary),
 	)
 }
 

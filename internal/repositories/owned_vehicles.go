@@ -104,21 +104,14 @@ func (v *VehiclesRepo) GetOwnedVehicles(ctx context.Context, addr common.Address
 		}
 
 		if v.R.AftermarketDevice != nil {
-			var deviceOwnerAddr, deviceAddr *common.Address
-			if v.R.AftermarketDevice.Address.Ptr() != nil {
-				deviceAddr = (*common.Address)(*v.R.AftermarketDevice.Address.Ptr())
-			}
-			if v.R.AftermarketDevice.Owner.Ptr() != nil {
-				deviceOwnerAddr = (*common.Address)(*v.R.AftermarketDevice.Owner.Ptr())
-			}
-
 			edge.Node.AftermarketDevice = &gmodel.AftermarketDevice{
-				ID:       strconv.Itoa(v.R.AftermarketDevice.ID),
-				Address:  deviceAddr,
-				Owner:    deviceOwnerAddr,
-				Serial:   v.R.AftermarketDevice.Serial.Ptr(),
-				Imei:     v.R.AftermarketDevice.Imei.Ptr(),
-				MintedAt: v.R.AftermarketDevice.MintedAt.Ptr(),
+				ID:          strconv.Itoa(v.R.AftermarketDevice.ID),
+				Address:     BytesToAddr(v.R.AftermarketDevice.Address),
+				Owner:       BytesToAddr(v.R.AftermarketDevice.Owner),
+				Serial:      v.R.AftermarketDevice.Serial.Ptr(),
+				Imei:        v.R.AftermarketDevice.Imei.Ptr(),
+				MintedAt:    v.R.AftermarketDevice.MintedAt.Ptr(),
+				Beneficiary: BytesToAddr(v.R.AftermarketDevice.Beneficiary),
 			}
 		}
 		vEdges = append(vEdges, edge)
