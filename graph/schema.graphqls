@@ -59,7 +59,7 @@ type Privilege {
 }
 
 type Query {
-  ownedVehicles(
+  accessibleVehicles(
     address: Address!
     first: Int
     after: String
