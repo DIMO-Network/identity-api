@@ -23,7 +23,7 @@ func BytesToAddr(addrB null.Bytes) *common.Address {
 
 func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr common.Address, first *int, after *string) (*gmodel.AftermarketDeviceConnection, error) {
 	ownedADCount, err := models.AftermarketDevices(
-		models.AftermarketDeviceWhere.Owner.EQ(null.BytesFrom(addr.Bytes())),
+		models.AftermarketDeviceWhere.Owner.EQ(addr.Bytes()),
 	).Count(ctx, v.pdb.DBS().Reader)
 	if err != nil {
 		return nil, err
@@ -46,7 +46,7 @@ func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr comm
 	}
 
 	queryMods := []qm.QueryMod{
-		models.AftermarketDeviceWhere.Owner.EQ(null.BytesFrom(addr.Bytes())),
+		models.AftermarketDeviceWhere.Owner.EQ(addr.Bytes()),
 		// Use limit + 1 here to check if there's a next page.
 		qm.Limit(limit + 1),
 		qm.OrderBy(models.AftermarketDeviceColumns.ID + " DESC"),
@@ -83,10 +83,10 @@ func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr comm
 				Node: &gmodel.AftermarketDevice{
 					ID:       strconv.Itoa(d.ID),
 					Address:  BytesToAddr(d.Address),
-					Owner:    common.BytesToAddress(d.Owner.Bytes),
+					Owner:    common.BytesToAddress(d.Owner),
 					Serial:   d.Serial.Ptr(),
 					Imei:     d.Imei.Ptr(),
-					MintedAt: d.MintedAt.Time,
+					MintedAt: d.MintedAt,
 				},
 				Cursor: base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(d.ID))),
 			},

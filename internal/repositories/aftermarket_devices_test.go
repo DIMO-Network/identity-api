@@ -19,7 +19,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
-	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
@@ -104,8 +103,9 @@ func TestAftermarketDeviceNodeMintMultiResponse(t *testing.T) {
 
 	for i := 1; i < 6; i++ {
 		ad := models.AftermarketDevice{
-			ID:    i,
-			Owner: null.BytesFrom(aftermarketDeviceNodeMintedArgs.Owner.Bytes()),
+			ID:       i,
+			Owner:    aftermarketDeviceNodeMintedArgs.Owner.Bytes(),
+			MintedAt: time.Now(),
 		}
 
 		err := ad.Insert(ctx, pdb.DBS().Writer, boil.Infer())

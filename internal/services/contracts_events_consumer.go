@@ -202,8 +202,8 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceNodeMintedEvent(e *Cont
 	ad := models.AftermarketDevice{
 		ID:       int(args.TokenID.Int64()),
 		Address:  null.BytesFrom(args.AftermarketDeviceAddress.Bytes()),
-		Owner:    null.BytesFrom(args.Owner.Bytes()),
-		MintedAt: null.TimeFrom(e.Block.Time),
+		Owner:    args.Owner.Bytes(),
+		MintedAt: e.Block.Time,
 	}
 
 	if err := ad.Upsert(context.Background(), c.dbs.DBS().Writer,
