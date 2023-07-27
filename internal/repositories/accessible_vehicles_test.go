@@ -244,20 +244,20 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 	o.NoError(err)
 
 	o.Equal(len(vehicles), res.TotalCount)
-	o.Equal(res.PageInfo.HasNextPage, false)
+	o.Equal(res.PageInfo.HasNextPage, true)
 
 	expected := []*gmodel.VehicleEdge{
 		{
 			Node: &gmodel.Vehicle{
-				ID:         "1",
+				ID:         "2",
 				Owner:      common.BytesToAddress(wallet.Bytes()),
-				Make:       &vehicles[0].Make.String,
-				Model:      &vehicles[0].Model.String,
-				Year:       &vehicles[0].Year.Int,
-				MintedAt:   vehicles[0].MintedAt,
+				Make:       &vehicles[1].Make.String,
+				Model:      &vehicles[1].Model.String,
+				Year:       &vehicles[1].Year.Int,
+				MintedAt:   vehicles[1].MintedAt,
 				Privileges: []*gmodel.Privilege{},
 			},
-			Cursor: "MQ==",
+			Cursor: "Mg==",
 		},
 	}
 
