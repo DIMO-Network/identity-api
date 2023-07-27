@@ -131,7 +131,7 @@ func TestOwnedAftermarketDevices(t *testing.T) {
 	assert.Equal(t, common.BytesToAddress(aftermarketDevice.Address.Bytes), *respBody.Address)
 	assert.Equal(t, common.BytesToAddress(aftermarketDevice.Owner.Bytes), *respBody.Owner)
 	assert.Equal(t, aftermarketDevice.Serial.String, *respBody.Serial)
-	assert.Equal(t, aftermarketDevice.Imei.String, *respBody.Imei)
+	assert.Equal(t, aftermarketDevice.Imei.String, *respBody.IMEI)
 }
 
 func TestOwnedAftermarketDeviceAndLinkedVehicle(t *testing.T) {
@@ -170,7 +170,7 @@ func TestOwnedAftermarketDeviceAndLinkedVehicle(t *testing.T) {
 	assert.Equal(t, common.BytesToAddress(aftermarketDevice.Address.Bytes), *adBody.Address)
 	assert.Equal(t, common.BytesToAddress(aftermarketDevice.Owner.Bytes), *adBody.Owner)
 	assert.Equal(t, aftermarketDevice.Serial.String, *adBody.Serial)
-	assert.Equal(t, aftermarketDevice.Imei.String, *adBody.Imei)
+	assert.Equal(t, aftermarketDevice.Imei.String, *adBody.IMEI)
 
 	assert.Equal(t, strconv.Itoa(vehicle.ID), vehicleBody.ID)
 	assert.Equal(t, common.BytesToAddress(vehicle.OwnerAddress), vehicleBody.Owner)

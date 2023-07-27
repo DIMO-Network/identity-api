@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/loader"
@@ -14,7 +15,10 @@ import (
 
 // Vehicle is the resolver for the vehicle field.
 func (r *aftermarketDeviceResolver) Vehicle(ctx context.Context, obj *model.AftermarketDevice) (*model.Vehicle, error) {
-	return loader.GetLinkedVehicleByID(ctx, obj.ID)
+	if obj.VehicleID == nil {
+		return nil, nil
+	}
+	return loader.GetVehicleByID(ctx, *obj.VehicleID)
 }
 
 // OwnedVehicles is the resolver for the ownedVehicles field.
@@ -46,3 +50,13 @@ func (r *Resolver) Vehicle() VehicleResolver { return &vehicleResolver{r} }
 type aftermarketDeviceResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type vehicleResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *aftermarketDeviceResolver) ID(ctx context.Context, obj *model.AftermarketDevice) (int, error) {
+	panic(fmt.Errorf("not implemented: ID - id"))
+}

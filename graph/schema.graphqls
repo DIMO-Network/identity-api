@@ -4,6 +4,7 @@
 
 scalar Time
 scalar Address
+scalar BigInt
 
 type VehicleConnection {
   totalCount: Int!
@@ -12,7 +13,7 @@ type VehicleConnection {
 }
 
 type Vehicle {
-  id: ID!
+  id: BigInt!
   owner: Address!
   make: String
   model: String
@@ -27,7 +28,7 @@ type VehicleEdge {
 }
 
 type AftermarketDevice {
-  id: ID!
+  id: BigInt!
   address: Address
   owner: Address
   serial: String

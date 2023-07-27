@@ -96,7 +96,7 @@ func (r *Repository) GetOwnedVehicles(ctx context.Context, addr common.Address, 
 	for _, v := range vehicles {
 		edge := &gmodel.VehicleEdge{
 			Node: &gmodel.Vehicle{
-				ID:       strconv.Itoa(v.ID),
+				ID:       v.ID,
 				Owner:    common.BytesToAddress(v.OwnerAddress),
 				Make:     v.Make.Ptr(),
 				Model:    v.Model.Ptr(),
@@ -139,7 +139,7 @@ func (r *Repository) GetLinkedVehicleByID(ctx context.Context, aftermarketDevID 
 	}
 
 	res := &gmodel.Vehicle{
-		ID:       strconv.Itoa(ad.R.Vehicle.ID),
+		ID:       ad.R.Vehicle.ID,
 		Owner:    common.BytesToAddress(ad.R.Vehicle.OwnerAddress),
 		Make:     ad.R.Vehicle.Make.Ptr(),
 		Model:    ad.R.Vehicle.Model.Ptr(),
