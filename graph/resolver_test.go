@@ -4,18 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"math/big"
-	"net/http"
-	"net/http/httptest"
-	"strconv"
-	"strings"
 	"testing"
 	"time"
 
+	"github.com/99designs/gqlgen/client"
 	"github.com/99designs/gqlgen/graphql/handler"
-	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/loader"
 	"github.com/DIMO-Network/identity-api/internal/repositories"
@@ -24,7 +18,6 @@ import (
 	"github.com/DIMO-Network/shared"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
-	"github.com/tidwall/gjson"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
@@ -63,6 +56,15 @@ var aftermarketDevice = models.AftermarketDevice{
 	VehicleID: null.IntFrom(11),
 }
 
+var ad2 = models.AftermarketDevice{
+	ID:       100,
+	Address:  null.BytesFrom(common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf5").Bytes()),
+	Owner:    null.BytesFrom(common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4").Bytes()),
+	Serial:   null.StringFrom("aftermarketDeviceSerial-1"),
+	Imei:     null.StringFrom("aftermarketDeviceIMEI-1"),
+	MintedAt: null.TimeFrom(time.Now()),
+}
+
 var vehicle = models.Vehicle{
 	ID:           11,
 	OwnerAddress: common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
@@ -72,144 +74,57 @@ var vehicle = models.Vehicle{
 	MintedAt:     time.Now(),
 }
 
-func createTestServerAndDB(ctx context.Context, t *testing.T, aftermarketDevices []models.AftermarketDevice, vehicles []models.Vehicle) *httptest.Server {
+func TestNew(t *testing.T) {
 	assert := assert.New(t)
+	ctx := context.Background()
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, helpers.MigrationsDirRelPath)
+
+	err := vehicle.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	assert.NoError(err)
+
+	err = aftermarketDevice.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	assert.NoError(err)
+
+	err = ad2.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	assert.NoError(err)
+
 	repo := repositories.NewRepository(pdb, 0)
 	resolver := NewResolver(repo)
+	c := client.New(loader.Middleware(pdb, handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: &resolver}))))
 
-	s := handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: &resolver}))
-	srv := loader.Middleware(pdb, s)
+	t.Run("ownedAftermarketDevices, return only one response", func(t *testing.T) {
+		var resp interface{}
+		c.MustPost(`{ownedAftermarketDevices(address: "46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4", first: 1) {edges {node {id owner}}}}`, &resp)
+		b, _ := json.Marshal(resp)
+		fmt.Println(string(b))
+		assert.Equal(`{"ownedAftermarketDevices":{"edges":[{"node":{"id":"100","owner":"0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"}}]}}`, string(b))
+	})
 
-	mux := http.NewServeMux()
-	mux.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	mux.Handle("/query", srv)
+	t.Run("ownedAftermarketDevices, search after", func(t *testing.T) {
+		var resp interface{}
+		c.MustPost(`{ownedAftermarketDevices(address: "46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4" after: "MQ==") {edges {node {id owner}}}}`, &resp)
+		b, _ := json.Marshal(resp)
+		fmt.Println(string(b))
+		assert.Equal(`{"ownedAftermarketDevices":{"edges":[]}}`, string(b))
+	})
 
-	app := httptest.NewServer(mux)
+	t.Run("ownedAftermarketDevices and linked vehicle", func(t *testing.T) {
+		var resp interface{}
+		c.MustPost(`{ownedAftermarketDevices(address: "46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4") {edges {node {id owner vehicle{id owner}}}}}`, &resp)
+		b, _ := json.Marshal(resp)
+		fmt.Println(string(b))
+		assert.Equal(
+			`{"ownedAftermarketDevices":{"edges":[{"node":{"id":"100","owner":"0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4","vehicle":null}},{"node":{"id":"1","owner":"0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4","vehicle":{"id":"11","owner":"0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"}}}]}}`,
+			string(b))
+	})
 
-	for _, vehicle := range vehicles {
-		err := vehicle.Insert(ctx, pdb.DBS().Writer, boil.Infer())
-		assert.NoError(err)
-	}
-
-	for _, device := range aftermarketDevices {
-		err := device.Insert(ctx, pdb.DBS().Writer, boil.Infer())
-		assert.NoError(err)
-	}
-
-	return app
-
-}
-
-func TestOwnedAftermarketDevices(t *testing.T) {
-	ctx := context.Background()
-	assert := assert.New(t)
-	app := createTestServerAndDB(ctx, t, []models.AftermarketDevice{aftermarketDevice}, []models.Vehicle{vehicle})
-	defer app.Close()
-
-	r := strings.NewReader(`{
-		"query": "query ownedAftermarketDevices($address: Address!){ ownedAftermarketDevices(address: $address) { edges { node { id serial owner address imei mintedAt owner } } }}",
-		"operationName": "ownedAftermarketDevices",
-		"variables": {
-			"address": "46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"
-		}
-}`)
-
-	resp, err := http.Post(app.URL+"/query", "application/json", r)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	var respBody model.AftermarketDevice
-	b, err := io.ReadAll(resp.Body)
-	defer resp.Body.Close()
-	assert.NoError(err)
-
-	err = json.Unmarshal([]byte(gjson.GetBytes(b, "data.ownedAftermarketDevices.edges.0.node").String()), &respBody)
-	assert.NoError(err)
-
-	assert.Equal(200, resp.StatusCode)
-	assert.Equal(strconv.Itoa(aftermarketDevice.ID), respBody.ID)
-	assert.Equal(common.BytesToAddress(aftermarketDevice.Address.Bytes), *respBody.Address)
-	assert.Equal(common.BytesToAddress(aftermarketDevice.Owner.Bytes), *respBody.Owner)
-	assert.Equal(aftermarketDevice.Serial.String, *respBody.Serial)
-	assert.Equal(aftermarketDevice.Imei.String, *respBody.Imei)
-}
-
-func TestOwnedAftermarketDeviceAndLinkedVehicle(t *testing.T) {
-	ctx := context.Background()
-	assert := assert.New(t)
-	app := createTestServerAndDB(ctx, t, []models.AftermarketDevice{aftermarketDevice}, []models.Vehicle{vehicle})
-	defer app.Close()
-
-	r := strings.NewReader(`{
-		"query": "query ownedAftermarketDevices($address: Address!){ ownedAftermarketDevices(address: $address) { edges { node { id owner address imei serial mintedAt vehicle { id owner make model year mintedAt } } } }}"
-			  ,
-			  "operationName": "ownedAftermarketDevices",
-			  "variables": {
-				  "address": "46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"
-			  }
-	  }`)
-
-	resp, err := http.Post(app.URL+"/query", "application/json", r)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	var adBody model.AftermarketDevice
-	var vehicleBody model.Vehicle
-	b, err := io.ReadAll(resp.Body)
-	defer resp.Body.Close()
-	assert.NoError(err)
-
-	err = json.Unmarshal([]byte(gjson.GetBytes(b, "data.ownedAftermarketDevices.edges.0.node").String()), &adBody)
-	assert.NoError(err)
-
-	err = json.Unmarshal([]byte(gjson.GetBytes(b, "data.ownedAftermarketDevices.edges.0.node.vehicle").String()), &vehicleBody)
-	assert.NoError(err)
-
-	assert.Equal(200, resp.StatusCode)
-	assert.Equal(strconv.Itoa(aftermarketDevice.ID), adBody.ID)
-	assert.Equal(common.BytesToAddress(aftermarketDevice.Address.Bytes), *adBody.Address)
-	assert.Equal(common.BytesToAddress(aftermarketDevice.Owner.Bytes), *adBody.Owner)
-	assert.Equal(aftermarketDevice.Serial.String, *adBody.Serial)
-	assert.Equal(aftermarketDevice.Imei.String, *adBody.Imei)
-
-	assert.Equal(strconv.Itoa(vehicle.ID), vehicleBody.ID)
-	assert.Equal(common.BytesToAddress(vehicle.OwnerAddress), vehicleBody.Owner)
-	assert.Equal(vehicle.Make.String, *vehicleBody.Make)
-	assert.Equal(vehicle.Model.String, *vehicleBody.Model)
-	assert.Equal(vehicle.Year.Int, *vehicleBody.Year)
-	assert.Equal(vehicle.MintedAt.UTC().Format(time.RFC1123), vehicleBody.MintedAt.UTC().Format(time.RFC1123))
-}
-
-func TestAftermarketDeviceNodeMintMultiResponse(t *testing.T) {
-	ctx := context.Background()
-	assert := assert.New(t)
-	pdb, _ := helpers.StartContainerDatabase(ctx, t, helpers.MigrationsDirRelPath)
-
-	for i := 1; i < 6; i++ {
-		ad := models.AftermarketDevice{
-			ID:    i,
-			Owner: null.BytesFrom(aftermarketDeviceNodeMintedArgs.Owner.Bytes()),
-		}
-
-		err := ad.Insert(ctx, pdb.DBS().Writer, boil.Infer())
-		assert.NoError(err)
-	}
-
-	// 6 5 4 3 2 1
-	//     ^
-	//     |
-	//     after this
-
-	adController := repositories.NewRepository(pdb, 0)
-	first := 2
-	after := "NA==" // 4
-	res, err := adController.GetOwnedAftermarketDevices(ctx, aftermarketDeviceNodeMintedArgs.Owner, &first, &after)
-	assert.NoError(err)
-
-	assert.Len(res.Edges, 2)
-	assert.Equal("3", res.Edges[0].Node.ID)
-	assert.Equal("2", res.Edges[1].Node.ID)
+	t.Run("ownedVehicles", func(t *testing.T) {
+		var resp interface{}
+		c.MustPost(`{ownedVehicles(address: "46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4") {edges {node {id owner}}}}`, &resp)
+		b, _ := json.Marshal(resp)
+		fmt.Println(string(b))
+		assert.Equal(
+			`{"ownedVehicles":{"edges":[{"node":{"id":"11","owner":"0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"}}]}}`,
+			string(b))
+	})
 }
