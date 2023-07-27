@@ -22,11 +22,7 @@ func GetLinkedVehicleByID(ctx context.Context, vehicleID string) (*model.Vehicle
 	// invoke and get thunk
 	thunk := loaders.VehicleByID.Load(ctx, vehicleID)
 	// read value from thunk
-	result, err := thunk()
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
+	return thunk()
 }
 
 // BatchGetLinkedVehicleByAftermarketID implements the dataloader for finding vehicles linked to aftermarket devices and returns
@@ -40,6 +36,7 @@ func (v *VehicleLoader) BatchGetLinkedVehicleByAftermarketID(ctx context.Context
 		k, err := strconv.Atoi(key)
 		if err != nil {
 			results[ix] = &dataloader.Result[*model.Vehicle]{Data: nil, Error: err}
+			continue
 		}
 		keyOrder[k] = ix
 		adIDs = append(adIDs, k)
@@ -57,22 +54,18 @@ func (v *VehicleLoader) BatchGetLinkedVehicleByAftermarketID(ctx context.Context
 	}
 
 	for _, device := range adVehicleLink {
-		if device.R.Vehicle == nil {
-			results[keyOrder[device.ID]] = &dataloader.Result[*model.Vehicle]{Data: nil, Error: nil}
-			continue
-		}
-
-		v := &model.Vehicle{
-			ID:       strconv.Itoa(device.R.Vehicle.ID),
-			Owner:    common.BytesToAddress(device.R.Vehicle.OwnerAddress),
-			Make:     device.R.Vehicle.Make.Ptr(),
-			Model:    device.R.Vehicle.Model.Ptr(),
-			Year:     device.R.Vehicle.Year.Ptr(),
-			MintedAt: device.R.Vehicle.MintedAt,
+		var v *model.Vehicle
+		if device.R.Vehicle != nil {
+			v = &model.Vehicle{
+				ID:       strconv.Itoa(device.R.Vehicle.ID),
+				Owner:    common.BytesToAddress(device.R.Vehicle.OwnerAddress),
+				Make:     device.R.Vehicle.Make.Ptr(),
+				Model:    device.R.Vehicle.Model.Ptr(),
+				Year:     device.R.Vehicle.Year.Ptr(),
+				MintedAt: device.R.Vehicle.MintedAt,
+			}
 		}
 		results[keyOrder[device.ID]] = &dataloader.Result[*model.Vehicle]{Data: v, Error: nil}
-		delete(keyOrder, device.ID)
-
 	}
 
 	return results

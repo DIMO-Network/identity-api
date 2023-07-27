@@ -41,7 +41,6 @@ func (r *Repository) GetOwnedAftermarketDevices(ctx context.Context, addr common
 
 	queryMods := []qm.QueryMod{
 		models.AftermarketDeviceWhere.Owner.EQ(null.BytesFrom(addr.Bytes())),
-		qm.Load(models.AftermarketDeviceRels.Vehicle),
 		// Use limit + 1 here to check if there's a next page.
 		qm.Limit(limit + 1),
 		qm.OrderBy(models.AftermarketDeviceColumns.ID + " DESC"),
@@ -73,16 +72,6 @@ func (r *Repository) GetOwnedAftermarketDevices(ctx context.Context, addr common
 
 	var adEdges []*gmodel.AftermarketDeviceEdge
 	for _, d := range ads {
-		var vehicle gmodel.Vehicle
-		if d.R.Vehicle != nil {
-			vehicle.ID = strconv.Itoa(d.R.Vehicle.ID)
-			vehicle.Owner = common.BytesToAddress(d.R.Vehicle.OwnerAddress)
-			vehicle.Make = d.R.Vehicle.Make.Ptr()
-			vehicle.Model = d.R.Vehicle.Model.Ptr()
-			vehicle.Year = d.R.Vehicle.Year.Ptr()
-			vehicle.MintedAt = d.R.Vehicle.MintedAt
-		}
-
 		adEdges = append(adEdges,
 			&gmodel.AftermarketDeviceEdge{
 				Node: &gmodel.AftermarketDevice{
@@ -92,7 +81,6 @@ func (r *Repository) GetOwnedAftermarketDevices(ctx context.Context, addr common
 					Serial:   d.Serial.Ptr(),
 					Imei:     d.Imei.Ptr(),
 					MintedAt: d.MintedAt.Ptr(),
-					Vehicle:  &vehicle,
 				},
 				Cursor: base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(d.ID))),
 			},

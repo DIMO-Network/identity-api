@@ -21,11 +21,7 @@ func GetAftermarketDeviceByVehicleID(ctx context.Context, vehicleID string) (*mo
 	// invoke and get thunk
 	thunk := loaders.AftermarketDeviceByVehicleID.Load(ctx, vehicleID)
 	// read value from thunk
-	result, err := thunk()
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
+	return thunk()
 }
 
 // BatchGetLinkedAftermarketDeviceByVehicleID implements the dataloader for finding aftermarket devices linked to vehicles and returns
@@ -64,7 +60,6 @@ func (ad *AftermarketDeviceLoader) BatchGetLinkedAftermarketDeviceByVehicleID(ct
 			MintedAt: device.MintedAt.Ptr(),
 		}
 		results[keyOrder[device.VehicleID.Int]] = &dataloader.Result[*model.AftermarketDevice]{Data: v, Error: nil}
-		delete(keyOrder, device.VehicleID.Int)
 	}
 
 	return results

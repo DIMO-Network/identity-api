@@ -58,7 +58,6 @@ func (r *Repository) GetOwnedVehicles(ctx context.Context, addr common.Address, 
 
 	queryMods := []qm.QueryMod{
 		models.VehicleWhere.OwnerAddress.EQ(addr.Bytes()),
-		qm.Load(models.VehicleRels.AftermarketDevice),
 		// Use limit + 1 here to check if there's a next page.
 		qm.Limit(limit + 1),
 		qm.OrderBy(models.VehicleColumns.ID + " DESC"),
@@ -105,25 +104,6 @@ func (r *Repository) GetOwnedVehicles(ctx context.Context, addr common.Address, 
 				MintedAt: v.MintedAt,
 			},
 			Cursor: base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(v.ID))),
-		}
-
-		if v.R.AftermarketDevice != nil {
-			var deviceOwnerAddr, deviceAddr *common.Address
-			if v.R.AftermarketDevice.Address.Ptr() != nil {
-				deviceAddr = (*common.Address)(*v.R.AftermarketDevice.Address.Ptr())
-			}
-			if v.R.AftermarketDevice.Owner.Ptr() != nil {
-				deviceOwnerAddr = (*common.Address)(*v.R.AftermarketDevice.Owner.Ptr())
-			}
-
-			edge.Node.AftermarketDevice = &gmodel.AftermarketDevice{
-				ID:       strconv.Itoa(v.R.AftermarketDevice.ID),
-				Address:  deviceAddr,
-				Owner:    deviceOwnerAddr,
-				Serial:   v.R.AftermarketDevice.Serial.Ptr(),
-				Imei:     v.R.AftermarketDevice.Imei.Ptr(),
-				MintedAt: v.R.AftermarketDevice.MintedAt.Ptr(),
-			}
 		}
 		vEdges = append(vEdges, edge)
 	}
