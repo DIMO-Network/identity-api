@@ -73,6 +73,7 @@ var vehicle = models.Vehicle{
 }
 
 func createTestServerAndDB(ctx context.Context, t *testing.T, aftermarketDevices []models.AftermarketDevice, vehicles []models.Vehicle) *httptest.Server {
+	assert := assert.New(t)
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, helpers.MigrationsDirRelPath)
 	repo := repositories.NewRepository(pdb, 0)
 	resolver := NewResolver(repo)
@@ -88,12 +89,12 @@ func createTestServerAndDB(ctx context.Context, t *testing.T, aftermarketDevices
 
 	for _, vehicle := range vehicles {
 		err := vehicle.Insert(ctx, pdb.DBS().Writer, boil.Infer())
-		assert.NoError(t, err)
+		assert.NoError(err)
 	}
 
 	for _, device := range aftermarketDevices {
 		err := device.Insert(ctx, pdb.DBS().Writer, boil.Infer())
-		assert.NoError(t, err)
+		assert.NoError(err)
 	}
 
 	return app
@@ -102,6 +103,7 @@ func createTestServerAndDB(ctx context.Context, t *testing.T, aftermarketDevices
 
 func TestOwnedAftermarketDevices(t *testing.T) {
 	ctx := context.Background()
+	assert := assert.New(t)
 	app := createTestServerAndDB(ctx, t, []models.AftermarketDevice{aftermarketDevice}, []models.Vehicle{vehicle})
 	defer app.Close()
 
@@ -121,21 +123,22 @@ func TestOwnedAftermarketDevices(t *testing.T) {
 	var respBody model.AftermarketDevice
 	b, err := io.ReadAll(resp.Body)
 	defer resp.Body.Close()
-	assert.NoError(t, err)
+	assert.NoError(err)
 
 	err = json.Unmarshal([]byte(gjson.GetBytes(b, "data.ownedAftermarketDevices.edges.0.node").String()), &respBody)
-	assert.NoError(t, err)
+	assert.NoError(err)
 
-	assert.Equal(t, 200, resp.StatusCode)
-	assert.Equal(t, strconv.Itoa(aftermarketDevice.ID), respBody.ID)
-	assert.Equal(t, common.BytesToAddress(aftermarketDevice.Address.Bytes), *respBody.Address)
-	assert.Equal(t, common.BytesToAddress(aftermarketDevice.Owner.Bytes), *respBody.Owner)
-	assert.Equal(t, aftermarketDevice.Serial.String, *respBody.Serial)
-	assert.Equal(t, aftermarketDevice.Imei.String, *respBody.Imei)
+	assert.Equal(200, resp.StatusCode)
+	assert.Equal(strconv.Itoa(aftermarketDevice.ID), respBody.ID)
+	assert.Equal(common.BytesToAddress(aftermarketDevice.Address.Bytes), *respBody.Address)
+	assert.Equal(common.BytesToAddress(aftermarketDevice.Owner.Bytes), *respBody.Owner)
+	assert.Equal(aftermarketDevice.Serial.String, *respBody.Serial)
+	assert.Equal(aftermarketDevice.Imei.String, *respBody.Imei)
 }
 
 func TestOwnedAftermarketDeviceAndLinkedVehicle(t *testing.T) {
 	ctx := context.Background()
+	assert := assert.New(t)
 	app := createTestServerAndDB(ctx, t, []models.AftermarketDevice{aftermarketDevice}, []models.Vehicle{vehicle})
 	defer app.Close()
 
@@ -157,32 +160,32 @@ func TestOwnedAftermarketDeviceAndLinkedVehicle(t *testing.T) {
 	var vehicleBody model.Vehicle
 	b, err := io.ReadAll(resp.Body)
 	defer resp.Body.Close()
-	assert.NoError(t, err)
+	assert.NoError(err)
 
 	err = json.Unmarshal([]byte(gjson.GetBytes(b, "data.ownedAftermarketDevices.edges.0.node").String()), &adBody)
-	assert.NoError(t, err)
+	assert.NoError(err)
 
 	err = json.Unmarshal([]byte(gjson.GetBytes(b, "data.ownedAftermarketDevices.edges.0.node.vehicle").String()), &vehicleBody)
-	assert.NoError(t, err)
+	assert.NoError(err)
 
-	assert.Equal(t, 200, resp.StatusCode)
-	assert.Equal(t, strconv.Itoa(aftermarketDevice.ID), adBody.ID)
-	assert.Equal(t, common.BytesToAddress(aftermarketDevice.Address.Bytes), *adBody.Address)
-	assert.Equal(t, common.BytesToAddress(aftermarketDevice.Owner.Bytes), *adBody.Owner)
-	assert.Equal(t, aftermarketDevice.Serial.String, *adBody.Serial)
-	assert.Equal(t, aftermarketDevice.Imei.String, *adBody.Imei)
+	assert.Equal(200, resp.StatusCode)
+	assert.Equal(strconv.Itoa(aftermarketDevice.ID), adBody.ID)
+	assert.Equal(common.BytesToAddress(aftermarketDevice.Address.Bytes), *adBody.Address)
+	assert.Equal(common.BytesToAddress(aftermarketDevice.Owner.Bytes), *adBody.Owner)
+	assert.Equal(aftermarketDevice.Serial.String, *adBody.Serial)
+	assert.Equal(aftermarketDevice.Imei.String, *adBody.Imei)
 
-	assert.Equal(t, strconv.Itoa(vehicle.ID), vehicleBody.ID)
-	assert.Equal(t, common.BytesToAddress(vehicle.OwnerAddress), vehicleBody.Owner)
-	assert.Equal(t, vehicle.Make.String, *vehicleBody.Make)
-	assert.Equal(t, vehicle.Model.String, *vehicleBody.Model)
-	assert.Equal(t, vehicle.Year.Int, *vehicleBody.Year)
-	assert.Equal(t, vehicle.MintedAt.UTC().Format(time.RFC1123), vehicleBody.MintedAt.UTC().Format(time.RFC1123))
+	assert.Equal(strconv.Itoa(vehicle.ID), vehicleBody.ID)
+	assert.Equal(common.BytesToAddress(vehicle.OwnerAddress), vehicleBody.Owner)
+	assert.Equal(vehicle.Make.String, *vehicleBody.Make)
+	assert.Equal(vehicle.Model.String, *vehicleBody.Model)
+	assert.Equal(vehicle.Year.Int, *vehicleBody.Year)
+	assert.Equal(vehicle.MintedAt.UTC().Format(time.RFC1123), vehicleBody.MintedAt.UTC().Format(time.RFC1123))
 }
 
 func TestAftermarketDeviceNodeMintMultiResponse(t *testing.T) {
 	ctx := context.Background()
-
+	assert := assert.New(t)
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, helpers.MigrationsDirRelPath)
 
 	for i := 1; i < 6; i++ {
@@ -192,7 +195,7 @@ func TestAftermarketDeviceNodeMintMultiResponse(t *testing.T) {
 		}
 
 		err := ad.Insert(ctx, pdb.DBS().Writer, boil.Infer())
-		assert.NoError(t, err)
+		assert.NoError(err)
 	}
 
 	// 6 5 4 3 2 1
@@ -204,11 +207,9 @@ func TestAftermarketDeviceNodeMintMultiResponse(t *testing.T) {
 	first := 2
 	after := "NA==" // 4
 	res, err := adController.GetOwnedAftermarketDevices(ctx, aftermarketDeviceNodeMintedArgs.Owner, &first, &after)
-	assert.NoError(t, err)
+	assert.NoError(err)
 
-	fmt.Println(res)
-
-	assert.Len(t, res.Edges, 2)
-	assert.Equal(t, "3", res.Edges[0].Node.ID)
-	assert.Equal(t, "2", res.Edges[1].Node.ID)
+	assert.Len(res.Edges, 2)
+	assert.Equal("3", res.Edges[0].Node.ID)
+	assert.Equal("2", res.Edges[1].Node.ID)
 }
