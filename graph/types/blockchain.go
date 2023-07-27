@@ -32,17 +32,5 @@ func MarshalInt(x int) graphql.Marshaler {
 	})
 }
 
+// Is this going to work?
 var UnmarshalInt = graphql.UnmarshalInt
-
-// func UnmarshalInt(v any) (int, error) {
-// 	switch v := v.(type) {
-// 	case string:
-// 		return strconv.Atoi(v)
-// 	case int:
-// 		return v, nil
-// 	case int64:
-// 		return int(v), nil
-// 	default:
-// 		return common.Address{}, fmt.Errorf("%T is not a string", v)
-// 	}
-// }
