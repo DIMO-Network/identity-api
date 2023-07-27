@@ -18,20 +18,25 @@ const (
 	defaultPageSize = 20
 )
 
-type VehiclesRepo struct {
-	pdb db.Store
+type Repository struct {
+	PDB      db.Store
+	PageSize int
 }
 
-func NewVehiclesRepo(pdb db.Store) VehiclesRepo {
-	return VehiclesRepo{
-		pdb: pdb,
+func NewRepository(pdb db.Store, pgSize int) *Repository {
+	if pgSize == 0 {
+		pgSize = defaultPageSize
+	}
+	return &Repository{
+		PDB:      pdb,
+		PageSize: pgSize,
 	}
 }
 
-func (v *VehiclesRepo) GetOwnedVehicles(ctx context.Context, addr common.Address, first *int, after *string) (*gmodel.VehicleConnection, error) {
+func (r *Repository) GetOwnedVehicles(ctx context.Context, addr common.Address, first *int, after *string) (*gmodel.VehicleConnection, error) {
 	totalCount, err := models.Vehicles(
 		models.VehicleWhere.OwnerAddress.EQ(addr.Bytes()),
-	).Count(ctx, v.pdb.DBS().Reader)
+	).Count(ctx, r.PDB.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +48,7 @@ func (v *VehiclesRepo) GetOwnedVehicles(ctx context.Context, addr common.Address
 		}, nil
 	}
 
-	limit := defaultPageSize
+	limit := r.PageSize
 	if first != nil {
 		limit = *first
 		if limit <= 0 {
@@ -68,7 +73,7 @@ func (v *VehiclesRepo) GetOwnedVehicles(ctx context.Context, addr common.Address
 		queryMods = append(queryMods, models.VehicleWhere.ID.LT(searchAfter))
 	}
 
-	vehicles, err := models.Vehicles(queryMods...).All(ctx, v.pdb.DBS().Reader)
+	vehicles, err := models.Vehicles(queryMods...).All(ctx, r.PDB.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +140,7 @@ func (v *VehiclesRepo) GetOwnedVehicles(ctx context.Context, addr common.Address
 	return res, nil
 }
 
-func (v *VehiclesRepo) GetLinkedVehicleByID(ctx context.Context, aftermarketDevID string) (*gmodel.Vehicle, error) {
+func (r *Repository) GetLinkedVehicleByID(ctx context.Context, aftermarketDevID string) (*gmodel.Vehicle, error) {
 	adID, err := strconv.Atoi(aftermarketDevID)
 	if err != nil {
 		return nil, err
@@ -144,7 +149,7 @@ func (v *VehiclesRepo) GetLinkedVehicleByID(ctx context.Context, aftermarketDevI
 	ad, err := models.AftermarketDevices(
 		models.AftermarketDeviceWhere.ID.EQ(adID),
 		qm.Load(models.AftermarketDeviceRels.Vehicle),
-	).One(ctx, v.pdb.DBS().Reader)
+	).One(ctx, r.PDB.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}

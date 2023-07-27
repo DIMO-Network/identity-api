@@ -5,7 +5,6 @@ go 1.20
 require (
 	github.com/99designs/gqlgen v0.17.34
 	github.com/DIMO-Network/shared v0.10.2
-	github.com/Shopify/sarama v1.38.1
 	github.com/docker/go-connections v0.4.0
 	github.com/ethereum/go-ethereum v1.12.0
 	github.com/friendsofgo/errors v0.9.2
@@ -24,6 +23,7 @@ require (
 )
 
 require (
+	github.com/Shopify/sarama v1.38.1 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
 	golang.org/x/time v0.3.0 // indirect

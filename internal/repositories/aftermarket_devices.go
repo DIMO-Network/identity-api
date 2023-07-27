@@ -15,15 +15,15 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
-func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr common.Address, first *int, after *string) (*gmodel.AftermarketDeviceConnection, error) {
+func (r *Repository) GetOwnedAftermarketDevices(ctx context.Context, addr common.Address, first *int, after *string) (*gmodel.AftermarketDeviceConnection, error) {
 	ownedADCount, err := models.AftermarketDevices(
 		models.AftermarketDeviceWhere.Owner.EQ(null.BytesFrom(addr.Bytes())),
-	).Count(ctx, v.pdb.DBS().Reader)
+	).Count(ctx, r.PDB.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}
 
-	limit := defaultPageSize
+	limit := r.PageSize
 	if first != nil {
 		if *first < 1 {
 			return nil, errors.New("invalid pagination parameter provided")
@@ -61,7 +61,7 @@ func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr comm
 		queryMods = append(queryMods, models.AftermarketDeviceWhere.ID.LT(searchAfter))
 	}
 
-	ads, err := models.AftermarketDevices(queryMods...).All(ctx, v.pdb.DBS().Reader)
+	ads, err := models.AftermarketDevices(queryMods...).All(ctx, r.PDB.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +115,7 @@ func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr comm
 	return res, nil
 }
 
-func (v *VehiclesRepo) GetLinkedAftermarketDeviceByVehicleID(ctx context.Context, vehicleID string) (*gmodel.AftermarketDevice, error) {
+func (r *Repository) GetLinkedAftermarketDeviceByVehicleID(ctx context.Context, vehicleID string) (*gmodel.AftermarketDevice, error) {
 	vID, err := strconv.Atoi(vehicleID)
 	if err != nil {
 		return nil, err
@@ -123,7 +123,7 @@ func (v *VehiclesRepo) GetLinkedAftermarketDeviceByVehicleID(ctx context.Context
 
 	ad, err := models.AftermarketDevices(
 		models.AftermarketDeviceWhere.VehicleID.EQ(null.IntFrom(vID)),
-	).One(ctx, v.pdb.DBS().Reader)
+	).One(ctx, r.PDB.DBS().Reader)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil

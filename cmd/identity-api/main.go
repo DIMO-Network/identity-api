@@ -47,7 +47,7 @@ func main() {
 
 	startContractEventsConsumer(ctx, &logger, &settings, dbs)
 
-	repo := repositories.NewVehiclesRepo(dbs)
+	repo := repositories.NewRepository(dbs, 0)
 
 	s := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{
 		Repo: repo,

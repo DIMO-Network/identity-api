@@ -22,8 +22,8 @@ import (
 )
 
 const (
-	MigrationsDirRelPath = "../../migrations"
-	SettingsPath         = "../../settings.yaml"
+	MigrationsDirRelPath = "../migrations"
+	SettingsPath         = "../settings.yaml"
 	TestDbName           = "identity_api"
 )
 
