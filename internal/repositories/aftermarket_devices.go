@@ -8,19 +8,12 @@ import (
 	"strconv"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
+	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
-
-func BytesToAddr(addrB null.Bytes) *common.Address {
-	var addr *common.Address
-	if addrB.Valid {
-		addr = (*common.Address)(*addrB.Ptr())
-	}
-	return addr
-}
 
 func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr common.Address, first *int, after *string) (*gmodel.AftermarketDeviceConnection, error) {
 	ownedADCount, err := models.AftermarketDevices(
@@ -94,8 +87,8 @@ func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr comm
 			&gmodel.AftermarketDeviceEdge{
 				Node: &gmodel.AftermarketDevice{
 					ID:       strconv.Itoa(d.ID),
-					Address:  BytesToAddr(d.Address),
-					Owner:    BytesToAddr(d.Owner),
+					Address:  helpers.BytesToAddr(d.Address),
+					Owner:    helpers.BytesToAddr(d.Owner),
 					Serial:   d.Serial.Ptr(),
 					Imei:     d.Imei.Ptr(),
 					MintedAt: d.MintedAt.Ptr(),
@@ -140,8 +133,8 @@ func (v *VehiclesRepo) GetLinkedAftermarketDeviceByVehicleID(ctx context.Context
 
 	res := &gmodel.AftermarketDevice{
 		ID:       strconv.Itoa(ad.ID),
-		Address:  BytesToAddr(ad.Address),
-		Owner:    BytesToAddr(ad.Address),
+		Address:  helpers.BytesToAddr(ad.Address),
+		Owner:    helpers.BytesToAddr(ad.Address),
 		Serial:   ad.Serial.Ptr(),
 		Imei:     ad.Imei.Ptr(),
 		MintedAt: ad.MintedAt.Ptr(),

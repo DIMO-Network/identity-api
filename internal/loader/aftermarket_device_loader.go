@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
-	"github.com/DIMO-Network/identity-api/internal/repositories"
+	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/graph-gophers/dataloader/v7"
@@ -57,8 +57,8 @@ func (ad *AftermarketDeviceLoader) BatchGetLinkedAftermarketDeviceByVehicleID(ct
 	for _, device := range devices {
 		v := &model.AftermarketDevice{
 			ID:       strconv.Itoa(device.ID),
-			Address:  repositories.BytesToAddr(device.Address),
-			Owner:    repositories.BytesToAddr(device.Owner),
+			Address:  helpers.BytesToAddr(device.Address),
+			Owner:    helpers.BytesToAddr(device.Owner),
 			Serial:   device.Serial.Ptr(),
 			Imei:     device.Imei.Ptr(),
 			MintedAt: device.MintedAt.Ptr(),
