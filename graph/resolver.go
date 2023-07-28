@@ -1,6 +1,8 @@
 package graph
 
-import "github.com/DIMO-Network/identity-api/internal/repositories"
+import (
+	"github.com/DIMO-Network/identity-api/internal/repositories"
+)
 
 //go:generate go run github.com/99designs/gqlgen generate
 

@@ -21,7 +21,16 @@ func (r *queryResolver) OwnedAftermarketDevices(ctx context.Context, address com
 	return r.Repo.GetOwnedAftermarketDevices(ctx, address, first, after)
 }
 
+// Privileges is the resolver for the privileges field.
+func (r *vehicleResolver) Privileges(ctx context.Context, vehicles *model.Vehicle) ([]*model.Privilege, error) {
+	return r.Repo.GetPrivilegesForVehicles(ctx, vehicles)
+}
+
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
+// Vehicle returns VehicleResolver implementation.
+func (r *Resolver) Vehicle() VehicleResolver { return &vehicleResolver{r} }
+
 type queryResolver struct{ *Resolver }
+type vehicleResolver struct{ *Resolver }

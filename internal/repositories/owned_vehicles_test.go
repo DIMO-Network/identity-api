@@ -36,11 +36,7 @@ func (o *OwnedVehiclesRepoTestSuite) SetupSuite() {
 		DIMORegistryAddr:    "0x4de1bcf2b7e851e31216fc07989caa902a604784",
 		DIMORegistryChainID: 80001,
 	}
-	o.repo = NewVehiclesRepo(o.pdb)
-	/* c := client.New(handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{
-		Repo: ov,
-	}}))) */
-
+	o.repo = NewVehiclesRepo(o.ctx, o.pdb)
 }
 
 // TearDownTest after each test truncate tables
@@ -130,26 +126,19 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Success() {
 				Model:      &vehicles[1].Model.String,
 				Year:       &vehicles[1].Year.Int,
 				MintedAt:   vehicles[1].MintedAt,
-				Privileges: []*gmodel.Privilege{},
+				Privileges: nil,
 			},
 			Cursor: "Mg==",
 		},
 		{
 			Node: &gmodel.Vehicle{
-				ID:       "1",
-				Owner:    common.BytesToAddress(wallet.Bytes()),
-				Make:     &vehicles[0].Make.String,
-				Model:    &vehicles[0].Model.String,
-				Year:     &vehicles[0].Year.Int,
-				MintedAt: vehicles[0].MintedAt,
-				Privileges: []*gmodel.Privilege{
-					{
-						ID:        privileges[0].PrivilegeID,
-						User:      common.BytesToAddress(privileges[0].UserAddress),
-						SetAt:     privileges[0].SetAt,
-						ExpiresAt: expiresAt,
-					},
-				},
+				ID:         "1",
+				Owner:      common.BytesToAddress(wallet.Bytes()),
+				Make:       &vehicles[0].Make.String,
+				Model:      &vehicles[0].Model.String,
+				Year:       &vehicles[0].Year.Int,
+				MintedAt:   vehicles[0].MintedAt,
+				Privileges: nil,
 			},
 			Cursor: "MQ==",
 		},
@@ -204,7 +193,7 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination() {
 				Model:      &vehicles[1].Model.String,
 				Year:       &vehicles[1].Year.Int,
 				MintedAt:   vehicles[1].MintedAt,
-				Privileges: []*gmodel.Privilege{},
+				Privileges: nil,
 			},
 			Cursor: "Mg==",
 		},
@@ -260,7 +249,7 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination_NextPage()
 				Model:      &vehicles[0].Model.String,
 				Year:       &vehicles[0].Year.Int,
 				MintedAt:   vehicles[0].MintedAt,
-				Privileges: []*gmodel.Privilege{},
+				Privileges: nil,
 			},
 			Cursor: "MQ==",
 		},

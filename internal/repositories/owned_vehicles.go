@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"strconv"
-	"time"
 
 	"encoding/base64"
 
@@ -20,11 +19,13 @@ const (
 )
 
 type VehiclesRepo struct {
+	ctx context.Context
 	pdb db.Store
 }
 
-func NewVehiclesRepo(pdb db.Store) VehiclesRepo {
+func NewVehiclesRepo(ctx context.Context, pdb db.Store) VehiclesRepo {
 	return VehiclesRepo{
+		ctx: ctx,
 		pdb: pdb,
 	}
 }
@@ -39,26 +40,26 @@ func (v *VehiclesRepo) createVehiclesResponse(totalCount int64, vehicles models.
 		cursor := crs
 
 		owner := common.BytesToAddress(v.OwnerAddress)
-		privs := []*gmodel.Privilege{}
+		// privs := []*gmodel.Privilege{}
 
-		for _, p := range v.R.TokenPrivileges {
+		/* for _, p := range v.R.TokenPrivileges {
 			privs = append(privs, &gmodel.Privilege{
 				ID:        p.PrivilegeID,
 				User:      common.BytesToAddress(p.UserAddress),
 				SetAt:     p.SetAt,
 				ExpiresAt: p.ExpiresAt,
 			})
-		}
+		} */
 
 		edge := &gmodel.VehicleEdge{
 			Node: &gmodel.Vehicle{
-				ID:         strconv.Itoa(v.ID),
-				Owner:      owner,
-				Make:       v.Make.Ptr(),
-				Model:      v.Model.Ptr(),
-				Year:       v.Year.Ptr(),
-				MintedAt:   v.MintedAt,
-				Privileges: privs,
+				ID:       strconv.Itoa(v.ID),
+				Owner:    owner,
+				Make:     v.Make.Ptr(),
+				Model:    v.Model.Ptr(),
+				Year:     v.Year.Ptr(),
+				MintedAt: v.MintedAt,
+				// Privileges: privs,
 			},
 			Cursor: cursor,
 		}
@@ -106,7 +107,7 @@ func (v *VehiclesRepo) GetOwnedVehicles(ctx context.Context, addr common.Address
 		// Use limit + 1 here to check if there's a next page.
 		qm.Limit(limit + 1),
 		qm.OrderBy(models.VehicleColumns.ID + " DESC"),
-		qm.Load(models.VehicleRels.TokenPrivileges, models.PrivilegeWhere.ExpiresAt.GTE(time.Now())),
+		// qm.Load(models.VehicleRels.TokenPrivileges, models.PrivilegeWhere.ExpiresAt.GTE(time.Now())),
 	}
 
 	if after != nil {

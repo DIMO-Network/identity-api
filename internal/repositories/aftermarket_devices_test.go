@@ -90,7 +90,7 @@ func TestAftermarketDeviceNodeMintSingleResponse(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, ad.Address.Bytes, aftermarketDeviceNodeMintedArgs.Owner.Bytes())
 
-	adController := NewVehiclesRepo(pdb)
+	adController := NewVehiclesRepo(ctx, pdb)
 	res, err := adController.GetOwnedAftermarketDevices(ctx, aftermarketDeviceNodeMintedArgs.Owner, nil, nil)
 	assert.NoError(t, err)
 
@@ -117,7 +117,7 @@ func TestAftermarketDeviceNodeMintMultiResponse(t *testing.T) {
 	//     |
 	//     after this
 
-	adController := NewVehiclesRepo(pdb)
+	adController := NewVehiclesRepo(ctx, pdb)
 	first := 2
 	after := "NA==" // 4
 	res, err := adController.GetOwnedAftermarketDevices(ctx, aftermarketDeviceNodeMintedArgs.Owner, &first, &after)
