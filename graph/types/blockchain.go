@@ -11,7 +11,7 @@ import (
 
 func MarshalAddress(addr common.Address) graphql.Marshaler {
 	return graphql.WriterFunc(func(w io.Writer) {
-		io.WriteString(w, strconv.Quote(addr.Hex()))
+		_, _ = io.WriteString(w, strconv.Quote(addr.Hex()))
 	})
 }
 
@@ -25,3 +25,12 @@ func UnmarshalAddress(v interface{}) (common.Address, error) {
 		return common.Address{}, fmt.Errorf("%T is not a string", v)
 	}
 }
+
+func MarshalInt(x int) graphql.Marshaler {
+	return graphql.WriterFunc(func(w io.Writer) {
+		_, _ = io.WriteString(w, strconv.Quote(strconv.Itoa(x)))
+	})
+}
+
+// Is this going to work?
+var UnmarshalInt = graphql.UnmarshalInt
