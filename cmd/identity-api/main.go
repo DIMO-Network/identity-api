@@ -12,6 +12,7 @@ import (
 
 	"github.com/DIMO-Network/identity-api/graph"
 	"github.com/DIMO-Network/identity-api/internal/config"
+	"github.com/DIMO-Network/identity-api/internal/loader"
 	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/internal/services"
 	"github.com/DIMO-Network/shared"
@@ -28,6 +29,8 @@ func main() {
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Couldn't load settings.")
 	}
+
+	logger.Info().Msgf("Loaded configuration. Addresses: Registry %s, Vehicle %s.", settings.DIMORegistryAddr, settings.VehicleNFTAddr)
 
 	if len(os.Args) > 1 && os.Args[1] == "migrate" {
 		command := "up"
@@ -46,11 +49,13 @@ func main() {
 
 	startContractEventsConsumer(ctx, &logger, &settings, dbs)
 
-	repo := repositories.NewVehiclesRepo(ctx, dbs)
+	repo := repositories.NewRepository(dbs, 0)
 
-	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{
+	s := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{
 		Repo: repo,
 	}}))
+
+	srv := loader.Middleware(dbs, s)
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", srv)

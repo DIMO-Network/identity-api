@@ -8,7 +8,7 @@ import (
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/config"
-	"github.com/DIMO-Network/identity-api/internal/test"
+	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/ethereum/go-ethereum/common"
@@ -24,24 +24,24 @@ type OwnedVehiclesRepoTestSuite struct {
 	ctx       context.Context
 	pdb       db.Store
 	container testcontainers.Container
-	repo      VehiclesRepo
+	repo      *Repository
 	settings  config.Settings
 }
 
 func (o *OwnedVehiclesRepoTestSuite) SetupSuite() {
 	o.ctx = context.Background()
-	o.pdb, o.container = test.StartContainerDatabase(o.ctx, o.T(), test.MigrationsDirRelPath)
+	o.pdb, o.container = helpers.StartContainerDatabase(o.ctx, o.T(), migrationsDir)
 
 	o.settings = config.Settings{
 		DIMORegistryAddr:    "0x4de1bcf2b7e851e31216fc07989caa902a604784",
 		DIMORegistryChainID: 80001,
 	}
-	o.repo = NewVehiclesRepo(o.ctx, o.pdb)
+	o.repo = NewRepository(o.pdb, 0)
 }
 
 // TearDownTest after each test truncate tables
 func (s *OwnedVehiclesRepoTestSuite) TearDownTest() {
-	test.TruncateTables(s.pdb.DBS().Writer.DB, s.T())
+	helpers.TruncateTables(s.pdb.DBS().Writer.DB, s.T())
 }
 
 // TearDownSuite cleanup at end by terminating container
@@ -60,10 +60,10 @@ func TestOwnedVehiclesRepoTestSuite(t *testing.T) {
 
 /* Actual Tests */
 func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Success() {
-	_, wallet, err := test.GenerateWallet()
+	_, wallet, err := helpers.GenerateWallet()
 	s.NoError(err)
 
-	_, wallet2, err := test.GenerateWallet()
+	_, wallet2, err := helpers.GenerateWallet()
 	s.NoError(err)
 
 	currTime := time.Now().UTC().Truncate(time.Microsecond)
@@ -120,7 +120,7 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Success() {
 	expected := []*gmodel.VehicleEdge{
 		{
 			Node: &gmodel.Vehicle{
-				ID:         "2",
+				ID:         2,
 				Owner:      common.BytesToAddress(wallet.Bytes()),
 				Make:       &vehicles[1].Make.String,
 				Model:      &vehicles[1].Model.String,
@@ -132,7 +132,7 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Success() {
 		},
 		{
 			Node: &gmodel.Vehicle{
-				ID:         "1",
+				ID:         1,
 				Owner:      common.BytesToAddress(wallet.Bytes()),
 				Make:       &vehicles[0].Make.String,
 				Model:      &vehicles[0].Model.String,
@@ -148,7 +148,7 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Success() {
 }
 
 func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination() {
-	_, wallet, err := test.GenerateWallet()
+	_, wallet, err := helpers.GenerateWallet()
 	s.NoError(err)
 
 	currTime := time.Now().UTC().Truncate(time.Microsecond)
@@ -187,7 +187,7 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination() {
 	expected := []*gmodel.VehicleEdge{
 		{
 			Node: &gmodel.Vehicle{
-				ID:         "2",
+				ID:         2,
 				Owner:      common.BytesToAddress(wallet.Bytes()),
 				Make:       &vehicles[1].Make.String,
 				Model:      &vehicles[1].Model.String,
@@ -203,7 +203,7 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination() {
 }
 
 func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination_NextPage() {
-	_, wallet, err := test.GenerateWallet()
+	_, wallet, err := helpers.GenerateWallet()
 	s.NoError(err)
 
 	currTime := time.Now().UTC().Truncate(time.Microsecond)
@@ -243,7 +243,7 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination_NextPage()
 	expected := []*gmodel.VehicleEdge{
 		{
 			Node: &gmodel.Vehicle{
-				ID:         "1",
+				ID:         1,
 				Owner:      common.BytesToAddress(wallet.Bytes()),
 				Make:       &vehicles[0].Make.String,
 				Model:      &vehicles[0].Model.String,

@@ -87,7 +87,16 @@ models:
       - github.com/99designs/gqlgen/graphql.Int32
   Address:
     model: github.com/DIMO-Network/identity-api/graph/types.Address
+  AftermarketDevice:
+    fields:
+      vehicle:
+        resolver: true
   Vehicle:
     fields:
+      aftermarketDevice:
+        resolver: true
       privileges:
         resolver: true
+  BigInt:
+    model:
+      - github.com/DIMO-Network/identity-api/graph/types.Int

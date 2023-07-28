@@ -2,7 +2,6 @@ package repositories
 
 import (
 	"context"
-	"strconv"
 	"time"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
@@ -10,15 +9,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func (v *VehiclesRepo) GetPrivilegesForVehicles(ctx context.Context, vehicle *gmodel.Vehicle) ([]*gmodel.Privilege, error) {
-	tkID, err := strconv.Atoi(vehicle.ID)
-	if err != nil {
-		return nil, err
-	}
+func (v *Repository) GetPrivilegesForVehicle(ctx context.Context, vehicleID int) ([]*gmodel.Privilege, error) {
 	privileges, err := models.Privileges(
-		models.PrivilegeWhere.TokenID.EQ(tkID),
+		models.PrivilegeWhere.TokenID.EQ(vehicleID),
 		models.PrivilegeWhere.ExpiresAt.GTE(time.Now()),
-	).All(v.ctx, v.pdb.DBS().Reader)
+	).All(ctx, v.PDB.DBS().Reader)
 
 	if err != nil {
 		return nil, err

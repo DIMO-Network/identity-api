@@ -8,7 +8,7 @@ import (
 
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/config"
-	"github.com/DIMO-Network/identity-api/internal/test"
+	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/segmentio/ksuid"
@@ -23,24 +23,24 @@ type VehiclesPrivilegesRepoTestSuite struct {
 	ctx       context.Context
 	pdb       db.Store
 	container testcontainers.Container
-	repo      VehiclesRepo
+	repo      *Repository
 	settings  config.Settings
 }
 
 func (s *VehiclesPrivilegesRepoTestSuite) SetupSuite() {
 	s.ctx = context.Background()
-	s.pdb, s.container = test.StartContainerDatabase(s.ctx, s.T(), test.MigrationsDirRelPath)
+	s.pdb, s.container = helpers.StartContainerDatabase(s.ctx, s.T(), migrationsDir)
 
 	s.settings = config.Settings{
 		DIMORegistryAddr:    "0x4de1bcf2b7e851e31216fc07989caa902a604784",
 		DIMORegistryChainID: 80001,
 	}
-	s.repo = NewVehiclesRepo(s.ctx, s.pdb)
+	s.repo = NewRepository(s.pdb, 0)
 }
 
 // TearDownTest after each test truncate tables
 func (s *VehiclesPrivilegesRepoTestSuite) TearDownTest() {
-	test.TruncateTables(s.pdb.DBS().Writer.DB, s.T())
+	helpers.TruncateTables(s.pdb.DBS().Writer.DB, s.T())
 }
 
 // TearDownSuite cleanup at end by terminating container
@@ -58,7 +58,7 @@ func TestVehiclesPrivilegesRepoTestSuite(t *testing.T) {
 }
 
 func (s *VehiclesPrivilegesRepoTestSuite) Test_GetVehiclePrivileges_Success() {
-	_, wallet, err := test.GenerateWallet()
+	_, wallet, err := helpers.GenerateWallet()
 	s.NoError(err)
 
 	currTime := time.Now().UTC().Truncate(time.Microsecond)
@@ -98,21 +98,7 @@ func (s *VehiclesPrivilegesRepoTestSuite) Test_GetVehiclePrivileges_Success() {
 		}
 	}
 
-	make := "Toyota"
-	mdl := "Camry"
-	year := 2020
-
-	veh := &model.Vehicle{
-		ID:         "1",
-		Owner:      *wallet,
-		Make:       &make,
-		Model:      &mdl,
-		Year:       &year,
-		MintedAt:   currTime,
-		Privileges: nil,
-	}
-
-	res, err := s.repo.GetPrivilegesForVehicles(s.ctx, veh)
+	res, err := s.repo.GetPrivilegesForVehicle(s.ctx, 1)
 	s.NoError(err)
 
 	s.Exactly([]*model.Privilege{

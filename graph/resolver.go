@@ -11,5 +11,9 @@ import (
 // It serves as dependency injection for your app, add any dependencies you require here.
 
 type Resolver struct {
-	Repo repositories.VehiclesRepo
+	Repo *repositories.Repository
+}
+
+func NewResolver(repo *repositories.Repository) *Resolver {
+	return &Resolver{repo}
 }

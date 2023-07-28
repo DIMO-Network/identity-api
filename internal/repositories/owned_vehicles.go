@@ -3,11 +3,10 @@ package repositories
 import (
 	"context"
 	"errors"
-	"strconv"
-
-	"encoding/base64"
+	"fmt"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
+	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/ethereum/go-ethereum/common"
@@ -18,71 +17,25 @@ const (
 	defaultPageSize = 20
 )
 
-type VehiclesRepo struct {
-	ctx context.Context
-	pdb db.Store
+type Repository struct {
+	PDB      db.Store
+	PageSize int
 }
 
-func NewVehiclesRepo(ctx context.Context, pdb db.Store) VehiclesRepo {
-	return VehiclesRepo{
-		ctx: ctx,
-		pdb: pdb,
+func NewRepository(pdb db.Store, pgSize int) *Repository {
+	if pgSize == 0 {
+		pgSize = defaultPageSize
+	}
+	return &Repository{
+		PDB:      pdb,
+		PageSize: pgSize,
 	}
 }
 
-func (v *VehiclesRepo) createVehiclesResponse(totalCount int64, vehicles models.VehicleSlice, hasNext bool) *gmodel.VehicleConnection {
-	lastItmID := vehicles[len(vehicles)-1].ID
-	endCursr := base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(lastItmID)))
-
-	var vEdges []*gmodel.VehicleEdge
-	for _, v := range vehicles {
-		crs := base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(v.ID)))
-		cursor := crs
-
-		owner := common.BytesToAddress(v.OwnerAddress)
-		// privs := []*gmodel.Privilege{}
-
-		/* for _, p := range v.R.TokenPrivileges {
-			privs = append(privs, &gmodel.Privilege{
-				ID:        p.PrivilegeID,
-				User:      common.BytesToAddress(p.UserAddress),
-				SetAt:     p.SetAt,
-				ExpiresAt: p.ExpiresAt,
-			})
-		} */
-
-		edge := &gmodel.VehicleEdge{
-			Node: &gmodel.Vehicle{
-				ID:       strconv.Itoa(v.ID),
-				Owner:    owner,
-				Make:     v.Make.Ptr(),
-				Model:    v.Model.Ptr(),
-				Year:     v.Year.Ptr(),
-				MintedAt: v.MintedAt,
-				// Privileges: privs,
-			},
-			Cursor: cursor,
-		}
-
-		vEdges = append(vEdges, edge)
-	}
-
-	res := &gmodel.VehicleConnection{
-		TotalCount: int(totalCount),
-		PageInfo: &gmodel.PageInfo{
-			HasNextPage: hasNext,
-			EndCursor:   &endCursr,
-		},
-		Edges: vEdges,
-	}
-
-	return res
-}
-
-func (v *VehiclesRepo) GetOwnedVehicles(ctx context.Context, addr common.Address, first *int, after *string) (*gmodel.VehicleConnection, error) {
+func (r *Repository) GetOwnedVehicles(ctx context.Context, addr common.Address, first *int, after *string) (*gmodel.VehicleConnection, error) {
 	totalCount, err := models.Vehicles(
 		models.VehicleWhere.OwnerAddress.EQ(addr.Bytes()),
-	).Count(ctx, v.pdb.DBS().Reader)
+	).Count(ctx, r.PDB.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +47,7 @@ func (v *VehiclesRepo) GetOwnedVehicles(ctx context.Context, addr common.Address
 		}, nil
 	}
 
-	limit := defaultPageSize
+	limit := r.PageSize
 	if first != nil {
 		limit = *first
 		if limit <= 0 {
@@ -111,34 +64,58 @@ func (v *VehiclesRepo) GetOwnedVehicles(ctx context.Context, addr common.Address
 	}
 
 	if after != nil {
-		lastCursor, err := base64.StdEncoding.DecodeString(*after)
+		afterID, err := helpers.CursorToID(*after)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("invalid cursor %q", *after)
 		}
 
-		lastCursorVal, err := strconv.Atoi(string(lastCursor))
-		if err != nil {
-			return nil, err
-		}
-		queryMods = append(queryMods, models.VehicleWhere.ID.LT(lastCursorVal))
+		queryMods = append(queryMods, models.VehicleWhere.ID.LT(afterID))
 	}
 
-	all, err := models.Vehicles(queryMods...).All(ctx, v.pdb.DBS().Reader)
+	vehicles, err := models.Vehicles(queryMods...).All(ctx, r.PDB.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(all) == 0 {
+	if len(vehicles) == 0 {
 		return &gmodel.VehicleConnection{
 			TotalCount: int(totalCount),
 			Edges:      []*gmodel.VehicleEdge{},
 		}, nil
 	}
 
-	vIterate := all
-	if len(all) > limit {
-		vIterate = all[:limit]
+	hasNextPage := len(vehicles) > limit
+	if hasNextPage {
+		vehicles = vehicles[:limit]
 	}
 
-	return v.createVehiclesResponse(totalCount, vIterate, len(all) > limit), nil
+	lastItmID := vehicles[len(vehicles)-1].ID
+	endCursr := helpers.IDToCursor(lastItmID)
+
+	var vEdges []*gmodel.VehicleEdge
+	for _, v := range vehicles {
+		edge := &gmodel.VehicleEdge{
+			Node: &gmodel.Vehicle{
+				ID:       v.ID,
+				Owner:    common.BytesToAddress(v.OwnerAddress),
+				Make:     v.Make.Ptr(),
+				Model:    v.Model.Ptr(),
+				Year:     v.Year.Ptr(),
+				MintedAt: v.MintedAt,
+			},
+			Cursor: helpers.IDToCursor(v.ID),
+		}
+		vEdges = append(vEdges, edge)
+	}
+
+	res := &gmodel.VehicleConnection{
+		TotalCount: int(totalCount),
+		PageInfo: &gmodel.PageInfo{
+			HasNextPage: hasNextPage,
+			EndCursor:   &endCursr,
+		},
+		Edges: vEdges,
+	}
+
+	return res, nil
 }

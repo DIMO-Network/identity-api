@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/DIMO-Network/identity-api/internal/config"
+	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/services"
-	"github.com/DIMO-Network/identity-api/internal/test"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared"
 	"github.com/Shopify/sarama"
@@ -47,9 +47,11 @@ var aftermarketDeviceNodeMintedArgs = services.AftermarketDeviceNodeMintedData{
 	TokenID:                  big.NewInt(42),
 }
 
+const migrationsDir = "../../migrations"
+
 func TestAftermarketDeviceNodeMintSingleResponse(t *testing.T) {
 	ctx := context.Background()
-	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", test.DBSettings.Name).Logger()
+	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
 
 	settings := config.Settings{
 		DIMORegistryAddr:    "0x4de1bcf2b7e851e31216fc07989caa902a604784",
@@ -59,7 +61,7 @@ func TestAftermarketDeviceNodeMintSingleResponse(t *testing.T) {
 	config := mocks.NewTestConfig()
 	consumer := mocks.NewConsumer(t, config)
 
-	pdb, _ := test.StartContainerDatabase(ctx, t, test.MigrationsDirRelPath)
+	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDir)
 	contractEventConsumer := services.NewContractsEventsConsumer(pdb, &logger, &settings)
 
 	argBytes, err := json.Marshal(aftermarketDeviceNodeMintedArgs)
@@ -90,7 +92,7 @@ func TestAftermarketDeviceNodeMintSingleResponse(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, ad.Address.Bytes, aftermarketDeviceNodeMintedArgs.Owner.Bytes())
 
-	adController := NewVehiclesRepo(ctx, pdb)
+	adController := NewRepository(pdb, 0)
 	res, err := adController.GetOwnedAftermarketDevices(ctx, aftermarketDeviceNodeMintedArgs.Owner, nil, nil)
 	assert.NoError(t, err)
 
@@ -100,7 +102,7 @@ func TestAftermarketDeviceNodeMintSingleResponse(t *testing.T) {
 func TestAftermarketDeviceNodeMintMultiResponse(t *testing.T) {
 	ctx := context.Background()
 
-	pdb, _ := test.StartContainerDatabase(ctx, t, test.MigrationsDirRelPath)
+	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDir)
 
 	for i := 1; i < 6; i++ {
 		ad := models.AftermarketDevice{
@@ -117,7 +119,7 @@ func TestAftermarketDeviceNodeMintMultiResponse(t *testing.T) {
 	//     |
 	//     after this
 
-	adController := NewVehiclesRepo(ctx, pdb)
+	adController := NewRepository(pdb, 0)
 	first := 2
 	after := "NA==" // 4
 	res, err := adController.GetOwnedAftermarketDevices(ctx, aftermarketDeviceNodeMintedArgs.Owner, &first, &after)
@@ -126,6 +128,6 @@ func TestAftermarketDeviceNodeMintMultiResponse(t *testing.T) {
 	fmt.Println(res)
 
 	assert.Len(t, res.Edges, 2)
-	assert.Equal(t, "3", res.Edges[0].Node.ID)
-	assert.Equal(t, "2", res.Edges[1].Node.ID)
+	assert.Equal(t, 3, res.Edges[0].Node.ID)
+	assert.Equal(t, 2, res.Edges[1].Node.ID)
 }
