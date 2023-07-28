@@ -28,15 +28,15 @@ type OwnedVehiclesRepoTestSuite struct {
 	settings  config.Settings
 }
 
-func (o *OwnedVehiclesRepoTestSuite) SetupSuite() {
-	o.ctx = context.Background()
-	o.pdb, o.container = helpers.StartContainerDatabase(o.ctx, o.T(), migrationsDir)
+func (s *OwnedVehiclesRepoTestSuite) SetupSuite() {
+	s.ctx = context.Background()
+	s.pdb, s.container = helpers.StartContainerDatabase(s.ctx, s.T(), migrationsDir)
 
-	o.settings = config.Settings{
+	s.settings = config.Settings{
 		DIMORegistryAddr:    "0x4de1bcf2b7e851e31216fc07989caa902a604784",
 		DIMORegistryChainID: 80001,
 	}
-	o.repo = NewRepository(o.pdb, 0)
+	s.repo = NewRepository(s.pdb, 0)
 }
 
 // TearDownTest after each test truncate tables
@@ -45,11 +45,11 @@ func (s *OwnedVehiclesRepoTestSuite) TearDownTest() {
 }
 
 // TearDownSuite cleanup at end by terminating container
-func (o *OwnedVehiclesRepoTestSuite) TearDownSuite() {
-	fmt.Printf("shutting down postgres at with session: %s \n", o.container.SessionID())
+func (s *OwnedVehiclesRepoTestSuite) TearDownSuite() {
+	fmt.Printf("shutting down postgres at with session: %s \n", s.container.SessionID())
 
-	if err := o.container.Terminate(o.ctx); err != nil {
-		o.T().Fatal(err)
+	if err := s.container.Terminate(s.ctx); err != nil {
+		s.T().Fatal(err)
 	}
 }
 
