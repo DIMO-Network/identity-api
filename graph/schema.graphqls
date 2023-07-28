@@ -18,7 +18,7 @@ type Vehicle {
   model: String
   year: Int
   mintedAt: Time!
-  privileges: [Privilege]
+  privileges: [Privilege!]!
 }
 
 type VehicleEdge {
@@ -53,8 +53,8 @@ type PageInfo {
 
 type Privilege {
   id: Int!
-  grantedToAddress: Address!
-  grantedAt: Time!
+  user: Address!
+  setAt: Time!
   expiresAt: Time!
 }
 

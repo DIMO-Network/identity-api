@@ -279,12 +279,12 @@ func (c *ContractsEventsConsumer) handlePrivilegeSetEvent(ctx context.Context, e
 	}
 
 	privilege := models.Privilege{
-		ID:               ksuid.New().String(),
-		TokenID:          int(args.TokenId.Int64()),
-		PrivilegeID:      int(args.PrivId.Int64()),
-		GrantedToAddress: args.User.Bytes(),
-		GrantedAt:        e.Block.Time,
-		ExpiresAt:        time.Unix(args.Expires.Int64(), 0),
+		ID:          ksuid.New().String(),
+		TokenID:     int(args.TokenId.Int64()),
+		PrivilegeID: int(args.PrivId.Int64()),
+		UserAddress: args.User.Bytes(),
+		SetAt:       e.Block.Time,
+		ExpiresAt:   time.Unix(args.Expires.Int64(), 0),
 	}
 
 	if err := privilege.Insert(ctx, c.dbs.DBS().Writer, boil.Infer()); err != nil {

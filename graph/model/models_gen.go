@@ -34,10 +34,10 @@ type PageInfo struct {
 }
 
 type Privilege struct {
-	ID               int            `json:"id"`
-	GrantedToAddress common.Address `json:"grantedToAddress"`
-	GrantedAt        time.Time      `json:"grantedAt"`
-	ExpiresAt        time.Time      `json:"expiresAt"`
+	ID        int            `json:"id"`
+	User      common.Address `json:"user"`
+	SetAt     time.Time      `json:"setAt"`
+	ExpiresAt time.Time      `json:"expiresAt"`
 }
 
 type Vehicle struct {

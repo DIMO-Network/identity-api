@@ -73,10 +73,10 @@ type ComplexityRoot struct {
 	}
 
 	Privilege struct {
-		ExpiresAt        func(childComplexity int) int
-		GrantedAt        func(childComplexity int) int
-		GrantedToAddress func(childComplexity int) int
-		ID               func(childComplexity int) int
+		ExpiresAt func(childComplexity int) int
+		ID        func(childComplexity int) int
+		SetAt     func(childComplexity int) int
+		User      func(childComplexity int) int
 	}
 
 	Query struct {
@@ -224,26 +224,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Privilege.ExpiresAt(childComplexity), true
 
-	case "Privilege.grantedAt":
-		if e.complexity.Privilege.GrantedAt == nil {
-			break
-		}
-
-		return e.complexity.Privilege.GrantedAt(childComplexity), true
-
-	case "Privilege.grantedToAddress":
-		if e.complexity.Privilege.GrantedToAddress == nil {
-			break
-		}
-
-		return e.complexity.Privilege.GrantedToAddress(childComplexity), true
-
 	case "Privilege.id":
 		if e.complexity.Privilege.ID == nil {
 			break
 		}
 
 		return e.complexity.Privilege.ID(childComplexity), true
+
+	case "Privilege.setAt":
+		if e.complexity.Privilege.SetAt == nil {
+			break
+		}
+
+		return e.complexity.Privilege.SetAt(childComplexity), true
+
+	case "Privilege.user":
+		if e.complexity.Privilege.User == nil {
+			break
+		}
+
+		return e.complexity.Privilege.User(childComplexity), true
 
 	case "Query.ownedAftermarketDevices":
 		if e.complexity.Query.OwnedAftermarketDevices == nil {
@@ -1204,8 +1204,8 @@ func (ec *executionContext) fieldContext_Privilege_id(ctx context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Privilege_grantedToAddress(ctx context.Context, field graphql.CollectedField, obj *model.Privilege) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Privilege_grantedToAddress(ctx, field)
+func (ec *executionContext) _Privilege_user(ctx context.Context, field graphql.CollectedField, obj *model.Privilege) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Privilege_user(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1218,7 +1218,7 @@ func (ec *executionContext) _Privilege_grantedToAddress(ctx context.Context, fie
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.GrantedToAddress, nil
+		return obj.User, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1235,7 +1235,7 @@ func (ec *executionContext) _Privilege_grantedToAddress(ctx context.Context, fie
 	return ec.marshalNAddress2githubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Privilege_grantedToAddress(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Privilege_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Privilege",
 		Field:      field,
@@ -1248,8 +1248,8 @@ func (ec *executionContext) fieldContext_Privilege_grantedToAddress(ctx context.
 	return fc, nil
 }
 
-func (ec *executionContext) _Privilege_grantedAt(ctx context.Context, field graphql.CollectedField, obj *model.Privilege) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Privilege_grantedAt(ctx, field)
+func (ec *executionContext) _Privilege_setAt(ctx context.Context, field graphql.CollectedField, obj *model.Privilege) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Privilege_setAt(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1262,7 +1262,7 @@ func (ec *executionContext) _Privilege_grantedAt(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.GrantedAt, nil
+		return obj.SetAt, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1279,7 +1279,7 @@ func (ec *executionContext) _Privilege_grantedAt(ctx context.Context, field grap
 	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Privilege_grantedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Privilege_setAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Privilege",
 		Field:      field,
@@ -1884,10 +1884,10 @@ func (ec *executionContext) fieldContext_Vehicle_privileges(ctx context.Context,
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Privilege_id(ctx, field)
-			case "grantedToAddress":
-				return ec.fieldContext_Privilege_grantedToAddress(ctx, field)
-			case "grantedAt":
-				return ec.fieldContext_Privilege_grantedAt(ctx, field)
+			case "user":
+				return ec.fieldContext_Privilege_user(ctx, field)
+			case "setAt":
+				return ec.fieldContext_Privilege_setAt(ctx, field)
 			case "expiresAt":
 				return ec.fieldContext_Privilege_expiresAt(ctx, field)
 			}
@@ -4125,13 +4125,13 @@ func (ec *executionContext) _Privilege(ctx context.Context, sel ast.SelectionSet
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "grantedToAddress":
-			out.Values[i] = ec._Privilege_grantedToAddress(ctx, field, obj)
+		case "user":
+			out.Values[i] = ec._Privilege_user(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "grantedAt":
-			out.Values[i] = ec._Privilege_grantedAt(ctx, field, obj)
+		case "setAt":
+			out.Values[i] = ec._Privilege_setAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

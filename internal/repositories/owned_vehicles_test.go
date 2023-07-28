@@ -63,12 +63,12 @@ func TestOwnedVehiclesRepoTestSuite(t *testing.T) {
 }
 
 /* Actual Tests */
-func (o *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Success() {
+func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Success() {
 	_, wallet, err := test.GenerateWallet()
-	o.NoError(err)
+	s.NoError(err)
 
 	_, wallet2, err := test.GenerateWallet()
-	o.NoError(err)
+	s.NoError(err)
 
 	currTime := time.Now().UTC().Truncate(time.Microsecond)
 	vehicles := []models.Vehicle{
@@ -91,34 +91,35 @@ func (o *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Success() {
 	}
 
 	for _, v := range vehicles {
-		if err := v.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer()); err != nil {
-			o.NoError(err)
+		if err := v.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer()); err != nil {
+			s.NoError(err)
 		}
 	}
 
+	expiresAt := currTime.Add(time.Minute + 10).UTC().Truncate(time.Microsecond)
 	privileges := []models.Privilege{
 		{
-			ID:               ksuid.New().String(),
-			TokenID:          1,
-			PrivilegeID:      1,
-			GrantedToAddress: wallet2.Bytes(),
-			GrantedAt:        currTime,
-			ExpiresAt:        currTime,
+			ID:          ksuid.New().String(),
+			TokenID:     1,
+			PrivilegeID: 1,
+			UserAddress: wallet2.Bytes(),
+			SetAt:       currTime,
+			ExpiresAt:   expiresAt,
 		},
 	}
 
 	for _, p := range privileges {
-		if err := p.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer()); err != nil {
-			o.NoError(err)
+		if err := p.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer()); err != nil {
+			s.NoError(err)
 		}
 	}
 
 	first := 3
-	res, err := o.repo.GetOwnedVehicles(o.ctx, *wallet, &first, nil)
-	o.NoError(err)
+	res, err := s.repo.GetOwnedVehicles(s.ctx, *wallet, &first, nil)
+	s.NoError(err)
 
-	o.Equal(2, res.TotalCount)
-	o.Equal(res.PageInfo.HasNextPage, false)
+	s.Equal(2, res.TotalCount)
+	s.False(res.PageInfo.HasNextPage)
 
 	expected := []*gmodel.VehicleEdge{
 		{
@@ -143,10 +144,10 @@ func (o *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Success() {
 				MintedAt: vehicles[0].MintedAt,
 				Privileges: []*gmodel.Privilege{
 					{
-						ID:               privileges[0].PrivilegeID,
-						GrantedToAddress: common.BytesToAddress(privileges[0].GrantedToAddress),
-						GrantedAt:        privileges[0].GrantedAt,
-						ExpiresAt:        privileges[0].ExpiresAt,
+						ID:        privileges[0].PrivilegeID,
+						User:      common.BytesToAddress(privileges[0].UserAddress),
+						SetAt:     privileges[0].SetAt,
+						ExpiresAt: expiresAt,
 					},
 				},
 			},
@@ -154,12 +155,12 @@ func (o *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Success() {
 		},
 	}
 
-	o.Exactly(expected, res.Edges)
+	s.Exactly(expected, res.Edges)
 }
 
-func (o *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination() {
+func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination() {
 	_, wallet, err := test.GenerateWallet()
-	o.NoError(err)
+	s.NoError(err)
 
 	currTime := time.Now().UTC().Truncate(time.Microsecond)
 	vehicles := []models.Vehicle{
@@ -182,17 +183,17 @@ func (o *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination() {
 	}
 
 	for _, v := range vehicles {
-		if err := v.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer()); err != nil {
-			o.NoError(err)
+		if err := v.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer()); err != nil {
+			s.NoError(err)
 		}
 	}
 
 	first := 1
-	res, err := o.repo.GetOwnedVehicles(o.ctx, *wallet, &first, nil)
-	o.NoError(err)
+	res, err := s.repo.GetOwnedVehicles(s.ctx, *wallet, &first, nil)
+	s.NoError(err)
 
-	o.Equal(len(vehicles), res.TotalCount)
-	o.Equal(res.PageInfo.HasNextPage, true)
+	s.Equal(len(vehicles), res.TotalCount)
+	s.Equal(res.PageInfo.HasNextPage, true)
 
 	expected := []*gmodel.VehicleEdge{
 		{
@@ -209,12 +210,12 @@ func (o *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination() {
 		},
 	}
 
-	o.Exactly(expected, res.Edges)
+	s.Exactly(expected, res.Edges)
 }
 
-func (o *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination_NextPage() {
+func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination_NextPage() {
 	_, wallet, err := test.GenerateWallet()
-	o.NoError(err)
+	s.NoError(err)
 
 	currTime := time.Now().UTC().Truncate(time.Microsecond)
 	vehicles := []models.Vehicle{
@@ -237,18 +238,18 @@ func (o *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination_NextPage()
 	}
 
 	for _, v := range vehicles {
-		if err := v.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer()); err != nil {
-			o.NoError(err)
+		if err := v.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer()); err != nil {
+			s.NoError(err)
 		}
 	}
 
 	first := 1
 	after := "Mg=="
-	res, err := o.repo.GetOwnedVehicles(o.ctx, *wallet, &first, &after)
-	o.NoError(err)
+	res, err := s.repo.GetOwnedVehicles(s.ctx, *wallet, &first, &after)
+	s.NoError(err)
 
-	o.Equal(len(vehicles), res.TotalCount)
-	o.Equal(res.PageInfo.HasNextPage, false)
+	s.Equal(len(vehicles), res.TotalCount)
+	s.Equal(res.PageInfo.HasNextPage, false)
 
 	expected := []*gmodel.VehicleEdge{
 		{
@@ -265,5 +266,5 @@ func (o *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination_NextPage()
 		},
 	}
 
-	o.Exactly(expected, res.Edges)
+	s.Exactly(expected, res.Edges)
 }

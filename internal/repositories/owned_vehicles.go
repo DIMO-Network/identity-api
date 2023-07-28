@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"strconv"
+	"time"
 
 	"encoding/base64"
 
@@ -42,10 +43,10 @@ func (v *VehiclesRepo) createVehiclesResponse(totalCount int64, vehicles models.
 
 		for _, p := range v.R.TokenPrivileges {
 			privs = append(privs, &gmodel.Privilege{
-				ID:               p.PrivilegeID,
-				GrantedToAddress: common.BytesToAddress(p.GrantedToAddress),
-				GrantedAt:        p.GrantedAt,
-				ExpiresAt:        p.ExpiresAt,
+				ID:        p.PrivilegeID,
+				User:      common.BytesToAddress(p.UserAddress),
+				SetAt:     p.SetAt,
+				ExpiresAt: p.ExpiresAt,
 			})
 		}
 
@@ -105,7 +106,7 @@ func (v *VehiclesRepo) GetOwnedVehicles(ctx context.Context, addr common.Address
 		// Use limit + 1 here to check if there's a next page.
 		qm.Limit(limit + 1),
 		qm.OrderBy(models.VehicleColumns.ID + " DESC"),
-		qm.Load(models.VehicleRels.TokenPrivileges),
+		qm.Load(models.VehicleRels.TokenPrivileges, models.PrivilegeWhere.ExpiresAt.GTE(time.Now())),
 	}
 
 	if after != nil {
