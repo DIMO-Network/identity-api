@@ -11,8 +11,8 @@ type AftermarketDevice struct {
 	Address   *common.Address `json:"address,omitempty"`
 	Owner     *common.Address `json:"owner,omitempty"`
 	Serial    *string         `json:"serial,omitempty"`
-	IMEI      *string         `json:"imei,omitempty"`
+	IMEI      *string         `json:"imei,omitempty"` // Override gqlgen's "Imei".
 	MintedAt  *time.Time      `json:"mintedAt,omitempty"`
-	VehicleID *int            `json:"vehicleId,omitempty"`
+	VehicleID *int            `json:"vehicleId,omitempty"` // We want to pass this to resolvers, but we don't want it in the API.
 	Vehicle   *Vehicle        `json:"vehicle,omitempty"`
 }
