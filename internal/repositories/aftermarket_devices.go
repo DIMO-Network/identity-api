@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"strconv"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
@@ -46,17 +47,12 @@ func (r *Repository) GetOwnedAftermarketDevices(ctx context.Context, addr common
 	}
 
 	if after != nil {
-		sB, err := base64.StdEncoding.DecodeString(*after)
+		afterID, err := helpers.CursorToID(*after)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("invalid cursor %q", *after)
 		}
 
-		searchAfter, err := strconv.Atoi(string(sB))
-		if err != nil {
-			return nil, err
-		}
-
-		queryMods = append(queryMods, models.AftermarketDeviceWhere.ID.LT(searchAfter))
+		queryMods = append(queryMods, models.AftermarketDeviceWhere.ID.LT(afterID))
 	}
 
 	ads, err := models.AftermarketDevices(queryMods...).All(ctx, r.PDB.DBS().Reader)
