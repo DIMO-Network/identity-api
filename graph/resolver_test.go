@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math/big"
 	"testing"
 	"time"
 
@@ -13,38 +12,12 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/loader"
 	"github.com/DIMO-Network/identity-api/internal/repositories"
-	"github.com/DIMO-Network/identity-api/internal/services"
 	"github.com/DIMO-Network/identity-api/models"
-	"github.com/DIMO-Network/shared"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
-
-var cloudEvent = shared.CloudEvent[json.RawMessage]{
-	ID:          "2SiTVhP3WBhfQQnnnpeBdMR7BSY",
-	Source:      "chain/80001",
-	SpecVersion: "1.0",
-	Subject:     "0x4de1bcf2b7e851e31216fc07989caa902a604784",
-	Time:        time.Now(),
-	Type:        "zone.dimo.contract.event",
-}
-
-var contractEventData = services.ContractEventData{
-	ChainID:         80001,
-	EventName:       "AftermarketDeviceNodeMinted",
-	Contract:        common.HexToAddress("0x4de1bcf2b7e851e31216fc07989caa902a604784"),
-	TransactionHash: common.HexToHash("0x811a85e24d0129a2018c9a6668652db63d73bc6d1c76f21b07da2162c6bfea7d"),
-	EventSignature:  common.HexToHash("0xd624fd4c3311e1803d230d97ce71fd60c4f658c30a31fbe08edcb211fd90f63f"),
-}
-
-var aftermarketDeviceNodeMintedArgs = services.AftermarketDeviceNodeMintedData{
-	AftermarketDeviceAddress: common.HexToAddress("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
-	ManufacturerID:           big.NewInt(137),
-	Owner:                    common.HexToAddress("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
-	TokenID:                  big.NewInt(42),
-}
 
 var aftermarketDevice = models.AftermarketDevice{
 	ID:        1,
