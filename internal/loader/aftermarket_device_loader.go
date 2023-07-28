@@ -2,7 +2,6 @@ package loader
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
@@ -15,7 +14,7 @@ type AftermarketDeviceLoader struct {
 	db db.Store
 }
 
-func GetAftermarketDeviceByVehicleID(ctx context.Context, vehicleID string) (*model.AftermarketDevice, error) {
+func GetAftermarketDeviceByVehicleID(ctx context.Context, vehicleID int) (*model.AftermarketDevice, error) {
 	// read loader from context
 	loaders := ctx.Value(dataLoadersKey).(*Loaders)
 	// invoke and get thunk
@@ -26,40 +25,38 @@ func GetAftermarketDeviceByVehicleID(ctx context.Context, vehicleID string) (*mo
 
 // BatchGetLinkedAftermarketDeviceByVehicleID implements the dataloader for finding aftermarket devices linked to vehicles and returns
 // them in the order requested
-func (ad *AftermarketDeviceLoader) BatchGetLinkedAftermarketDeviceByVehicleID(ctx context.Context, vehicleIDs []string) []*dataloader.Result[*model.AftermarketDevice] {
-	keyOrder := make(map[int]int)
+func (ad *AftermarketDeviceLoader) BatchGetLinkedAftermarketDeviceByVehicleID(ctx context.Context, vehicleIDs []int) []*dataloader.Result[*model.AftermarketDevice] {
 	results := make([]*dataloader.Result[*model.AftermarketDevice], len(vehicleIDs))
-	var vIDs []int
 
-	for ix, key := range vehicleIDs {
-		k, err := strconv.Atoi(key)
-		if err != nil {
-			results[ix] = &dataloader.Result[*model.AftermarketDevice]{Data: nil, Error: err}
-		}
-		keyOrder[k] = ix
-		vIDs = append(vIDs, k)
-	}
-
-	devices, err := models.AftermarketDevices(
-		models.AftermarketDeviceWhere.VehicleID.IN(vIDs),
-	).All(ctx, ad.db.DBS().Reader)
+	devices, err := models.AftermarketDevices(models.AftermarketDeviceWhere.VehicleID.IN(vehicleIDs)).All(ctx, ad.db.DBS().Reader)
 	if err != nil {
-		for ix := range vIDs {
-			results[ix] = &dataloader.Result[*model.AftermarketDevice]{Data: nil, Error: err}
+		for i := range vehicleIDs {
+			results[i] = &dataloader.Result[*model.AftermarketDevice]{Data: nil, Error: err}
 		}
 		return results
 	}
 
-	for _, device := range devices {
-		v := &model.AftermarketDevice{
-			ID:       strconv.Itoa(device.ID),
-			Address:  helpers.BytesToAddr(device.Address),
-			Owner:    helpers.BytesToAddr(device.Owner),
-			Serial:   device.Serial.Ptr(),
-			Imei:     device.Imei.Ptr(),
-			MintedAt: device.MintedAt.Ptr(),
+	amByVehicleID := map[int]*models.AftermarketDevice{}
+
+	for _, d := range devices {
+		amByVehicleID[d.VehicleID.Int] = d
+	}
+
+	for i, vID := range vehicleIDs {
+		if am, ok := amByVehicleID[vID]; ok {
+			results[i] = &dataloader.Result[*model.AftermarketDevice]{
+				Data: &model.AftermarketDevice{
+					ID:       am.ID,
+					Address:  helpers.BytesToAddr(am.Address),
+					Owner:    helpers.BytesToAddr(am.Owner),
+					Serial:   am.Serial.Ptr(),
+					IMEI:     am.Imei.Ptr(),
+					MintedAt: am.MintedAt.Ptr(),
+				},
+			}
+		} else {
+			results[i] = &dataloader.Result[*model.AftermarketDevice]{}
 		}
-		results[keyOrder[device.VehicleID.Int]] = &dataloader.Result[*model.AftermarketDevice]{Data: v, Error: nil}
 	}
 
 	return results

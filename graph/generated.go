@@ -52,7 +52,7 @@ type ComplexityRoot struct {
 	AftermarketDevice struct {
 		Address  func(childComplexity int) int
 		ID       func(childComplexity int) int
-		Imei     func(childComplexity int) int
+		IMEI     func(childComplexity int) int
 		MintedAt func(childComplexity int) int
 		Owner    func(childComplexity int) int
 		Serial   func(childComplexity int) int
@@ -143,11 +143,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.AftermarketDevice.ID(childComplexity), true
 
 	case "AftermarketDevice.imei":
-		if e.complexity.AftermarketDevice.Imei == nil {
+		if e.complexity.AftermarketDevice.IMEI == nil {
 			break
 		}
 
-		return e.complexity.AftermarketDevice.Imei(childComplexity), true
+		return e.complexity.AftermarketDevice.IMEI(childComplexity), true
 
 	case "AftermarketDevice.mintedAt":
 		if e.complexity.AftermarketDevice.MintedAt == nil {
@@ -587,9 +587,9 @@ func (ec *executionContext) _AftermarketDevice_id(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNBigInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AftermarketDevice_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -599,7 +599,7 @@ func (ec *executionContext) fieldContext_AftermarketDevice_id(ctx context.Contex
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
+			return nil, errors.New("field of type BigInt does not have child fields")
 		},
 	}
 	return fc, nil
@@ -742,7 +742,7 @@ func (ec *executionContext) _AftermarketDevice_imei(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Imei, nil
+		return obj.IMEI, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1481,9 +1481,9 @@ func (ec *executionContext) _Vehicle_id(ctx context.Context, field graphql.Colle
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNBigInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Vehicle_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1493,7 +1493,7 @@ func (ec *executionContext) fieldContext_Vehicle_id(ctx context.Context, field g
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
+			return nil, errors.New("field of type BigInt does not have child fields")
 		},
 	}
 	return fc, nil
@@ -4706,13 +4706,13 @@ func (ec *executionContext) marshalNAftermarketDeviceEdge2ᚖgithubᚗcomᚋDIMO
 	return ec._AftermarketDeviceEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
-	res, err := graphql.UnmarshalBoolean(v)
+func (ec *executionContext) unmarshalNBigInt2int(ctx context.Context, v interface{}) (int, error) {
+	res, err := types.UnmarshalInt(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.SelectionSet, v bool) graphql.Marshaler {
-	res := graphql.MarshalBoolean(v)
+func (ec *executionContext) marshalNBigInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
+	res := types.MarshalInt(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -4721,13 +4721,13 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
-	res, err := graphql.UnmarshalID(v)
+func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
+	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
-	res := graphql.MarshalID(v)
+func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.SelectionSet, v bool) graphql.Marshaler {
+	res := graphql.MarshalBoolean(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
