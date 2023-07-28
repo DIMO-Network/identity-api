@@ -238,7 +238,7 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination_NextPage()
 	s.NoError(err)
 
 	s.Equal(len(vehicles), res.TotalCount)
-	s.Equal(res.PageInfo.HasNextPage, false)
+	s.False(res.PageInfo.HasNextPage)
 
 	expected := []*gmodel.VehicleEdge{
 		{
