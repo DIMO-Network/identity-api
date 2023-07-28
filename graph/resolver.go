@@ -14,6 +14,6 @@ type Resolver struct {
 	Repo *repositories.Repository
 }
 
-func NewResolver(repo *repositories.Repository) Resolver {
-	return Resolver{repo}
+func NewResolver(repo *repositories.Repository) *Resolver {
+	return &Resolver{repo}
 }

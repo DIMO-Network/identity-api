@@ -47,10 +47,12 @@ var vehicle = models.Vehicle{
 	MintedAt:     time.Now(),
 }
 
+const migrationsDir = "../migrations"
+
 func TestNew(t *testing.T) {
 	assert := assert.New(t)
 	ctx := context.Background()
-	pdb, _ := helpers.StartContainerDatabase(ctx, t, helpers.MigrationsDirRelPath)
+	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDir)
 
 	err := vehicle.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	assert.NoError(err)
@@ -63,7 +65,7 @@ func TestNew(t *testing.T) {
 
 	repo := repositories.NewRepository(pdb, 0)
 	resolver := NewResolver(repo)
-	c := client.New(loader.Middleware(pdb, handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: &resolver}))))
+	c := client.New(loader.Middleware(pdb, handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: resolver}))))
 
 	t.Run("ownedAftermarketDevices, return only one response", func(t *testing.T) {
 		var resp interface{}

@@ -60,6 +60,7 @@ func (r *Repository) GetOwnedVehicles(ctx context.Context, addr common.Address, 
 		// Use limit + 1 here to check if there's a next page.
 		qm.Limit(limit + 1),
 		qm.OrderBy(models.VehicleColumns.ID + " DESC"),
+		// qm.Load(models.VehicleRels.TokenPrivileges, models.PrivilegeWhere.ExpiresAt.GTE(time.Now())),
 	}
 
 	if after != nil {

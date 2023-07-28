@@ -24,6 +24,13 @@ type PageInfo struct {
 	HasNextPage bool    `json:"hasNextPage"`
 }
 
+type Privilege struct {
+	ID        int            `json:"id"`
+	User      common.Address `json:"user"`
+	SetAt     time.Time      `json:"setAt"`
+	ExpiresAt time.Time      `json:"expiresAt"`
+}
+
 type Vehicle struct {
 	ID                int                `json:"id"`
 	Owner             common.Address     `json:"owner"`
@@ -32,6 +39,7 @@ type Vehicle struct {
 	Year              *int               `json:"year,omitempty"`
 	MintedAt          time.Time          `json:"mintedAt"`
 	AftermarketDevice *AftermarketDevice `json:"aftermarketDevice,omitempty"`
+	Privileges        []*Privilege       `json:"privileges"`
 }
 
 type VehicleConnection struct {

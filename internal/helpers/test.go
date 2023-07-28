@@ -2,6 +2,7 @@ package helpers
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"database/sql"
 	"fmt"
 	"net/http"
@@ -12,6 +13,8 @@ import (
 
 	"github.com/DIMO-Network/shared/db"
 	"github.com/docker/go-connections/nat"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/pkg/errors"
@@ -171,4 +174,15 @@ func Logger() *zerolog.Logger {
 		Str("app", DBSettings.Name).
 		Logger()
 	return &l
+}
+
+func GenerateWallet() (*ecdsa.PrivateKey, *common.Address, error) {
+	privateKey, err := crypto.GenerateKey()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	userAddr := crypto.PubkeyToAddress(privateKey.PublicKey)
+
+	return privateKey, &userAddr, nil
 }

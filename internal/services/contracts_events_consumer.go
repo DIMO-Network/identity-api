@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/segmentio/ksuid"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 
@@ -33,6 +34,7 @@ const (
 	VehicleAttributeSet                EventName = "VehicleAttributeSet"
 	AftermarketDeviceNodeMinted        EventName = "AftermarketDeviceNodeMinted"
 	AftermarketDeviceAttributeSetEvent EventName = "AftermarketDeviceAttributeSet"
+	PrivilegeSet                       EventName = "PrivilegeSet"
 	AftermarketDevicePairedEvent       EventName = "AftermarketDevicePaired"
 	AftermarketDeviceUnpairedEvent     EventName = "AftermarketDeviceUnpaired"
 )
@@ -90,6 +92,13 @@ type TransferEventData struct {
 	TokenID *big.Int
 }
 
+type PrivilegeSetData struct {
+	TokenId *big.Int
+	PrivId  *big.Int
+	User    common.Address
+	Expires *big.Int
+}
+
 func NewContractsEventsConsumer(dbs db.Store, log *zerolog.Logger, settings *config.Settings) *ContractsEventsConsumer {
 	return &ContractsEventsConsumer{
 		dbs:      dbs,
@@ -118,6 +127,8 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 
 	eventName := EventName(data.EventName)
 
+	c.log.Info().Str("Event", string(eventName)).Str("Contract", data.Contract.Hex()).Msg("Event Received")
+
 	switch data.Contract {
 	case registryAddr:
 		switch eventName {
@@ -133,8 +144,11 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 			return c.handleAftermarketDeviceUnpairedEvent(ctx, &data)
 		}
 	case vehicleNFTAddr:
-		if eventName == Transfer {
+		switch eventName {
+		case Transfer:
 			return c.handleVehicleTransferEvent(ctx, &data)
+		case PrivilegeSet:
+			return c.handlePrivilegeSetEvent(ctx, &data)
 		}
 	}
 
@@ -266,6 +280,32 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceAttributeSetEvent(ctx c
 			return err
 		}
 	}
+
+	return nil
+}
+
+func (c *ContractsEventsConsumer) handlePrivilegeSetEvent(ctx context.Context, e *ContractEventData) error {
+	logger := c.log.With().Str("EventName", Transfer.String()).Logger()
+
+	var args PrivilegeSetData
+
+	privilege := models.Privilege{
+		ID:          ksuid.New().String(),
+		TokenID:     int(args.TokenId.Int64()),
+		PrivilegeID: int(args.PrivId.Int64()),
+		UserAddress: args.User.Bytes(),
+		SetAt:       e.Block.Time,
+		ExpiresAt:   time.Unix(args.Expires.Int64(), 0),
+	}
+
+	if err := privilege.Insert(ctx, c.dbs.DBS().Writer, boil.Infer()); err != nil {
+		return err
+	}
+
+	logger.Info().
+		Str("PrivilegeID", args.PrivId.String()).
+		Str("TokenID", args.TokenId.String()).
+		Msg("Event processed successfuly")
 
 	return nil
 }
