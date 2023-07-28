@@ -121,33 +121,3 @@ func (r *Repository) GetOwnedVehicles(ctx context.Context, addr common.Address, 
 
 	return res, nil
 }
-
-func (r *Repository) GetLinkedVehicleByID(ctx context.Context, aftermarketDevID string) (*gmodel.Vehicle, error) {
-	adID, err := strconv.Atoi(aftermarketDevID)
-	if err != nil {
-		return nil, err
-	}
-
-	ad, err := models.AftermarketDevices(
-		models.AftermarketDeviceWhere.ID.EQ(adID),
-		qm.Load(models.AftermarketDeviceRels.Vehicle),
-	).One(ctx, r.PDB.DBS().Reader)
-	if err != nil {
-		return nil, err
-	}
-
-	if ad.R.Vehicle == nil {
-		return nil, nil
-	}
-
-	res := &gmodel.Vehicle{
-		ID:       ad.R.Vehicle.ID,
-		Owner:    common.BytesToAddress(ad.R.Vehicle.OwnerAddress),
-		Make:     ad.R.Vehicle.Make.Ptr(),
-		Model:    ad.R.Vehicle.Model.Ptr(),
-		Year:     ad.R.Vehicle.Year.Ptr(),
-		MintedAt: ad.R.Vehicle.MintedAt,
-	}
-
-	return res, nil
-}
