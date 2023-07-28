@@ -3,11 +3,13 @@ package repositories
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 
 	"encoding/base64"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
+	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/ethereum/go-ethereum/common"
@@ -64,12 +66,12 @@ func (r *Repository) GetOwnedVehicles(ctx context.Context, addr common.Address, 
 	}
 
 	if after != nil {
-		searchAfter, err := strconv.Atoi(string([]byte(*after)))
+		afterID, err := helpers.CursorToID(*after)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("invalid cursor %q", *after)
 		}
 
-		queryMods = append(queryMods, models.VehicleWhere.ID.LT(searchAfter))
+		queryMods = append(queryMods, models.VehicleWhere.ID.LT(afterID))
 	}
 
 	vehicles, err := models.Vehicles(queryMods...).All(ctx, r.PDB.DBS().Reader)
