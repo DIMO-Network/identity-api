@@ -44,11 +44,11 @@ func (s *VehiclesPrivilegesRepoTestSuite) TearDownTest() {
 }
 
 // TearDownSuite cleanup at end by terminating container
-func (o *VehiclesPrivilegesRepoTestSuite) TearDownSuite() {
-	fmt.Printf("shutting down postgres at with session: %s \n", o.container.SessionID())
+func (s *VehiclesPrivilegesRepoTestSuite) TearDownSuite() {
+	fmt.Printf("shutting down postgres at with session: %s \n", s.container.SessionID())
 
-	if err := o.container.Terminate(o.ctx); err != nil {
-		o.T().Fatal(err)
+	if err := s.container.Terminate(s.ctx); err != nil {
+		s.T().Fatal(err)
 	}
 }
 
