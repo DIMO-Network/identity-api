@@ -11,7 +11,7 @@ import (
 
 func MarshalAddress(addr common.Address) graphql.Marshaler {
 	return graphql.WriterFunc(func(w io.Writer) {
-		io.WriteString(w, strconv.Quote(addr.Hex()))
+		_, _ = io.WriteString(w, strconv.Quote(addr.Hex()))
 	})
 }
 

@@ -57,7 +57,7 @@ func main() {
 
 	logger.Info().Msgf("Server started on port: %d", settings.Port)
 
-	http.ListenAndServe(fmt.Sprintf(":%d", settings.Port), nil)
+	logger.Fatal().Err(http.ListenAndServe(fmt.Sprintf(":%d", settings.Port), nil)).Msg("Server shut down.")
 }
 
 func startContractEventsConsumer(ctx context.Context, logger *zerolog.Logger, settings *config.Settings, dbs db.Store) {
@@ -73,5 +73,5 @@ func startContractEventsConsumer(ctx context.Context, logger *zerolog.Logger, se
 		logger.Fatal().Err(err).Msg("Couldn't start event consumer.")
 	}
 
-	logger.Info().Msg("Contracts events consumer started")
+	logger.Info().Msg("Contract events consumer started.")
 }
