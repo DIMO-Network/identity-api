@@ -27,15 +27,15 @@ type VehiclesPrivilegesRepoTestSuite struct {
 	settings  config.Settings
 }
 
-func (o *VehiclesPrivilegesRepoTestSuite) SetupSuite() {
-	o.ctx = context.Background()
-	o.pdb, o.container = test.StartContainerDatabase(o.ctx, o.T(), test.MigrationsDirRelPath)
+func (s *VehiclesPrivilegesRepoTestSuite) SetupSuite() {
+	s.ctx = context.Background()
+	s.pdb, s.container = test.StartContainerDatabase(s.ctx, s.T(), test.MigrationsDirRelPath)
 
-	o.settings = config.Settings{
+	s.settings = config.Settings{
 		DIMORegistryAddr:    "0x4de1bcf2b7e851e31216fc07989caa902a604784",
 		DIMORegistryChainID: 80001,
 	}
-	o.repo = NewVehiclesRepo(o.ctx, o.pdb)
+	s.repo = NewVehiclesRepo(s.ctx, s.pdb)
 }
 
 // TearDownTest after each test truncate tables
