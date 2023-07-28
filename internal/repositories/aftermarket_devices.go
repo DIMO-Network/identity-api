@@ -2,7 +2,6 @@ package repositories
 
 import (
 	"context"
-	"database/sql"
 	"encoding/base64"
 	"errors"
 	"strconv"
@@ -100,33 +99,5 @@ func (r *Repository) GetOwnedAftermarketDevices(ctx context.Context, addr common
 	}
 
 	res.PageInfo.EndCursor = &adEdges[len(adEdges)-1].Cursor
-	return res, nil
-}
-
-func (r *Repository) GetLinkedAftermarketDeviceByVehicleID(ctx context.Context, vehicleID string) (*gmodel.AftermarketDevice, error) {
-	vID, err := strconv.Atoi(vehicleID)
-	if err != nil {
-		return nil, err
-	}
-
-	ad, err := models.AftermarketDevices(
-		models.AftermarketDeviceWhere.VehicleID.EQ(null.IntFrom(vID)),
-	).One(ctx, r.PDB.DBS().Reader)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
-		return nil, err
-	}
-
-	res := &gmodel.AftermarketDevice{
-		ID:       strconv.Itoa(ad.ID),
-		Address:  helpers.BytesToAddr(ad.Address),
-		Owner:    helpers.BytesToAddr(ad.Address),
-		Serial:   ad.Serial.Ptr(),
-		Imei:     ad.Imei.Ptr(),
-		MintedAt: ad.MintedAt.Ptr(),
-	}
-
 	return res, nil
 }
