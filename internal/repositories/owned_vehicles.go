@@ -4,9 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
-
-	"encoding/base64"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
@@ -92,7 +89,7 @@ func (r *Repository) GetOwnedVehicles(ctx context.Context, addr common.Address, 
 	}
 
 	lastItmID := vehicles[len(vehicles)-1].ID
-	endCursr := base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(lastItmID)))
+	endCursr := helpers.IDToCursor(lastItmID)
 
 	var vEdges []*gmodel.VehicleEdge
 	for _, v := range vehicles {
@@ -105,7 +102,7 @@ func (r *Repository) GetOwnedVehicles(ctx context.Context, addr common.Address, 
 				Year:     v.Year.Ptr(),
 				MintedAt: v.MintedAt,
 			},
-			Cursor: base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(v.ID))),
+			Cursor: helpers.IDToCursor(v.ID),
 		}
 		vEdges = append(vEdges, edge)
 	}

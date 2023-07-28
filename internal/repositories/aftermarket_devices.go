@@ -2,10 +2,8 @@ package repositories
 
 import (
 	"context"
-	"encoding/base64"
 	"errors"
 	"fmt"
-	"strconv"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
@@ -78,7 +76,7 @@ func (r *Repository) GetOwnedAftermarketDevices(ctx context.Context, addr common
 					VehicleID: d.VehicleID.Ptr(),
 					MintedAt:  d.MintedAt.Ptr(),
 				},
-				Cursor: base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(d.ID))),
+				Cursor: helpers.IDToCursor(d.ID),
 			},
 		)
 	}

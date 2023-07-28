@@ -24,3 +24,7 @@ func CursorToID(cur string) (int, error) {
 
 	return strconv.Atoi(string(b))
 }
+
+func IDToCursor(id int) string {
+	return base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(id)))
+}
