@@ -374,6 +374,11 @@ func (c *ContractsEventsConsumer) handleBeneficiarySetEvent(ctx context.Context,
 		return err
 	}
 
+	if args.IdProxyAddress != common.HexToAddress(c.settings.AftermarketDeviceAddr) {
+		c.log.Warn().Msgf("beneficiary set on an unexpected contract: %s", args.IdProxyAddress.Hex())
+		return nil
+	}
+
 	var err error
 	ad := new(models.AftermarketDevice)
 	ad.ID = int(args.NodeId.Int64())

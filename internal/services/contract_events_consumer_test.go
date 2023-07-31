@@ -428,14 +428,15 @@ func TestHandleBeneficiarySetEvent(t *testing.T) {
 	contractEventData.EventName = "BeneficiarySet"
 
 	var beneficiarySetData = BeneficiarySetEventData{
-		IdProxyAddress: common.HexToAddress("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		IdProxyAddress: common.HexToAddress(aftermarketDeviceAddr),
 		Beneficiary:    common.HexToAddress("0x55b6D41bd932244Dd08186e4c19F1a7E48cbcDg3"),
 		NodeId:         big.NewInt(100),
 	}
 
 	settings := config.Settings{
-		DIMORegistryAddr:    contractEventData.Contract.String(),
-		DIMORegistryChainID: contractEventData.ChainID,
+		DIMORegistryAddr:      contractEventData.Contract.String(),
+		DIMORegistryChainID:   contractEventData.ChainID,
+		AftermarketDeviceAddr: contractEventData.Contract.String(),
 	}
 
 	config := mocks.NewTestConfig()
@@ -483,14 +484,15 @@ func TestHandleClearBeneficiaryEvent(t *testing.T) {
 	contractEventData.EventName = "BeneficiarySet"
 
 	var beneficiarySetData = BeneficiarySetEventData{
-		IdProxyAddress: common.HexToAddress("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		IdProxyAddress: common.HexToAddress(aftermarketDeviceAddr),
 		Beneficiary:    zeroAddress,
 		NodeId:         big.NewInt(100),
 	}
 
 	settings := config.Settings{
-		DIMORegistryAddr:    contractEventData.Contract.String(),
-		DIMORegistryChainID: contractEventData.ChainID,
+		DIMORegistryAddr:      contractEventData.Contract.String(),
+		DIMORegistryChainID:   contractEventData.ChainID,
+		AftermarketDeviceAddr: aftermarketDeviceAddr,
 	}
 
 	config := mocks.NewTestConfig()
