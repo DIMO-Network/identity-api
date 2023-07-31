@@ -89,7 +89,7 @@ func (v *VehiclesRepo) GetAccessibleVehicles(ctx context.Context, addr common.Ad
 	vAlias := "identity_api." + models.TableNames.Vehicles
 	pAlias := "identity_api." + models.TableNames.Privileges
 	queryMods := []qm.QueryMod{
-		qm.Select(vAlias + ".*"),
+		qm.Select("DISTINCT ON (" + vAlias + ".id) " + vAlias + ".*"),
 		qm.LeftOuterJoin(
 			pAlias + " ON " + models.VehicleTableColumns.ID + " = " + models.PrivilegeTableColumns.TokenID,
 		),
