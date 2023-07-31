@@ -23,8 +23,6 @@ import (
 )
 
 const migrationsDirRelPath = "../" + helpers.MigrationsDirRelPath
-const registryAddr = "0x5FbDB2315678afecb367f032d93F642f64180aa3"
-const vehicleNFTAddr = "0xc6e7DF5E7b4f2A278906862b61205850344D4e7d"
 const aftermarketDeviceAddr = "0xcf9af64522162da85164a714c23a7705e6e466b3"
 
 var mintedAt = time.Now()
