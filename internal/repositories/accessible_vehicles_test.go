@@ -8,7 +8,7 @@ import (
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/config"
-	"github.com/DIMO-Network/identity-api/internal/test"
+	test "github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/ethereum/go-ethereum/common"
@@ -94,12 +94,12 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Success() {
 
 	privileges := []models.Privilege{
 		{
-			ID:               ksuid.New().String(),
-			TokenID:          1,
-			PrivilegeID:      1,
-			GrantedToAddress: wallet2.Bytes(),
-			GrantedAt:        currTime,
-			ExpiresAt:        currTime,
+			ID:          ksuid.New().String(),
+			TokenID:     1,
+			PrivilegeID: 1,
+			UserAddress: wallet2.Bytes(),
+			SetAt:       currTime,
+			ExpiresAt:   currTime,
 		},
 	}
 
@@ -119,7 +119,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Success() {
 	expected := []*gmodel.VehicleEdge{
 		{
 			Node: &gmodel.Vehicle{
-				ID:         "2",
+				ID:         2,
 				Owner:      common.BytesToAddress(wallet.Bytes()),
 				Make:       &vehicles[1].Make.String,
 				Model:      &vehicles[1].Model.String,
@@ -131,7 +131,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Success() {
 		},
 		{
 			Node: &gmodel.Vehicle{
-				ID:       "1",
+				ID:       1,
 				Owner:    common.BytesToAddress(wallet.Bytes()),
 				Make:     &vehicles[0].Make.String,
 				Model:    &vehicles[0].Model.String,
@@ -139,10 +139,10 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Success() {
 				MintedAt: vehicles[0].MintedAt,
 				Privileges: []*gmodel.Privilege{
 					{
-						ID:               privileges[0].PrivilegeID,
-						GrantedToAddress: common.BytesToAddress(privileges[0].GrantedToAddress),
-						GrantedAt:        privileges[0].GrantedAt,
-						ExpiresAt:        privileges[0].ExpiresAt,
+						ID:        privileges[0].PrivilegeID,
+						User:      common.BytesToAddress(privileges[0].UserAddress),
+						SetAt:     privileges[0].SetAt,
+						ExpiresAt: privileges[0].ExpiresAt,
 					},
 				},
 			},
@@ -193,7 +193,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination(
 	expected := []*gmodel.VehicleEdge{
 		{
 			Node: &gmodel.Vehicle{
-				ID:         "2",
+				ID:         2,
 				Owner:      common.BytesToAddress(wallet.Bytes()),
 				Make:       &vehicles[1].Make.String,
 				Model:      &vehicles[1].Model.String,
@@ -249,7 +249,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 	expected := []*gmodel.VehicleEdge{
 		{
 			Node: &gmodel.Vehicle{
-				ID:         "2",
+				ID:         2,
 				Owner:      common.BytesToAddress(wallet.Bytes()),
 				Make:       &vehicles[1].Make.String,
 				Model:      &vehicles[1].Model.String,
@@ -299,12 +299,12 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_OwnedByUser
 
 	privileges := []models.Privilege{
 		{
-			ID:               ksuid.New().String(),
-			TokenID:          2,
-			PrivilegeID:      1,
-			GrantedToAddress: wallet.Bytes(),
-			GrantedAt:        currTime,
-			ExpiresAt:        currTime,
+			ID:          ksuid.New().String(),
+			TokenID:     2,
+			PrivilegeID: 1,
+			UserAddress: wallet.Bytes(),
+			SetAt:       currTime,
+			ExpiresAt:   currTime,
 		},
 	}
 
@@ -324,7 +324,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_OwnedByUser
 	expected := []*gmodel.VehicleEdge{
 		{
 			Node: &gmodel.Vehicle{
-				ID:       "2",
+				ID:       2,
 				Owner:    common.BytesToAddress(wallet2.Bytes()),
 				Make:     &vehicles[1].Make.String,
 				Model:    &vehicles[1].Model.String,
@@ -332,10 +332,10 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_OwnedByUser
 				MintedAt: vehicles[1].MintedAt,
 				Privileges: []*gmodel.Privilege{
 					{
-						ID:               privileges[0].PrivilegeID,
-						GrantedToAddress: common.BytesToAddress(privileges[0].GrantedToAddress),
-						GrantedAt:        privileges[0].GrantedAt,
-						ExpiresAt:        privileges[0].ExpiresAt,
+						ID:        privileges[0].PrivilegeID,
+						User:      common.BytesToAddress(privileges[0].UserAddress),
+						SetAt:     privileges[0].SetAt,
+						ExpiresAt: privileges[0].ExpiresAt,
 					},
 				},
 			},
@@ -343,7 +343,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_OwnedByUser
 		},
 		{
 			Node: &gmodel.Vehicle{
-				ID:         "1",
+				ID:         1,
 				Owner:      common.BytesToAddress(wallet.Bytes()),
 				Make:       &vehicles[0].Make.String,
 				Model:      &vehicles[0].Model.String,

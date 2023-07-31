@@ -42,16 +42,16 @@ func (v *VehiclesRepo) createVehiclesResponse(totalCount int64, vehicles models.
 
 		for _, p := range v.R.TokenPrivileges {
 			privs = append(privs, &gmodel.Privilege{
-				ID:               p.PrivilegeID,
-				GrantedToAddress: common.BytesToAddress(p.GrantedToAddress),
-				GrantedAt:        p.GrantedAt,
-				ExpiresAt:        p.ExpiresAt,
+				ID:        p.PrivilegeID,
+				User:      common.BytesToAddress(p.UserAddress),
+				SetAt:     p.SetAt,
+				ExpiresAt: p.ExpiresAt,
 			})
 		}
 
 		edge := &gmodel.VehicleEdge{
 			Node: &gmodel.Vehicle{
-				ID:         strconv.Itoa(v.ID),
+				ID:         v.ID,
 				Owner:      owner,
 				Make:       v.Make.Ptr(),
 				Model:      v.Model.Ptr(),
@@ -94,7 +94,7 @@ func (v *VehiclesRepo) GetAccessibleVehicles(ctx context.Context, addr common.Ad
 			pAlias + " ON " + models.VehicleTableColumns.ID + " = " + models.PrivilegeTableColumns.TokenID,
 		),
 		qm.Or2(models.VehicleWhere.OwnerAddress.EQ(addr.Bytes())),
-		qm.Or2(models.PrivilegeWhere.GrantedToAddress.EQ(addr.Bytes())),
+		qm.Or2(models.PrivilegeWhere.UserAddress.EQ(addr.Bytes())),
 		// Use limit + 1 here to check if there's a next page.
 	}
 

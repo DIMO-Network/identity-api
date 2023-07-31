@@ -2,7 +2,7 @@ name: gotest
 
 on:
   pull_request:
-    branches: [ '**' ]
+    branches: ["**"]
 
 jobs:
   tests:

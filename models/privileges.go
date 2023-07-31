@@ -23,47 +23,47 @@ import (
 
 // Privilege is an object representing the database table.
 type Privilege struct {
-	ID               string    `boil:"id" json:"id" toml:"id" yaml:"id"`
-	TokenID          int       `boil:"token_id" json:"token_id" toml:"token_id" yaml:"token_id"`
-	PrivilegeID      int       `boil:"privilege_id" json:"privilege_id" toml:"privilege_id" yaml:"privilege_id"`
-	GrantedToAddress []byte    `boil:"granted_to_address" json:"granted_to_address" toml:"granted_to_address" yaml:"granted_to_address"`
-	GrantedAt        time.Time `boil:"granted_at" json:"granted_at" toml:"granted_at" yaml:"granted_at"`
-	ExpiresAt        time.Time `boil:"expires_at" json:"expires_at" toml:"expires_at" yaml:"expires_at"`
+	ID          string    `boil:"id" json:"id" toml:"id" yaml:"id"`
+	TokenID     int       `boil:"token_id" json:"token_id" toml:"token_id" yaml:"token_id"`
+	PrivilegeID int       `boil:"privilege_id" json:"privilege_id" toml:"privilege_id" yaml:"privilege_id"`
+	UserAddress []byte    `boil:"user_address" json:"user_address" toml:"user_address" yaml:"user_address"`
+	SetAt       time.Time `boil:"set_at" json:"set_at" toml:"set_at" yaml:"set_at"`
+	ExpiresAt   time.Time `boil:"expires_at" json:"expires_at" toml:"expires_at" yaml:"expires_at"`
 
 	R *privilegeR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L privilegeL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var PrivilegeColumns = struct {
-	ID               string
-	TokenID          string
-	PrivilegeID      string
-	GrantedToAddress string
-	GrantedAt        string
-	ExpiresAt        string
+	ID          string
+	TokenID     string
+	PrivilegeID string
+	UserAddress string
+	SetAt       string
+	ExpiresAt   string
 }{
-	ID:               "id",
-	TokenID:          "token_id",
-	PrivilegeID:      "privilege_id",
-	GrantedToAddress: "granted_to_address",
-	GrantedAt:        "granted_at",
-	ExpiresAt:        "expires_at",
+	ID:          "id",
+	TokenID:     "token_id",
+	PrivilegeID: "privilege_id",
+	UserAddress: "user_address",
+	SetAt:       "set_at",
+	ExpiresAt:   "expires_at",
 }
 
 var PrivilegeTableColumns = struct {
-	ID               string
-	TokenID          string
-	PrivilegeID      string
-	GrantedToAddress string
-	GrantedAt        string
-	ExpiresAt        string
+	ID          string
+	TokenID     string
+	PrivilegeID string
+	UserAddress string
+	SetAt       string
+	ExpiresAt   string
 }{
-	ID:               "privileges.id",
-	TokenID:          "privileges.token_id",
-	PrivilegeID:      "privileges.privilege_id",
-	GrantedToAddress: "privileges.granted_to_address",
-	GrantedAt:        "privileges.granted_at",
-	ExpiresAt:        "privileges.expires_at",
+	ID:          "privileges.id",
+	TokenID:     "privileges.token_id",
+	PrivilegeID: "privileges.privilege_id",
+	UserAddress: "privileges.user_address",
+	SetAt:       "privileges.set_at",
+	ExpiresAt:   "privileges.expires_at",
 }
 
 // Generated where
@@ -122,19 +122,19 @@ func (w whereHelpertime_Time) GTE(x time.Time) qm.QueryMod {
 }
 
 var PrivilegeWhere = struct {
-	ID               whereHelperstring
-	TokenID          whereHelperint
-	PrivilegeID      whereHelperint
-	GrantedToAddress whereHelper__byte
-	GrantedAt        whereHelpertime_Time
-	ExpiresAt        whereHelpertime_Time
+	ID          whereHelperstring
+	TokenID     whereHelperint
+	PrivilegeID whereHelperint
+	UserAddress whereHelper__byte
+	SetAt       whereHelpertime_Time
+	ExpiresAt   whereHelpertime_Time
 }{
-	ID:               whereHelperstring{field: "\"identity_api\".\"privileges\".\"id\""},
-	TokenID:          whereHelperint{field: "\"identity_api\".\"privileges\".\"token_id\""},
-	PrivilegeID:      whereHelperint{field: "\"identity_api\".\"privileges\".\"privilege_id\""},
-	GrantedToAddress: whereHelper__byte{field: "\"identity_api\".\"privileges\".\"granted_to_address\""},
-	GrantedAt:        whereHelpertime_Time{field: "\"identity_api\".\"privileges\".\"granted_at\""},
-	ExpiresAt:        whereHelpertime_Time{field: "\"identity_api\".\"privileges\".\"expires_at\""},
+	ID:          whereHelperstring{field: "\"identity_api\".\"privileges\".\"id\""},
+	TokenID:     whereHelperint{field: "\"identity_api\".\"privileges\".\"token_id\""},
+	PrivilegeID: whereHelperint{field: "\"identity_api\".\"privileges\".\"privilege_id\""},
+	UserAddress: whereHelper__byte{field: "\"identity_api\".\"privileges\".\"user_address\""},
+	SetAt:       whereHelpertime_Time{field: "\"identity_api\".\"privileges\".\"set_at\""},
+	ExpiresAt:   whereHelpertime_Time{field: "\"identity_api\".\"privileges\".\"expires_at\""},
 }
 
 // PrivilegeRels is where relationship names are stored.
@@ -165,8 +165,8 @@ func (r *privilegeR) GetToken() *Vehicle {
 type privilegeL struct{}
 
 var (
-	privilegeAllColumns            = []string{"id", "token_id", "privilege_id", "granted_to_address", "granted_at", "expires_at"}
-	privilegeColumnsWithoutDefault = []string{"id", "token_id", "privilege_id", "granted_to_address", "granted_at", "expires_at"}
+	privilegeAllColumns            = []string{"id", "token_id", "privilege_id", "user_address", "set_at", "expires_at"}
+	privilegeColumnsWithoutDefault = []string{"id", "token_id", "privilege_id", "user_address", "set_at", "expires_at"}
 	privilegeColumnsWithDefault    = []string{}
 	privilegePrimaryKeyColumns     = []string{"id"}
 	privilegeGeneratedColumns      = []string{}

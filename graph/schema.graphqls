@@ -4,6 +4,7 @@
 
 scalar Time
 scalar Address
+scalar BigInt
 
 type VehicleConnection {
   totalCount: Int!
@@ -12,13 +13,14 @@ type VehicleConnection {
 }
 
 type Vehicle {
-  id: ID!
+  id: BigInt!
   owner: Address!
   make: String
   model: String
   year: Int
   mintedAt: Time!
-  privileges: [Privilege]
+  aftermarketDevice: AftermarketDevice
+  privileges: [Privilege!]!
 }
 
 type VehicleEdge {
@@ -27,12 +29,13 @@ type VehicleEdge {
 }
 
 type AftermarketDevice {
-  id: ID!
+  id: BigInt!
   address: Address
   owner: Address
   serial: String
   imei: String
   mintedAt: Time
+  vehicle: Vehicle
 }
 
 type AftermarketDeviceConnection {
@@ -53,8 +56,8 @@ type PageInfo {
 
 type Privilege {
   id: Int!
-  grantedToAddress: Address!
-  grantedAt: Time!
+  user: Address!
+  setAt: Time!
   expiresAt: Time!
 }
 
