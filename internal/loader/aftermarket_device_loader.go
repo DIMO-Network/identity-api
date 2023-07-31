@@ -7,6 +7,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/graph-gophers/dataloader/v7"
 )
 
@@ -48,10 +49,10 @@ func (ad *AftermarketDeviceLoader) BatchGetLinkedAftermarketDeviceByVehicleID(ct
 				Data: &model.AftermarketDevice{
 					ID:       am.ID,
 					Address:  helpers.BytesToAddr(am.Address),
-					Owner:    helpers.BytesToAddr(am.Owner),
+					Owner:    common.BytesToAddress(am.Owner),
 					Serial:   am.Serial.Ptr(),
 					IMEI:     am.Imei.Ptr(),
-					MintedAt: am.MintedAt.Ptr(),
+					MintedAt: am.MintedAt,
 				},
 			}
 		} else {

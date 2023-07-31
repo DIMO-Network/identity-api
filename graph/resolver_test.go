@@ -22,20 +22,20 @@ import (
 var aftermarketDevice = models.AftermarketDevice{
 	ID:        1,
 	Address:   null.BytesFrom(common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf5").Bytes()),
-	Owner:     null.BytesFrom(common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4").Bytes()),
+	Owner:     common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4").Bytes(),
 	Serial:    null.StringFrom("aftermarketDeviceSerial-1"),
 	Imei:      null.StringFrom("aftermarketDeviceIMEI-1"),
-	MintedAt:  null.TimeFrom(time.Now()),
+	MintedAt:  time.Now(),
 	VehicleID: null.IntFrom(11),
 }
 
 var ad2 = models.AftermarketDevice{
 	ID:       100,
 	Address:  null.BytesFrom(common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf5").Bytes()),
-	Owner:    null.BytesFrom(common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4").Bytes()),
+	Owner:    common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4").Bytes(),
 	Serial:   null.StringFrom("aftermarketDeviceSerial-1"),
 	Imei:     null.StringFrom("aftermarketDeviceIMEI-1"),
-	MintedAt: null.TimeFrom(time.Now()),
+	MintedAt: time.Now(),
 }
 
 var vehicle = models.Vehicle{
