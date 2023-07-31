@@ -6,7 +6,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/loader"
@@ -15,7 +14,10 @@ import (
 
 // Vehicle is the resolver for the vehicle field.
 func (r *aftermarketDeviceResolver) Vehicle(ctx context.Context, obj *model.AftermarketDevice) (*model.Vehicle, error) {
-	panic(fmt.Errorf("not implemented: Vehicle - vehicle"))
+	if obj.VehicleID == nil {
+		return nil, nil
+	}
+	return loader.GetVehicleByID(ctx, *obj.VehicleID)
 }
 
 // AccessibleVehicles is the resolver for the accessibleVehicles field.
