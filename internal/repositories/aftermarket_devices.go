@@ -41,7 +41,6 @@ func (r *Repository) GetOwnedAftermarketDevices(ctx context.Context, addr common
 
 	queryMods := []qm.QueryMod{
 		models.AftermarketDeviceWhere.Owner.EQ(null.BytesFrom(addr.Bytes())),
-		qm.Load(models.AftermarketDeviceRels.Vehicle),
 		// Use limit + 1 here to check if there's a next page.
 		qm.Limit(limit + 1),
 		qm.OrderBy(models.AftermarketDeviceColumns.ID + " DESC"),
@@ -123,7 +122,7 @@ func (v *Repository) GetLinkedAftermarketDeviceByVehicleID(ctx context.Context, 
 		Serial:      ad.Serial.Ptr(),
 		IMEI:        ad.Imei.Ptr(),
 		MintedAt:    ad.MintedAt.Ptr(),
-		Beneficiary: helpers.BytesToAddr(ad.Beneficiary),
+		Beneficiary: common.BytesToAddress(ad.Beneficiary),
 	}
 
 	return res, nil

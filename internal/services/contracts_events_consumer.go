@@ -39,7 +39,6 @@ const (
 	PrivilegeSet                       EventName = "PrivilegeSet"
 	AftermarketDevicePairedEvent       EventName = "AftermarketDevicePaired"
 	AftermarketDeviceUnpairedEvent     EventName = "AftermarketDeviceUnpaired"
-	AftermarketDeviceTransferredEvent  EventName = "AftermarketDeviceTransferred"
 	BeneficiarySetEvent                EventName = "BeneficiarySet"
 )
 
@@ -103,12 +102,6 @@ type PrivilegeSetData struct {
 	Expires *big.Int
 }
 
-type AftermarketDeviceTransferredEventData struct {
-	OldOwner              common.Address
-	NewOwner              common.Address
-	AftermarketDeviceNode *big.Int
-}
-
 type BeneficiarySetEventData struct {
 	IdProxyAddress common.Address
 	NodeId         *big.Int
@@ -135,6 +128,7 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 
 	registryAddr := common.HexToAddress(c.settings.DIMORegistryAddr)
 	vehicleNFTAddr := common.HexToAddress(c.settings.VehicleNFTAddr)
+	aftermarketDeviceAddr := common.HexToAddress(c.settings.AftermarketDeviceAddr)
 
 	var data ContractEventData
 	if err := json.Unmarshal(event.Data, &data); err != nil {
@@ -158,8 +152,6 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 			return c.handleAftermarketDevicePairedEvent(ctx, &data)
 		case AftermarketDeviceUnpairedEvent:
 			return c.handleAftermarketDeviceUnpairedEvent(ctx, &data)
-		case AftermarketDeviceTransferredEvent:
-			return c.handleAftermarketDeviceTransferredEvent(ctx, &data)
 		case BeneficiarySetEvent:
 			return c.handleBeneficiarySetEvent(ctx, &data)
 		}
@@ -169,6 +161,11 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 			return c.handleVehicleTransferEvent(ctx, &data)
 		case PrivilegeSet:
 			return c.handlePrivilegeSetEvent(ctx, &data)
+		}
+	case aftermarketDeviceAddr:
+		switch eventName {
+		case Transfer:
+			return c.handleAftermarketDeviceTransferredEvent(ctx, &data)
 		}
 	}
 
@@ -246,20 +243,16 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceNodeMintedEvent(ctx con
 	}
 
 	ad := models.AftermarketDevice{
-		ID:          int(args.TokenID.Int64()),
-		Address:     null.BytesFrom(args.AftermarketDeviceAddress.Bytes()),
-		Owner:       null.BytesFrom(args.Owner.Bytes()),
-		Beneficiary: null.BytesFrom(args.Owner.Bytes()),
-		MintedAt:    null.TimeFrom(e.Block.Time),
+		ID:       int(args.TokenID.Int64()),
+		Address:  null.BytesFrom(args.AftermarketDeviceAddress.Bytes()),
+		Owner:    null.BytesFrom(args.Owner.Bytes()),
+		MintedAt: null.TimeFrom(e.Block.Time),
 	}
 
-	if err := ad.Upsert(
+	if _, err := ad.Update(
 		ctx,
 		c.dbs.DBS().Writer,
-		true,
-		[]string{models.AftermarketDeviceColumns.ID},
 		boil.Whitelist(models.AftermarketDeviceColumns.Address, models.AftermarketDeviceColumns.Owner, models.AftermarketDeviceColumns.MintedAt),
-		boil.Whitelist(models.AftermarketDeviceColumns.ID, models.AftermarketDeviceColumns.Address, models.AftermarketDeviceColumns.Owner, models.AftermarketDeviceColumns.MintedAt),
 	); err != nil {
 		return err
 	}
@@ -280,24 +273,18 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceAttributeSetEvent(ctx c
 	switch args.Attribute {
 	case "Serial":
 		ad.Serial = null.StringFrom(args.Info)
-		if err := ad.Upsert(
+		if _, err := ad.Update(
 			ctx,
 			c.dbs.DBS().Writer,
-			true,
-			[]string{models.AftermarketDeviceColumns.ID},
-			boil.Whitelist(models.AftermarketDeviceColumns.Serial),
-			boil.Infer()); err != nil {
+			boil.Whitelist(models.AftermarketDeviceColumns.Serial)); err != nil {
 			return err
 		}
 	case "IMEI":
 		ad.Imei = null.StringFrom(args.Info)
-		if err := ad.Upsert(
+		if _, err := ad.Update(
 			ctx,
 			c.dbs.DBS().Writer,
-			true,
-			[]string{models.AftermarketDeviceColumns.ID},
-			boil.Whitelist(models.AftermarketDeviceColumns.Imei),
-			boil.Infer()); err != nil {
+			boil.Whitelist(models.AftermarketDeviceColumns.Imei)); err != nil {
 			return err
 		}
 	}
@@ -359,16 +346,16 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceUnpairedEvent(ctx conte
 }
 
 func (c *ContractsEventsConsumer) handleAftermarketDeviceTransferredEvent(ctx context.Context, e *ContractEventData) error {
-	var args AftermarketDeviceTransferredEventData
+	var args TransferEventData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
 		return err
 	}
 
 	ad := models.AftermarketDevice{
-		ID:          int(args.AftermarketDeviceNode.Int64()),
-		Owner:       null.BytesFrom(args.NewOwner.Bytes()),
-		Beneficiary: null.BytesFrom(args.NewOwner.Bytes()),
-		VehicleID:   null.Int{},
+		ID:          int(args.TokenID.Int64()),
+		Owner:       null.BytesFrom(args.To.Bytes()),
+		MintedAt:    null.TimeFrom(e.Block.Time),
+		Beneficiary: args.To.Bytes(),
 	}
 
 	return ad.Upsert(
@@ -376,8 +363,8 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceTransferredEvent(ctx co
 		c.dbs.DBS().Writer,
 		true,
 		[]string{models.AftermarketDeviceColumns.ID},
-		boil.Whitelist(models.AftermarketDeviceColumns.ID, models.AftermarketDeviceColumns.Owner, models.AftermarketDeviceColumns.VehicleID, models.AftermarketDeviceColumns.Beneficiary),
-		boil.Whitelist(models.AftermarketDeviceColumns.ID, models.AftermarketDeviceColumns.Owner, models.AftermarketDeviceColumns.VehicleID, models.AftermarketDeviceColumns.Beneficiary),
+		boil.Whitelist(models.AftermarketDeviceColumns.ID, models.AftermarketDeviceColumns.Owner, models.AftermarketDeviceColumns.MintedAt, models.AftermarketDeviceColumns.Beneficiary),
+		boil.Whitelist(models.AftermarketDeviceColumns.ID, models.AftermarketDeviceColumns.Owner, models.AftermarketDeviceColumns.MintedAt, models.AftermarketDeviceColumns.Beneficiary),
 	)
 }
 
@@ -387,10 +374,10 @@ func (c *ContractsEventsConsumer) handleBeneficiarySetEvent(ctx context.Context,
 		return err
 	}
 
+	var err error
 	ad := new(models.AftermarketDevice)
 	ad.ID = int(args.NodeId.Int64())
-	ad.Beneficiary = null.BytesFrom(args.Beneficiary.Bytes())
-	var err error
+	ad.Beneficiary = args.Beneficiary.Bytes()
 
 	if args.Beneficiary == zeroAddress {
 		ad, err = models.AftermarketDevices(
@@ -399,15 +386,16 @@ func (c *ContractsEventsConsumer) handleBeneficiarySetEvent(ctx context.Context,
 		if err != nil {
 			return err
 		}
-		ad.Beneficiary = ad.Owner
+		ad.Beneficiary = ad.Owner.Bytes
 	}
 
-	return ad.Upsert(
+	if _, err = ad.Update(
 		ctx,
 		c.dbs.DBS().Writer,
-		true,
-		[]string{models.AftermarketDeviceColumns.ID},
-		boil.Whitelist(models.AftermarketDeviceColumns.ID, models.AftermarketDeviceColumns.Beneficiary),
-		boil.Whitelist(models.AftermarketDeviceColumns.ID, models.AftermarketDeviceColumns.Beneficiary),
-	)
+		boil.Whitelist(models.AftermarketDeviceColumns.Beneficiary),
+	); err != nil {
+		return err
+	}
+
+	return nil
 }

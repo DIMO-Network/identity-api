@@ -15,5 +15,5 @@ type AftermarketDevice struct {
 	MintedAt    *time.Time      `json:"mintedAt,omitempty"`
 	VehicleID   *int            `json:"vehicleId,omitempty"` // We want to pass this to resolvers, but we don't want it in the API.
 	Vehicle     *Vehicle        `json:"vehicle,omitempty"`
-	Beneficiary *common.Address `json:"beneficiary,omitempty"`
+	Beneficiary common.Address  `json:"beneficiary,omitempty"`
 }

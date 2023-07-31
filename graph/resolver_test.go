@@ -20,22 +20,24 @@ import (
 )
 
 var aftermarketDevice = models.AftermarketDevice{
-	ID:        1,
-	Address:   null.BytesFrom(common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf5").Bytes()),
-	Owner:     null.BytesFrom(common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4").Bytes()),
-	Serial:    null.StringFrom("aftermarketDeviceSerial-1"),
-	Imei:      null.StringFrom("aftermarketDeviceIMEI-1"),
-	MintedAt:  null.TimeFrom(time.Now()),
-	VehicleID: null.IntFrom(11),
+	ID:          1,
+	Address:     null.BytesFrom(common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf5")),
+	Owner:       null.BytesFrom(common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4")),
+	Serial:      null.StringFrom("aftermarketDeviceSerial-1"),
+	Imei:        null.StringFrom("aftermarketDeviceIMEI-1"),
+	MintedAt:    null.TimeFrom(time.Now()),
+	VehicleID:   null.IntFrom(11),
+	Beneficiary: common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 }
 
 var ad2 = models.AftermarketDevice{
-	ID:       100,
-	Address:  null.BytesFrom(common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf5").Bytes()),
-	Owner:    null.BytesFrom(common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4").Bytes()),
-	Serial:   null.StringFrom("aftermarketDeviceSerial-1"),
-	Imei:     null.StringFrom("aftermarketDeviceIMEI-1"),
-	MintedAt: null.TimeFrom(time.Now()),
+	ID:          100,
+	Address:     null.BytesFrom(common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf5")),
+	Owner:       null.BytesFrom(common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4")),
+	Serial:      null.StringFrom("aftermarketDeviceSerial-1"),
+	Imei:        null.StringFrom("aftermarketDeviceIMEI-1"),
+	MintedAt:    null.TimeFrom(time.Now()),
+	Beneficiary: common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf5"),
 }
 
 var vehicle = models.Vehicle{
@@ -49,7 +51,7 @@ var vehicle = models.Vehicle{
 
 const migrationsDir = "../migrations"
 
-func TestNew(t *testing.T) {
+func TestResolver(t *testing.T) {
 	assert := assert.New(t)
 	ctx := context.Background()
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDir)

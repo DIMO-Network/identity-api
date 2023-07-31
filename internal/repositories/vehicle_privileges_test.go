@@ -29,7 +29,7 @@ type VehiclesPrivilegesRepoTestSuite struct {
 
 func (s *VehiclesPrivilegesRepoTestSuite) SetupSuite() {
 	s.ctx = context.Background()
-	s.pdb, s.container = helpers.StartContainerDatabase(s.ctx, s.T(), migrationsDirRelPath)
+	s.pdb, s.container = helpers.StartContainerDatabase(s.ctx, s.T(), migrationsDir)
 
 	s.settings = config.Settings{
 		DIMORegistryAddr:    "0x4de1bcf2b7e851e31216fc07989caa902a604784",
