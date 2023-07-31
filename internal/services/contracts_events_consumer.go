@@ -29,6 +29,8 @@ type ContractsEventsConsumer struct {
 
 type EventName string
 
+var zeroAddress common.Address
+
 const (
 	Transfer                           EventName = "Transfer"
 	VehicleAttributeSet                EventName = "VehicleAttributeSet"
@@ -385,9 +387,19 @@ func (c *ContractsEventsConsumer) handleBeneficiarySetEvent(ctx context.Context,
 		return err
 	}
 
-	ad := models.AftermarketDevice{
-		ID:          int(args.NodeId.Int64()),
-		Beneficiary: null.BytesFrom(args.Beneficiary.Bytes()),
+	ad := new(models.AftermarketDevice)
+	ad.ID = int(args.NodeId.Int64())
+	ad.Beneficiary = null.BytesFrom(args.Beneficiary.Bytes())
+	var err error
+
+	if args.Beneficiary == zeroAddress {
+		ad, err = models.AftermarketDevices(
+			models.AftermarketDeviceWhere.ID.EQ(int(args.NodeId.Int64())),
+		).One(ctx, c.dbs.DBS().Reader)
+		if err != nil {
+			return err
+		}
+		ad.Beneficiary = ad.Owner
 	}
 
 	return ad.Upsert(

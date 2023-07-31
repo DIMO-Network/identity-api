@@ -366,7 +366,7 @@ func TestHandleBeneficiarySetEvent(t *testing.T) {
 
 	var beneficiarySetData = BeneficiarySetEventData{
 		IdProxyAddress: common.HexToAddress("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
-		Beneficiary:    common.HexToAddress("0x55a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Beneficiary:    common.HexToAddress("0x55b6D41bd932244Dd08186e4c19F1a7E48cbcDg3"),
 		NodeId:         big.NewInt(100),
 	}
 
@@ -410,5 +410,59 @@ func TestHandleBeneficiarySetEvent(t *testing.T) {
 
 	assert.Equal(t, beneficiarySetData.NodeId.Int64(), int64(ad.ID))
 	assert.Equal(t, beneficiarySetData.Beneficiary.Bytes(), ad.Beneficiary.Bytes)
+
+}
+
+func TestHandleClearBeneficiaryEvent(t *testing.T) {
+	ctx := context.Background()
+	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
+	contractEventData.EventName = "BeneficiarySet"
+
+	var beneficiarySetData = BeneficiarySetEventData{
+		IdProxyAddress: common.HexToAddress("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Beneficiary:    zeroAddress,
+		NodeId:         big.NewInt(100),
+	}
+
+	settings := config.Settings{
+		DIMORegistryAddr:    contractEventData.Contract.String(),
+		DIMORegistryChainID: contractEventData.ChainID,
+	}
+
+	config := mocks.NewTestConfig()
+	consumer := mocks.NewConsumer(t, config)
+
+	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
+	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
+	expectedBytes := eventBytes(beneficiarySetData, contractEventData, t)
+
+	d := models.AftermarketDevice{
+		ID:          100,
+		Owner:       null.BytesFrom(common.HexToAddress("0x22a3A41bd932244Dd08186e4c19F1a7E48cbcDf4").Bytes()),
+		Beneficiary: null.BytesFrom(common.HexToAddress("0x22a3A41bd932244Dd08186e4c19F1a7E48cbcDf4").Bytes()),
+	}
+	err := d.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err)
+
+	consumer.ExpectConsumePartition(settings.ContractsEventTopic, 0, 0).YieldMessage(&sarama.ConsumerMessage{Value: expectedBytes})
+
+	outputTest, err := consumer.ConsumePartition(settings.ContractsEventTopic, 0, 0)
+	assert.NoError(t, err)
+
+	m := <-outputTest.Messages()
+	var e shared.CloudEvent[json.RawMessage]
+	err = json.Unmarshal(m.Value, &e)
+	assert.NoError(t, err)
+
+	err = contractEventConsumer.Process(ctx, &e)
+	assert.NoError(t, err)
+
+	ad, err := models.AftermarketDevices(
+		models.AftermarketDeviceWhere.ID.EQ(int(beneficiarySetData.NodeId.Int64())),
+	).One(ctx, pdb.DBS().Reader)
+	assert.NoError(t, err)
+
+	assert.Equal(t, beneficiarySetData.NodeId.Int64(), int64(ad.ID))
+	assert.Equal(t, ad.Owner.Bytes, ad.Beneficiary.Bytes)
 
 }
