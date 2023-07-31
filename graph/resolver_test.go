@@ -63,8 +63,8 @@ func TestNew(t *testing.T) {
 	err = ad2.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	assert.NoError(err)
 
-	repo := repositories.NewRepository(pdb, 0)
-	resolver := NewResolver(repo)
+	repo := repositories.NewVehiclesRepo(pdb)
+	resolver := NewResolver(&repo)
 	c := client.New(loader.Middleware(pdb, handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: resolver}))))
 
 	t.Run("ownedAftermarketDevices, return only one response", func(t *testing.T) {
