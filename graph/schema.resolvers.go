@@ -14,7 +14,10 @@ import (
 
 // Vehicle is the resolver for the vehicle field.
 func (r *aftermarketDeviceResolver) Vehicle(ctx context.Context, obj *model.AftermarketDevice) (*model.Vehicle, error) {
-	return loader.GetLinkedVehicleByID(ctx, obj.ID)
+	if obj.VehicleID == nil {
+		return nil, nil
+	}
+	return loader.GetVehicleByID(ctx, *obj.VehicleID)
 }
 
 // OwnedVehicles is the resolver for the ownedVehicles field.
@@ -30,6 +33,11 @@ func (r *queryResolver) OwnedAftermarketDevices(ctx context.Context, address com
 // AftermarketDevice is the resolver for the aftermarketDevice field.
 func (r *vehicleResolver) AftermarketDevice(ctx context.Context, obj *model.Vehicle) (*model.AftermarketDevice, error) {
 	return loader.GetAftermarketDeviceByVehicleID(ctx, obj.ID)
+}
+
+// Privileges is the resolver for the privileges field.
+func (r *vehicleResolver) Privileges(ctx context.Context, obj *model.Vehicle) ([]*model.Privilege, error) {
+	return r.Repo.GetPrivilegesForVehicle(ctx, obj.ID)
 }
 
 // AftermarketDevice returns AftermarketDeviceResolver implementation.

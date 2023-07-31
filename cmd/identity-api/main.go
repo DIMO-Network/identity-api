@@ -30,6 +30,8 @@ func main() {
 		logger.Fatal().Err(err).Msg("Couldn't load settings.")
 	}
 
+	logger.Info().Msgf("Loaded configuration. Addresses: Registry %s, Vehicle %s.", settings.DIMORegistryAddr, settings.VehicleNFTAddr)
+
 	if len(os.Args) > 1 && os.Args[1] == "migrate" {
 		command := "up"
 		if len(os.Args) > 2 {
@@ -47,7 +49,7 @@ func main() {
 
 	startContractEventsConsumer(ctx, &logger, &settings, dbs)
 
-	repo := repositories.NewVehiclesRepo(dbs)
+	repo := repositories.NewRepository(dbs, 0)
 
 	s := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{
 		Repo: repo,
@@ -60,10 +62,7 @@ func main() {
 
 	logger.Info().Msgf("Server started on port: %d", settings.Port)
 
-	if err := http.ListenAndServe(fmt.Sprintf(":%d", settings.Port), nil); err != nil {
-		logger.Fatal().Msgf("failed to start identity api: %v\n", err)
-	}
-
+	logger.Fatal().Err(http.ListenAndServe(fmt.Sprintf(":%d", settings.Port), nil)).Msg("Server shut down.")
 }
 
 func startContractEventsConsumer(ctx context.Context, logger *zerolog.Logger, settings *config.Settings, dbs db.Store) {
@@ -79,5 +78,5 @@ func startContractEventsConsumer(ctx context.Context, logger *zerolog.Logger, se
 		logger.Fatal().Err(err).Msg("Couldn't start event consumer.")
 	}
 
-	logger.Info().Msg("Contracts events consumer started")
+	logger.Info().Msg("Contract events consumer started.")
 }

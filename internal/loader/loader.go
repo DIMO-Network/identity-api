@@ -9,7 +9,6 @@ import (
 	"github.com/graph-gophers/dataloader/v7"
 )
 
-type loaderKey struct{}
 type loadersString string
 
 const (
@@ -17,8 +16,8 @@ const (
 )
 
 type Loaders struct {
-	VehicleByID                  dataloader.Interface[string, *model.Vehicle]
-	AftermarketDeviceByVehicleID dataloader.Interface[string, *model.AftermarketDevice]
+	VehicleByID                  dataloader.Interface[int, *model.Vehicle]
+	AftermarketDeviceByVehicleID dataloader.Interface[int, *model.AftermarketDevice]
 }
 
 // NewDataLoader returns the instantiated Loaders struct for use in a request
@@ -30,11 +29,11 @@ func NewDataLoader(dbs db.Store) *Loaders {
 	return &Loaders{
 		VehicleByID: dataloader.NewBatchedLoader(
 			vehicle.BatchGetLinkedVehicleByAftermarketID,
-			dataloader.WithClearCacheOnBatch[string, *model.Vehicle](),
+			dataloader.WithClearCacheOnBatch[int, *model.Vehicle](),
 		),
 		AftermarketDeviceByVehicleID: dataloader.NewBatchedLoader(
 			aftermarketDevice.BatchGetLinkedAftermarketDeviceByVehicleID,
-			dataloader.WithClearCacheOnBatch[string, *model.AftermarketDevice](),
+			dataloader.WithClearCacheOnBatch[int, *model.AftermarketDevice](),
 		),
 	}
 }

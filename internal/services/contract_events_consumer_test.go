@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/DIMO-Network/identity-api/internal/config"
-	"github.com/DIMO-Network/identity-api/internal/test"
+	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared"
 	"github.com/Shopify/sarama"
@@ -21,6 +21,8 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
+
+const migrationsDirRelPath = "../" + helpers.MigrationsDirRelPath
 
 var mintedAt = time.Now()
 
@@ -61,7 +63,7 @@ func eventBytes(args interface{}, contractEventData ContractEventData, t *testin
 
 func TestHandleAftermarketDeviceNodeMintedEvent(t *testing.T) {
 	ctx := context.Background()
-	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", test.DBSettings.Name).Logger()
+	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
 	contractEventData.EventName = "AftermarketDeviceNodeMinted"
 
 	var aftermarketDeviceNodeMintedArgs = AftermarketDeviceNodeMintedData{
@@ -79,7 +81,7 @@ func TestHandleAftermarketDeviceNodeMintedEvent(t *testing.T) {
 	config := mocks.NewTestConfig()
 	consumer := mocks.NewConsumer(t, config)
 
-	pdb, _ := test.StartContainerDatabase(ctx, t, test.MigrationsDirRelPath)
+	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
 	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
 	expectedBytes := eventBytes(aftermarketDeviceNodeMintedArgs, contractEventData, t)
 
@@ -102,13 +104,13 @@ func TestHandleAftermarketDeviceNodeMintedEvent(t *testing.T) {
 	assert.Equal(t, aftermarketDeviceNodeMintedArgs.TokenID.Int64(), int64(ad.ID))
 	assert.Equal(t, aftermarketDeviceNodeMintedArgs.AftermarketDeviceAddress.Bytes(), ad.Address.Bytes)
 	assert.Equal(t, aftermarketDeviceNodeMintedArgs.Owner.Bytes(), ad.Owner.Bytes)
-	assert.Equal(t, aftermarketDeviceNodeMintedArgs.Owner.Bytes(), ad.Beneficiary.Bytes)
+	assert.Equal(t, []uint8([]byte{}), ad.Beneficiary.Bytes)
 	assert.Equal(t, mintedAt.UTC().Format(time.RFC3339), ad.MintedAt.Time.UTC().Format(time.RFC3339))
 }
 
 func TestHandleAftermarketDeviceAttributeSetEvent(t *testing.T) {
 	ctx := context.Background()
-	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", test.DBSettings.Name).Logger()
+	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
 	contractEventData.EventName = "AftermarketDeviceAttributeSet"
 
 	var aftermarketDeviceAttributesSerial = AftermarketDeviceAttributeSetData{
@@ -125,7 +127,7 @@ func TestHandleAftermarketDeviceAttributeSetEvent(t *testing.T) {
 	config := mocks.NewTestConfig()
 	consumer := mocks.NewConsumer(t, config)
 
-	pdb, _ := test.StartContainerDatabase(ctx, t, test.MigrationsDirRelPath)
+	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
 	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
 	expectedBytes := eventBytes(aftermarketDeviceAttributesSerial, contractEventData, t)
 	consumer.ExpectConsumePartition(settings.ContractsEventTopic, 0, 0).YieldMessage(&sarama.ConsumerMessage{Value: expectedBytes})
@@ -162,7 +164,7 @@ func TestHandleAftermarketDeviceAttributeSetEvent(t *testing.T) {
 
 func TestHandleAftermarketDevicePairedEvent(t *testing.T) {
 	ctx := context.Background()
-	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", test.DBSettings.Name).Logger()
+	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
 	contractEventData.EventName = "AftermarketDevicePaired"
 
 	var aftermarketDevicePairData = AftermarketDevicePairData{
@@ -179,19 +181,26 @@ func TestHandleAftermarketDevicePairedEvent(t *testing.T) {
 	config := mocks.NewTestConfig()
 	consumer := mocks.NewConsumer(t, config)
 
-	pdb, _ := test.StartContainerDatabase(ctx, t, test.MigrationsDirRelPath)
+	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
 	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
 	expectedBytes := eventBytes(aftermarketDevicePairData, contractEventData, t)
 
 	v := models.Vehicle{
 		ID:           11,
-		OwnerAddress: null.BytesFrom(common.HexToAddress("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4").Bytes()),
+		OwnerAddress: common.HexToAddress("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4").Bytes(),
 		Make:         null.StringFrom("Tesla"),
 		Model:        null.StringFrom("Model-3"),
 		Year:         null.IntFrom(2023),
-		MintedAt:     null.TimeFrom(time.Now()),
+		MintedAt:     time.Now(),
 	}
 	err := v.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err)
+
+	d := models.AftermarketDevice{
+		ID:    1,
+		Owner: null.BytesFrom(common.HexToAddress("0x12b3A41bd932244Dd08186e4c19F1a7E48cbcDf4").Bytes()),
+	}
+	err = d.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	assert.NoError(t, err)
 
 	consumer.ExpectConsumePartition(settings.ContractsEventTopic, 0, 0).YieldMessage(&sarama.ConsumerMessage{Value: expectedBytes})
@@ -214,13 +223,12 @@ func TestHandleAftermarketDevicePairedEvent(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, aftermarketDevicePairData.AftermarketDeviceNode.Int64(), int64(ad.ID))
-	assert.Equal(t, aftermarketDevicePairData.Owner.Bytes(), ad.Owner.Bytes)
 	assert.Equal(t, aftermarketDevicePairData.VehicleNode.Int64(), int64(ad.R.Vehicle.ID))
 }
 
 func TestHandleAftermarketDeviceUnPairedEvent(t *testing.T) {
 	ctx := context.Background()
-	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", test.DBSettings.Name).Logger()
+	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
 	contractEventData.EventName = "AftermarketDeviceUnpaired"
 
 	var aftermarketDevicePairData = AftermarketDevicePairData{
@@ -237,19 +245,26 @@ func TestHandleAftermarketDeviceUnPairedEvent(t *testing.T) {
 	config := mocks.NewTestConfig()
 	consumer := mocks.NewConsumer(t, config)
 
-	pdb, _ := test.StartContainerDatabase(ctx, t, test.MigrationsDirRelPath)
+	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
 	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
 	expectedBytes := eventBytes(aftermarketDevicePairData, contractEventData, t)
 
 	v := models.Vehicle{
 		ID:           11,
-		OwnerAddress: null.BytesFrom(common.HexToAddress("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4").Bytes()),
+		OwnerAddress: common.HexToAddress("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4").Bytes(),
 		Make:         null.StringFrom("Tesla"),
 		Model:        null.StringFrom("Model-3"),
 		Year:         null.IntFrom(2023),
-		MintedAt:     null.TimeFrom(time.Now()),
+		MintedAt:     time.Now(),
 	}
 	err := v.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err)
+
+	d := models.AftermarketDevice{
+		ID:    1,
+		Owner: null.BytesFrom(common.HexToAddress("0x12b3A41bd932244Dd08186e4c19F1a7E48cbcDf4").Bytes()),
+	}
+	err = d.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	assert.NoError(t, err)
 
 	consumer.ExpectConsumePartition(settings.ContractsEventTopic, 0, 0).YieldMessage(&sarama.ConsumerMessage{Value: expectedBytes})
@@ -281,7 +296,7 @@ func TestHandleAftermarketDeviceUnPairedEvent(t *testing.T) {
 
 func TestHandleAftermarketDeviceTransferredEvent(t *testing.T) {
 	ctx := context.Background()
-	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", test.DBSettings.Name).Logger()
+	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
 	contractEventData.EventName = "AftermarketDeviceTransferred"
 
 	var aftermarketDeviceTransferredData = AftermarketDeviceTransferredEventData{
@@ -298,14 +313,14 @@ func TestHandleAftermarketDeviceTransferredEvent(t *testing.T) {
 	config := mocks.NewTestConfig()
 	consumer := mocks.NewConsumer(t, config)
 
-	pdb, _ := test.StartContainerDatabase(ctx, t, test.MigrationsDirRelPath)
+	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
 	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
 	expectedBytes := eventBytes(aftermarketDeviceTransferredData, contractEventData, t)
 
 	v := models.Vehicle{
 		ID:           11,
-		OwnerAddress: null.BytesFrom(aftermarketDeviceTransferredData.OldOwner.Bytes()),
-		MintedAt:     null.TimeFrom(mintedAt),
+		OwnerAddress: aftermarketDeviceTransferredData.OldOwner.Bytes(),
+		MintedAt:     mintedAt,
 	}
 	err := v.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	assert.NoError(t, err)
@@ -346,7 +361,7 @@ func TestHandleAftermarketDeviceTransferredEvent(t *testing.T) {
 
 func TestHandleBeneficiarySetEvent(t *testing.T) {
 	ctx := context.Background()
-	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", test.DBSettings.Name).Logger()
+	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
 	contractEventData.EventName = "BeneficiarySet"
 
 	var beneficiarySetData = BeneficiarySetEventData{
@@ -363,7 +378,7 @@ func TestHandleBeneficiarySetEvent(t *testing.T) {
 	config := mocks.NewTestConfig()
 	consumer := mocks.NewConsumer(t, config)
 
-	pdb, _ := test.StartContainerDatabase(ctx, t, test.MigrationsDirRelPath)
+	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
 	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
 	expectedBytes := eventBytes(beneficiarySetData, contractEventData, t)
 

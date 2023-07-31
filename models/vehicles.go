@@ -25,11 +25,11 @@ import (
 // Vehicle is an object representing the database table.
 type Vehicle struct {
 	ID           int         `boil:"id" json:"id" toml:"id" yaml:"id"`
-	OwnerAddress null.Bytes  `boil:"owner_address" json:"owner_address,omitempty" toml:"owner_address" yaml:"owner_address,omitempty"`
+	OwnerAddress []byte      `boil:"owner_address" json:"owner_address" toml:"owner_address" yaml:"owner_address"`
 	Make         null.String `boil:"make" json:"make,omitempty" toml:"make" yaml:"make,omitempty"`
 	Model        null.String `boil:"model" json:"model,omitempty" toml:"model" yaml:"model,omitempty"`
 	Year         null.Int    `boil:"year" json:"year,omitempty" toml:"year" yaml:"year,omitempty"`
-	MintedAt     null.Time   `boil:"minted_at" json:"minted_at,omitempty" toml:"minted_at" yaml:"minted_at,omitempty"`
+	MintedAt     time.Time   `boil:"minted_at" json:"minted_at" toml:"minted_at" yaml:"minted_at"`
 
 	R *vehicleR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L vehicleL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -71,30 +71,33 @@ var VehicleTableColumns = struct {
 
 var VehicleWhere = struct {
 	ID           whereHelperint
-	OwnerAddress whereHelpernull_Bytes
+	OwnerAddress whereHelper__byte
 	Make         whereHelpernull_String
 	Model        whereHelpernull_String
 	Year         whereHelpernull_Int
-	MintedAt     whereHelpernull_Time
+	MintedAt     whereHelpertime_Time
 }{
 	ID:           whereHelperint{field: "\"identity_api\".\"vehicles\".\"id\""},
-	OwnerAddress: whereHelpernull_Bytes{field: "\"identity_api\".\"vehicles\".\"owner_address\""},
+	OwnerAddress: whereHelper__byte{field: "\"identity_api\".\"vehicles\".\"owner_address\""},
 	Make:         whereHelpernull_String{field: "\"identity_api\".\"vehicles\".\"make\""},
 	Model:        whereHelpernull_String{field: "\"identity_api\".\"vehicles\".\"model\""},
 	Year:         whereHelpernull_Int{field: "\"identity_api\".\"vehicles\".\"year\""},
-	MintedAt:     whereHelpernull_Time{field: "\"identity_api\".\"vehicles\".\"minted_at\""},
+	MintedAt:     whereHelpertime_Time{field: "\"identity_api\".\"vehicles\".\"minted_at\""},
 }
 
 // VehicleRels is where relationship names are stored.
 var VehicleRels = struct {
 	AftermarketDevice string
+	TokenPrivileges   string
 }{
 	AftermarketDevice: "AftermarketDevice",
+	TokenPrivileges:   "TokenPrivileges",
 }
 
 // vehicleR is where relationships are stored.
 type vehicleR struct {
 	AftermarketDevice *AftermarketDevice `boil:"AftermarketDevice" json:"AftermarketDevice" toml:"AftermarketDevice" yaml:"AftermarketDevice"`
+	TokenPrivileges   PrivilegeSlice     `boil:"TokenPrivileges" json:"TokenPrivileges" toml:"TokenPrivileges" yaml:"TokenPrivileges"`
 }
 
 // NewStruct creates a new relationship struct
@@ -109,13 +112,20 @@ func (r *vehicleR) GetAftermarketDevice() *AftermarketDevice {
 	return r.AftermarketDevice
 }
 
+func (r *vehicleR) GetTokenPrivileges() PrivilegeSlice {
+	if r == nil {
+		return nil
+	}
+	return r.TokenPrivileges
+}
+
 // vehicleL is where Load methods for each relationship are stored.
 type vehicleL struct{}
 
 var (
 	vehicleAllColumns            = []string{"id", "owner_address", "make", "model", "year", "minted_at"}
-	vehicleColumnsWithoutDefault = []string{"id"}
-	vehicleColumnsWithDefault    = []string{"owner_address", "make", "model", "year", "minted_at"}
+	vehicleColumnsWithoutDefault = []string{"id", "owner_address", "minted_at"}
+	vehicleColumnsWithDefault    = []string{"make", "model", "year"}
 	vehiclePrimaryKeyColumns     = []string{"id"}
 	vehicleGeneratedColumns      = []string{}
 )
@@ -409,6 +419,20 @@ func (o *Vehicle) AftermarketDevice(mods ...qm.QueryMod) aftermarketDeviceQuery 
 	return AftermarketDevices(queryMods...)
 }
 
+// TokenPrivileges retrieves all the privilege's Privileges with an executor via token_id column.
+func (o *Vehicle) TokenPrivileges(mods ...qm.QueryMod) privilegeQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"identity_api\".\"privileges\".\"token_id\"=?", o.ID),
+	)
+
+	return Privileges(queryMods...)
+}
+
 // LoadAftermarketDevice allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for a 1-1 relationship.
 func (vehicleL) LoadAftermarketDevice(ctx context.Context, e boil.ContextExecutor, singular bool, maybeVehicle interface{}, mods queries.Applicator) error {
@@ -526,6 +550,120 @@ func (vehicleL) LoadAftermarketDevice(ctx context.Context, e boil.ContextExecuto
 	return nil
 }
 
+// LoadTokenPrivileges allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (vehicleL) LoadTokenPrivileges(ctx context.Context, e boil.ContextExecutor, singular bool, maybeVehicle interface{}, mods queries.Applicator) error {
+	var slice []*Vehicle
+	var object *Vehicle
+
+	if singular {
+		var ok bool
+		object, ok = maybeVehicle.(*Vehicle)
+		if !ok {
+			object = new(Vehicle)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeVehicle)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeVehicle))
+			}
+		}
+	} else {
+		s, ok := maybeVehicle.(*[]*Vehicle)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeVehicle)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeVehicle))
+			}
+		}
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &vehicleR{}
+		}
+		args = append(args, object.ID)
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &vehicleR{}
+			}
+
+			for _, a := range args {
+				if a == obj.ID {
+					continue Outer
+				}
+			}
+
+			args = append(args, obj.ID)
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`identity_api.privileges`),
+		qm.WhereIn(`identity_api.privileges.token_id in ?`, args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load privileges")
+	}
+
+	var resultSlice []*Privilege
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice privileges")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on privileges")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for privileges")
+	}
+
+	if len(privilegeAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.TokenPrivileges = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &privilegeR{}
+			}
+			foreign.R.Token = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.TokenID {
+				local.R.TokenPrivileges = append(local.R.TokenPrivileges, foreign)
+				if foreign.R == nil {
+					foreign.R = &privilegeR{}
+				}
+				foreign.R.Token = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
 // SetAftermarketDevice of the vehicle to the related item.
 // Sets o.R.AftermarketDevice to related.
 // Adds o to related.R.Vehicle.
@@ -597,6 +735,59 @@ func (o *Vehicle) RemoveAftermarketDevice(ctx context.Context, exec boil.Context
 
 	related.R.Vehicle = nil
 
+	return nil
+}
+
+// AddTokenPrivileges adds the given related objects to the existing relationships
+// of the vehicle, optionally inserting them as new records.
+// Appends related to o.R.TokenPrivileges.
+// Sets related.R.Token appropriately.
+func (o *Vehicle) AddTokenPrivileges(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Privilege) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.TokenID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"identity_api\".\"privileges\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"token_id"}),
+				strmangle.WhereClause("\"", "\"", 2, privilegePrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.TokenID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &vehicleR{
+			TokenPrivileges: related,
+		}
+	} else {
+		o.R.TokenPrivileges = append(o.R.TokenPrivileges, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &privilegeR{
+				Token: o,
+			}
+		} else {
+			rel.R.Token = o
+		}
+	}
 	return nil
 }
 
