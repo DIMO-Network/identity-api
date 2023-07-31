@@ -91,7 +91,7 @@ func (v *VehiclesRepo) GetAccessibleVehicles(ctx context.Context, addr common.Ad
 	queryMods := []qm.QueryMod{
 		qm.Select(vAlias + ".*"),
 		qm.LeftOuterJoin(
-			"identity_api." + models.TableNames.Privileges + " ON " + vAlias + ".id = " + pAlias + "." + models.PrivilegeColumns.TokenID,
+			pAlias + " ON " + models.VehicleTableColumns.ID + " = " + models.PrivilegeTableColumns.TokenID,
 		),
 		qm.Or2(models.VehicleWhere.OwnerAddress.EQ(addr.Bytes())),
 		qm.Or2(models.PrivilegeWhere.GrantedToAddress.EQ(addr.Bytes())),
