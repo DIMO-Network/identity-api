@@ -36,6 +36,7 @@ type AftermarketDevice {
   imei: String
   mintedAt: Time
   vehicle: Vehicle
+  beneficiary: Address!
 }
 
 type AftermarketDeviceConnection {

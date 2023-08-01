@@ -24,52 +24,57 @@ import (
 
 // AftermarketDevice is an object representing the database table.
 type AftermarketDevice struct {
-	ID        int         `boil:"id" json:"id" toml:"id" yaml:"id"`
-	Address   null.Bytes  `boil:"address" json:"address,omitempty" toml:"address" yaml:"address,omitempty"`
-	Owner     null.Bytes  `boil:"owner" json:"owner,omitempty" toml:"owner" yaml:"owner,omitempty"`
-	Serial    null.String `boil:"serial" json:"serial,omitempty" toml:"serial" yaml:"serial,omitempty"`
-	Imei      null.String `boil:"imei" json:"imei,omitempty" toml:"imei" yaml:"imei,omitempty"`
-	MintedAt  null.Time   `boil:"minted_at" json:"minted_at,omitempty" toml:"minted_at" yaml:"minted_at,omitempty"`
-	VehicleID null.Int    `boil:"vehicle_id" json:"vehicle_id,omitempty" toml:"vehicle_id" yaml:"vehicle_id,omitempty"`
+	ID          int         `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Address     null.Bytes  `boil:"address" json:"address,omitempty" toml:"address" yaml:"address,omitempty"`
+	Owner       null.Bytes  `boil:"owner" json:"owner,omitempty" toml:"owner" yaml:"owner,omitempty"`
+	Serial      null.String `boil:"serial" json:"serial,omitempty" toml:"serial" yaml:"serial,omitempty"`
+	Imei        null.String `boil:"imei" json:"imei,omitempty" toml:"imei" yaml:"imei,omitempty"`
+	MintedAt    null.Time   `boil:"minted_at" json:"minted_at,omitempty" toml:"minted_at" yaml:"minted_at,omitempty"`
+	VehicleID   null.Int    `boil:"vehicle_id" json:"vehicle_id,omitempty" toml:"vehicle_id" yaml:"vehicle_id,omitempty"`
+	Beneficiary []byte      `boil:"beneficiary" json:"beneficiary" toml:"beneficiary" yaml:"beneficiary"`
 
 	R *aftermarketDeviceR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L aftermarketDeviceL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var AftermarketDeviceColumns = struct {
-	ID        string
-	Address   string
-	Owner     string
-	Serial    string
-	Imei      string
-	MintedAt  string
-	VehicleID string
+	ID          string
+	Address     string
+	Owner       string
+	Serial      string
+	Imei        string
+	MintedAt    string
+	VehicleID   string
+	Beneficiary string
 }{
-	ID:        "id",
-	Address:   "address",
-	Owner:     "owner",
-	Serial:    "serial",
-	Imei:      "imei",
-	MintedAt:  "minted_at",
-	VehicleID: "vehicle_id",
+	ID:          "id",
+	Address:     "address",
+	Owner:       "owner",
+	Serial:      "serial",
+	Imei:        "imei",
+	MintedAt:    "minted_at",
+	VehicleID:   "vehicle_id",
+	Beneficiary: "beneficiary",
 }
 
 var AftermarketDeviceTableColumns = struct {
-	ID        string
-	Address   string
-	Owner     string
-	Serial    string
-	Imei      string
-	MintedAt  string
-	VehicleID string
+	ID          string
+	Address     string
+	Owner       string
+	Serial      string
+	Imei        string
+	MintedAt    string
+	VehicleID   string
+	Beneficiary string
 }{
-	ID:        "aftermarket_devices.id",
-	Address:   "aftermarket_devices.address",
-	Owner:     "aftermarket_devices.owner",
-	Serial:    "aftermarket_devices.serial",
-	Imei:      "aftermarket_devices.imei",
-	MintedAt:  "aftermarket_devices.minted_at",
-	VehicleID: "aftermarket_devices.vehicle_id",
+	ID:          "aftermarket_devices.id",
+	Address:     "aftermarket_devices.address",
+	Owner:       "aftermarket_devices.owner",
+	Serial:      "aftermarket_devices.serial",
+	Imei:        "aftermarket_devices.imei",
+	MintedAt:    "aftermarket_devices.minted_at",
+	VehicleID:   "aftermarket_devices.vehicle_id",
+	Beneficiary: "aftermarket_devices.beneficiary",
 }
 
 // Generated where
@@ -221,22 +226,33 @@ func (w whereHelpernull_Int) NIN(slice []int) qm.QueryMod {
 func (w whereHelpernull_Int) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
 func (w whereHelpernull_Int) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
+type whereHelper__byte struct{ field string }
+
+func (w whereHelper__byte) EQ(x []byte) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
+func (w whereHelper__byte) NEQ(x []byte) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
+func (w whereHelper__byte) LT(x []byte) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
+func (w whereHelper__byte) LTE(x []byte) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
+func (w whereHelper__byte) GT(x []byte) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
+func (w whereHelper__byte) GTE(x []byte) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
+
 var AftermarketDeviceWhere = struct {
-	ID        whereHelperint
-	Address   whereHelpernull_Bytes
-	Owner     whereHelpernull_Bytes
-	Serial    whereHelpernull_String
-	Imei      whereHelpernull_String
-	MintedAt  whereHelpernull_Time
-	VehicleID whereHelpernull_Int
+	ID          whereHelperint
+	Address     whereHelpernull_Bytes
+	Owner       whereHelpernull_Bytes
+	Serial      whereHelpernull_String
+	Imei        whereHelpernull_String
+	MintedAt    whereHelpernull_Time
+	VehicleID   whereHelpernull_Int
+	Beneficiary whereHelper__byte
 }{
-	ID:        whereHelperint{field: "\"identity_api\".\"aftermarket_devices\".\"id\""},
-	Address:   whereHelpernull_Bytes{field: "\"identity_api\".\"aftermarket_devices\".\"address\""},
-	Owner:     whereHelpernull_Bytes{field: "\"identity_api\".\"aftermarket_devices\".\"owner\""},
-	Serial:    whereHelpernull_String{field: "\"identity_api\".\"aftermarket_devices\".\"serial\""},
-	Imei:      whereHelpernull_String{field: "\"identity_api\".\"aftermarket_devices\".\"imei\""},
-	MintedAt:  whereHelpernull_Time{field: "\"identity_api\".\"aftermarket_devices\".\"minted_at\""},
-	VehicleID: whereHelpernull_Int{field: "\"identity_api\".\"aftermarket_devices\".\"vehicle_id\""},
+	ID:          whereHelperint{field: "\"identity_api\".\"aftermarket_devices\".\"id\""},
+	Address:     whereHelpernull_Bytes{field: "\"identity_api\".\"aftermarket_devices\".\"address\""},
+	Owner:       whereHelpernull_Bytes{field: "\"identity_api\".\"aftermarket_devices\".\"owner\""},
+	Serial:      whereHelpernull_String{field: "\"identity_api\".\"aftermarket_devices\".\"serial\""},
+	Imei:        whereHelpernull_String{field: "\"identity_api\".\"aftermarket_devices\".\"imei\""},
+	MintedAt:    whereHelpernull_Time{field: "\"identity_api\".\"aftermarket_devices\".\"minted_at\""},
+	VehicleID:   whereHelpernull_Int{field: "\"identity_api\".\"aftermarket_devices\".\"vehicle_id\""},
+	Beneficiary: whereHelper__byte{field: "\"identity_api\".\"aftermarket_devices\".\"beneficiary\""},
 }
 
 // AftermarketDeviceRels is where relationship names are stored.
@@ -267,8 +283,8 @@ func (r *aftermarketDeviceR) GetVehicle() *Vehicle {
 type aftermarketDeviceL struct{}
 
 var (
-	aftermarketDeviceAllColumns            = []string{"id", "address", "owner", "serial", "imei", "minted_at", "vehicle_id"}
-	aftermarketDeviceColumnsWithoutDefault = []string{"id"}
+	aftermarketDeviceAllColumns            = []string{"id", "address", "owner", "serial", "imei", "minted_at", "vehicle_id", "beneficiary"}
+	aftermarketDeviceColumnsWithoutDefault = []string{"id", "beneficiary"}
 	aftermarketDeviceColumnsWithDefault    = []string{"address", "owner", "serial", "imei", "minted_at", "vehicle_id"}
 	aftermarketDevicePrimaryKeyColumns     = []string{"id"}
 	aftermarketDeviceGeneratedColumns      = []string{}
