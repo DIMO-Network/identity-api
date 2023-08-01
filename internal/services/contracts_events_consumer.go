@@ -231,6 +231,10 @@ func (c *ContractsEventsConsumer) handleVehicleTransferEvent(ctx context.Context
 		return err
 	}
 
+	if _, err := models.Privileges(models.PrivilegeWhere.TokenID.EQ(int(args.TokenID.Int64()))).DeleteAll(ctx, c.dbs.DBS().Reader); err != nil {
+		return err
+	}
+
 	logger.Info().Str("TokenID", args.TokenID.String()).Msg("Event processed successfuly")
 
 	return nil
