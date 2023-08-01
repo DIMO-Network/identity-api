@@ -11,7 +11,6 @@ import (
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
-	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
@@ -30,7 +29,7 @@ func TestAftermarketDeviceNodeMintMultiResponse(t *testing.T) {
 	for i := 1; i < 6; i++ {
 		ad := models.AftermarketDevice{
 			ID:          i,
-			Owner:       null.BytesFrom(aftermarketDeviceNodeMintedArgs.Owner.Bytes()),
+			Owner:       aftermarketDeviceNodeMintedArgs.Owner.Bytes(),
 			Beneficiary: aftermarketDeviceNodeMintedArgs.Owner.Bytes(),
 		}
 

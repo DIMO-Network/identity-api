@@ -249,8 +249,8 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceNodeMintedEvent(ctx con
 	ad := models.AftermarketDevice{
 		ID:       int(args.TokenID.Int64()),
 		Address:  null.BytesFrom(args.AftermarketDeviceAddress.Bytes()),
-		Owner:    null.BytesFrom(args.Owner.Bytes()),
-		MintedAt: null.TimeFrom(e.Block.Time),
+		Owner:    args.Owner.Bytes(),
+		MintedAt: e.Block.Time,
 	}
 
 	if _, err := ad.Update(
@@ -360,8 +360,8 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceTransferredEvent(ctx co
 
 	ad := models.AftermarketDevice{
 		ID:          int(args.TokenID.Int64()),
-		Owner:       null.BytesFrom(args.To.Bytes()),
-		MintedAt:    null.TimeFrom(e.Block.Time),
+		Owner:       args.To.Bytes(),
+		MintedAt:    e.Block.Time,
 		Beneficiary: args.To.Bytes(),
 	}
 
@@ -392,7 +392,7 @@ func (c *ContractsEventsConsumer) handleBeneficiarySetEvent(ctx context.Context,
 		if err := ad.Reload(ctx, c.dbs.DBS().Reader); err != nil {
 			return err
 		}
-		ad.Beneficiary = ad.Owner.Bytes
+		ad.Beneficiary = ad.Owner
 	} else {
 		ad.Beneficiary = args.Beneficiary.Bytes()
 	}

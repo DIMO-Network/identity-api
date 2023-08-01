@@ -89,6 +89,7 @@ func TestHandleAftermarketDeviceNodeMintedEvent(t *testing.T) {
 
 	d := models.AftermarketDevice{
 		ID:          int(aftermarketDeviceNodeMintedArgs.TokenID.Int64()),
+		Owner:       aftermarketDeviceNodeMintedArgs.Owner.Bytes(),
 		Beneficiary: aftermarketDeviceNodeMintedArgs.Owner.Bytes(),
 	}
 	err := d.Insert(ctx, pdb.DBS().Writer.DB, boil.Infer())
@@ -112,9 +113,9 @@ func TestHandleAftermarketDeviceNodeMintedEvent(t *testing.T) {
 
 	assert.Equal(t, aftermarketDeviceNodeMintedArgs.TokenID.Int64(), int64(ad.ID))
 	assert.Equal(t, aftermarketDeviceNodeMintedArgs.AftermarketDeviceAddress.Bytes(), ad.Address.Bytes)
-	assert.Equal(t, aftermarketDeviceNodeMintedArgs.Owner.Bytes(), ad.Owner.Bytes)
+	assert.Equal(t, aftermarketDeviceNodeMintedArgs.Owner.Bytes(), ad.Owner)
 	assert.Equal(t, aftermarketDeviceNodeMintedArgs.Owner.Bytes(), ad.Beneficiary)
-	assert.Equal(t, mintedAt.UTC().Format(time.RFC3339), ad.MintedAt.Time.UTC().Format(time.RFC3339))
+	assert.Equal(t, mintedAt.UTC().Format(time.RFC3339), ad.MintedAt.UTC().Format(time.RFC3339))
 }
 
 func TestHandleAftermarketDeviceAttributeSetEvent(t *testing.T) {
@@ -142,6 +143,7 @@ func TestHandleAftermarketDeviceAttributeSetEvent(t *testing.T) {
 
 	d := models.AftermarketDevice{
 		ID:          int(aftermarketDeviceAttributesSerial.TokenID.Int64()),
+		Owner:       common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		Beneficiary: common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		Imei:        null.StringFrom("garbage-imei-value"),
 	}
@@ -168,8 +170,8 @@ func TestHandleAftermarketDeviceAttributeSetEvent(t *testing.T) {
 	assert.Equal(t, aftermarketDeviceAttributesSerial.Info, ad.Serial.String)
 	assert.Equal(t, d.Imei.String, ad.Imei.String)
 	assert.Equal(t, null.Bytes{Bytes: []uint8{}}, ad.Address)
-	assert.Equal(t, null.Bytes{Bytes: []uint8{}}, ad.Owner)
-	assert.Equal(t, null.Time{}, ad.MintedAt)
+	assert.Equal(t, common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"), ad.Owner)
+	assert.Equal(t, time.Time{}, ad.MintedAt)
 }
 
 func TestHandleAftermarketDevicePairedEvent(t *testing.T) {
@@ -208,7 +210,7 @@ func TestHandleAftermarketDevicePairedEvent(t *testing.T) {
 
 	d := models.AftermarketDevice{
 		ID:          1,
-		Owner:       null.BytesFrom(common.FromHex("0x12b3A41bd932244Dd08186e4c19F1a7E48cbcDf4")),
+		Owner:       common.FromHex("0x12b3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		Beneficiary: common.FromHex("0x12b3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 	}
 	err = d.Insert(ctx, pdb.DBS().Writer, boil.Infer())
@@ -273,7 +275,7 @@ func TestHandleAftermarketDeviceUnPairedEvent(t *testing.T) {
 
 	d := models.AftermarketDevice{
 		ID:          1,
-		Owner:       null.BytesFrom(common.FromHex("0x12b3A41bd932244Dd08186e4c19F1a7E48cbcDf4")),
+		Owner:       common.FromHex("0x12b3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		Beneficiary: common.FromHex("0x12b3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 	}
 	err = d.Insert(ctx, pdb.DBS().Writer, boil.Infer())
@@ -349,7 +351,7 @@ func TestHandleAftermarketDeviceTransferredEventNewTokenID(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, aftermarketDeviceTransferredData.TokenID.Int64(), int64(ad.ID))
-	assert.Equal(t, aftermarketDeviceTransferredData.To.Bytes(), ad.Owner.Bytes)
+	assert.Equal(t, aftermarketDeviceTransferredData.To.Bytes(), ad.Owner)
 	assert.Equal(t, aftermarketDeviceTransferredData.To.Bytes(), ad.Beneficiary)
 	assert.Equal(t, null.Int{}, ad.VehicleID)
 
@@ -388,7 +390,7 @@ func TestHandleAftermarketDeviceTransferredEventExistingTokenID(t *testing.T) {
 
 	d := models.AftermarketDevice{
 		ID:          100,
-		Owner:       null.BytesFrom(common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4")),
+		Owner:       common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		Beneficiary: common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		VehicleID:   null.IntFrom(v.ID),
 	}
@@ -414,7 +416,7 @@ func TestHandleAftermarketDeviceTransferredEventExistingTokenID(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, aftermarketDeviceTransferredData.TokenID.Int64(), int64(ad.ID))
-	assert.Equal(t, aftermarketDeviceTransferredData.To.Bytes(), ad.Owner.Bytes)
+	assert.Equal(t, aftermarketDeviceTransferredData.To.Bytes(), ad.Owner)
 	assert.Equal(t, aftermarketDeviceTransferredData.To.Bytes(), ad.Beneficiary)
 	assert.Equal(t, v.ID, ad.VehicleID.Int)
 
@@ -447,7 +449,7 @@ func TestHandleBeneficiarySetEvent(t *testing.T) {
 
 	d := models.AftermarketDevice{
 		ID:          100,
-		Owner:       null.BytesFrom(common.HexToAddress("0x22a3A41bd932244Dd08186e4c19F1a7E48cbcDf4").Bytes()),
+		Owner:       common.HexToAddress("0x22a3A41bd932244Dd08186e4c19F1a7E48cbcDf4").Bytes(),
 		Beneficiary: common.HexToAddress("0x22a3A41bd932244Dd08186e4c19F1a7E48cbcDf4").Bytes(),
 	}
 
@@ -503,7 +505,7 @@ func TestHandleClearBeneficiaryEvent(t *testing.T) {
 
 	d := models.AftermarketDevice{
 		ID:          100,
-		Owner:       null.BytesFrom(common.FromHex("0x22a3A41bd932244Dd08186e4c19F1a7E48cbcDf4")),
+		Owner:       common.FromHex("0x22a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		Beneficiary: common.FromHex("0x22a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 	}
 	err := d.Insert(ctx, pdb.DBS().Writer, boil.Infer())
@@ -528,6 +530,6 @@ func TestHandleClearBeneficiaryEvent(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, beneficiarySetData.NodeId.Int64(), int64(ad.ID))
-	assert.Equal(t, ad.Owner.Bytes, ad.Beneficiary)
+	assert.Equal(t, ad.Owner, ad.Beneficiary)
 
 }

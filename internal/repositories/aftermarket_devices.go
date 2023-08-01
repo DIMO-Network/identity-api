@@ -9,14 +9,15 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
 func (r *Repository) GetOwnedAftermarketDevices(ctx context.Context, addr common.Address, first *int, after *string) (*gmodel.AftermarketDeviceConnection, error) {
-	ownedADCount, err := models.AftermarketDevices(
-		models.AftermarketDeviceWhere.Owner.EQ(null.BytesFrom(addr.Bytes())),
-	).Count(ctx, r.pdb.DBS().Reader)
+	where := []qm.QueryMod{
+		models.AftermarketDeviceWhere.Owner.EQ(addr.Bytes()),
+	}
+
+	ownedADCount, err := models.AftermarketDevices(where...).Count(ctx, r.pdb.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}
@@ -37,12 +38,11 @@ func (r *Repository) GetOwnedAftermarketDevices(ctx context.Context, addr common
 		}, nil
 	}
 
-	queryMods := []qm.QueryMod{
-		models.AftermarketDeviceWhere.Owner.EQ(null.BytesFrom(addr.Bytes())),
+	queryMods := append(where,
 		// Use limit + 1 here to check if there's a next page.
-		qm.Limit(limit + 1),
-		qm.OrderBy(models.AftermarketDeviceColumns.ID + " DESC"),
-	}
+		qm.Limit(limit+1),
+		qm.OrderBy(models.AftermarketDeviceColumns.ID+" DESC"),
+	)
 
 	if after != nil {
 		afterID, err := helpers.CursorToID(*after)
@@ -70,12 +70,12 @@ func (r *Repository) GetOwnedAftermarketDevices(ctx context.Context, addr common
 				Node: &gmodel.AftermarketDevice{
 					ID:          d.ID,
 					Address:     helpers.BytesToAddr(d.Address),
-					Owner:       helpers.BytesToAddr(d.Owner),
+					Owner:       common.BytesToAddress(d.Owner),
 					Serial:      d.Serial.Ptr(),
 					IMEI:        d.Imei.Ptr(),
-					VehicleID:   d.VehicleID.Ptr(),
 					Beneficiary: common.BytesToAddress(d.Beneficiary),
-					MintedAt:    d.MintedAt.Ptr(),
+					VehicleID:   d.VehicleID.Ptr(),
+					MintedAt:    d.MintedAt,
 				},
 				Cursor: helpers.IDToCursor(d.ID),
 			},
