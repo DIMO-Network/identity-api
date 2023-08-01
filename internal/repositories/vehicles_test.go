@@ -119,13 +119,12 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Success() {
 	expected := []*gmodel.VehicleEdge{
 		{
 			Node: &gmodel.Vehicle{
-				ID:         2,
-				Owner:      common.BytesToAddress(wallet.Bytes()),
-				Make:       &vehicles[1].Make.String,
-				Model:      &vehicles[1].Model.String,
-				Year:       &vehicles[1].Year.Int,
-				MintedAt:   vehicles[1].MintedAt,
-				Privileges: []*gmodel.Privilege{},
+				ID:       2,
+				Owner:    common.BytesToAddress(wallet.Bytes()),
+				Make:     &vehicles[1].Make.String,
+				Model:    &vehicles[1].Model.String,
+				Year:     &vehicles[1].Year.Int,
+				MintedAt: vehicles[1].MintedAt,
 			},
 			Cursor: "Mg==",
 		},
@@ -137,14 +136,6 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Success() {
 				Model:    &vehicles[0].Model.String,
 				Year:     &vehicles[0].Year.Int,
 				MintedAt: vehicles[0].MintedAt,
-				Privileges: []*gmodel.Privilege{
-					{
-						ID:        privileges[0].PrivilegeID,
-						User:      common.BytesToAddress(privileges[0].UserAddress),
-						SetAt:     privileges[0].SetAt,
-						ExpiresAt: privileges[0].ExpiresAt,
-					},
-				},
 			},
 			Cursor: "MQ==",
 		},
@@ -193,13 +184,12 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination(
 	expected := []*gmodel.VehicleEdge{
 		{
 			Node: &gmodel.Vehicle{
-				ID:         2,
-				Owner:      common.BytesToAddress(wallet.Bytes()),
-				Make:       &vehicles[1].Make.String,
-				Model:      &vehicles[1].Model.String,
-				Year:       &vehicles[1].Year.Int,
-				MintedAt:   vehicles[1].MintedAt,
-				Privileges: []*gmodel.Privilege{},
+				ID:       2,
+				Owner:    common.BytesToAddress(wallet.Bytes()),
+				Make:     &vehicles[1].Make.String,
+				Model:    &vehicles[1].Model.String,
+				Year:     &vehicles[1].Year.Int,
+				MintedAt: vehicles[1].MintedAt,
 			},
 			Cursor: "Mg==",
 		},
@@ -249,13 +239,12 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 	expected := []*gmodel.VehicleEdge{
 		{
 			Node: &gmodel.Vehicle{
-				ID:         2,
-				Owner:      common.BytesToAddress(wallet.Bytes()),
-				Make:       &vehicles[1].Make.String,
-				Model:      &vehicles[1].Model.String,
-				Year:       &vehicles[1].Year.Int,
-				MintedAt:   vehicles[1].MintedAt,
-				Privileges: []*gmodel.Privilege{},
+				ID:       2,
+				Owner:    common.BytesToAddress(wallet.Bytes()),
+				Make:     &vehicles[1].Make.String,
+				Model:    &vehicles[1].Model.String,
+				Year:     &vehicles[1].Year.Int,
+				MintedAt: vehicles[1].MintedAt,
 			},
 			Cursor: "Mg==",
 		},
@@ -264,7 +253,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 	o.Exactly(expected, res.Edges)
 }
 
-func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_OwnedByUser_And_ForPrivilegesGrandted() {
+func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_OwnedByUser_And_ForPrivilegesGranted() {
 	_, wallet, err := test.GenerateWallet()
 	o.NoError(err)
 
@@ -330,26 +319,110 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_OwnedByUser
 				Model:    &vehicles[1].Model.String,
 				Year:     &vehicles[1].Year.Int,
 				MintedAt: vehicles[1].MintedAt,
-				Privileges: []*gmodel.Privilege{
-					{
-						ID:        privileges[0].PrivilegeID,
-						User:      common.BytesToAddress(privileges[0].UserAddress),
-						SetAt:     privileges[0].SetAt,
-						ExpiresAt: privileges[0].ExpiresAt,
-					},
-				},
 			},
 			Cursor: "Mg==",
 		},
 		{
 			Node: &gmodel.Vehicle{
-				ID:         1,
-				Owner:      common.BytesToAddress(wallet.Bytes()),
-				Make:       &vehicles[0].Make.String,
-				Model:      &vehicles[0].Model.String,
-				Year:       &vehicles[0].Year.Int,
-				MintedAt:   vehicles[0].MintedAt,
-				Privileges: []*gmodel.Privilege{},
+				ID:       1,
+				Owner:    common.BytesToAddress(wallet.Bytes()),
+				Make:     &vehicles[0].Make.String,
+				Model:    &vehicles[0].Model.String,
+				Year:     &vehicles[0].Year.Int,
+				MintedAt: vehicles[0].MintedAt,
+			},
+			Cursor: "MQ==",
+		},
+	}
+
+	o.Exactly(expected, res.Edges)
+}
+
+func (o *AccessibleVehiclesRepoTestSuite) TestVehiclesMultiplePrivsOnOne() {
+	_, wallet, err := test.GenerateWallet()
+	o.NoError(err)
+
+	_, wallet2, err := test.GenerateWallet()
+	o.NoError(err)
+
+	currTime := time.Now().UTC().Truncate(time.Microsecond)
+	vehicles := []models.Vehicle{
+		{
+			ID:           1,
+			OwnerAddress: wallet.Bytes(),
+			Make:         null.StringFrom("Toyota"),
+			Model:        null.StringFrom("Camry"),
+			Year:         null.IntFrom(2020),
+			MintedAt:     currTime,
+		},
+		{
+			ID:           2,
+			OwnerAddress: wallet2.Bytes(),
+			Make:         null.StringFrom("Toyota"),
+			Model:        null.StringFrom("Camry"),
+			Year:         null.IntFrom(2022),
+			MintedAt:     currTime,
+		},
+	}
+
+	for _, v := range vehicles {
+		if err := v.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer()); err != nil {
+			o.NoError(err)
+		}
+	}
+
+	privileges := []models.Privilege{
+		{
+			ID:          ksuid.New().String(),
+			TokenID:     2,
+			PrivilegeID: 1,
+			UserAddress: wallet.Bytes(),
+			SetAt:       currTime,
+			ExpiresAt:   currTime,
+		},
+		{
+			ID:          ksuid.New().String(),
+			TokenID:     2,
+			PrivilegeID: 2,
+			UserAddress: wallet.Bytes(),
+			SetAt:       currTime,
+			ExpiresAt:   currTime,
+		},
+	}
+
+	for _, p := range privileges {
+		if err := p.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer()); err != nil {
+			o.NoError(err)
+		}
+	}
+
+	first := 3
+	res, err := o.repo.GetAccessibleVehicles(o.ctx, *wallet, &first, nil)
+	o.NoError(err)
+
+	o.Equal(2, res.TotalCount)
+	o.Equal(res.PageInfo.HasNextPage, false)
+
+	expected := []*gmodel.VehicleEdge{
+		{
+			Node: &gmodel.Vehicle{
+				ID:       2,
+				Owner:    common.BytesToAddress(wallet2.Bytes()),
+				Make:     &vehicles[1].Make.String,
+				Model:    &vehicles[1].Model.String,
+				Year:     &vehicles[1].Year.Int,
+				MintedAt: vehicles[1].MintedAt,
+			},
+			Cursor: "Mg==",
+		},
+		{
+			Node: &gmodel.Vehicle{
+				ID:       1,
+				Owner:    common.BytesToAddress(wallet.Bytes()),
+				Make:     &vehicles[0].Make.String,
+				Model:    &vehicles[0].Model.String,
+				Year:     &vehicles[0].Year.Int,
+				MintedAt: vehicles[0].MintedAt,
 			},
 			Cursor: "MQ==",
 		},

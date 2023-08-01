@@ -52,7 +52,7 @@ func main() {
 	repo := repositories.New(dbs)
 
 	s := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{
-		Repo: &repo,
+		Repo: repo,
 	}}))
 
 	srv := loader.Middleware(dbs, s)

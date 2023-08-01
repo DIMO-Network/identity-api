@@ -3,11 +3,9 @@ package repositories
 import (
 	"context"
 	"errors"
-	"strconv"
-
-	"encoding/base64"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
+	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/ethereum/go-ethereum/common"
@@ -29,37 +27,20 @@ func New(pdb db.Store) *Repository {
 }
 
 func (v *Repository) createVehiclesResponse(totalCount int64, vehicles models.VehicleSlice, hasNext bool) *gmodel.VehicleConnection {
-	lastItmID := vehicles[len(vehicles)-1].ID
-	endCursr := base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(lastItmID)))
+	endCursr := helpers.IDToCursor(vehicles[len(vehicles)-1].ID)
 
 	var vEdges []*gmodel.VehicleEdge
 	for _, v := range vehicles {
-		crs := base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(v.ID)))
-		cursor := crs
-
-		owner := common.BytesToAddress(v.OwnerAddress)
-		privs := []*gmodel.Privilege{}
-
-		for _, p := range v.R.TokenPrivileges {
-			privs = append(privs, &gmodel.Privilege{
-				ID:        p.PrivilegeID,
-				User:      common.BytesToAddress(p.UserAddress),
-				SetAt:     p.SetAt,
-				ExpiresAt: p.ExpiresAt,
-			})
-		}
-
 		edge := &gmodel.VehicleEdge{
 			Node: &gmodel.Vehicle{
-				ID:         v.ID,
-				Owner:      owner,
-				Make:       v.Make.Ptr(),
-				Model:      v.Model.Ptr(),
-				Year:       v.Year.Ptr(),
-				MintedAt:   v.MintedAt,
-				Privileges: privs,
+				ID:       v.ID,
+				Owner:    common.BytesToAddress(v.OwnerAddress),
+				Make:     v.Make.Ptr(),
+				Model:    v.Model.Ptr(),
+				Year:     v.Year.Ptr(),
+				MintedAt: v.MintedAt,
 			},
-			Cursor: cursor,
+			Cursor: helpers.IDToCursor(v.ID),
 		}
 
 		vEdges = append(vEdges, edge)
@@ -86,29 +67,14 @@ func (v *Repository) GetAccessibleVehicles(ctx context.Context, addr common.Addr
 		}
 	}
 
-	vAlias := "identity_api." + models.TableNames.Vehicles
-	pAlias := "identity_api." + models.TableNames.Privileges
 	queryMods := []qm.QueryMod{
-		qm.Select("DISTINCT ON (" + vAlias + ".id) " + vAlias + ".*"),
+		qm.Select("DISTINCT ON (" + models.VehicleTableColumns.ID + ") " + helpers.WithSchema(models.TableNames.Vehicles) + ".*"),
 		qm.LeftOuterJoin(
-			pAlias + " ON " + models.VehicleTableColumns.ID + " = " + models.PrivilegeTableColumns.TokenID,
+			helpers.WithSchema(models.TableNames.Privileges) + " ON " + models.VehicleTableColumns.ID + " = " + models.PrivilegeTableColumns.TokenID,
 		),
-		qm.Or2(models.VehicleWhere.OwnerAddress.EQ(addr.Bytes())),
+		models.VehicleWhere.OwnerAddress.EQ(addr.Bytes()),
 		qm.Or2(models.PrivilegeWhere.UserAddress.EQ(addr.Bytes())),
 		// Use limit + 1 here to check if there's a next page.
-	}
-
-	if after != nil {
-		lastCursor, err := base64.StdEncoding.DecodeString(*after)
-		if err != nil {
-			return nil, err
-		}
-
-		lastCursorVal, err := strconv.Atoi(string(lastCursor))
-		if err != nil {
-			return nil, err
-		}
-		queryMods = append(queryMods, models.VehicleWhere.ID.LT(lastCursorVal))
 	}
 
 	totalCount, err := models.Vehicles(queryMods...).Count(ctx, v.pdb.DBS().Reader)
@@ -120,13 +86,23 @@ func (v *Repository) GetAccessibleVehicles(ctx context.Context, addr common.Addr
 		return &gmodel.VehicleConnection{
 			TotalCount: 0,
 			Edges:      []*gmodel.VehicleEdge{},
+			PageInfo:   &gmodel.PageInfo{},
 		}, nil
+	}
+
+	if after != nil {
+		afterID, err := helpers.CursorToID(*after)
+		if err != nil {
+			return nil, err
+		}
+
+		queryMods = append(queryMods, models.VehicleWhere.ID.LT(afterID))
 	}
 
 	queryMods = append(queryMods,
 		qm.Limit(limit+1),
 		qm.OrderBy(models.VehicleColumns.ID+" DESC"),
-		qm.Load(models.VehicleRels.TokenPrivileges))
+	)
 
 	all, err := models.Vehicles(queryMods...).All(ctx, v.pdb.DBS().Reader)
 	if err != nil {
@@ -140,10 +116,10 @@ func (v *Repository) GetAccessibleVehicles(ctx context.Context, addr common.Addr
 		}, nil
 	}
 
-	vIterate := all
-	if len(all) > limit {
-		vIterate = all[:limit]
+	hasNext := len(all) > limit
+	if hasNext {
+		all = all[:limit]
 	}
 
-	return v.createVehiclesResponse(totalCount, vIterate, len(all) > limit), nil
+	return v.createVehiclesResponse(totalCount, all, hasNext), nil
 }
