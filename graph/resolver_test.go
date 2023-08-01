@@ -20,22 +20,24 @@ import (
 )
 
 var aftermarketDevice = models.AftermarketDevice{
-	ID:        1,
-	Address:   null.BytesFrom(common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf5").Bytes()),
-	Owner:     common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4").Bytes(),
-	Serial:    null.StringFrom("aftermarketDeviceSerial-1"),
-	Imei:      null.StringFrom("aftermarketDeviceIMEI-1"),
-	MintedAt:  time.Now(),
-	VehicleID: null.IntFrom(11),
+	ID:          1,
+	Address:     null.BytesFrom(common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf5").Bytes()),
+	Owner:       common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4").Bytes(),
+	Serial:      null.StringFrom("aftermarketDeviceSerial-1"),
+	Imei:        null.StringFrom("aftermarketDeviceIMEI-1"),
+	MintedAt:    time.Now(),
+	VehicleID:   null.IntFrom(11),
+	Beneficiary: common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 }
 
 var ad2 = models.AftermarketDevice{
-	ID:       100,
-	Address:  null.BytesFrom(common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf5").Bytes()),
-	Owner:    common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4").Bytes(),
-	Serial:   null.StringFrom("aftermarketDeviceSerial-1"),
-	Imei:     null.StringFrom("aftermarketDeviceIMEI-1"),
-	MintedAt: time.Now(),
+	ID:          100,
+	Address:     null.BytesFrom(common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf5").Bytes()),
+	Owner:       common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4").Bytes(),
+	Serial:      null.StringFrom("aftermarketDeviceSerial-1"),
+	Imei:        null.StringFrom("aftermarketDeviceIMEI-1"),
+	MintedAt:    time.Now(),
+	Beneficiary: common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 }
 
 var vehicle = models.Vehicle{
@@ -49,7 +51,7 @@ var vehicle = models.Vehicle{
 
 const migrationsDir = "../migrations"
 
-func TestNew(t *testing.T) {
+func TestResolver(t *testing.T) {
 	assert := assert.New(t)
 	ctx := context.Background()
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDir)
@@ -63,7 +65,7 @@ func TestNew(t *testing.T) {
 	err = ad2.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	assert.NoError(err)
 
-	repo := repositories.NewRepository(pdb, 0)
+	repo := repositories.New(pdb)
 	resolver := NewResolver(repo)
 	c := client.New(loader.Middleware(pdb, handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: resolver}))))
 
@@ -93,13 +95,13 @@ func TestNew(t *testing.T) {
 			string(b))
 	})
 
-	t.Run("ownedVehicles", func(t *testing.T) {
+	t.Run("accessibleVehicles", func(t *testing.T) {
 		var resp interface{}
-		c.MustPost(`{ownedVehicles(address: "46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4") {edges {node {id owner}}}}`, &resp)
+		c.MustPost(`{accessibleVehicles(address: "46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4") {edges {node {id owner}}}}`, &resp)
 		b, _ := json.Marshal(resp)
 		fmt.Println(string(b))
 		assert.Equal(
-			`{"ownedVehicles":{"edges":[{"node":{"id":"11","owner":"0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"}}]}}`,
+			`{"accessibleVehicles":{"edges":[{"node":{"id":"11","owner":"0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"}}]}}`,
 			string(b))
 	})
 }

@@ -20,9 +20,9 @@ func (r *aftermarketDeviceResolver) Vehicle(ctx context.Context, obj *model.Afte
 	return loader.GetVehicleByID(ctx, *obj.VehicleID)
 }
 
-// OwnedVehicles is the resolver for the ownedVehicles field.
-func (r *queryResolver) OwnedVehicles(ctx context.Context, address common.Address, first *int, after *string) (*model.VehicleConnection, error) {
-	return r.Repo.GetOwnedVehicles(ctx, address, first, after)
+// AccessibleVehicles is the resolver for the accessibleVehicles field.
+func (r *queryResolver) AccessibleVehicles(ctx context.Context, address common.Address, first *int, after *string) (*model.VehicleConnection, error) {
+	return r.Repo.GetAccessibleVehicles(ctx, address, first, after)
 }
 
 // OwnedAftermarketDevices is the resolver for the ownedAftermarketDevices field.

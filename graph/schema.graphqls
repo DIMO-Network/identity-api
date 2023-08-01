@@ -36,6 +36,7 @@ type AftermarketDevice {
   imei: String
   mintedAt: Time!
   vehicle: Vehicle
+  beneficiary: Address!
 }
 
 type AftermarketDeviceConnection {
@@ -62,7 +63,7 @@ type Privilege {
 }
 
 type Query {
-  ownedVehicles(
+  accessibleVehicles(
     address: Address!
     first: Int
     after: String

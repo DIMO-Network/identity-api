@@ -15,12 +15,12 @@ import (
 func (r *Repository) GetOwnedAftermarketDevices(ctx context.Context, addr common.Address, first *int, after *string) (*gmodel.AftermarketDeviceConnection, error) {
 	ownedADCount, err := models.AftermarketDevices(
 		models.AftermarketDeviceWhere.Owner.EQ(addr.Bytes()),
-	).Count(ctx, r.PDB.DBS().Reader)
+	).Count(ctx, r.pdb.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}
 
-	limit := r.PageSize
+	limit := defaultPageSize
 	if first != nil {
 		if *first < 1 {
 			return nil, errors.New("invalid pagination parameter provided")
@@ -52,7 +52,7 @@ func (r *Repository) GetOwnedAftermarketDevices(ctx context.Context, addr common
 		queryMods = append(queryMods, models.AftermarketDeviceWhere.ID.LT(afterID))
 	}
 
-	ads, err := models.AftermarketDevices(queryMods...).All(ctx, r.PDB.DBS().Reader)
+	ads, err := models.AftermarketDevices(queryMods...).All(ctx, r.pdb.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}
@@ -67,13 +67,14 @@ func (r *Repository) GetOwnedAftermarketDevices(ctx context.Context, addr common
 		adEdges = append(adEdges,
 			&gmodel.AftermarketDeviceEdge{
 				Node: &gmodel.AftermarketDevice{
-					ID:        d.ID,
-					Address:   helpers.BytesToAddr(d.Address),
-					Owner:     common.BytesToAddress(d.Owner),
-					Serial:    d.Serial.Ptr(),
-					IMEI:      d.Imei.Ptr(),
-					VehicleID: d.VehicleID.Ptr(),
-					MintedAt:  d.MintedAt,
+					ID:          d.ID,
+					Address:     helpers.BytesToAddr(d.Address),
+					Owner:       common.BytesToAddress(d.Owner),
+					Serial:      d.Serial.Ptr(),
+					IMEI:        d.Imei.Ptr(),
+					Beneficiary: common.BytesToAddress(d.Beneficiary),
+					VehicleID:   d.VehicleID.Ptr(),
+					MintedAt:    d.MintedAt,
 				},
 				Cursor: helpers.IDToCursor(d.ID),
 			},

@@ -13,7 +13,7 @@ func (v *Repository) GetPrivilegesForVehicle(ctx context.Context, vehicleID int)
 	privileges, err := models.Privileges(
 		models.PrivilegeWhere.TokenID.EQ(vehicleID),
 		models.PrivilegeWhere.ExpiresAt.GTE(time.Now()),
-	).All(ctx, v.PDB.DBS().Reader)
+	).All(ctx, v.pdb.DBS().Reader)
 
 	if err != nil {
 		return nil, err
