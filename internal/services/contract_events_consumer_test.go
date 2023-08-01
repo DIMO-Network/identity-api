@@ -62,62 +62,6 @@ func eventBytes(args interface{}, contractEventData ContractEventData, t *testin
 	return expectedBytes
 }
 
-func TestHandleAftermarketDeviceNodeMintedEvent(t *testing.T) {
-	ctx := context.Background()
-	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
-	contractEventData.EventName = "AftermarketDeviceNodeMinted"
-
-	var aftermarketDeviceNodeMintedArgs = AftermarketDeviceNodeMintedData{
-		AftermarketDeviceAddress: common.HexToAddress("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
-		ManufacturerID:           big.NewInt(137),
-		Owner:                    common.HexToAddress("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
-		TokenID:                  big.NewInt(42),
-	}
-
-	settings := config.Settings{
-		DIMORegistryAddr:      contractEventData.Contract.String(),
-		DIMORegistryChainID:   contractEventData.ChainID,
-		AftermarketDeviceAddr: aftermarketDeviceAddr,
-	}
-
-	config := mocks.NewTestConfig()
-	consumer := mocks.NewConsumer(t, config)
-
-	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
-	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
-	expectedBytes := eventBytes(aftermarketDeviceNodeMintedArgs, contractEventData, t)
-
-	d := models.AftermarketDevice{
-		ID:          int(aftermarketDeviceNodeMintedArgs.TokenID.Int64()),
-		Owner:       aftermarketDeviceNodeMintedArgs.Owner.Bytes(),
-		Beneficiary: aftermarketDeviceNodeMintedArgs.Owner.Bytes(),
-	}
-	err := d.Insert(ctx, pdb.DBS().Writer.DB, boil.Infer())
-	assert.NoError(t, err)
-
-	consumer.ExpectConsumePartition(settings.ContractsEventTopic, 0, 0).YieldMessage(&sarama.ConsumerMessage{Value: expectedBytes})
-
-	outputTest, err := consumer.ConsumePartition(settings.ContractsEventTopic, 0, 0)
-	assert.NoError(t, err)
-
-	m := <-outputTest.Messages()
-	var e shared.CloudEvent[json.RawMessage]
-	err = json.Unmarshal(m.Value, &e)
-	assert.NoError(t, err)
-
-	err = contractEventConsumer.Process(ctx, &e)
-	assert.NoError(t, err)
-
-	ad, err := models.AftermarketDevices(models.AftermarketDeviceWhere.ID.EQ(int(aftermarketDeviceNodeMintedArgs.TokenID.Int64()))).One(ctx, pdb.DBS().Reader)
-	assert.NoError(t, err)
-
-	assert.Equal(t, aftermarketDeviceNodeMintedArgs.TokenID.Int64(), int64(ad.ID))
-	assert.Equal(t, aftermarketDeviceNodeMintedArgs.AftermarketDeviceAddress.Bytes(), ad.Address.Bytes)
-	assert.Equal(t, aftermarketDeviceNodeMintedArgs.Owner.Bytes(), ad.Owner)
-	assert.Equal(t, aftermarketDeviceNodeMintedArgs.Owner.Bytes(), ad.Beneficiary)
-	assert.Equal(t, mintedAt.UTC().Format(time.RFC3339), ad.MintedAt.UTC().Format(time.RFC3339))
-}
-
 func TestHandleAftermarketDeviceAttributeSetEvent(t *testing.T) {
 	ctx := context.Background()
 	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()

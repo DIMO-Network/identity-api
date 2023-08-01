@@ -33,7 +33,6 @@ var zeroAddress common.Address
 const (
 	Transfer                           EventName = "Transfer"
 	VehicleAttributeSet                EventName = "VehicleAttributeSet"
-	AftermarketDeviceNodeMintedEvent   EventName = "AftermarketDeviceNodeMinted"
 	AftermarketDeviceAttributeSetEvent EventName = "AftermarketDeviceAttributeSet"
 	PrivilegeSet                       EventName = "PrivilegeSet"
 	AftermarketDevicePairedEvent       EventName = "AftermarketDevicePaired"
@@ -143,8 +142,6 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 		switch eventName {
 		case VehicleAttributeSet:
 			return c.handleVehicleAttributeSetEvent(ctx, &data)
-		case AftermarketDeviceNodeMintedEvent:
-			return c.handleAftermarketDeviceNodeMintedEvent(ctx, &data)
 		case AftermarketDeviceAttributeSetEvent:
 			return c.handleAftermarketDeviceAttributeSetEvent(ctx, &data)
 		case AftermarketDevicePairedEvent:
@@ -235,30 +232,6 @@ func (c *ContractsEventsConsumer) handleVehicleTransferEvent(ctx context.Context
 	}
 
 	logger.Info().Str("TokenID", args.TokenID.String()).Msg("Event processed successfuly")
-
-	return nil
-}
-
-func (c *ContractsEventsConsumer) handleAftermarketDeviceNodeMintedEvent(ctx context.Context, e *ContractEventData) error {
-	var args AftermarketDeviceNodeMintedData
-	if err := json.Unmarshal(e.Arguments, &args); err != nil {
-		return err
-	}
-
-	ad := models.AftermarketDevice{
-		ID:       int(args.TokenID.Int64()),
-		Address:  null.BytesFrom(args.AftermarketDeviceAddress.Bytes()),
-		Owner:    args.Owner.Bytes(),
-		MintedAt: e.Block.Time,
-	}
-
-	if _, err := ad.Update(
-		ctx,
-		c.dbs.DBS().Writer,
-		boil.Whitelist(models.AftermarketDeviceColumns.Address, models.AftermarketDeviceColumns.Owner, models.AftermarketDeviceColumns.MintedAt),
-	); err != nil {
-		return err
-	}
 
 	return nil
 }
