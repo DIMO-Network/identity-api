@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/segmentio/ksuid"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 
@@ -297,7 +296,7 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceAttributeSetEvent(ctx c
 }
 
 func (c *ContractsEventsConsumer) handlePrivilegeSetEvent(ctx context.Context, e *ContractEventData) error {
-	logger := c.log.With().Str("EventName", Transfer.String()).Logger()
+	logger := c.log.With().Str("EventName", PrivilegeSet.String()).Logger()
 
 	var args PrivilegeSetData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
@@ -305,7 +304,6 @@ func (c *ContractsEventsConsumer) handlePrivilegeSetEvent(ctx context.Context, e
 	}
 
 	privilege := models.Privilege{
-		ID:          ksuid.New().String(),
 		TokenID:     int(args.TokenId.Int64()),
 		PrivilegeID: int(args.PrivId.Int64()),
 		UserAddress: args.User.Bytes(),
@@ -313,7 +311,14 @@ func (c *ContractsEventsConsumer) handlePrivilegeSetEvent(ctx context.Context, e
 		ExpiresAt:   time.Unix(args.Expires.Int64(), 0),
 	}
 
-	if err := privilege.Insert(ctx, c.dbs.DBS().Writer, boil.Infer()); err != nil {
+	if err := privilege.Upsert(ctx, c.dbs.DBS().Writer, true,
+		[]string{
+			models.PrivilegeColumns.PrivilegeID,
+			models.PrivilegeColumns.TokenID,
+			models.PrivilegeColumns.UserAddress,
+		},
+		boil.Whitelist(models.PrivilegeColumns.SetAt, models.PrivilegeColumns.ExpiresAt),
+		boil.Infer()); err != nil {
 		return err
 	}
 

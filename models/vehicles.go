@@ -756,7 +756,7 @@ func (o *Vehicle) AddTokenPrivileges(ctx context.Context, exec boil.ContextExecu
 				strmangle.SetParamNames("\"", "\"", 1, []string{"token_id"}),
 				strmangle.WhereClause("\"", "\"", 2, privilegePrimaryKeyColumns),
 			)
-			values := []interface{}{o.ID, rel.ID}
+			values := []interface{}{o.ID, rel.TokenID, rel.PrivilegeID, rel.UserAddress}
 
 			if boil.IsDebug(ctx) {
 				writer := boil.DebugWriterFrom(ctx)
