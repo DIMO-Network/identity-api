@@ -292,6 +292,9 @@ func (c *ContractsEventsConsumer) handlePrivilegeSetEvent(ctx context.Context, e
 	logger := c.log.With().Str("EventName", Transfer.String()).Logger()
 
 	var args PrivilegeSetData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
 
 	privilege := models.Privilege{
 		ID:          ksuid.New().String(),
