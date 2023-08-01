@@ -42,16 +42,16 @@ func (v *VehiclesRepo) createVehiclesResponse(totalCount int64, vehicles models.
 
 		for _, p := range v.R.TokenPrivileges {
 			privs = append(privs, &gmodel.Privilege{
-				ID:               p.PrivilegeID,
-				GrantedToAddress: common.BytesToAddress(p.GrantedToAddress),
-				GrantedAt:        p.GrantedAt,
-				ExpiresAt:        p.ExpiresAt,
+				ID:        p.PrivilegeID,
+				User:      common.BytesToAddress(p.UserAddress),
+				SetAt:     p.SetAt,
+				ExpiresAt: p.ExpiresAt,
 			})
 		}
 
 		edge := &gmodel.VehicleEdge{
 			Node: &gmodel.Vehicle{
-				ID:         strconv.Itoa(v.ID),
+				ID:         v.ID,
 				Owner:      owner,
 				Make:       v.Make.Ptr(),
 				Model:      v.Model.Ptr(),
@@ -77,21 +77,7 @@ func (v *VehiclesRepo) createVehiclesResponse(totalCount int64, vehicles models.
 	return res
 }
 
-func (v *VehiclesRepo) GetOwnedVehicles(ctx context.Context, addr common.Address, first *int, after *string) (*gmodel.VehicleConnection, error) {
-	totalCount, err := models.Vehicles(
-		models.VehicleWhere.OwnerAddress.EQ(addr.Bytes()),
-	).Count(ctx, v.pdb.DBS().Reader)
-	if err != nil {
-		return nil, err
-	}
-
-	if totalCount == 0 {
-		return &gmodel.VehicleConnection{
-			TotalCount: 0,
-			Edges:      []*gmodel.VehicleEdge{},
-		}, nil
-	}
-
+func (v *VehiclesRepo) GetAccessibleVehicles(ctx context.Context, addr common.Address, first *int, after *string) (*gmodel.VehicleConnection, error) {
 	limit := defaultPageSize
 	if first != nil {
 		limit = *first
@@ -100,12 +86,16 @@ func (v *VehiclesRepo) GetOwnedVehicles(ctx context.Context, addr common.Address
 		}
 	}
 
+	vAlias := "identity_api." + models.TableNames.Vehicles
+	pAlias := "identity_api." + models.TableNames.Privileges
 	queryMods := []qm.QueryMod{
-		models.VehicleWhere.OwnerAddress.EQ(addr.Bytes()),
+		qm.Select("DISTINCT ON (" + vAlias + ".id) " + vAlias + ".*"),
+		qm.LeftOuterJoin(
+			pAlias + " ON " + models.VehicleTableColumns.ID + " = " + models.PrivilegeTableColumns.TokenID,
+		),
+		qm.Or2(models.VehicleWhere.OwnerAddress.EQ(addr.Bytes())),
+		qm.Or2(models.PrivilegeWhere.UserAddress.EQ(addr.Bytes())),
 		// Use limit + 1 here to check if there's a next page.
-		qm.Limit(limit + 1),
-		qm.OrderBy(models.VehicleColumns.ID + " DESC"),
-		qm.Load(models.VehicleRels.TokenPrivileges),
 	}
 
 	if after != nil {
@@ -120,6 +110,23 @@ func (v *VehiclesRepo) GetOwnedVehicles(ctx context.Context, addr common.Address
 		}
 		queryMods = append(queryMods, models.VehicleWhere.ID.LT(lastCursorVal))
 	}
+
+	totalCount, err := models.Vehicles(queryMods...).Count(ctx, v.pdb.DBS().Reader)
+	if err != nil {
+		return nil, err
+	}
+
+	if totalCount == 0 {
+		return &gmodel.VehicleConnection{
+			TotalCount: 0,
+			Edges:      []*gmodel.VehicleEdge{},
+		}, nil
+	}
+
+	queryMods = append(queryMods,
+		qm.Limit(limit+1),
+		qm.OrderBy(models.VehicleColumns.ID+" DESC"),
+		qm.Load(models.VehicleRels.TokenPrivileges))
 
 	all, err := models.Vehicles(queryMods...).All(ctx, v.pdb.DBS().Reader)
 	if err != nil {

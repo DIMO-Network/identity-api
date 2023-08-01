@@ -2,21 +2,21 @@ package repositories
 
 import (
 	"context"
-	"encoding/base64"
 	"errors"
-	"strconv"
+	"fmt"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
+	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
-func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr common.Address, first *int, after *string) (*gmodel.AftermarketDeviceConnection, error) {
+func (r *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr common.Address, first *int, after *string) (*gmodel.AftermarketDeviceConnection, error) {
 	ownedADCount, err := models.AftermarketDevices(
 		models.AftermarketDeviceWhere.Owner.EQ(null.BytesFrom(addr.Bytes())),
-	).Count(ctx, v.pdb.DBS().Reader)
+	).Count(ctx, r.pdb.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}
@@ -45,49 +45,38 @@ func (v *VehiclesRepo) GetOwnedAftermarketDevices(ctx context.Context, addr comm
 	}
 
 	if after != nil {
-		sB, err := base64.StdEncoding.DecodeString(*after)
+		afterID, err := helpers.CursorToID(*after)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("invalid cursor %q", *after)
 		}
 
-		searchAfter, err := strconv.Atoi(string(sB))
-		if err != nil {
-			return nil, err
-		}
-
-		queryMods = append(queryMods, models.AftermarketDeviceWhere.ID.LT(searchAfter))
+		queryMods = append(queryMods, models.AftermarketDeviceWhere.ID.LT(afterID))
 	}
 
-	ads, err := models.AftermarketDevices(queryMods...).All(ctx, v.pdb.DBS().Reader)
+	ads, err := models.AftermarketDevices(queryMods...).All(ctx, r.pdb.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}
 
 	hasNextPage := len(ads) > limit
 	if hasNextPage {
-		ads = ads[:len(ads)-1]
+		ads = ads[:limit]
 	}
 
 	var adEdges []*gmodel.AftermarketDeviceEdge
 	for _, d := range ads {
-		var ownerAddr, deviceAddr *common.Address
-		if d.Address.Valid {
-			deviceAddr = (*common.Address)(*d.Address.Ptr())
-		}
-		if d.Owner.Valid {
-			ownerAddr = (*common.Address)(*d.Owner.Ptr())
-		}
 		adEdges = append(adEdges,
 			&gmodel.AftermarketDeviceEdge{
 				Node: &gmodel.AftermarketDevice{
-					ID:       strconv.Itoa(d.ID),
-					Address:  deviceAddr,
-					Owner:    ownerAddr,
-					Serial:   d.Serial.Ptr(),
-					Imei:     d.Imei.Ptr(),
-					MintedAt: d.MintedAt.Ptr(),
+					ID:        d.ID,
+					Address:   helpers.BytesToAddr(d.Address),
+					Owner:     helpers.BytesToAddr(d.Owner),
+					Serial:    d.Serial.Ptr(),
+					IMEI:      d.Imei.Ptr(),
+					VehicleID: d.VehicleID.Ptr(),
+					MintedAt:  d.MintedAt.Ptr(),
 				},
-				Cursor: base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(d.ID))),
+				Cursor: helpers.IDToCursor(d.ID),
 			},
 		)
 	}

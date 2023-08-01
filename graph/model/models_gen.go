@@ -8,15 +8,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-type AftermarketDevice struct {
-	ID       string          `json:"id"`
-	Address  *common.Address `json:"address,omitempty"`
-	Owner    *common.Address `json:"owner,omitempty"`
-	Serial   *string         `json:"serial,omitempty"`
-	Imei     *string         `json:"imei,omitempty"`
-	MintedAt *time.Time      `json:"mintedAt,omitempty"`
-}
-
 type AftermarketDeviceConnection struct {
 	TotalCount int                      `json:"totalCount"`
 	Edges      []*AftermarketDeviceEdge `json:"edges"`
@@ -34,20 +25,21 @@ type PageInfo struct {
 }
 
 type Privilege struct {
-	ID               int            `json:"id"`
-	GrantedToAddress common.Address `json:"grantedToAddress"`
-	GrantedAt        time.Time      `json:"grantedAt"`
-	ExpiresAt        time.Time      `json:"expiresAt"`
+	ID        int            `json:"id"`
+	User      common.Address `json:"user"`
+	SetAt     time.Time      `json:"setAt"`
+	ExpiresAt time.Time      `json:"expiresAt"`
 }
 
 type Vehicle struct {
-	ID         string         `json:"id"`
-	Owner      common.Address `json:"owner"`
-	Make       *string        `json:"make,omitempty"`
-	Model      *string        `json:"model,omitempty"`
-	Year       *int           `json:"year,omitempty"`
-	MintedAt   time.Time      `json:"mintedAt"`
-	Privileges []*Privilege   `json:"privileges,omitempty"`
+	ID                int                `json:"id"`
+	Owner             common.Address     `json:"owner"`
+	Make              *string            `json:"make,omitempty"`
+	Model             *string            `json:"model,omitempty"`
+	Year              *int               `json:"year,omitempty"`
+	MintedAt          time.Time          `json:"mintedAt"`
+	AftermarketDevice *AftermarketDevice `json:"aftermarketDevice,omitempty"`
+	Privileges        []*Privilege       `json:"privileges"`
 }
 
 type VehicleConnection struct {

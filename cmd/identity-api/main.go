@@ -12,6 +12,7 @@ import (
 
 	"github.com/DIMO-Network/identity-api/graph"
 	"github.com/DIMO-Network/identity-api/internal/config"
+	"github.com/DIMO-Network/identity-api/internal/loader"
 	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/internal/services"
 	"github.com/DIMO-Network/shared"
@@ -28,6 +29,8 @@ func main() {
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Couldn't load settings.")
 	}
+
+	logger.Info().Msgf("Loaded configuration. Addresses: Registry %s, Vehicle %s.", settings.DIMORegistryAddr, settings.VehicleNFTAddr)
 
 	if len(os.Args) > 1 && os.Args[1] == "migrate" {
 		command := "up"
@@ -48,16 +51,18 @@ func main() {
 
 	repo := repositories.NewVehiclesRepo(dbs)
 
-	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{
-		Repo: repo,
+	s := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{
+		Repo: &repo,
 	}}))
+
+	srv := loader.Middleware(dbs, s)
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", srv)
 
 	logger.Info().Msgf("Server started on port: %d", settings.Port)
 
-	http.ListenAndServe(fmt.Sprintf(":%d", settings.Port), nil)
+	logger.Fatal().Err(http.ListenAndServe(fmt.Sprintf(":%d", settings.Port), nil)).Msg("Server shut down.")
 }
 
 func startContractEventsConsumer(ctx context.Context, logger *zerolog.Logger, settings *config.Settings, dbs db.Store) {
@@ -73,5 +78,5 @@ func startContractEventsConsumer(ctx context.Context, logger *zerolog.Logger, se
 		logger.Fatal().Err(err).Msg("Couldn't start event consumer.")
 	}
 
-	logger.Info().Msg("Contracts events consumer started")
+	logger.Info().Msg("Contract events consumer started.")
 }
