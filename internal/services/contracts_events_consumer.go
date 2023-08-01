@@ -289,7 +289,7 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceAttributeSetEvent(ctx c
 }
 
 func (c *ContractsEventsConsumer) handlePrivilegeSetEvent(ctx context.Context, e *ContractEventData) error {
-	logger := c.log.With().Str("EventName", Transfer.String()).Logger()
+	logger := c.log.With().Str("EventName", PrivilegeSet.String()).Logger()
 
 	var args PrivilegeSetData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
