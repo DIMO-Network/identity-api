@@ -29,13 +29,13 @@ type VehiclesPrivilegesRepoTestSuite struct {
 
 func (s *VehiclesPrivilegesRepoTestSuite) SetupSuite() {
 	s.ctx = context.Background()
-	s.pdb, s.container = helpers.StartContainerDatabase(s.ctx, s.T(), migrationsDir)
+	s.pdb, s.container = helpers.StartContainerDatabase(s.ctx, s.T(), "../../migrations")
 
 	s.settings = config.Settings{
 		DIMORegistryAddr:    "0x4de1bcf2b7e851e31216fc07989caa902a604784",
 		DIMORegistryChainID: 80001,
 	}
-	s.repo = NewRepository(s.pdb, 0)
+	s.repo = New(s.pdb)
 }
 
 // TearDownTest after each test truncate tables

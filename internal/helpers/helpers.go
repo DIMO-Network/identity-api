@@ -28,3 +28,7 @@ func CursorToID(cur string) (int, error) {
 func IDToCursor(id int) string {
 	return base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(id)))
 }
+
+func WithSchema(tableName string) string {
+	return "identity_api." + tableName
+}
