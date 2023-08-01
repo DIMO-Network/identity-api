@@ -13,9 +13,11 @@ import (
 )
 
 func (r *Repository) GetOwnedAftermarketDevices(ctx context.Context, addr common.Address, first *int, after *string) (*gmodel.AftermarketDeviceConnection, error) {
-	ownedADCount, err := models.AftermarketDevices(
+	where := []qm.QueryMod{
 		models.AftermarketDeviceWhere.Owner.EQ(addr.Bytes()),
-	).Count(ctx, r.pdb.DBS().Reader)
+	}
+
+	ownedADCount, err := models.AftermarketDevices(where...).Count(ctx, r.pdb.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}
@@ -36,12 +38,11 @@ func (r *Repository) GetOwnedAftermarketDevices(ctx context.Context, addr common
 		}, nil
 	}
 
-	queryMods := []qm.QueryMod{
-		models.AftermarketDeviceWhere.Owner.EQ(addr.Bytes()),
+	queryMods := append(where,
 		// Use limit + 1 here to check if there's a next page.
-		qm.Limit(limit + 1),
-		qm.OrderBy(models.AftermarketDeviceColumns.ID + " DESC"),
-	}
+		qm.Limit(limit+1),
+		qm.OrderBy(models.AftermarketDeviceColumns.ID+" DESC"),
+	)
 
 	if after != nil {
 		afterID, err := helpers.CursorToID(*after)
