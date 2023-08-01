@@ -202,12 +202,7 @@ func (c *ContractsEventsConsumer) handleVehicleTransferEvent(ctx context.Context
 		return err
 	}
 
-	priv, err := models.Privileges(models.PrivilegeWhere.TokenID.EQ(int(args.TokenID.Int64()))).One(ctx, c.dbs.DBS().Reader)
-	if err != nil {
-		return err
-	}
-
-	if _, err := priv.Delete(ctx, c.dbs.DBS().Writer); err != nil {
+	if _, err := models.Privileges(models.PrivilegeWhere.TokenID.EQ(int(args.TokenID.Int64()))).DeleteAll(ctx, c.dbs.DBS().Reader); err != nil {
 		return err
 	}
 
