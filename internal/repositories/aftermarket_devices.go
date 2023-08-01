@@ -2,10 +2,8 @@ package repositories
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
-	"strconv"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
@@ -97,34 +95,5 @@ func (r *Repository) GetOwnedAftermarketDevices(ctx context.Context, addr common
 	}
 
 	res.PageInfo.EndCursor = &adEdges[len(adEdges)-1].Cursor
-	return res, nil
-}
-
-func (v *Repository) GetLinkedAftermarketDeviceByVehicleID(ctx context.Context, vehicleID string) (*gmodel.AftermarketDevice, error) {
-	vID, err := strconv.Atoi(vehicleID)
-	if err != nil {
-		return nil, err
-	}
-
-	ad, err := models.AftermarketDevices(
-		models.AftermarketDeviceWhere.VehicleID.EQ(null.IntFrom(vID)),
-	).One(ctx, v.PDB.DBS().Reader)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
-		return nil, err
-	}
-
-	res := &gmodel.AftermarketDevice{
-		ID:          ad.ID,
-		Address:     helpers.BytesToAddr(ad.Address),
-		Owner:       helpers.BytesToAddr(ad.Address),
-		Serial:      ad.Serial.Ptr(),
-		IMEI:        ad.Imei.Ptr(),
-		MintedAt:    ad.MintedAt.Ptr(),
-		Beneficiary: common.BytesToAddress(ad.Beneficiary),
-	}
-
 	return res, nil
 }

@@ -363,7 +363,7 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceTransferredEvent(ctx co
 		c.dbs.DBS().Writer,
 		true,
 		[]string{models.AftermarketDeviceColumns.ID},
-		boil.Whitelist(models.AftermarketDeviceColumns.ID, models.AftermarketDeviceColumns.Owner, models.AftermarketDeviceColumns.MintedAt, models.AftermarketDeviceColumns.Beneficiary),
+		boil.Whitelist(models.AftermarketDeviceColumns.Owner, models.AftermarketDeviceColumns.Beneficiary),
 		boil.Whitelist(models.AftermarketDeviceColumns.ID, models.AftermarketDeviceColumns.Owner, models.AftermarketDeviceColumns.MintedAt, models.AftermarketDeviceColumns.Beneficiary),
 	)
 }
@@ -379,22 +379,18 @@ func (c *ContractsEventsConsumer) handleBeneficiarySetEvent(ctx context.Context,
 		return nil
 	}
 
-	var err error
-	ad := new(models.AftermarketDevice)
-	ad.ID = int(args.NodeId.Int64())
-	ad.Beneficiary = args.Beneficiary.Bytes()
+	ad := &models.AftermarketDevice{ID: int(args.NodeId.Int64())}
 
 	if args.Beneficiary == zeroAddress {
-		ad, err = models.AftermarketDevices(
-			models.AftermarketDeviceWhere.ID.EQ(int(args.NodeId.Int64())),
-		).One(ctx, c.dbs.DBS().Reader)
-		if err != nil {
+		if err := ad.Reload(ctx, c.dbs.DBS().Reader); err != nil {
 			return err
 		}
 		ad.Beneficiary = ad.Owner.Bytes
+	} else {
+		ad.Beneficiary = args.Beneficiary.Bytes()
 	}
 
-	if _, err = ad.Update(
+	if _, err := ad.Update(
 		ctx,
 		c.dbs.DBS().Writer,
 		boil.Whitelist(models.AftermarketDeviceColumns.Beneficiary),

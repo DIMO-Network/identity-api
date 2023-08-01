@@ -424,6 +424,7 @@ func TestHandleBeneficiarySetEvent(t *testing.T) {
 	ctx := context.Background()
 	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
 	contractEventData.EventName = "BeneficiarySet"
+	contractEventData.Contract = common.HexToAddress(aftermarketDeviceAddr)
 
 	var beneficiarySetData = BeneficiarySetEventData{
 		IdProxyAddress: common.HexToAddress(aftermarketDeviceAddr),
@@ -434,7 +435,7 @@ func TestHandleBeneficiarySetEvent(t *testing.T) {
 	settings := config.Settings{
 		DIMORegistryAddr:      contractEventData.Contract.String(),
 		DIMORegistryChainID:   contractEventData.ChainID,
-		AftermarketDeviceAddr: contractEventData.Contract.String(),
+		AftermarketDeviceAddr: aftermarketDeviceAddr,
 	}
 
 	config := mocks.NewTestConfig()
