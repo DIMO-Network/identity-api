@@ -18,17 +18,17 @@ const (
 	defaultPageSize = 20
 )
 
-type VehiclesRepo struct {
+type Repository struct {
 	pdb db.Store
 }
 
-func NewVehiclesRepo(pdb db.Store) VehiclesRepo {
-	return VehiclesRepo{
+func NewVehiclesRepo(pdb db.Store) Repository {
+	return Repository{
 		pdb: pdb,
 	}
 }
 
-func (v *VehiclesRepo) createVehiclesResponse(totalCount int64, vehicles models.VehicleSlice, hasNext bool) *gmodel.VehicleConnection {
+func (v *Repository) createVehiclesResponse(totalCount int64, vehicles models.VehicleSlice, hasNext bool) *gmodel.VehicleConnection {
 	lastItmID := vehicles[len(vehicles)-1].ID
 	endCursr := base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(lastItmID)))
 
@@ -77,7 +77,7 @@ func (v *VehiclesRepo) createVehiclesResponse(totalCount int64, vehicles models.
 	return res
 }
 
-func (v *VehiclesRepo) GetAccessibleVehicles(ctx context.Context, addr common.Address, first *int, after *string) (*gmodel.VehicleConnection, error) {
+func (v *Repository) GetAccessibleVehicles(ctx context.Context, addr common.Address, first *int, after *string) (*gmodel.VehicleConnection, error) {
 	limit := defaultPageSize
 	if first != nil {
 		limit = *first

@@ -9,7 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func (v *VehiclesRepo) GetPrivilegesForVehicle(ctx context.Context, vehicleID int) ([]*gmodel.Privilege, error) {
+func (v *Repository) GetPrivilegesForVehicle(ctx context.Context, vehicleID int) ([]*gmodel.Privilege, error) {
 	privileges, err := models.Privileges(
 		models.PrivilegeWhere.TokenID.EQ(vehicleID),
 		models.PrivilegeWhere.ExpiresAt.GTE(time.Now()),

@@ -24,12 +24,6 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-const (
-	MigrationsDirRelPath = "../../migrations"
-	SettingsPath         = "../../settings.yaml"
-	TestDbName           = "identity_api"
-)
-
 var DBSettings = db.Settings{
 	Name:               "identity_api",
 	Host:               "localhost",

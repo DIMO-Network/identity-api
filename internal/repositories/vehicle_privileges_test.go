@@ -23,13 +23,13 @@ type VehiclesPrivilegesRepoTestSuite struct {
 	ctx       context.Context
 	pdb       db.Store
 	container testcontainers.Container
-	repo      VehiclesRepo
+	repo      Repository
 	settings  config.Settings
 }
 
 func (s *VehiclesPrivilegesRepoTestSuite) SetupSuite() {
 	s.ctx = context.Background()
-	s.pdb, s.container = helpers.StartContainerDatabase(s.ctx, s.T(), migrationsDir)
+	s.pdb, s.container = helpers.StartContainerDatabase(s.ctx, s.T(), "../../migrations")
 
 	s.settings = config.Settings{
 		DIMORegistryAddr:    "0x4de1bcf2b7e851e31216fc07989caa902a604784",
