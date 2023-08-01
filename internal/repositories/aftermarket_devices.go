@@ -16,12 +16,12 @@ import (
 func (r *Repository) GetOwnedAftermarketDevices(ctx context.Context, addr common.Address, first *int, after *string) (*gmodel.AftermarketDeviceConnection, error) {
 	ownedADCount, err := models.AftermarketDevices(
 		models.AftermarketDeviceWhere.Owner.EQ(null.BytesFrom(addr.Bytes())),
-	).Count(ctx, r.PDB.DBS().Reader)
+	).Count(ctx, r.pdb.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}
 
-	limit := r.PageSize
+	limit := defaultPageSize
 	if first != nil {
 		if *first < 1 {
 			return nil, errors.New("invalid pagination parameter provided")
@@ -53,7 +53,7 @@ func (r *Repository) GetOwnedAftermarketDevices(ctx context.Context, addr common
 		queryMods = append(queryMods, models.AftermarketDeviceWhere.ID.LT(afterID))
 	}
 
-	ads, err := models.AftermarketDevices(queryMods...).All(ctx, r.PDB.DBS().Reader)
+	ads, err := models.AftermarketDevices(queryMods...).All(ctx, r.pdb.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}

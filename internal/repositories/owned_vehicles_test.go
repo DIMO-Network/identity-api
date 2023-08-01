@@ -28,7 +28,7 @@ type OwnedVehiclesRepoTestSuite struct {
 	settings  config.Settings
 }
 
-const migrationsDir = "../" + helpers.MigrationsDirRelPath
+const migrationsDir = "../../migrations"
 
 func (s *OwnedVehiclesRepoTestSuite) SetupSuite() {
 	s.ctx = context.Background()
@@ -38,7 +38,7 @@ func (s *OwnedVehiclesRepoTestSuite) SetupSuite() {
 		DIMORegistryAddr:    "0x4de1bcf2b7e851e31216fc07989caa902a604784",
 		DIMORegistryChainID: 80001,
 	}
-	s.repo = NewRepository(s.pdb, 0)
+	s.repo = New(s.pdb)
 }
 
 // TearDownTest after each test truncate tables
@@ -113,7 +113,7 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Success() {
 	}
 
 	first := 3
-	res, err := s.repo.GetOwnedVehicles(s.ctx, *wallet, &first, nil)
+	res, err := s.repo.GetAccessibleVehicles(s.ctx, *wallet, &first, nil)
 	s.NoError(err)
 
 	s.Equal(2, res.TotalCount)
@@ -180,7 +180,7 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination() {
 	}
 
 	first := 1
-	res, err := s.repo.GetOwnedVehicles(s.ctx, *wallet, &first, nil)
+	res, err := s.repo.GetAccessibleVehicles(s.ctx, *wallet, &first, nil)
 	s.NoError(err)
 
 	s.Equal(len(vehicles), res.TotalCount)
@@ -236,7 +236,7 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination_NextPage()
 
 	first := 1
 	after := "Mg=="
-	res, err := s.repo.GetOwnedVehicles(s.ctx, *wallet, &first, &after)
+	res, err := s.repo.GetAccessibleVehicles(s.ctx, *wallet, &first, &after)
 	s.NoError(err)
 
 	s.Len(vehicles, res.TotalCount)

@@ -22,7 +22,7 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
-const migrationsDirRelPath = "../" + helpers.MigrationsDirRelPath
+const migrationsDirRelPath = "../../migrations"
 const aftermarketDeviceAddr = "0xcf9af64522162da85164a714c23a7705e6e466b3"
 
 var mintedAt = time.Now()
