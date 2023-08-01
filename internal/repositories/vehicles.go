@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"errors"
+	"time"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
@@ -72,8 +73,15 @@ func (v *Repository) GetAccessibleVehicles(ctx context.Context, addr common.Addr
 		qm.LeftOuterJoin(
 			helpers.WithSchema(models.TableNames.Privileges) + " ON " + models.VehicleTableColumns.ID + " = " + models.PrivilegeTableColumns.TokenID,
 		),
-		models.VehicleWhere.OwnerAddress.EQ(addr.Bytes()),
-		qm.Or2(models.PrivilegeWhere.UserAddress.EQ(addr.Bytes())),
+		qm.Expr(
+			models.VehicleWhere.OwnerAddress.EQ(addr.Bytes()),
+			qm.Or2(
+				qm.Expr(
+					models.PrivilegeWhere.UserAddress.EQ(addr.Bytes()),
+					models.PrivilegeWhere.ExpiresAt.GTE(time.Now()),
+				),
+			),
+		),
 		// Use limit + 1 here to check if there's a next page.
 	}
 

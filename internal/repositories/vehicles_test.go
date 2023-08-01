@@ -234,19 +234,19 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 	o.NoError(err)
 
 	o.Equal(len(vehicles), res.TotalCount)
-	o.Equal(res.PageInfo.HasNextPage, true)
+	o.Equal(res.PageInfo.HasNextPage, false)
 
 	expected := []*gmodel.VehicleEdge{
 		{
 			Node: &gmodel.Vehicle{
-				ID:       2,
+				ID:       1,
 				Owner:    common.BytesToAddress(wallet.Bytes()),
-				Make:     &vehicles[1].Make.String,
-				Model:    &vehicles[1].Model.String,
-				Year:     &vehicles[1].Year.Int,
-				MintedAt: vehicles[1].MintedAt,
+				Make:     &vehicles[0].Make.String,
+				Model:    &vehicles[0].Model.String,
+				Year:     &vehicles[0].Year.Int,
+				MintedAt: vehicles[0].MintedAt,
 			},
-			Cursor: "Mg==",
+			Cursor: "MQ==",
 		},
 	}
 
@@ -293,7 +293,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_OwnedByUser
 			PrivilegeID: 1,
 			UserAddress: wallet.Bytes(),
 			SetAt:       currTime,
-			ExpiresAt:   currTime,
+			ExpiresAt:   currTime.Add(time.Hour),
 		},
 	}
 
@@ -378,7 +378,7 @@ func (o *AccessibleVehiclesRepoTestSuite) TestVehiclesMultiplePrivsOnOne() {
 			PrivilegeID: 1,
 			UserAddress: wallet.Bytes(),
 			SetAt:       currTime,
-			ExpiresAt:   currTime,
+			ExpiresAt:   currTime.Add(time.Hour),
 		},
 		{
 			ID:          ksuid.New().String(),
@@ -386,7 +386,7 @@ func (o *AccessibleVehiclesRepoTestSuite) TestVehiclesMultiplePrivsOnOne() {
 			PrivilegeID: 2,
 			UserAddress: wallet.Bytes(),
 			SetAt:       currTime,
-			ExpiresAt:   currTime,
+			ExpiresAt:   currTime.Add(time.Hour),
 		},
 	}
 
