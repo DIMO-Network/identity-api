@@ -22,8 +22,8 @@ type Repository struct {
 	pdb db.Store
 }
 
-func NewVehiclesRepo(pdb db.Store) Repository {
-	return Repository{
+func New(pdb db.Store) *Repository {
+	return &Repository{
 		pdb: pdb,
 	}
 }

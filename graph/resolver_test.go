@@ -63,7 +63,7 @@ func TestNew(t *testing.T) {
 	err = ad2.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	assert.NoError(err)
 
-	repo := repositories.NewVehiclesRepo(pdb)
+	repo := repositories.New(pdb)
 	resolver := NewResolver(&repo)
 	c := client.New(loader.Middleware(pdb, handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: resolver}))))
 

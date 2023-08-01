@@ -24,7 +24,7 @@ type AccessibleVehiclesRepoTestSuite struct {
 	ctx       context.Context
 	pdb       db.Store
 	container testcontainers.Container
-	repo      Repository
+	repo      *Repository
 	settings  config.Settings
 }
 
@@ -36,7 +36,7 @@ func (o *AccessibleVehiclesRepoTestSuite) SetupSuite() {
 		DIMORegistryAddr:    "0x4de1bcf2b7e851e31216fc07989caa902a604784",
 		DIMORegistryChainID: 80001,
 	}
-	o.repo = NewVehiclesRepo(o.pdb)
+	o.repo = New(o.pdb)
 }
 
 // TearDownTest after each test truncate tables
