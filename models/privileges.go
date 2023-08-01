@@ -23,7 +23,6 @@ import (
 
 // Privilege is an object representing the database table.
 type Privilege struct {
-	ID          string    `boil:"id" json:"id" toml:"id" yaml:"id"`
 	TokenID     int       `boil:"token_id" json:"token_id" toml:"token_id" yaml:"token_id"`
 	PrivilegeID int       `boil:"privilege_id" json:"privilege_id" toml:"privilege_id" yaml:"privilege_id"`
 	UserAddress []byte    `boil:"user_address" json:"user_address" toml:"user_address" yaml:"user_address"`
@@ -35,14 +34,12 @@ type Privilege struct {
 }
 
 var PrivilegeColumns = struct {
-	ID          string
 	TokenID     string
 	PrivilegeID string
 	UserAddress string
 	SetAt       string
 	ExpiresAt   string
 }{
-	ID:          "id",
 	TokenID:     "token_id",
 	PrivilegeID: "privilege_id",
 	UserAddress: "user_address",
@@ -51,14 +48,12 @@ var PrivilegeColumns = struct {
 }
 
 var PrivilegeTableColumns = struct {
-	ID          string
 	TokenID     string
 	PrivilegeID string
 	UserAddress string
 	SetAt       string
 	ExpiresAt   string
 }{
-	ID:          "privileges.id",
 	TokenID:     "privileges.token_id",
 	PrivilegeID: "privileges.privilege_id",
 	UserAddress: "privileges.user_address",
@@ -68,38 +63,13 @@ var PrivilegeTableColumns = struct {
 
 // Generated where
 
-type whereHelperstring struct{ field string }
-
-func (w whereHelperstring) EQ(x string) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
-func (w whereHelperstring) NEQ(x string) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
-func (w whereHelperstring) LT(x string) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
-func (w whereHelperstring) LTE(x string) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
-func (w whereHelperstring) GT(x string) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
-func (w whereHelperstring) GTE(x string) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
-func (w whereHelperstring) IN(slice []string) qm.QueryMod {
-	values := make([]interface{}, 0, len(slice))
-	for _, value := range slice {
-		values = append(values, value)
-	}
-	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
-}
-func (w whereHelperstring) NIN(slice []string) qm.QueryMod {
-	values := make([]interface{}, 0, len(slice))
-	for _, value := range slice {
-		values = append(values, value)
-	}
-	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
-}
-
 var PrivilegeWhere = struct {
-	ID          whereHelperstring
 	TokenID     whereHelperint
 	PrivilegeID whereHelperint
 	UserAddress whereHelper__byte
 	SetAt       whereHelpertime_Time
 	ExpiresAt   whereHelpertime_Time
 }{
-	ID:          whereHelperstring{field: "\"identity_api\".\"privileges\".\"id\""},
 	TokenID:     whereHelperint{field: "\"identity_api\".\"privileges\".\"token_id\""},
 	PrivilegeID: whereHelperint{field: "\"identity_api\".\"privileges\".\"privilege_id\""},
 	UserAddress: whereHelper__byte{field: "\"identity_api\".\"privileges\".\"user_address\""},
@@ -135,10 +105,10 @@ func (r *privilegeR) GetToken() *Vehicle {
 type privilegeL struct{}
 
 var (
-	privilegeAllColumns            = []string{"id", "token_id", "privilege_id", "user_address", "set_at", "expires_at"}
-	privilegeColumnsWithoutDefault = []string{"id", "token_id", "privilege_id", "user_address", "set_at", "expires_at"}
+	privilegeAllColumns            = []string{"token_id", "privilege_id", "user_address", "set_at", "expires_at"}
+	privilegeColumnsWithoutDefault = []string{"token_id", "privilege_id", "user_address", "set_at", "expires_at"}
 	privilegeColumnsWithDefault    = []string{}
-	privilegePrimaryKeyColumns     = []string{"id"}
+	privilegePrimaryKeyColumns     = []string{"token_id", "privilege_id", "user_address"}
 	privilegeGeneratedColumns      = []string{}
 )
 
@@ -567,7 +537,7 @@ func (o *Privilege) SetToken(ctx context.Context, exec boil.ContextExecutor, ins
 		strmangle.SetParamNames("\"", "\"", 1, []string{"token_id"}),
 		strmangle.WhereClause("\"", "\"", 2, privilegePrimaryKeyColumns),
 	)
-	values := []interface{}{related.ID, o.ID}
+	values := []interface{}{related.ID, o.TokenID, o.PrivilegeID, o.UserAddress}
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -611,7 +581,7 @@ func Privileges(mods ...qm.QueryMod) privilegeQuery {
 
 // FindPrivilege retrieves a single record by ID with an executor.
 // If selectCols is empty Find will return all columns.
-func FindPrivilege(ctx context.Context, exec boil.ContextExecutor, iD string, selectCols ...string) (*Privilege, error) {
+func FindPrivilege(ctx context.Context, exec boil.ContextExecutor, tokenID int, privilegeID int, userAddress []byte, selectCols ...string) (*Privilege, error) {
 	privilegeObj := &Privilege{}
 
 	sel := "*"
@@ -619,10 +589,10 @@ func FindPrivilege(ctx context.Context, exec boil.ContextExecutor, iD string, se
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from \"identity_api\".\"privileges\" where \"id\"=$1", sel,
+		"select %s from \"identity_api\".\"privileges\" where \"token_id\"=$1 AND \"privilege_id\"=$2 AND \"user_address\"=$3", sel,
 	)
 
-	q := queries.Raw(query, iD)
+	q := queries.Raw(query, tokenID, privilegeID, userAddress)
 
 	err := q.Bind(ctx, exec, privilegeObj)
 	if err != nil {
@@ -974,7 +944,7 @@ func (o *Privilege) Delete(ctx context.Context, exec boil.ContextExecutor) (int6
 	}
 
 	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), privilegePrimaryKeyMapping)
-	sql := "DELETE FROM \"identity_api\".\"privileges\" WHERE \"id\"=$1"
+	sql := "DELETE FROM \"identity_api\".\"privileges\" WHERE \"token_id\"=$1 AND \"privilege_id\"=$2 AND \"user_address\"=$3"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -1071,7 +1041,7 @@ func (o PrivilegeSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor
 // Reload refetches the object from the database
 // using the primary keys with an executor.
 func (o *Privilege) Reload(ctx context.Context, exec boil.ContextExecutor) error {
-	ret, err := FindPrivilege(ctx, exec, o.ID)
+	ret, err := FindPrivilege(ctx, exec, o.TokenID, o.PrivilegeID, o.UserAddress)
 	if err != nil {
 		return err
 	}
@@ -1110,16 +1080,16 @@ func (o *PrivilegeSlice) ReloadAll(ctx context.Context, exec boil.ContextExecuto
 }
 
 // PrivilegeExists checks if the Privilege row exists.
-func PrivilegeExists(ctx context.Context, exec boil.ContextExecutor, iD string) (bool, error) {
+func PrivilegeExists(ctx context.Context, exec boil.ContextExecutor, tokenID int, privilegeID int, userAddress []byte) (bool, error) {
 	var exists bool
-	sql := "select exists(select 1 from \"identity_api\".\"privileges\" where \"id\"=$1 limit 1)"
+	sql := "select exists(select 1 from \"identity_api\".\"privileges\" where \"token_id\"=$1 AND \"privilege_id\"=$2 AND \"user_address\"=$3 limit 1)"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
 		fmt.Fprintln(writer, sql)
-		fmt.Fprintln(writer, iD)
+		fmt.Fprintln(writer, tokenID, privilegeID, userAddress)
 	}
-	row := exec.QueryRowContext(ctx, sql, iD)
+	row := exec.QueryRowContext(ctx, sql, tokenID, privilegeID, userAddress)
 
 	err := row.Scan(&exists)
 	if err != nil {
@@ -1131,5 +1101,5 @@ func PrivilegeExists(ctx context.Context, exec boil.ContextExecutor, iD string) 
 
 // Exists checks if the Privilege row exists.
 func (o *Privilege) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
-	return PrivilegeExists(ctx, exec, o.ID)
+	return PrivilegeExists(ctx, exec, o.TokenID, o.PrivilegeID, o.UserAddress)
 }

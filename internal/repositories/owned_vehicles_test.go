@@ -12,7 +12,6 @@ import (
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/segmentio/ksuid"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/volatiletech/null/v8"
@@ -97,7 +96,6 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Success() {
 	expiresAt := currTime.Add(time.Minute + 10).UTC().Truncate(time.Microsecond)
 	privileges := []models.Privilege{
 		{
-			ID:          ksuid.New().String(),
 			TokenID:     1,
 			PrivilegeID: 1,
 			UserAddress: wallet2.Bytes(),
