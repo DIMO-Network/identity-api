@@ -370,7 +370,6 @@ func (o *AccessibleVehiclesRepoTestSuite) TestVehiclesMultiplePrivsOnOne() {
 
 	privileges := []models.Privilege{
 		{
-			ID:          ksuid.New().String(),
 			TokenID:     2,
 			PrivilegeID: 1,
 			UserAddress: wallet.Bytes(),
@@ -378,7 +377,6 @@ func (o *AccessibleVehiclesRepoTestSuite) TestVehiclesMultiplePrivsOnOne() {
 			ExpiresAt:   currTime.Add(time.Hour),
 		},
 		{
-			ID:          ksuid.New().String(),
 			TokenID:     2,
 			PrivilegeID: 2,
 			UserAddress: wallet.Bytes(),
