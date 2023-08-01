@@ -77,7 +77,12 @@ func (v *Repository) GetAccessibleVehicles(ctx context.Context, addr common.Addr
 		// Use limit + 1 here to check if there's a next page.
 	}
 
-	totalCount, err := models.Vehicles(queryMods...).Count(ctx, v.pdb.DBS().Reader)
+	totalCount, err := models.Vehicles(
+		// We're performing this because SQLBoiler doesn't understand DISTINCT ON. If we use
+		// the original version of queryMods the entire SELECT clause will be replaced by
+		// SELECT COUNT(*), and we'll probably over-count the number of vehicles.
+		append([]qm.QueryMod{qm.Distinct(models.VehicleTableColumns.ID)}, queryMods[1:]...)...,
+	).Count(ctx, v.pdb.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}
