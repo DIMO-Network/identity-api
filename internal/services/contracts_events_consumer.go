@@ -115,6 +115,8 @@ func NewContractsEventsConsumer(dbs db.Store, log *zerolog.Logger, settings *con
 }
 
 func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.CloudEvent[json.RawMessage]) error {
+
+	fmt.Println(event)
 	// Filter out end-of-block events.
 	if event.Type != contractEventCEType {
 		return nil
