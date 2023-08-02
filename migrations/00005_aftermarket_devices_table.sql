@@ -7,7 +7,7 @@ CREATE TABLE aftermarket_devices(
     "owner" bytea CONSTRAINT aftermarket_devices_owner_check CHECK (length("owner") = 20),
     "serial" text,
     imei text,
-    minted_at timestamptz
+    minted_at timestamptz(0)
 );
 
 -- +goose StatementEnd

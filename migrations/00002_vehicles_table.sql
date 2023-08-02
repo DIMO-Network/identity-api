@@ -6,7 +6,7 @@ CREATE TABLE vehicles (
     make varchar(100),
     model varchar(100),
     year int,
-    mint_time timestamptz
+    mint_time timestamptz(0)
 );
 -- +goose StatementEnd
 
