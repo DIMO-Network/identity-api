@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
+	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/graph-gophers/dataloader/v7"
 )
 
@@ -46,14 +46,7 @@ func (v *VehicleLoader) BatchGetLinkedVehicleByAftermarketID(ctx context.Context
 	for i, k := range vehicleIDs {
 		if v, ok := vehicleByID[k]; ok {
 			results[i] = &dataloader.Result[*model.Vehicle]{
-				Data: &model.Vehicle{
-					ID:       k,
-					Owner:    common.BytesToAddress(v.OwnerAddress),
-					Make:     v.Make.Ptr(),
-					Model:    v.Model.Ptr(),
-					Year:     v.Year.Ptr(),
-					MintedAt: v.MintedAt,
-				},
+				Data: repositories.VehicleToAPI(v),
 			}
 		} else {
 			results[i] = &dataloader.Result[*model.Vehicle]{Error: fmt.Errorf("no vehicle with id %d", k)}

@@ -67,16 +67,7 @@ func (r *Repository) GetOwnedAftermarketDevices(ctx context.Context, addr common
 	for _, d := range ads {
 		adEdges = append(adEdges,
 			&gmodel.AftermarketDeviceEdge{
-				Node: &gmodel.AftermarketDevice{
-					ID:          d.ID,
-					Address:     helpers.BytesToAddr(d.Address),
-					Owner:       common.BytesToAddress(d.Owner),
-					Serial:      d.Serial.Ptr(),
-					IMEI:        d.Imei.Ptr(),
-					Beneficiary: common.BytesToAddress(d.Beneficiary),
-					VehicleID:   d.VehicleID.Ptr(),
-					MintedAt:    d.MintedAt,
-				},
+				Node:   AftermarketDeviceToAPI(d),
 				Cursor: helpers.IDToCursor(d.ID),
 			},
 		)
@@ -96,4 +87,17 @@ func (r *Repository) GetOwnedAftermarketDevices(ctx context.Context, addr common
 
 	res.PageInfo.EndCursor = &adEdges[len(adEdges)-1].Cursor
 	return res, nil
+}
+
+func AftermarketDeviceToAPI(d *models.AftermarketDevice) *gmodel.AftermarketDevice {
+	return &gmodel.AftermarketDevice{
+		ID:          d.ID,
+		Address:     helpers.BytesToAddr(d.Address),
+		Owner:       common.BytesToAddress(d.Owner),
+		Serial:      d.Serial.Ptr(),
+		IMEI:        d.Imei.Ptr(),
+		Beneficiary: common.BytesToAddress(d.Beneficiary),
+		VehicleID:   d.VehicleID.Ptr(),
+		MintedAt:    d.MintedAt,
+	}
 }

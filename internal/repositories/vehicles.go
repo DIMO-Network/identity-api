@@ -27,20 +27,24 @@ func New(pdb db.Store) *Repository {
 	}
 }
 
+func VehicleToAPI(v *models.Vehicle) *gmodel.Vehicle {
+	return &gmodel.Vehicle{
+		ID:       v.ID,
+		Owner:    common.BytesToAddress(v.OwnerAddress),
+		Make:     v.Make.Ptr(),
+		Model:    v.Model.Ptr(),
+		Year:     v.Year.Ptr(),
+		MintedAt: v.MintedAt,
+	}
+}
+
 func (v *Repository) createVehiclesResponse(totalCount int64, vehicles models.VehicleSlice, hasNext bool) *gmodel.VehicleConnection {
 	endCursr := helpers.IDToCursor(vehicles[len(vehicles)-1].ID)
 
 	var vEdges []*gmodel.VehicleEdge
 	for _, v := range vehicles {
 		edge := &gmodel.VehicleEdge{
-			Node: &gmodel.Vehicle{
-				ID:       v.ID,
-				Owner:    common.BytesToAddress(v.OwnerAddress),
-				Make:     v.Make.Ptr(),
-				Model:    v.Model.Ptr(),
-				Year:     v.Year.Ptr(),
-				MintedAt: v.MintedAt,
-			},
+			Node:   VehicleToAPI(v),
 			Cursor: helpers.IDToCursor(v.ID),
 		}
 
