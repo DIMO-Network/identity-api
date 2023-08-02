@@ -6,10 +6,9 @@ scalar Time
 scalar Address
 scalar BigInt
 
-type VehicleConnection {
-  totalCount: Int!
-  edges: [VehicleEdge!]!
-  pageInfo: PageInfo!
+type Query {
+  accessibleVehicles(address: Address!, first: Int, after: String): VehicleConnection!
+  ownedAftermarketDevices(address: Address!, first: Int, after: String): AftermarketDeviceConnection!
 }
 
 type Vehicle {
@@ -21,6 +20,12 @@ type Vehicle {
   mintedAt: Time!
   aftermarketDevice: AftermarketDevice
   privileges: [Privilege!]!
+}
+
+type VehicleConnection {
+  totalCount: Int!
+  edges: [VehicleEdge!]!
+  pageInfo: PageInfo!
 }
 
 type VehicleEdge {
@@ -60,17 +65,4 @@ type Privilege {
   user: Address!
   setAt: Time!
   expiresAt: Time!
-}
-
-type Query {
-  accessibleVehicles(
-    address: Address!
-    first: Int
-    after: String
-  ): VehicleConnection!
-  ownedAftermarketDevices(
-    address: Address!
-    first: Int
-    after: String
-  ): AftermarketDeviceConnection!
 }
