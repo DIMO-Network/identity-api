@@ -47,12 +47,13 @@ func (ad *AftermarketDeviceLoader) BatchGetLinkedAftermarketDeviceByVehicleID(ct
 		if am, ok := amByVehicleID[vID]; ok {
 			results[i] = &dataloader.Result[*model.AftermarketDevice]{
 				Data: &model.AftermarketDevice{
-					ID:       am.ID,
-					Address:  helpers.BytesToAddr(am.Address),
-					Owner:    common.BytesToAddress(am.Owner),
-					Serial:   am.Serial.Ptr(),
-					IMEI:     am.Imei.Ptr(),
-					MintedAt: am.MintedAt,
+					ID:        am.ID,
+					Address:   helpers.BytesToAddr(am.Address),
+					Owner:     common.BytesToAddress(am.Owner),
+					Serial:    am.Serial.Ptr(),
+					IMEI:      am.Imei.Ptr(),
+					MintedAt:  am.MintedAt,
+					VehicleID: am.VehicleID.Ptr(),
 				},
 			}
 		} else {
