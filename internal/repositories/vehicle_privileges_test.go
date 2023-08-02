@@ -60,7 +60,7 @@ func (s *VehiclesPrivilegesRepoTestSuite) Test_GetVehiclePrivileges_Success() {
 	_, wallet, err := helpers.GenerateWallet()
 	s.NoError(err)
 
-	currTime := time.Now().UTC().Truncate(time.Microsecond)
+	currTime := time.Now().UTC().Truncate(time.Second)
 
 	vehicles := []models.Vehicle{
 		{
@@ -79,7 +79,7 @@ func (s *VehiclesPrivilegesRepoTestSuite) Test_GetVehiclePrivileges_Success() {
 		}
 	}
 
-	expiresAt := currTime.Add(time.Minute + 10).UTC().Truncate(time.Microsecond)
+	expiresAt := currTime.Add(time.Minute + 10).UTC().Truncate(time.Second)
 	privileges := []*models.Privilege{
 		{
 			TokenID:     1,

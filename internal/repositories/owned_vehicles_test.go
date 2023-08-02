@@ -67,7 +67,7 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Success() {
 	_, wallet2, err := helpers.GenerateWallet()
 	s.NoError(err)
 
-	currTime := time.Now().UTC().Truncate(time.Microsecond)
+	currTime := time.Now().UTC().Truncate(time.Second)
 	vehicles := []models.Vehicle{
 		{
 			ID:           1,
@@ -93,7 +93,7 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Success() {
 		}
 	}
 
-	expiresAt := currTime.Add(time.Minute + 10).UTC().Truncate(time.Microsecond)
+	expiresAt := currTime.Add(time.Minute + 10).UTC().Truncate(time.Second)
 	privileges := []models.Privilege{
 		{
 			TokenID:     1,
@@ -151,7 +151,7 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination() {
 	_, wallet, err := helpers.GenerateWallet()
 	s.NoError(err)
 
-	currTime := time.Now().UTC().Truncate(time.Microsecond)
+	currTime := time.Now().UTC().Truncate(time.Second)
 	vehicles := []models.Vehicle{
 		{
 			ID:           1,
@@ -206,7 +206,7 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination_NextPage()
 	_, wallet, err := helpers.GenerateWallet()
 	s.NoError(err)
 
-	currTime := time.Now().UTC().Truncate(time.Microsecond)
+	currTime := time.Now().UTC().Truncate(time.Second)
 	vehicles := []models.Vehicle{
 		{
 			ID:           1,

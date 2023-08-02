@@ -65,7 +65,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Success() {
 	_, wallet2, err := test.GenerateWallet()
 	o.NoError(err)
 
-	currTime := time.Now().UTC().Truncate(time.Microsecond)
+	currTime := time.Now().UTC().Truncate(time.Second)
 	vehicles := []models.Vehicle{
 		{
 			ID:           1,
@@ -146,7 +146,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination(
 	_, wallet, err := test.GenerateWallet()
 	o.NoError(err)
 
-	currTime := time.Now().UTC().Truncate(time.Microsecond)
+	currTime := time.Now().UTC().Truncate(time.Second)
 	vehicles := []models.Vehicle{
 		{
 			ID:           1,
@@ -200,7 +200,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 	_, wallet, err := test.GenerateWallet()
 	o.NoError(err)
 
-	currTime := time.Now().UTC().Truncate(time.Microsecond)
+	currTime := time.Now().UTC().Truncate(time.Second)
 	vehicles := []models.Vehicle{
 		{
 			ID:           1,
@@ -258,7 +258,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_OwnedByUser
 	_, wallet2, err := test.GenerateWallet()
 	o.NoError(err)
 
-	currTime := time.Now().UTC().Truncate(time.Microsecond)
+	currTime := time.Now().UTC().Truncate(time.Second)
 	vehicles := []models.Vehicle{
 		{
 			ID:           1,
@@ -342,7 +342,7 @@ func (o *AccessibleVehiclesRepoTestSuite) TestVehiclesMultiplePrivsOnOne() {
 	_, wallet2, err := test.GenerateWallet()
 	o.NoError(err)
 
-	currTime := time.Now().UTC().Truncate(time.Microsecond)
+	currTime := time.Now().UTC().Truncate(time.Second)
 	vehicles := []models.Vehicle{
 		{
 			ID:           1,
