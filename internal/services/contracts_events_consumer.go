@@ -38,6 +38,7 @@ const (
 	AftermarketDevicePairedEvent       EventName = "AftermarketDevicePaired"
 	AftermarketDeviceUnpairedEvent     EventName = "AftermarketDeviceUnpaired"
 	BeneficiarySetEvent                EventName = "BeneficiarySet"
+	AftermarketDeviceNodeMintedEvent   EventName = "AftermarketDeviceNodeMinted"
 )
 
 func (r EventName) String() string {
@@ -142,6 +143,8 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 		switch eventName {
 		case VehicleAttributeSet:
 			return c.handleVehicleAttributeSetEvent(ctx, &data)
+		case AftermarketDeviceNodeMintedEvent:
+			return c.handleAftermarketDeviceMintedEvent(ctx, &data)
 		case AftermarketDeviceAttributeSetEvent:
 			return c.handleAftermarketDeviceAttributeSetEvent(ctx, &data)
 		case AftermarketDevicePairedEvent:
@@ -168,6 +171,21 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 	c.log.Debug().Str("event", data.EventName).Msg("Handler not provided for event.")
 
 	return nil
+}
+
+func (c *ContractsEventsConsumer) handleAftermarketDeviceMintedEvent(ctx context.Context, e *ContractEventData) error {
+	var args AftermarketDeviceNodeMintedData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	ad := models.AftermarketDevice{
+		ID:      int(args.TokenID.Int64()),
+		Address: null.BytesFrom(args.AftermarketDeviceAddress.Bytes()),
+	}
+
+	_, err := ad.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.AftermarketDeviceColumns.Address))
+	return err
 }
 
 func (c *ContractsEventsConsumer) handleVehicleAttributeSetEvent(ctx context.Context, e *ContractEventData) error {
