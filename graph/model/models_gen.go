@@ -31,15 +31,26 @@ type Privilege struct {
 	ExpiresAt time.Time      `json:"expiresAt"`
 }
 
+type PrivilegeEdge struct {
+	Node   *Privilege `json:"node"`
+	Cursor string     `json:"cursor"`
+}
+
+type PrivilegesConnection struct {
+	TotalCount int              `json:"totalCount"`
+	Edges      []*PrivilegeEdge `json:"edges"`
+	PageInfo   *PageInfo        `json:"pageInfo"`
+}
+
 type Vehicle struct {
-	ID                int                `json:"id"`
-	Owner             common.Address     `json:"owner"`
-	Make              *string            `json:"make,omitempty"`
-	Model             *string            `json:"model,omitempty"`
-	Year              *int               `json:"year,omitempty"`
-	MintedAt          time.Time          `json:"mintedAt"`
-	AftermarketDevice *AftermarketDevice `json:"aftermarketDevice,omitempty"`
-	Privileges        []*Privilege       `json:"privileges"`
+	ID                int                   `json:"id"`
+	Owner             common.Address        `json:"owner"`
+	Make              *string               `json:"make,omitempty"`
+	Model             *string               `json:"model,omitempty"`
+	Year              *int                  `json:"year,omitempty"`
+	MintedAt          time.Time             `json:"mintedAt"`
+	AftermarketDevice *AftermarketDevice    `json:"aftermarketDevice,omitempty"`
+	Privileges        *PrivilegesConnection `json:"privileges"`
 }
 
 type VehicleConnection struct {
