@@ -1,4 +1,8 @@
-.PHONY: models
+.PHONY: run orm gql
 
-models:
+run:
+	go run ./cmd/identity-api
+orm:
 	sqlboiler psql --no-tests --wipe
+gql:
+	go run github.com/99designs/gqlgen generate

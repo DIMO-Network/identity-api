@@ -30,6 +30,11 @@ func (r *queryResolver) OwnedAftermarketDevices(ctx context.Context, address com
 	return r.Repo.GetOwnedAftermarketDevices(ctx, address, first, after)
 }
 
+// Vehicle is the resolver for the vehicle field.
+func (r *queryResolver) Vehicle(ctx context.Context, id int) (*model.Vehicle, error) {
+	return r.Repo.GetVehicle(ctx, id)
+}
+
 // AftermarketDevice is the resolver for the aftermarketDevice field.
 func (r *vehicleResolver) AftermarketDevice(ctx context.Context, obj *model.Vehicle) (*model.AftermarketDevice, error) {
 	return loader.GetAftermarketDeviceByVehicleID(ctx, obj.ID)
