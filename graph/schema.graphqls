@@ -9,6 +9,7 @@ scalar BigInt
 type Query {
   accessibleVehicles(address: Address!, first: Int, after: String): VehicleConnection!
   ownedAftermarketDevices(address: Address!, first: Int, after: String): AftermarketDeviceConnection!
+  vehicle(id: Int!): Vehicle!
 }
 
 type Vehicle {

@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/loader"
@@ -28,6 +29,11 @@ func (r *queryResolver) AccessibleVehicles(ctx context.Context, address common.A
 // OwnedAftermarketDevices is the resolver for the ownedAftermarketDevices field.
 func (r *queryResolver) OwnedAftermarketDevices(ctx context.Context, address common.Address, first *int, after *string) (*model.AftermarketDeviceConnection, error) {
 	return r.Repo.GetOwnedAftermarketDevices(ctx, address, first, after)
+}
+
+// Vehicle is the resolver for the vehicle field.
+func (r *queryResolver) Vehicle(ctx context.Context, id int) (*model.Vehicle, error) {
+	panic(fmt.Errorf("not implemented: Vehicle - vehicle"))
 }
 
 // AftermarketDevice is the resolver for the aftermarketDevice field.

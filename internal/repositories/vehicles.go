@@ -140,3 +140,12 @@ func (v *Repository) GetAccessibleVehicles(ctx context.Context, addr common.Addr
 
 	return v.createVehiclesResponse(totalCount, all, hasNext), nil
 }
+
+func (r *Repository) GetVehicle(ctx context.Context, id int) (*gmodel.Vehicle, error) {
+	v, err := models.FindVehicle(ctx, r.pdb.DBS().Reader, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return VehicleToAPI(v), nil
+}
