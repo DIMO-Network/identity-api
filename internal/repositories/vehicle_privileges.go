@@ -73,7 +73,7 @@ func (p *Repository) createPrivilegeResponse(privs models.PrivilegeSlice, totalC
 	return res, nil
 }
 
-func (p *Repository) GetPrivilegesForVehicle(ctx context.Context, vehicle *gmodel.Vehicle, first *int, after *string) (*gmodel.PrivilegesConnection, error) {
+func (p *Repository) GetPrivilegesForVehicle(ctx context.Context, tokenID int, first *int, after *string) (*gmodel.PrivilegesConnection, error) {
 	pHelp := helpers.PaginationHelper[PrivilegeCursor]{}
 
 	limit := defaultPageSize
@@ -85,7 +85,7 @@ func (p *Repository) GetPrivilegesForVehicle(ctx context.Context, vehicle *gmode
 	}
 
 	queryMods := []qm.QueryMod{
-		models.PrivilegeWhere.TokenID.EQ(vehicle.ID),
+		models.PrivilegeWhere.TokenID.EQ(tokenID),
 		models.PrivilegeWhere.ExpiresAt.GTE(time.Now()),
 	}
 
@@ -112,7 +112,7 @@ func (p *Repository) GetPrivilegesForVehicle(ctx context.Context, vehicle *gmode
 			qm.Expr(
 				models.PrivilegeWhere.SetAt.EQ(afterCursor.SetAt),
 				qm.And(
-					fmt.Sprintf("(%s,%s,%s) > (?,?,?)", models.PrivilegeColumns.TokenID, models.PrivilegeColumns.PrivilegeID, models.PrivilegeColumns.UserAddress),
+					fmt.Sprintf("(%s, %s, %s) > (?, ?, ?)", models.PrivilegeColumns.TokenID, models.PrivilegeColumns.PrivilegeID, models.PrivilegeColumns.UserAddress),
 					afterCursor.TokenID, afterCursor.PrivilegeID, afterCursor.User,
 				),
 				qm.Or2(models.PrivilegeWhere.SetAt.LT(afterCursor.SetAt)),
