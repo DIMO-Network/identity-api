@@ -8,24 +8,10 @@ Run `make` to see some helpful sub-commands:
 Specify a subcommand:
 
   run                  Run the app.
-  migrate              Run database migrations.
-  boil                 Generate SQLBoiler models.
-  gql                  Generate gqlgen code.
+  migrate              Run unapplied database migrations.
+  boil                 Regenerate SQLBoiler models.
+  gql                  Regenerate gqlgen code.
 
-```
-
-## Start App
-
-`go run ./cmd/identity-api`
-
-## Create migration
-
-`goose -dir migrations create <migration_name> sql`
-
-## graphQL generate new schema model
-
-```bash
-go generate ./...
 ```
 
 ```mermaid
