@@ -124,22 +124,22 @@ func (p *Repository) GetPrivilegesForVehicle(ctx context.Context, tokenID int, f
 		),
 	)
 
-	all, err := models.Privileges(queryMods...).All(ctx, p.pdb.DBS().Reader)
+	page, err := models.Privileges(queryMods...).All(ctx, p.pdb.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(all) == 0 {
+	if len(page) == 0 {
 		return &gmodel.PrivilegesConnection{
 			TotalCount: int(totalCount),
 			Edges:      []*gmodel.PrivilegeEdge{},
 		}, nil
 	}
 
-	hasNext := len(all) > limit
+	hasNext := len(page) > limit
 	if hasNext {
-		all = all[:limit]
+		page = page[:limit]
 	}
 
-	return p.createPrivilegeResponse(all, totalCount, hasNext, pHelp)
+	return p.createPrivilegeResponse(page, totalCount, hasNext, pHelp)
 }
