@@ -4,7 +4,13 @@ Generate [SQLBoiler](https://github.com/volatiletech/sqlboiler) models:
 
 ```
 go run ./cmd/identity-api migrate
-make models
+```
+
+Makefile commands:
+```
+run    Start the server
+orm    Regenerate SQLBoiler models using the configured, running Postgres
+gql    Generate Go from gqlgen configuration
 ```
 
 ## Start App
