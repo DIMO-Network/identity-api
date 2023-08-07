@@ -102,7 +102,6 @@ func (s *VehiclesPrivilegesRepoTestSuite) Test_GetVehiclePrivileges_Success() {
 	pHelp := &helpers.PaginationHelper[PrivilegeCursor]{}
 	cursor, err := pHelp.EncodeCursor(PrivilegeCursor{
 		SetAt:       currTime,
-		TokenID:     1,
 		PrivilegeID: 1,
 		User:        wallet.Bytes(),
 	})
@@ -194,7 +193,6 @@ func (s *VehiclesPrivilegesRepoTestSuite) Test_Privileges_NoExpiredPrivilege_Pag
 	pHelp := &helpers.PaginationHelper[PrivilegeCursor]{}
 	cursor, err := pHelp.EncodeCursor(PrivilegeCursor{
 		SetAt:       currTime,
-		TokenID:     1,
 		PrivilegeID: 1,
 		User:        wallet2.Bytes(),
 	})
@@ -286,7 +284,6 @@ func (s *VehiclesPrivilegesRepoTestSuite) Test_Privileges_Pagination_Success() {
 	pHelp := &helpers.PaginationHelper[PrivilegeCursor]{}
 	cursor, err := pHelp.EncodeCursor(PrivilegeCursor{
 		SetAt:       currTime,
-		TokenID:     1,
 		PrivilegeID: 1,
 		User:        wallet2.Bytes(),
 	})
@@ -317,7 +314,6 @@ func (s *VehiclesPrivilegesRepoTestSuite) Test_Privileges_Pagination_Success() {
 
 	cursor, err = pHelp.EncodeCursor(PrivilegeCursor{
 		SetAt:       currTime,
-		TokenID:     1,
 		PrivilegeID: 2,
 		User:        wallet2.Bytes(),
 	})

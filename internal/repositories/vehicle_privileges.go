@@ -15,7 +15,6 @@ import (
 
 type PrivilegeCursor struct {
 	SetAt       time.Time
-	TokenID     int
 	PrivilegeID int
 	User        []byte
 }
@@ -33,7 +32,6 @@ func (p *Repository) createPrivilegeResponse(privs models.PrivilegeSlice, totalC
 	lastPriv := privs[len(privs)-1]
 	endCursr, err := pHelper.EncodeCursor(PrivilegeCursor{
 		SetAt:       lastPriv.SetAt,
-		TokenID:     lastPriv.TokenID,
 		PrivilegeID: lastPriv.PrivilegeID,
 		User:        lastPriv.UserAddress,
 	})
@@ -46,7 +44,6 @@ func (p *Repository) createPrivilegeResponse(privs models.PrivilegeSlice, totalC
 	for _, pr := range privs {
 		crsr, err := pHelper.EncodeCursor(PrivilegeCursor{
 			SetAt:       pr.SetAt,
-			TokenID:     pr.TokenID,
 			PrivilegeID: pr.PrivilegeID,
 			User:        pr.UserAddress,
 		})
@@ -112,8 +109,8 @@ func (p *Repository) GetPrivilegesForVehicle(ctx context.Context, tokenID int, f
 			qm.Expr(
 				models.PrivilegeWhere.SetAt.EQ(afterCursor.SetAt),
 				qm.And(
-					fmt.Sprintf("(%s, %s, %s) > (?, ?, ?)", models.PrivilegeColumns.TokenID, models.PrivilegeColumns.PrivilegeID, models.PrivilegeColumns.UserAddress),
-					afterCursor.TokenID, afterCursor.PrivilegeID, afterCursor.User,
+					fmt.Sprintf("(%s, %s) > (?, ?)", models.PrivilegeColumns.PrivilegeID, models.PrivilegeColumns.UserAddress),
+					afterCursor.PrivilegeID, afterCursor.User,
 				),
 				qm.Or2(models.PrivilegeWhere.SetAt.LT(afterCursor.SetAt)),
 			),
@@ -123,7 +120,7 @@ func (p *Repository) GetPrivilegesForVehicle(ctx context.Context, tokenID int, f
 	queryMods = append(queryMods,
 		qm.Limit(limit+1),
 		qm.OrderBy(
-			fmt.Sprintf("%s DESC, (%s, %s, %s)", models.PrivilegeColumns.SetAt, models.PrivilegeColumns.TokenID, models.PrivilegeColumns.PrivilegeID, models.PrivilegeColumns.UserAddress),
+			fmt.Sprintf("%s DESC, (%s, %s)", models.PrivilegeColumns.SetAt, models.PrivilegeColumns.PrivilegeID, models.PrivilegeColumns.UserAddress),
 		),
 	)
 
