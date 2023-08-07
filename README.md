@@ -1,16 +1,17 @@
 # identity-api
 
-Generate [SQLBoiler](https://github.com/volatiletech/sqlboiler) models:
+Run `make` to see some helpful sub-commands:
 
 ```
-go run ./cmd/identity-api migrate
-```
+% make
 
-Makefile commands:
-```
-run    Start the server
-orm    Regenerate SQLBoiler models using the configured, running Postgres
-gql    Generate Go from gqlgen configuration
+Specify a subcommand:
+
+  run                  Run the app.
+  migrate              Run database migrations.
+  boil                 Generate SQLBoiler models.
+  gql                  Generate gqlgen code.
+
 ```
 
 ## Start App
