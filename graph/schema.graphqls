@@ -7,10 +7,28 @@ scalar Address
 scalar BigInt
 
 type Query {
-  accessibleVehicles(address: Address!, first: Int, after: String): VehicleConnection!
-  ownedAftermarketDevices(address: Address!, first: Int, after: String): AftermarketDeviceConnection!
+  accessibleVehicles(
+    address: Address!
+    first: Int
+    after: String
+  ): VehicleConnection!
+
+  ownedAftermarketDevices(
+    address: Address!
+    first: Int
+    after: String
+  ): AftermarketDeviceConnection!
   vehicle(id: Int!): Vehicle!
 }
+
+# Shared Types
+
+type PageInfo {
+  endCursor: String
+  hasNextPage: Boolean!
+}
+
+# Vehicles Types
 
 type Vehicle {
   id: BigInt!
@@ -20,7 +38,12 @@ type Vehicle {
   year: Int
   mintedAt: Time!
   aftermarketDevice: AftermarketDevice
-  privileges: [Privilege!]!
+  privileges(first: Int, after: String): PrivilegesConnection!
+}
+
+type VehicleEdge {
+  node: Vehicle!
+  cursor: String!
 }
 
 type VehicleConnection {
@@ -29,10 +52,7 @@ type VehicleConnection {
   pageInfo: PageInfo!
 }
 
-type VehicleEdge {
-  node: Vehicle!
-  cursor: String!
-}
+# Aftermarket Types
 
 type AftermarketDevice {
   id: BigInt!
@@ -56,14 +76,22 @@ type AftermarketDeviceEdge {
   node: AftermarketDevice!
 }
 
-type PageInfo {
-  endCursor: String
-  hasNextPage: Boolean!
-}
+# Privileges Types
 
 type Privilege {
   id: Int!
   user: Address!
   setAt: Time!
   expiresAt: Time!
+}
+
+type PrivilegeEdge {
+  node: Privilege!
+  cursor: String!
+}
+
+type PrivilegesConnection {
+  totalCount: Int!
+  edges: [PrivilegeEdge!]!
+  pageInfo: PageInfo!
 }
