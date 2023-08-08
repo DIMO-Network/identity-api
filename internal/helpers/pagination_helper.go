@@ -3,7 +3,6 @@ package helpers
 import (
 	"bytes"
 	"encoding/base64"
-	"reflect"
 
 	"github.com/vmihailenco/msgpack/v5"
 )
@@ -14,10 +13,7 @@ func (p PaginationHelper[T]) EncodeCursor(cursor T) (string, error) {
 	var b bytes.Buffer
 	e := msgpack.NewEncoder(&b)
 
-	if reflect.ValueOf(cursor).Kind() == reflect.Struct {
-		e.UseArrayEncodedStructs(true)
-	}
-
+	e.UseArrayEncodedStructs(true)
 	if err := e.Encode(cursor); err != nil {
 		return "", err
 	}
