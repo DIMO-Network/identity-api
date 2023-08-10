@@ -30,7 +30,7 @@ type PageInfo {
 
 # Vehicles Types
 
-type Vehicle {
+type Vehicle @key(fields: "id") {
   id: BigInt!
   owner: Address!
   make: String

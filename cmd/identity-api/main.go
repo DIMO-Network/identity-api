@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/debug"
 	"github.com/99designs/gqlgen/graphql/playground"
 
 	"github.com/DIMO-Network/identity-api/graph"
@@ -54,7 +55,7 @@ func main() {
 	s := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{
 		Repo: repo,
 	}}))
-
+	s.Use(&debug.Tracer{})
 	srv := loader.Middleware(dbs, s)
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))

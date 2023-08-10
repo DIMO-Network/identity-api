@@ -53,6 +53,8 @@ type Vehicle struct {
 	Privileges        *PrivilegesConnection `json:"privileges"`
 }
 
+func (Vehicle) IsEntity() {}
+
 type VehicleConnection struct {
 	TotalCount int            `json:"totalCount"`
 	Edges      []*VehicleEdge `json:"edges"`

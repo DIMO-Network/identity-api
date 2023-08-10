@@ -8,9 +8,9 @@ exec:
   package: graph
 
 # Uncomment to enable federation
-# federation:
-#   filename: graph/federation.go
-#   package: graph
+federation:
+  filename: graph/federation.go
+  package: graph
 
 # Where should any generated models go?
 model:
