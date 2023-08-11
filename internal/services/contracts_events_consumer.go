@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math/big"
 	"strconv"
 	"strings"
 	"time"
@@ -39,6 +38,7 @@ const (
 	AftermarketDeviceUnpairedEvent     EventName = "AftermarketDeviceUnpaired"
 	BeneficiarySetEvent                EventName = "BeneficiarySet"
 	AftermarketDeviceNodeMintedEvent   EventName = "AftermarketDeviceNodeMinted"
+	SyntheticDeviceNodeMinted          EventName = "SyntheticDeviceNodeMinted"
 )
 
 func (r EventName) String() string {
@@ -46,66 +46,6 @@ func (r EventName) String() string {
 }
 
 const contractEventCEType = "zone.dimo.contract.event"
-
-type ContractEventData struct {
-	ChainID         int64           `json:"chainId"`
-	EventName       string          `json:"eventName"`
-	Block           Block           `json:"block,omitempty"`
-	Contract        common.Address  `json:"contract"`
-	TransactionHash common.Hash     `json:"transactionHash"`
-	EventSignature  common.Hash     `json:"eventSignature"`
-	Arguments       json.RawMessage `json:"arguments"`
-}
-
-type Block struct {
-	Number *big.Int    `json:"number,omitempty"`
-	Hash   common.Hash `json:"hash,omitempty"`
-	Time   time.Time   `json:"time,omitempty"`
-}
-
-type VehicleAttributeSetData struct {
-	TokenID   *big.Int
-	Attribute string
-	Info      string
-}
-
-type AftermarketDeviceNodeMintedData struct {
-	ManufacturerID           *big.Int
-	TokenID                  *big.Int
-	AftermarketDeviceAddress common.Address
-	Owner                    common.Address
-}
-
-type AftermarketDeviceAttributeSetData struct {
-	TokenID   *big.Int
-	Attribute string
-	Info      string
-}
-
-type AftermarketDevicePairData struct {
-	AftermarketDeviceNode *big.Int
-	VehicleNode           *big.Int
-	Owner                 common.Address
-}
-
-type TransferEventData struct {
-	From    common.Address
-	To      common.Address
-	TokenID *big.Int
-}
-
-type PrivilegeSetData struct {
-	TokenId *big.Int
-	PrivId  *big.Int
-	User    common.Address
-	Expires *big.Int
-}
-
-type BeneficiarySetEventData struct {
-	IdProxyAddress common.Address
-	NodeId         *big.Int
-	Beneficiary    common.Address
-}
 
 func NewContractsEventsConsumer(dbs db.Store, log *zerolog.Logger, settings *config.Settings) *ContractsEventsConsumer {
 	return &ContractsEventsConsumer{
@@ -153,6 +93,8 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 			return c.handleAftermarketDeviceUnpairedEvent(ctx, &data)
 		case BeneficiarySetEvent:
 			return c.handleBeneficiarySetEvent(ctx, &data)
+		case SyntheticDeviceNodeMinted:
+			return c.handleSyntheticDeviceNodeMintedEvent(ctx, &data)
 		}
 	case vehicleNFTAddr:
 		switch eventName {
@@ -402,4 +344,21 @@ func (c *ContractsEventsConsumer) handleBeneficiarySetEvent(ctx context.Context,
 	}
 
 	return nil
+}
+
+func (c *ContractsEventsConsumer) handleSyntheticDeviceNodeMintedEvent(ctx context.Context, e *ContractEventData) error {
+	var args SyntheticDeviceNodeMintedData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	sd := models.SyntheticDevice{
+		ID:            int(args.SyntheticDeviceNode.Int64()),
+		IntegrationID: int(args.IntegrationNode.Int64()),
+		VehicleID:     int(args.VehicleNode.Int64()),
+		DeviceAddress: args.SyntheticDeviceAddress.Bytes(),
+		MintedAt:      e.Block.Time,
+	}
+
+	return sd.Insert(ctx, c.dbs.DBS().Writer, boil.Infer())
 }
