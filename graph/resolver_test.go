@@ -73,7 +73,7 @@ func TestResolver(t *testing.T) {
 	err = ad2.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	assert.NoError(err)
 
-	err = ad2.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	err = syntheticDevice.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	assert.NoError(err)
 
 	repo := repositories.New(pdb)
@@ -119,19 +119,11 @@ func TestResolver(t *testing.T) {
 	t.Run("accessibleVehicles and syntheticDevices", func(t *testing.T) {
 		var resp interface{}
 		c.MustPost(`{
-			accessibleVehicles(address: "46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4") {
-				edges {
-					node {
-						id 
-						owner
-					}
-				}
-			}
-		}`, &resp)
+			accessibleVehicles(address: "46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4") {edges {node {id owner syntheticDevice {id}}}}}`, &resp)
 		b, _ := json.Marshal(resp)
 		fmt.Println(string(b))
 		assert.Equal(
-			`{"accessibleVehicles":{"edges":[{"node":{"id":"11","owner":"0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"}}]}}`,
+			`{"accessibleVehicles":{"edges":[{"node":{"id":"11","owner":"0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4","syntheticDevice":{"id":"1"}}}]}}`,
 			string(b))
 	})
 }
