@@ -9,9 +9,9 @@ Specify a subcommand:
 
   run                  Run the app.
   migrate              Run unapplied database migrations.
+  sql                  Create a new SQL migration file. Use the NAME variable to set the name: "make sql NAME=dcn_table".
   boil                 Regenerate SQLBoiler models.
   gql                  Regenerate gqlgen code.
-
 ```
 
 ```mermaid
