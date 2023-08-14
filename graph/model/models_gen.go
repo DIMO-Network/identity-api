@@ -42,6 +42,12 @@ type PrivilegesConnection struct {
 	PageInfo   *PageInfo        `json:"pageInfo"`
 }
 
+type SyntheticDevice struct {
+	ID            int            `json:"id"`
+	IntegrationID int            `json:"integrationId"`
+	DeviceAddress common.Address `json:"deviceAddress"`
+}
+
 type Vehicle struct {
 	ID                int                   `json:"id"`
 	Owner             common.Address        `json:"owner"`
@@ -51,6 +57,7 @@ type Vehicle struct {
 	MintedAt          time.Time             `json:"mintedAt"`
 	AftermarketDevice *AftermarketDevice    `json:"aftermarketDevice,omitempty"`
 	Privileges        *PrivilegesConnection `json:"privileges"`
+	SyntheticDevice   *SyntheticDevice      `json:"syntheticDevice,omitempty"`
 }
 
 type VehicleConnection struct {

@@ -39,6 +39,7 @@ type Vehicle {
   mintedAt: Time!
   aftermarketDevice: AftermarketDevice
   privileges(first: Int, after: String): PrivilegesConnection!
+  syntheticDevice: SyntheticDevice
 }
 
 type VehicleEdge {
@@ -94,4 +95,12 @@ type PrivilegesConnection {
   totalCount: Int!
   edges: [PrivilegeEdge!]!
   pageInfo: PageInfo!
+}
+
+# SyntheticDevice Types
+
+type SyntheticDevice {
+  id: BigInt!
+  integrationId: BigInt!
+  deviceAddress: Address!
 }

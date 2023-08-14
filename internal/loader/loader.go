@@ -18,6 +18,7 @@ const (
 type Loaders struct {
 	VehicleByID                  dataloader.Interface[int, *model.Vehicle]
 	AftermarketDeviceByVehicleID dataloader.Interface[int, *model.AftermarketDevice]
+	SyntheticDeviceByVehicleID   dataloader.Interface[int, *model.SyntheticDevice]
 }
 
 // NewDataLoader returns the instantiated Loaders struct for use in a request
@@ -25,6 +26,7 @@ func NewDataLoader(dbs db.Store) *Loaders {
 	// instantiate the user dataloader
 	vehicle := &VehicleLoader{db: dbs}
 	aftermarketDevice := &AftermarketDeviceLoader{db: dbs}
+	syntheticDevice := &SyntheticDeviceLoader{db: dbs}
 	// return the DataLoader
 	return &Loaders{
 		VehicleByID: dataloader.NewBatchedLoader(
@@ -34,6 +36,10 @@ func NewDataLoader(dbs db.Store) *Loaders {
 		AftermarketDeviceByVehicleID: dataloader.NewBatchedLoader(
 			aftermarketDevice.BatchGetLinkedAftermarketDeviceByVehicleID,
 			dataloader.WithClearCacheOnBatch[int, *model.AftermarketDevice](),
+		),
+		SyntheticDeviceByVehicleID: dataloader.NewBatchedLoader(
+			syntheticDevice.BatchGetSyntheticDeviceByVehicleID,
+			dataloader.WithClearCacheOnBatch[int, *model.SyntheticDevice](),
 		),
 	}
 }

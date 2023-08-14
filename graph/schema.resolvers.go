@@ -45,6 +45,11 @@ func (r *vehicleResolver) Privileges(ctx context.Context, obj *model.Vehicle, fi
 	return r.Repo.GetPrivilegesForVehicle(ctx, obj.ID, first, after)
 }
 
+// SyntheticDevice is the resolver for the syntheticDevice field.
+func (r *vehicleResolver) SyntheticDevice(ctx context.Context, obj *model.Vehicle) (*model.SyntheticDevice, error) {
+	return loader.GetSyntheticDeviceByVehicleID(ctx, obj.ID)
+}
+
 // AftermarketDevice returns AftermarketDeviceResolver implementation.
 func (r *Resolver) AftermarketDevice() AftermarketDeviceResolver {
 	return &aftermarketDeviceResolver{r}
