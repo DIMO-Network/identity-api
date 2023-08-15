@@ -12,6 +12,8 @@ boil: ## Generate SQLBoiler models.
 	sqlboiler psql --no-tests --wipe
 gql: ## Generate gqlgen code.
 	go run github.com/99designs/gqlgen generate
+lint: ## Run golangci-lint linters.
+	golangci-lint run
 
 help:
 	@echo "\nSpecify a subcommand:\n"
