@@ -102,5 +102,6 @@ type PrivilegesConnection {
 type SyntheticDevice {
   id: BigInt!
   integrationId: BigInt!
-  deviceAddress: Address!
+  address: Address!
+  mintedAt: Time!
 }

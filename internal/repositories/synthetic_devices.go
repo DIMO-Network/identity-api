@@ -10,6 +10,7 @@ func SyntheticDeviceToAPI(sd *models.SyntheticDevice) *gmodel.SyntheticDevice {
 	return &gmodel.SyntheticDevice{
 		ID:            sd.ID,
 		IntegrationID: sd.IntegrationID,
-		DeviceAddress: common.BytesToAddress(sd.DeviceAddress),
+		Address:       common.BytesToAddress(sd.DeviceAddress),
+		MintedAt:      sd.MintedAt,
 	}
 }

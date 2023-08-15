@@ -101,9 +101,10 @@ type ComplexityRoot struct {
 	}
 
 	SyntheticDevice struct {
-		DeviceAddress func(childComplexity int) int
+		Address       func(childComplexity int) int
 		ID            func(childComplexity int) int
 		IntegrationID func(childComplexity int) int
+		MintedAt      func(childComplexity int) int
 	}
 
 	Vehicle struct {
@@ -363,12 +364,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Vehicle(childComplexity, args["id"].(int)), true
 
-	case "SyntheticDevice.deviceAddress":
-		if e.complexity.SyntheticDevice.DeviceAddress == nil {
+	case "SyntheticDevice.address":
+		if e.complexity.SyntheticDevice.Address == nil {
 			break
 		}
 
-		return e.complexity.SyntheticDevice.DeviceAddress(childComplexity), true
+		return e.complexity.SyntheticDevice.Address(childComplexity), true
 
 	case "SyntheticDevice.id":
 		if e.complexity.SyntheticDevice.ID == nil {
@@ -383,6 +384,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.SyntheticDevice.IntegrationID(childComplexity), true
+
+	case "SyntheticDevice.mintedAt":
+		if e.complexity.SyntheticDevice.MintedAt == nil {
+			break
+		}
+
+		return e.complexity.SyntheticDevice.MintedAt(childComplexity), true
 
 	case "Vehicle.aftermarketDevice":
 		if e.complexity.Vehicle.AftermarketDevice == nil {
@@ -2284,8 +2292,8 @@ func (ec *executionContext) fieldContext_SyntheticDevice_integrationId(ctx conte
 	return fc, nil
 }
 
-func (ec *executionContext) _SyntheticDevice_deviceAddress(ctx context.Context, field graphql.CollectedField, obj *model.SyntheticDevice) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SyntheticDevice_deviceAddress(ctx, field)
+func (ec *executionContext) _SyntheticDevice_address(ctx context.Context, field graphql.CollectedField, obj *model.SyntheticDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SyntheticDevice_address(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -2298,7 +2306,7 @@ func (ec *executionContext) _SyntheticDevice_deviceAddress(ctx context.Context, 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.DeviceAddress, nil
+		return obj.Address, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2315,7 +2323,7 @@ func (ec *executionContext) _SyntheticDevice_deviceAddress(ctx context.Context, 
 	return ec.marshalNAddress2githubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SyntheticDevice_deviceAddress(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SyntheticDevice_address(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SyntheticDevice",
 		Field:      field,
@@ -2323,6 +2331,50 @@ func (ec *executionContext) fieldContext_SyntheticDevice_deviceAddress(ctx conte
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Address does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SyntheticDevice_mintedAt(ctx context.Context, field graphql.CollectedField, obj *model.SyntheticDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SyntheticDevice_mintedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MintedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SyntheticDevice_mintedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SyntheticDevice",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
 		},
 	}
 	return fc, nil
@@ -2745,8 +2797,10 @@ func (ec *executionContext) fieldContext_Vehicle_syntheticDevice(ctx context.Con
 				return ec.fieldContext_SyntheticDevice_id(ctx, field)
 			case "integrationId":
 				return ec.fieldContext_SyntheticDevice_integrationId(ctx, field)
-			case "deviceAddress":
-				return ec.fieldContext_SyntheticDevice_deviceAddress(ctx, field)
+			case "address":
+				return ec.fieldContext_SyntheticDevice_address(ctx, field)
+			case "mintedAt":
+				return ec.fieldContext_SyntheticDevice_mintedAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SyntheticDevice", field.Name)
 		},
@@ -5298,8 +5352,13 @@ func (ec *executionContext) _SyntheticDevice(ctx context.Context, sel ast.Select
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "deviceAddress":
-			out.Values[i] = ec._SyntheticDevice_deviceAddress(ctx, field, obj)
+		case "address":
+			out.Values[i] = ec._SyntheticDevice_address(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "mintedAt":
+			out.Values[i] = ec._SyntheticDevice_mintedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

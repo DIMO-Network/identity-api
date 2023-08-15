@@ -45,7 +45,8 @@ type PrivilegesConnection struct {
 type SyntheticDevice struct {
 	ID            int            `json:"id"`
 	IntegrationID int            `json:"integrationId"`
-	DeviceAddress common.Address `json:"deviceAddress"`
+	Address       common.Address `json:"address"`
+	MintedAt      time.Time      `json:"mintedAt"`
 }
 
 type Vehicle struct {
