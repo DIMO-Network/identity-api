@@ -12,6 +12,7 @@ Specify a subcommand:
   sql                  Create a new SQL migration file. Use the NAME variable to set the name: "make sql NAME=dcn_table".
   boil                 Regenerate SQLBoiler models.
   gql                  Regenerate gqlgen code.
+  lint                 Run golangci-lint linters.
 ```
 
 ```mermaid
