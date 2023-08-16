@@ -373,9 +373,7 @@ func (c *ContractsEventsConsumer) handleSyntheticDeviceNodeBurnedEvent(ctx conte
 	}
 
 	sd := models.SyntheticDevice{
-		DeviceAddress: args.Owner.Bytes(),
-		VehicleID:     int(args.VehicleNode.Int64()),
-		ID:            int(args.SyntheticDeviceNode.Int64()),
+		ID: int(args.SyntheticDeviceNode.Int64()),
 	}
 
 	_, err := sd.Delete(ctx, c.dbs.DBS().Writer)
