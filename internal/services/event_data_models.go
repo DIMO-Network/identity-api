@@ -75,3 +75,9 @@ type SyntheticDeviceNodeMintedData struct {
 	SyntheticDeviceAddress common.Address
 	Owner                  common.Address
 }
+
+type SyntheticDeviceNodeBurnedData struct {
+	SyntheticDeviceNode *big.Int
+	VehicleNode         *big.Int
+	Owner               common.Address
+}

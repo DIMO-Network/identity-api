@@ -554,3 +554,80 @@ func TestHandle_SyntheticDeviceNodeMintedEvent_Success(t *testing.T) {
 		MintedAt:      mintedTime,
 	}, sd)
 }
+
+func TestHandle_SyntheticDeviceNodeBurnedEvent_Success(t *testing.T) {
+	ctx := context.Background()
+	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
+	contractEventData.EventName = string(SyntheticDeviceNodeBurned)
+	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
+
+	_, wallet, err := helpers.GenerateWallet()
+	assert.NoError(t, err)
+
+	_, wallet2, err := helpers.GenerateWallet()
+	assert.NoError(t, err)
+
+	currTime := time.Now().UTC().Truncate(time.Second)
+	vehicles := []models.Vehicle{
+		{
+			ID:           1,
+			OwnerAddress: wallet.Bytes(),
+			Make:         null.StringFrom("Toyota"),
+			Model:        null.StringFrom("Camry"),
+			Year:         null.IntFrom(2020),
+			MintedAt:     currTime,
+		},
+	}
+
+	for _, v := range vehicles {
+		if err := v.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
+			assert.NoError(t, err)
+		}
+	}
+
+	sd := models.SyntheticDevice{
+		ID:            1,
+		IntegrationID: 2,
+		VehicleID:     1,
+		DeviceAddress: wallet2.Bytes(),
+		MintedAt:      currTime,
+	}
+
+	err = sd.Insert(ctx, pdb.DBS().Writer.DB, boil.Infer())
+	assert.NoError(t, err)
+
+	eventData := SyntheticDeviceNodeBurnedData{
+		SyntheticDeviceNode: big.NewInt(2),
+		VehicleNode:         big.NewInt(1),
+		Owner:               *wallet2,
+	}
+	settings := config.Settings{
+		DIMORegistryAddr:    contractEventData.Contract.String(),
+		DIMORegistryChainID: contractEventData.ChainID,
+	}
+
+	config := mocks.NewTestConfig()
+	consumer := mocks.NewConsumer(t, config)
+	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
+	expectedBytes := eventBytes(eventData, contractEventData, t)
+
+	consumer.ExpectConsumePartition(settings.ContractsEventTopic, 0, 0).YieldMessage(&sarama.ConsumerMessage{Value: expectedBytes})
+	outputTest, err := consumer.ConsumePartition(settings.ContractsEventTopic, 0, 0)
+	assert.NoError(t, err)
+
+	m := <-outputTest.Messages()
+	var e shared.CloudEvent[json.RawMessage]
+	err = json.Unmarshal(m.Value, &e)
+	assert.NoError(t, err)
+
+	err = contractEventConsumer.Process(ctx, &e)
+	assert.NoError(t, err)
+
+	sds, err := models.SyntheticDevices(
+		models.SyntheticDeviceWhere.VehicleID.EQ(1),
+		models.SyntheticDeviceWhere.ID.EQ(2),
+	).All(ctx, pdb.DBS().Reader)
+	assert.NoError(t, err)
+
+	assert.Empty(t, sds)
+}
