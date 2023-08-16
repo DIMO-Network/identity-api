@@ -379,9 +379,5 @@ func (c *ContractsEventsConsumer) handleSyntheticDeviceNodeBurnedEvent(ctx conte
 	}
 
 	_, err := sd.Delete(ctx, c.dbs.DBS().Writer)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
