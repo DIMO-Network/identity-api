@@ -629,5 +629,5 @@ func TestHandle_SyntheticDeviceNodeBurnedEvent_Success(t *testing.T) {
 	).All(ctx, pdb.DBS().Reader)
 	assert.NoError(t, err)
 
-	assert.Len(t, sds, 0)
+	assert.Empty(t, sds)
 }
