@@ -2,21 +2,20 @@ package services
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/volatiletech/null/v8"
-	"github.com/volatiletech/sqlboiler/v4/boil"
 
 	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/goccy/go-json"
 	"github.com/rs/zerolog"
+	"github.com/volatiletech/null/v8"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
 type ContractsEventsConsumer struct {

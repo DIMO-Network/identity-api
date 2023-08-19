@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"encoding/json"
 	"math/big"
 	"os"
 	"testing"
@@ -15,6 +14,7 @@ import (
 	"github.com/Shopify/sarama"
 	"github.com/Shopify/sarama/mocks"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/goccy/go-json"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/volatiletech/null/v8"

@@ -3,7 +3,6 @@ package graph
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -16,6 +15,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/services"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/goccy/go-json"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"

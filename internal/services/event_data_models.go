@@ -1,7 +1,8 @@
 package services
 
 import (
-	"encoding/json"
+	"github.com/goccy/go-json"
+
 	"math/big"
 	"time"
 
