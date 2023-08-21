@@ -3,10 +3,13 @@ package repositories
 import (
 	"context"
 	"errors"
+	"fmt"
+	"log"
 	"time"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
+	"github.com/DIMO-Network/identity-api/internal/middleware"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/ethereum/go-ethereum/common"
@@ -64,6 +67,12 @@ func (v *Repository) createVehiclesResponse(totalCount int64, vehicles models.Ve
 }
 
 func (v *Repository) GetAccessibleVehicles(ctx context.Context, addr common.Address, first *int, after *string) (*gmodel.VehicleConnection, error) {
+	user := middleware.GetUserFromContext(ctx)
+	log.Println(user)
+	if user == nil {
+		return nil, fmt.Errorf("Access denied")
+	}
+
 	limit := defaultPageSize
 	if first != nil {
 		limit = *first

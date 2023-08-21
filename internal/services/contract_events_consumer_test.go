@@ -475,5 +475,82 @@ func TestHandleClearBeneficiaryEvent(t *testing.T) {
 
 	assert.Equal(t, beneficiarySetData.NodeId.Int64(), int64(ad.ID))
 	assert.Equal(t, ad.Owner, ad.Beneficiary)
+}
 
+func TestHandle_SyntheticDeviceNodeMintedEvent_Success(t *testing.T) {
+	ctx := context.Background()
+	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
+	contractEventData.EventName = string(SyntheticDeviceNodeMinted)
+
+	mintedTime := mintedAt.UTC().Truncate(time.Second)
+	contractEventData.Block.Time = mintedTime
+	_, wallet, err := helpers.GenerateWallet()
+	assert.NoError(t, err)
+
+	_, wallet2, err := helpers.GenerateWallet()
+	assert.NoError(t, err)
+
+	eventData := SyntheticDeviceNodeMintedData{
+		IntegrationNode:        big.NewInt(1),
+		SyntheticDeviceNode:    big.NewInt(2),
+		VehicleNode:            big.NewInt(1),
+		SyntheticDeviceAddress: *wallet,
+		Owner:                  *wallet2,
+	}
+
+	settings := config.Settings{
+		DIMORegistryAddr:    contractEventData.Contract.String(),
+		DIMORegistryChainID: contractEventData.ChainID,
+	}
+
+	config := mocks.NewTestConfig()
+	consumer := mocks.NewConsumer(t, config)
+
+	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
+	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
+	expectedBytes := eventBytes(eventData, contractEventData, t)
+
+	currTime := time.Now().UTC().Truncate(time.Second)
+	vehicles := []models.Vehicle{
+		{
+			ID:           1,
+			OwnerAddress: wallet.Bytes(),
+			Make:         null.StringFrom("Toyota"),
+			Model:        null.StringFrom("Camry"),
+			Year:         null.IntFrom(2020),
+			MintedAt:     currTime,
+		},
+	}
+
+	for _, v := range vehicles {
+		if err := v.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
+			assert.NoError(t, err)
+		}
+	}
+
+	consumer.ExpectConsumePartition(settings.ContractsEventTopic, 0, 0).YieldMessage(&sarama.ConsumerMessage{Value: expectedBytes})
+
+	outputTest, err := consumer.ConsumePartition(settings.ContractsEventTopic, 0, 0)
+	assert.NoError(t, err)
+
+	m := <-outputTest.Messages()
+	var e shared.CloudEvent[json.RawMessage]
+	err = json.Unmarshal(m.Value, &e)
+	assert.NoError(t, err)
+
+	err = contractEventConsumer.Process(ctx, &e)
+	assert.NoError(t, err)
+
+	sd, err := models.SyntheticDevices(
+		models.SyntheticDeviceWhere.VehicleID.EQ(1),
+	).One(ctx, pdb.DBS().Reader)
+	assert.NoError(t, err)
+
+	assert.Exactly(t, &models.SyntheticDevice{
+		ID:            int(eventData.SyntheticDeviceNode.Int64()),
+		IntegrationID: int(eventData.IntegrationNode.Int64()),
+		VehicleID:     int(eventData.VehicleNode.Int64()),
+		DeviceAddress: eventData.SyntheticDeviceAddress.Bytes(),
+		MintedAt:      mintedTime,
+	}, sd)
 }

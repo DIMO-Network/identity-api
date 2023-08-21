@@ -3,17 +3,19 @@ package main
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"os"
 	"strings"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/debug"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/adaptor"
 
 	"github.com/DIMO-Network/identity-api/graph"
 	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/identity-api/internal/loader"
+	"github.com/DIMO-Network/identity-api/internal/middleware"
 	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/internal/services"
 	"github.com/DIMO-Network/shared"
@@ -25,6 +27,9 @@ import (
 func main() {
 	ctx := context.Background()
 	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", "identity-api").Logger()
+
+	app := fiber.New(fiber.Config{})
+	app.Use(adaptor.HTTPMiddleware(middleware.AuthMiddleware()))
 
 	settings, err := shared.LoadConfig[config.Settings]("settings.yaml")
 	if err != nil {
@@ -56,14 +61,13 @@ func main() {
 		Repo: repo,
 	}}))
 	s.Use(&debug.Tracer{})
-	srv := loader.Middleware(dbs, s)
 
-	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", srv)
+	srv := loader.Middleware(dbs, s)
+	app.All("/", adaptor.HTTPHandler(playground.Handler("GraphQL playground", "/query")))
+	app.All("/query", adaptor.HTTPHandler(srv))
 
 	logger.Info().Msgf("Server started on port: %d", settings.Port)
-
-	logger.Fatal().Err(http.ListenAndServe(fmt.Sprintf(":%d", settings.Port), nil)).Msg("Server shut down.")
+	logger.Fatal().Err(app.Listen(fmt.Sprintf(":%d", settings.Port))).Msg("Server shut down.")
 }
 
 func startContractEventsConsumer(ctx context.Context, logger *zerolog.Logger, settings *config.Settings, dbs db.Store) {

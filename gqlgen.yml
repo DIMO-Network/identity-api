@@ -97,6 +97,8 @@ models:
         resolver: true
       privileges:
         resolver: true
+      syntheticDevice:
+        resolver: true
   BigInt:
     model:
       - github.com/DIMO-Network/identity-api/graph/types.Int
