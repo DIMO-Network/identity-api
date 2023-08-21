@@ -2,21 +2,20 @@ package services
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/volatiletech/null/v8"
-	"github.com/volatiletech/sqlboiler/v4/boil"
 
 	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/goccy/go-json"
 	"github.com/rs/zerolog"
+	"github.com/volatiletech/null/v8"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
 type ContractsEventsConsumer struct {
@@ -39,6 +38,7 @@ const (
 	BeneficiarySetEvent                EventName = "BeneficiarySet"
 	AftermarketDeviceNodeMintedEvent   EventName = "AftermarketDeviceNodeMinted"
 	SyntheticDeviceNodeMinted          EventName = "SyntheticDeviceNodeMinted"
+	SyntheticDeviceNodeBurned          EventName = "SyntheticDeviceNodeBurned"
 )
 
 func (r EventName) String() string {
@@ -95,6 +95,8 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 			return c.handleBeneficiarySetEvent(ctx, &data)
 		case SyntheticDeviceNodeMinted:
 			return c.handleSyntheticDeviceNodeMintedEvent(ctx, &data)
+		case SyntheticDeviceNodeBurned:
+			return c.handleSyntheticDeviceNodeBurnedEvent(ctx, &data)
 		}
 	case vehicleNFTAddr:
 		switch eventName {
@@ -361,4 +363,18 @@ func (c *ContractsEventsConsumer) handleSyntheticDeviceNodeMintedEvent(ctx conte
 	}
 
 	return sd.Insert(ctx, c.dbs.DBS().Writer, boil.Infer())
+}
+
+func (c *ContractsEventsConsumer) handleSyntheticDeviceNodeBurnedEvent(ctx context.Context, e *ContractEventData) error {
+	var args SyntheticDeviceNodeBurnedData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	sd := models.SyntheticDevice{
+		ID: int(args.SyntheticDeviceNode.Int64()),
+	}
+
+	_, err := sd.Delete(ctx, c.dbs.DBS().Writer)
+	return err
 }

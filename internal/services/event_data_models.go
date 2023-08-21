@@ -1,7 +1,8 @@
 package services
 
 import (
-	"encoding/json"
+	"github.com/goccy/go-json"
+
 	"math/big"
 	"time"
 
@@ -74,4 +75,10 @@ type SyntheticDeviceNodeMintedData struct {
 	VehicleNode            *big.Int
 	SyntheticDeviceAddress common.Address
 	Owner                  common.Address
+}
+
+type SyntheticDeviceNodeBurnedData struct {
+	SyntheticDeviceNode *big.Int
+	VehicleNode         *big.Int
+	Owner               common.Address
 }

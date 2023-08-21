@@ -9,6 +9,7 @@ require (
 	github.com/docker/go-connections v0.4.0
 	github.com/ethereum/go-ethereum v1.12.2
 	github.com/friendsofgo/errors v0.9.2
+	github.com/goccy/go-json v0.10.2
 	github.com/gofiber/fiber/v2 v2.48.0
 	github.com/golang-jwt/jwt/v5 v5.0.0
 	github.com/graph-gophers/dataloader/v7 v7.1.0
@@ -49,8 +50,6 @@ require (
 	github.com/eapache/go-resiliency v1.3.0 // indirect
 	github.com/eapache/go-xerial-snappy v0.0.0-20230111030713-bf00bc1b83b6 // indirect
 	github.com/eapache/queue v1.1.0 // indirect
-	github.com/go-chi/chi v1.5.4 // indirect
-	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/gofrs/uuid v4.3.0+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
