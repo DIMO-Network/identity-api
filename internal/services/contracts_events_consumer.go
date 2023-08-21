@@ -142,6 +142,7 @@ func (c *ContractsEventsConsumer) handleVehicleAttributeSetEvent(ctx context.Con
 	if err != nil {
 		return err
 	}
+	colToLower := strings.ToLower(args.Attribute)
 
 	switch args.Attribute {
 	case "Make":
@@ -154,11 +155,12 @@ func (c *ContractsEventsConsumer) handleVehicleAttributeSetEvent(ctx context.Con
 			return err
 		}
 		veh.Year = null.IntFrom(year)
+	case "Definition URI":
+		veh.DefinitionURI = null.StringFrom(args.Info)
+		colToLower = models.VehicleColumns.DefinitionURI
 	default:
 		return fmt.Errorf("unrecognized vehicle attribute %q", args.Attribute)
 	}
-
-	colToLower := strings.ToLower(args.Attribute)
 
 	_, err = veh.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(colToLower))
 	return err
