@@ -19,6 +19,10 @@ type AftermarketDeviceEdge struct {
 	Node   *AftermarketDevice `json:"node"`
 }
 
+type Definition struct {
+	URI *string `json:"uri,omitempty"`
+}
+
 type PageInfo struct {
 	EndCursor   *string `json:"endCursor,omitempty"`
 	HasNextPage bool    `json:"hasNextPage"`
@@ -59,6 +63,7 @@ type Vehicle struct {
 	AftermarketDevice *AftermarketDevice    `json:"aftermarketDevice,omitempty"`
 	Privileges        *PrivilegesConnection `json:"privileges"`
 	SyntheticDevice   *SyntheticDevice      `json:"syntheticDevice,omitempty"`
+	Definition        *Definition           `json:"definition,omitempty"`
 }
 
 type VehicleConnection struct {

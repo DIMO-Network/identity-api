@@ -40,6 +40,11 @@ type Vehicle {
   aftermarketDevice: AftermarketDevice
   privileges(first: Int, after: String): PrivilegesConnection!
   syntheticDevice: SyntheticDevice
+  definition: Definition
+}
+
+type Definition {
+  uri: String
 }
 
 type VehicleEdge {

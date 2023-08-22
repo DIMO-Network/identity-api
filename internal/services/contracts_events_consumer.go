@@ -3,8 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
-	"strconv"
-	"strings"
+	"net/http"
 	"time"
 
 	"github.com/DIMO-Network/identity-api/internal/config"
@@ -13,6 +12,7 @@ import (
 	"github.com/DIMO-Network/shared/db"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/goccy/go-json"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -142,28 +142,40 @@ func (c *ContractsEventsConsumer) handleVehicleAttributeSetEvent(ctx context.Con
 	if err != nil {
 		return err
 	}
-	colToLower := strings.ToLower(args.Attribute)
 
 	switch args.Attribute {
-	case "Make":
-		veh.Make = null.StringFrom(args.Info)
-	case "Model":
-		veh.Model = null.StringFrom(args.Info)
-	case "Year":
-		year, err := strconv.Atoi(args.Info)
+	case "Make", "Model", "Year":
+		return fmt.Errorf("ignoring MMY attributes %q", args.Attribute)
+	case "Definition URI":
+		res, err := http.Get(args.Info)
 		if err != nil {
 			return err
 		}
-		veh.Year = null.IntFrom(year)
-	case "Definition URI":
+		defer res.Body.Close()
+
+		if res.StatusCode != http.StatusOK {
+			return fmt.Errorf("error occurred fetching device Definition for device with token %d: %d", args.TokenID.Int64(), res.StatusCode)
+		}
+
+		ddf := DeviceDefinition{}
+		err = json.NewDecoder(res.Body).Decode(&ddf)
+		if err != nil {
+			return errors.Wrap(err, "failed to marshal json from device definition")
+		}
+
+		veh.Make = null.StringFrom(ddf.Type.Make)
+		veh.Model = null.StringFrom(ddf.Type.Model)
+		veh.Year = null.IntFrom(ddf.Type.Year)
 		veh.DefinitionURI = null.StringFrom(args.Info)
-		colToLower = models.VehicleColumns.DefinitionURI
+
+		_, err = veh.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.VehicleColumns.Make, models.VehicleColumns.Model, models.VehicleColumns.Year, models.VehicleColumns.DefinitionURI))
+
+		return err
 	default:
 		return fmt.Errorf("unrecognized vehicle attribute %q", args.Attribute)
 	}
 
-	_, err = veh.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(colToLower))
-	return err
+	return nil
 }
 
 func (c *ContractsEventsConsumer) handleVehicleTransferEvent(ctx context.Context, e *ContractEventData) error {

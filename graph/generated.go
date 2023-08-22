@@ -71,6 +71,10 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	Definition struct {
+		URI func(childComplexity int) int
+	}
+
 	PageInfo struct {
 		EndCursor   func(childComplexity int) int
 		HasNextPage func(childComplexity int) int
@@ -109,6 +113,7 @@ type ComplexityRoot struct {
 
 	Vehicle struct {
 		AftermarketDevice func(childComplexity int) int
+		Definition        func(childComplexity int) int
 		ID                func(childComplexity int) int
 		Make              func(childComplexity int) int
 		MintedAt          func(childComplexity int) int
@@ -250,6 +255,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.AftermarketDeviceEdge.Node(childComplexity), true
+
+	case "Definition.uri":
+		if e.complexity.Definition.URI == nil {
+			break
+		}
+
+		return e.complexity.Definition.URI(childComplexity), true
 
 	case "PageInfo.endCursor":
 		if e.complexity.PageInfo.EndCursor == nil {
@@ -398,6 +410,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Vehicle.AftermarketDevice(childComplexity), true
+
+	case "Vehicle.definition":
+		if e.complexity.Vehicle.Definition == nil {
+			break
+		}
+
+		return e.complexity.Vehicle.Definition(childComplexity), true
 
 	case "Vehicle.id":
 		if e.complexity.Vehicle.ID == nil {
@@ -1070,6 +1089,8 @@ func (ec *executionContext) fieldContext_AftermarketDevice_vehicle(ctx context.C
 				return ec.fieldContext_Vehicle_privileges(ctx, field)
 			case "syntheticDevice":
 				return ec.fieldContext_Vehicle_syntheticDevice(ctx, field)
+			case "definition":
+				return ec.fieldContext_Vehicle_definition(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
 		},
@@ -1366,6 +1387,47 @@ func (ec *executionContext) fieldContext_AftermarketDeviceEdge_node(ctx context.
 				return ec.fieldContext_AftermarketDevice_beneficiary(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type AftermarketDevice", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Definition_uri(ctx context.Context, field graphql.CollectedField, obj *model.Definition) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Definition_uri(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.URI, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Definition_uri(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Definition",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -2057,6 +2119,8 @@ func (ec *executionContext) fieldContext_Query_vehicle(ctx context.Context, fiel
 				return ec.fieldContext_Vehicle_privileges(ctx, field)
 			case "syntheticDevice":
 				return ec.fieldContext_Vehicle_syntheticDevice(ctx, field)
+			case "definition":
+				return ec.fieldContext_Vehicle_definition(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
 		},
@@ -2808,6 +2872,51 @@ func (ec *executionContext) fieldContext_Vehicle_syntheticDevice(ctx context.Con
 	return fc, nil
 }
 
+func (ec *executionContext) _Vehicle_definition(ctx context.Context, field graphql.CollectedField, obj *model.Vehicle) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Vehicle_definition(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Definition, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Definition)
+	fc.Result = res
+	return ec.marshalODefinition2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDefinition(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Vehicle_definition(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Vehicle",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "uri":
+				return ec.fieldContext_Definition_uri(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Definition", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _VehicleConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.VehicleConnection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_VehicleConnection_totalCount(ctx, field)
 	if err != nil {
@@ -3009,6 +3118,8 @@ func (ec *executionContext) fieldContext_VehicleEdge_node(ctx context.Context, f
 				return ec.fieldContext_Vehicle_privileges(ctx, field)
 			case "syntheticDevice":
 				return ec.fieldContext_Vehicle_syntheticDevice(ctx, field)
+			case "definition":
+				return ec.fieldContext_Vehicle_definition(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
 		},
@@ -5027,6 +5138,42 @@ func (ec *executionContext) _AftermarketDeviceEdge(ctx context.Context, sel ast.
 	return out
 }
 
+var definitionImplementors = []string{"Definition"}
+
+func (ec *executionContext) _Definition(ctx context.Context, sel ast.SelectionSet, obj *model.Definition) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, definitionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Definition")
+		case "uri":
+			out.Values[i] = ec._Definition_uri(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var pageInfoImplementors = []string{"PageInfo"}
 
 func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet, obj *model.PageInfo) graphql.Marshaler {
@@ -5519,6 +5666,8 @@ func (ec *executionContext) _Vehicle(ctx context.Context, sel ast.SelectionSet, 
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "definition":
+			out.Values[i] = ec._Vehicle_definition(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6599,6 +6748,13 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	}
 	res := graphql.MarshalBoolean(*v)
 	return res
+}
+
+func (ec *executionContext) marshalODefinition2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDefinition(ctx context.Context, sel ast.SelectionSet, v *model.Definition) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Definition(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
