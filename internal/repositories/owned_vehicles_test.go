@@ -67,23 +67,30 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Success() {
 	_, wallet2, err := helpers.GenerateWallet()
 	s.NoError(err)
 
+	ddfUrl := []string{
+		"http://some-url.com",
+		"http://some-url-2.com",
+	}
+
 	currTime := time.Now().UTC().Truncate(time.Second)
 	vehicles := []models.Vehicle{
 		{
-			ID:           1,
-			OwnerAddress: wallet.Bytes(),
-			Make:         null.StringFrom("Toyota"),
-			Model:        null.StringFrom("Camry"),
-			Year:         null.IntFrom(2020),
-			MintedAt:     currTime,
+			ID:            1,
+			OwnerAddress:  wallet.Bytes(),
+			Make:          null.StringFrom("Toyota"),
+			Model:         null.StringFrom("Camry"),
+			Year:          null.IntFrom(2020),
+			MintedAt:      currTime,
+			DefinitionURI: null.StringFrom(ddfUrl[0]),
 		},
 		{
-			ID:           2,
-			OwnerAddress: wallet.Bytes(),
-			Make:         null.StringFrom("Toyota"),
-			Model:        null.StringFrom("Camry"),
-			Year:         null.IntFrom(2022),
-			MintedAt:     currTime,
+			ID:            2,
+			OwnerAddress:  wallet.Bytes(),
+			Make:          null.StringFrom("Toyota"),
+			Model:         null.StringFrom("Camry"),
+			Year:          null.IntFrom(2022),
+			MintedAt:      currTime,
+			DefinitionURI: null.StringFrom(ddfUrl[1]),
 		},
 	}
 
@@ -127,6 +134,9 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Success() {
 				Year:       &vehicles[1].Year.Int,
 				MintedAt:   vehicles[1].MintedAt,
 				Privileges: nil,
+				Definition: &gmodel.Definition{
+					URI: &ddfUrl[1],
+				},
 			},
 			Cursor: "Mg==",
 		},
@@ -139,6 +149,9 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Success() {
 				Year:       &vehicles[0].Year.Int,
 				MintedAt:   vehicles[0].MintedAt,
 				Privileges: nil,
+				Definition: &gmodel.Definition{
+					URI: &ddfUrl[0],
+				},
 			},
 			Cursor: "MQ==",
 		},
@@ -151,23 +164,30 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination() {
 	_, wallet, err := helpers.GenerateWallet()
 	s.NoError(err)
 
+	ddfUrl := []string{
+		"http://some-url.com",
+		"http://some-url-2.com",
+	}
+
 	currTime := time.Now().UTC().Truncate(time.Second)
 	vehicles := []models.Vehicle{
 		{
-			ID:           1,
-			OwnerAddress: wallet.Bytes(),
-			Make:         null.StringFrom("Toyota"),
-			Model:        null.StringFrom("Camry"),
-			Year:         null.IntFrom(2020),
-			MintedAt:     currTime,
+			ID:            1,
+			OwnerAddress:  wallet.Bytes(),
+			Make:          null.StringFrom("Toyota"),
+			Model:         null.StringFrom("Camry"),
+			Year:          null.IntFrom(2020),
+			MintedAt:      currTime,
+			DefinitionURI: null.StringFrom(ddfUrl[0]),
 		},
 		{
-			ID:           2,
-			OwnerAddress: wallet.Bytes(),
-			Make:         null.StringFrom("Toyota"),
-			Model:        null.StringFrom("Camry"),
-			Year:         null.IntFrom(2022),
-			MintedAt:     currTime,
+			ID:            2,
+			OwnerAddress:  wallet.Bytes(),
+			Make:          null.StringFrom("Toyota"),
+			Model:         null.StringFrom("Camry"),
+			Year:          null.IntFrom(2022),
+			MintedAt:      currTime,
+			DefinitionURI: null.StringFrom(ddfUrl[1]),
 		},
 	}
 
@@ -194,6 +214,9 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination() {
 				Year:       &vehicles[1].Year.Int,
 				MintedAt:   vehicles[1].MintedAt,
 				Privileges: nil,
+				Definition: &gmodel.Definition{
+					URI: &ddfUrl[1],
+				},
 			},
 			Cursor: "Mg==",
 		},
@@ -206,23 +229,30 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination_NextPage()
 	_, wallet, err := helpers.GenerateWallet()
 	s.NoError(err)
 
+	ddfUrl := []string{
+		"http://some-url.com",
+		"http://some-url-2.com",
+	}
+
 	currTime := time.Now().UTC().Truncate(time.Second)
 	vehicles := []models.Vehicle{
 		{
-			ID:           1,
-			OwnerAddress: wallet.Bytes(),
-			Make:         null.StringFrom("Toyota"),
-			Model:        null.StringFrom("Camry"),
-			Year:         null.IntFrom(2020),
-			MintedAt:     currTime,
+			ID:            1,
+			OwnerAddress:  wallet.Bytes(),
+			Make:          null.StringFrom("Toyota"),
+			Model:         null.StringFrom("Camry"),
+			Year:          null.IntFrom(2020),
+			MintedAt:      currTime,
+			DefinitionURI: null.StringFrom(ddfUrl[0]),
 		},
 		{
-			ID:           2,
-			OwnerAddress: wallet.Bytes(),
-			Make:         null.StringFrom("Toyota"),
-			Model:        null.StringFrom("Camry"),
-			Year:         null.IntFrom(2022),
-			MintedAt:     currTime,
+			ID:            2,
+			OwnerAddress:  wallet.Bytes(),
+			Make:          null.StringFrom("Toyota"),
+			Model:         null.StringFrom("Camry"),
+			Year:          null.IntFrom(2022),
+			MintedAt:      currTime,
+			DefinitionURI: null.StringFrom(ddfUrl[1]),
 		},
 	}
 
@@ -250,6 +280,9 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination_NextPage()
 				Year:       &vehicles[0].Year.Int,
 				MintedAt:   vehicles[0].MintedAt,
 				Privileges: nil,
+				Definition: &gmodel.Definition{
+					URI: &ddfUrl[0],
+				},
 			},
 			Cursor: "MQ==",
 		},

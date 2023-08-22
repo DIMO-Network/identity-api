@@ -174,8 +174,6 @@ func (c *ContractsEventsConsumer) handleVehicleAttributeSetEvent(ctx context.Con
 	default:
 		return fmt.Errorf("unrecognized vehicle attribute %q", args.Attribute)
 	}
-
-	return nil
 }
 
 func (c *ContractsEventsConsumer) handleVehicleTransferEvent(ctx context.Context, e *ContractEventData) error {
