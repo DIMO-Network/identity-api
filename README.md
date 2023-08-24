@@ -18,6 +18,7 @@ Specify a subcommand:
 ```mermaid
 flowchart TD
     Vehicle <--> Aftermarket
+    Vehicle <--> Synthetic
     Privilege --> Vehicle
     Vehicle --> User
     Aftermarket --> User
