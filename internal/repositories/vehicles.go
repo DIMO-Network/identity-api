@@ -36,7 +36,7 @@ func VehicleToAPI(v *models.Vehicle) *gmodel.Vehicle {
 		Year:     v.Year.Ptr(),
 		MintedAt: v.MintedAt,
 		Definition: &gmodel.Definition{
-			URI: &v.DefinitionURI.String,
+			URI: v.DefinitionURI.Ptr(),
 		},
 	}
 }

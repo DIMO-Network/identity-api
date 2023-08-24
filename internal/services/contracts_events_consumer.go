@@ -145,16 +145,20 @@ func (c *ContractsEventsConsumer) handleVehicleAttributeSetEvent(ctx context.Con
 
 	switch args.Attribute {
 	case "Make", "Model", "Year":
-		return fmt.Errorf("ignoring MMY attributes %q", args.Attribute)
+		c.log.Debug().Str("Attribute", args.Attribute).Msg("ignoring MMY attributes")
+		return nil
 	case "Definition URI":
-		res, err := http.Get(args.Info)
+		client := http.Client{
+			Timeout: 10 * time.Second,
+		}
+		res, err := client.Get(args.Info)
 		if err != nil {
 			return err
 		}
 		defer res.Body.Close()
 
 		if res.StatusCode != http.StatusOK {
-			return fmt.Errorf("error occurred fetching device Definition for device with token %d: %d", args.TokenID.Int64(), res.StatusCode)
+			return fmt.Errorf("error occurred fetching device Definition for device with token %d: %d", args.TokenID, res.StatusCode)
 		}
 
 		ddf := DeviceDefinition{}
