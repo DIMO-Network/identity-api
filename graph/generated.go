@@ -72,7 +72,10 @@ type ComplexityRoot struct {
 	}
 
 	Definition struct {
-		URI func(childComplexity int) int
+		Make  func(childComplexity int) int
+		Model func(childComplexity int) int
+		URI   func(childComplexity int) int
+		Year  func(childComplexity int) int
 	}
 
 	PageInfo struct {
@@ -115,13 +118,10 @@ type ComplexityRoot struct {
 		AftermarketDevice func(childComplexity int) int
 		Definition        func(childComplexity int) int
 		ID                func(childComplexity int) int
-		Make              func(childComplexity int) int
 		MintedAt          func(childComplexity int) int
-		Model             func(childComplexity int) int
 		Owner             func(childComplexity int) int
 		Privileges        func(childComplexity int, first *int, after *string) int
 		SyntheticDevice   func(childComplexity int) int
-		Year              func(childComplexity int) int
 	}
 
 	VehicleConnection struct {
@@ -256,12 +256,33 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.AftermarketDeviceEdge.Node(childComplexity), true
 
+	case "Definition.make":
+		if e.complexity.Definition.Make == nil {
+			break
+		}
+
+		return e.complexity.Definition.Make(childComplexity), true
+
+	case "Definition.model":
+		if e.complexity.Definition.Model == nil {
+			break
+		}
+
+		return e.complexity.Definition.Model(childComplexity), true
+
 	case "Definition.uri":
 		if e.complexity.Definition.URI == nil {
 			break
 		}
 
 		return e.complexity.Definition.URI(childComplexity), true
+
+	case "Definition.year":
+		if e.complexity.Definition.Year == nil {
+			break
+		}
+
+		return e.complexity.Definition.Year(childComplexity), true
 
 	case "PageInfo.endCursor":
 		if e.complexity.PageInfo.EndCursor == nil {
@@ -425,26 +446,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Vehicle.ID(childComplexity), true
 
-	case "Vehicle.make":
-		if e.complexity.Vehicle.Make == nil {
-			break
-		}
-
-		return e.complexity.Vehicle.Make(childComplexity), true
-
 	case "Vehicle.mintedAt":
 		if e.complexity.Vehicle.MintedAt == nil {
 			break
 		}
 
 		return e.complexity.Vehicle.MintedAt(childComplexity), true
-
-	case "Vehicle.model":
-		if e.complexity.Vehicle.Model == nil {
-			break
-		}
-
-		return e.complexity.Vehicle.Model(childComplexity), true
 
 	case "Vehicle.owner":
 		if e.complexity.Vehicle.Owner == nil {
@@ -471,13 +478,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Vehicle.SyntheticDevice(childComplexity), true
-
-	case "Vehicle.year":
-		if e.complexity.Vehicle.Year == nil {
-			break
-		}
-
-		return e.complexity.Vehicle.Year(childComplexity), true
 
 	case "VehicleConnection.edges":
 		if e.complexity.VehicleConnection.Edges == nil {
@@ -1075,12 +1075,6 @@ func (ec *executionContext) fieldContext_AftermarketDevice_vehicle(ctx context.C
 				return ec.fieldContext_Vehicle_id(ctx, field)
 			case "owner":
 				return ec.fieldContext_Vehicle_owner(ctx, field)
-			case "make":
-				return ec.fieldContext_Vehicle_make(ctx, field)
-			case "model":
-				return ec.fieldContext_Vehicle_model(ctx, field)
-			case "year":
-				return ec.fieldContext_Vehicle_year(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_Vehicle_mintedAt(ctx, field)
 			case "aftermarketDevice":
@@ -1428,6 +1422,129 @@ func (ec *executionContext) fieldContext_Definition_uri(ctx context.Context, fie
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Definition_make(ctx context.Context, field graphql.CollectedField, obj *model.Definition) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Definition_make(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Make, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Definition_make(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Definition",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Definition_model(ctx context.Context, field graphql.CollectedField, obj *model.Definition) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Definition_model(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Model, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Definition_model(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Definition",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Definition_year(ctx context.Context, field graphql.CollectedField, obj *model.Definition) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Definition_year(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Year, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Definition_year(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Definition",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -2105,12 +2222,6 @@ func (ec *executionContext) fieldContext_Query_vehicle(ctx context.Context, fiel
 				return ec.fieldContext_Vehicle_id(ctx, field)
 			case "owner":
 				return ec.fieldContext_Vehicle_owner(ctx, field)
-			case "make":
-				return ec.fieldContext_Vehicle_make(ctx, field)
-			case "model":
-				return ec.fieldContext_Vehicle_model(ctx, field)
-			case "year":
-				return ec.fieldContext_Vehicle_year(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_Vehicle_mintedAt(ctx, field)
 			case "aftermarketDevice":
@@ -2532,129 +2643,6 @@ func (ec *executionContext) fieldContext_Vehicle_owner(ctx context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _Vehicle_make(ctx context.Context, field graphql.CollectedField, obj *model.Vehicle) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Vehicle_make(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Make, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Vehicle_make(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Vehicle",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Vehicle_model(ctx context.Context, field graphql.CollectedField, obj *model.Vehicle) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Vehicle_model(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Model, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Vehicle_model(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Vehicle",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Vehicle_year(ctx context.Context, field graphql.CollectedField, obj *model.Vehicle) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Vehicle_year(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Year, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*int)
-	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Vehicle_year(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Vehicle",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Vehicle_mintedAt(ctx context.Context, field graphql.CollectedField, obj *model.Vehicle) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Vehicle_mintedAt(ctx, field)
 	if err != nil {
@@ -2910,6 +2898,12 @@ func (ec *executionContext) fieldContext_Vehicle_definition(ctx context.Context,
 			switch field.Name {
 			case "uri":
 				return ec.fieldContext_Definition_uri(ctx, field)
+			case "make":
+				return ec.fieldContext_Definition_make(ctx, field)
+			case "model":
+				return ec.fieldContext_Definition_model(ctx, field)
+			case "year":
+				return ec.fieldContext_Definition_year(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Definition", field.Name)
 		},
@@ -3104,12 +3098,6 @@ func (ec *executionContext) fieldContext_VehicleEdge_node(ctx context.Context, f
 				return ec.fieldContext_Vehicle_id(ctx, field)
 			case "owner":
 				return ec.fieldContext_Vehicle_owner(ctx, field)
-			case "make":
-				return ec.fieldContext_Vehicle_make(ctx, field)
-			case "model":
-				return ec.fieldContext_Vehicle_model(ctx, field)
-			case "year":
-				return ec.fieldContext_Vehicle_year(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_Vehicle_mintedAt(ctx, field)
 			case "aftermarketDevice":
@@ -5151,6 +5139,12 @@ func (ec *executionContext) _Definition(ctx context.Context, sel ast.SelectionSe
 			out.Values[i] = graphql.MarshalString("Definition")
 		case "uri":
 			out.Values[i] = ec._Definition_uri(ctx, field, obj)
+		case "make":
+			out.Values[i] = ec._Definition_make(ctx, field, obj)
+		case "model":
+			out.Values[i] = ec._Definition_model(ctx, field, obj)
+		case "year":
+			out.Values[i] = ec._Definition_year(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5553,12 +5547,6 @@ func (ec *executionContext) _Vehicle(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "make":
-			out.Values[i] = ec._Vehicle_make(ctx, field, obj)
-		case "model":
-			out.Values[i] = ec._Vehicle_model(ctx, field, obj)
-		case "year":
-			out.Values[i] = ec._Vehicle_year(ctx, field, obj)
 		case "mintedAt":
 			out.Values[i] = ec._Vehicle_mintedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

@@ -18,6 +18,8 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
+const migrationsDir = "../../migrations"
+
 type AccessibleVehiclesRepoTestSuite struct {
 	suite.Suite
 	ctx       context.Context
@@ -126,12 +128,12 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Success() {
 			Node: &gmodel.Vehicle{
 				ID:       2,
 				Owner:    common.BytesToAddress(wallet.Bytes()),
-				Make:     &vehicles[1].Make.String,
-				Model:    &vehicles[1].Model.String,
-				Year:     &vehicles[1].Year.Int,
 				MintedAt: vehicles[1].MintedAt,
 				Definition: &gmodel.Definition{
-					URI: &ddfUrl[1],
+					URI:   &ddfUrl[1],
+					Make:  &vehicles[1].Make.String,
+					Model: &vehicles[1].Model.String,
+					Year:  &vehicles[1].Year.Int,
 				},
 			},
 			Cursor: "Mg==",
@@ -140,12 +142,12 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Success() {
 			Node: &gmodel.Vehicle{
 				ID:       1,
 				Owner:    common.BytesToAddress(wallet.Bytes()),
-				Make:     &vehicles[0].Make.String,
-				Model:    &vehicles[0].Model.String,
-				Year:     &vehicles[0].Year.Int,
 				MintedAt: vehicles[0].MintedAt,
 				Definition: &gmodel.Definition{
-					URI: &ddfUrl[0],
+					URI:   &ddfUrl[0],
+					Make:  &vehicles[0].Make.String,
+					Model: &vehicles[0].Model.String,
+					Year:  &vehicles[0].Year.Int,
 				},
 			},
 			Cursor: "MQ==",
@@ -204,12 +206,12 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination(
 			Node: &gmodel.Vehicle{
 				ID:       2,
 				Owner:    common.BytesToAddress(wallet.Bytes()),
-				Make:     &vehicles[1].Make.String,
-				Model:    &vehicles[1].Model.String,
-				Year:     &vehicles[1].Year.Int,
 				MintedAt: vehicles[1].MintedAt,
 				Definition: &gmodel.Definition{
-					URI: &ddfUrl[1],
+					URI:   &ddfUrl[1],
+					Make:  &vehicles[1].Make.String,
+					Model: &vehicles[1].Model.String,
+					Year:  &vehicles[1].Year.Int,
 				},
 			},
 			Cursor: "Mg==",
@@ -269,12 +271,12 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 			Node: &gmodel.Vehicle{
 				ID:       1,
 				Owner:    common.BytesToAddress(wallet.Bytes()),
-				Make:     &vehicles[0].Make.String,
-				Model:    &vehicles[0].Model.String,
-				Year:     &vehicles[0].Year.Int,
 				MintedAt: vehicles[0].MintedAt,
 				Definition: &gmodel.Definition{
-					URI: &ddfUrl[0],
+					URI:   &ddfUrl[0],
+					Make:  &vehicles[0].Make.String,
+					Model: &vehicles[0].Model.String,
+					Year:  &vehicles[0].Year.Int,
 				},
 			},
 			Cursor: "MQ==",
@@ -352,12 +354,12 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_OwnedByUser
 			Node: &gmodel.Vehicle{
 				ID:       2,
 				Owner:    common.BytesToAddress(wallet2.Bytes()),
-				Make:     &vehicles[1].Make.String,
-				Model:    &vehicles[1].Model.String,
-				Year:     &vehicles[1].Year.Int,
 				MintedAt: vehicles[1].MintedAt,
 				Definition: &gmodel.Definition{
-					URI: &ddfUrl[1],
+					URI:   &ddfUrl[1],
+					Make:  &vehicles[1].Make.String,
+					Model: &vehicles[1].Model.String,
+					Year:  &vehicles[1].Year.Int,
 				},
 			},
 			Cursor: "Mg==",
@@ -366,12 +368,12 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_OwnedByUser
 			Node: &gmodel.Vehicle{
 				ID:       1,
 				Owner:    common.BytesToAddress(wallet.Bytes()),
-				Make:     &vehicles[0].Make.String,
-				Model:    &vehicles[0].Model.String,
-				Year:     &vehicles[0].Year.Int,
 				MintedAt: vehicles[0].MintedAt,
 				Definition: &gmodel.Definition{
-					URI: &ddfUrl[0],
+					URI:   &ddfUrl[0],
+					Make:  &vehicles[0].Make.String,
+					Model: &vehicles[0].Model.String,
+					Year:  &vehicles[0].Year.Int,
 				},
 			},
 			Cursor: "MQ==",
@@ -456,12 +458,12 @@ func (o *AccessibleVehiclesRepoTestSuite) TestVehiclesMultiplePrivsOnOne() {
 			Node: &gmodel.Vehicle{
 				ID:       2,
 				Owner:    common.BytesToAddress(wallet2.Bytes()),
-				Make:     &vehicles[1].Make.String,
-				Model:    &vehicles[1].Model.String,
-				Year:     &vehicles[1].Year.Int,
 				MintedAt: vehicles[1].MintedAt,
 				Definition: &gmodel.Definition{
-					URI: &ddfUrl[1],
+					URI:   &ddfUrl[1],
+					Make:  &vehicles[1].Make.String,
+					Model: &vehicles[1].Model.String,
+					Year:  &vehicles[1].Year.Int,
 				},
 			},
 			Cursor: "Mg==",
@@ -470,12 +472,12 @@ func (o *AccessibleVehiclesRepoTestSuite) TestVehiclesMultiplePrivsOnOne() {
 			Node: &gmodel.Vehicle{
 				ID:       1,
 				Owner:    common.BytesToAddress(wallet.Bytes()),
-				Make:     &vehicles[0].Make.String,
-				Model:    &vehicles[0].Model.String,
-				Year:     &vehicles[0].Year.Int,
 				MintedAt: vehicles[0].MintedAt,
 				Definition: &gmodel.Definition{
-					URI: &ddfUrl[0],
+					URI:   &ddfUrl[0],
+					Make:  &vehicles[0].Make.String,
+					Model: &vehicles[0].Model.String,
+					Year:  &vehicles[0].Year.Int,
 				},
 			},
 			Cursor: "MQ==",

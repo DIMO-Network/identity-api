@@ -20,7 +20,10 @@ type AftermarketDeviceEdge struct {
 }
 
 type Definition struct {
-	URI *string `json:"uri,omitempty"`
+	URI   *string `json:"uri,omitempty"`
+	Make  *string `json:"make,omitempty"`
+	Model *string `json:"model,omitempty"`
+	Year  *int    `json:"year,omitempty"`
 }
 
 type PageInfo struct {
@@ -56,9 +59,6 @@ type SyntheticDevice struct {
 type Vehicle struct {
 	ID                int                   `json:"id"`
 	Owner             common.Address        `json:"owner"`
-	Make              *string               `json:"make,omitempty"`
-	Model             *string               `json:"model,omitempty"`
-	Year              *int                  `json:"year,omitempty"`
 	MintedAt          time.Time             `json:"mintedAt"`
 	AftermarketDevice *AftermarketDevice    `json:"aftermarketDevice,omitempty"`
 	Privileges        *PrivilegesConnection `json:"privileges"`
