@@ -2,7 +2,9 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"math/big"
+	"net/http"
 	"os"
 	"testing"
 	"time"
@@ -15,6 +17,7 @@ import (
 	"github.com/Shopify/sarama/mocks"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/goccy/go-json"
+	"github.com/jarcoal/httpmock"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/volatiletech/null/v8"
@@ -630,4 +633,92 @@ func TestHandle_SyntheticDeviceNodeBurnedEvent_Success(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Empty(t, sds)
+}
+
+func TestHandle_DefinitionUriAttribute_Event_Success(t *testing.T) {
+	ctx := context.Background()
+	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
+	contractEventData.EventName = string(VehicleAttributeSet)
+	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
+
+	_, wallet, err := helpers.GenerateWallet()
+	assert.NoError(t, err)
+
+	_, wallet2, err := helpers.GenerateWallet()
+	assert.NoError(t, err)
+
+	currTime := time.Now().UTC().Truncate(time.Second)
+	vehicles := []models.Vehicle{
+		{
+			ID:           1,
+			OwnerAddress: wallet.Bytes(),
+			Make:         null.StringFrom("Toyota"),
+			Model:        null.StringFrom("Camry"),
+			Year:         null.IntFrom(2020),
+			MintedAt:     currTime,
+		},
+	}
+
+	for _, v := range vehicles {
+		if err := v.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
+			assert.NoError(t, err)
+		}
+	}
+
+	sd := models.SyntheticDevice{
+		ID:            1,
+		IntegrationID: 2,
+		VehicleID:     1,
+		DeviceAddress: wallet2.Bytes(),
+		MintedAt:      currTime,
+	}
+
+	err = sd.Insert(ctx, pdb.DBS().Writer.DB, boil.Infer())
+	assert.NoError(t, err)
+
+	mockDefUri := "http://someurl.com/someid"
+	// http client mock
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+	respJSON := fmt.Sprintf(`{ "type": { "make":"%s", "model":"%s", "year":%d }}`, "Toyota", "Camry", 2020)
+
+	httpmock.RegisterResponder(http.MethodGet, mockDefUri, httpmock.NewStringResponder(200, respJSON))
+
+	tkID := big.NewInt(1)
+	eventData := VehicleAttributeSetData{
+		TokenID:   tkID,
+		Attribute: "Definition URI",
+		Info:      mockDefUri,
+	}
+	settings := config.Settings{
+		DIMORegistryAddr:    contractEventData.Contract.String(),
+		DIMORegistryChainID: contractEventData.ChainID,
+	}
+
+	config := mocks.NewTestConfig()
+	consumer := mocks.NewConsumer(t, config)
+	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
+	expectedBytes := eventBytes(eventData, contractEventData, t)
+
+	consumer.ExpectConsumePartition(settings.ContractsEventTopic, 0, 0).YieldMessage(&sarama.ConsumerMessage{Value: expectedBytes})
+	outputTest, err := consumer.ConsumePartition(settings.ContractsEventTopic, 0, 0)
+	assert.NoError(t, err)
+
+	m := <-outputTest.Messages()
+	var e shared.CloudEvent[json.RawMessage]
+	err = json.Unmarshal(m.Value, &e)
+	assert.NoError(t, err)
+
+	err = contractEventConsumer.Process(ctx, &e)
+	assert.NoError(t, err)
+
+	vhs, err := models.Vehicles(
+		models.VehicleWhere.ID.EQ(int(tkID.Int64())),
+	).All(ctx, pdb.DBS().Reader)
+	assert.NoError(t, err)
+
+	assert.Len(t, vhs, 1)
+	assert.Equal(t, "Toyota", *vhs[0].Make.Ptr())
+	assert.Equal(t, "Camry", *vhs[0].Model.Ptr())
+	assert.Equal(t, 2020, vhs[0].Year.Int)
 }
