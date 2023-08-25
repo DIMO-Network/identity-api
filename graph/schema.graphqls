@@ -11,12 +11,16 @@ type Query {
     address: Address!
     first: Int
     after: String
+    last: Int
+    before: String
   ): VehicleConnection!
 
   ownedAftermarketDevices(
     address: Address!
     first: Int
     after: String
+    last: Int
+    before: String
   ): AftermarketDeviceConnection!
   vehicle(id: Int!): Vehicle!
 }
@@ -24,7 +28,9 @@ type Query {
 # Shared Types
 
 type PageInfo {
+  startCursor: String
   endCursor: String
+  hasPreviousPage: Boolean
   hasNextPage: Boolean!
 }
 

@@ -12,7 +12,7 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
-func (r *Repository) GetOwnedAftermarketDevices(ctx context.Context, addr common.Address, first *int, after *string) (*gmodel.AftermarketDeviceConnection, error) {
+func (r *Repository) GetOwnedAftermarketDevices(ctx context.Context, addr common.Address, first *int, after *string, last *int, before *string) (*gmodel.AftermarketDeviceConnection, error) {
 	where := []qm.QueryMod{
 		models.AftermarketDeviceWhere.Owner.EQ(addr.Bytes()),
 	}
