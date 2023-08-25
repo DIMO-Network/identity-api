@@ -42,20 +42,21 @@ func (p PaginationHelper[T]) DecodeCursor(cursor string) (*T, error) {
 const errInvalidPagination = "INVALID_PAGINATION"
 
 func ValidateFirstLast(first, last *int) (err *gqlerror.Error) {
-	switch {
-	case first != nil && last != nil:
+	if first != nil && last != nil {
 		err = &gqlerror.Error{
 			Message: "Passing both `first` and `last` to paginate a connection is not supported.",
 		}
-	default:
-		for _, arg := range []*int{first, last} {
-			if arg != nil && *arg <= 0 {
-				err = &gqlerror.Error{
-					Message: fmt.Sprintf("invalid value provided for %d. Value cannot be less than or equal to 0", arg),
-				}
+		return err
+	}
+
+	for _, arg := range []*int{first, last} {
+		if arg != nil && *arg <= 0 {
+			err = &gqlerror.Error{
+				Message: fmt.Sprintf("invalid value provided for %d. Value cannot be less than or equal to 0", arg),
 			}
 			errcode.Set(err, errInvalidPagination)
+			return err
 		}
 	}
-	return err
+	return nil
 }
