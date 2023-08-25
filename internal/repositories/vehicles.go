@@ -63,12 +63,12 @@ func (v *Repository) createVehiclesResponse(totalCount int64, vehicles models.Ve
 }
 
 // GetAccessibleVehicles godoc
-// @Description gets devices given an owner address
+// @Description gets devices for an owner address
 // @Param addr [common.Address] "eth address of owner"
 // @Param first [*int] "the number of devices to return per page"
 // @Param after [*string] "base64 string representing a device tokenID. This is a pointer to where we start fetching devices from on each page"
 // @Param last [*int] "the number of devices to return from previous pages"
-// @Param before [*string] "base64 string representing a device tokenID. Pointer to where we start fetching devices from previous pages"x
+// @Param before [*string] "base64 string representing a device tokenID. Pointer to where we start fetching devices from previous pages"
 func (v *Repository) GetAccessibleVehicles(ctx context.Context, addr common.Address, first *int, after *string, last *int, before *string) (*gmodel.VehicleConnection, error) {
 	limit := defaultPageSize
 
