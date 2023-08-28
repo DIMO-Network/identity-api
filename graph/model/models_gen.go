@@ -22,7 +22,7 @@ type AftermarketDeviceEdge struct {
 type PageInfo struct {
 	StartCursor     *string `json:"startCursor,omitempty"`
 	EndCursor       *string `json:"endCursor,omitempty"`
-	HasPreviousPage *bool   `json:"hasPreviousPage,omitempty"`
+	HasPreviousPage bool    `json:"hasPreviousPage"`
 	HasNextPage     bool    `json:"hasNextPage"`
 }
 

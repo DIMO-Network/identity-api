@@ -70,7 +70,7 @@ func (p *Repository) createPrivilegeResponse(privs models.PrivilegeSlice, totalC
 	return res, nil
 }
 
-func (p *Repository) GetPrivilegesForVehicle(ctx context.Context, tokenID int, first *int, after *string) (*gmodel.PrivilegesConnection, error) {
+func (p *Repository) GetPrivilegesForVehicle(ctx context.Context, tokenID int, first *int, after *string, last *int, before *string) (*gmodel.PrivilegesConnection, error) {
 	pHelp := helpers.PaginationHelper[PrivilegeCursor]{}
 
 	limit := defaultPageSize

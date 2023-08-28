@@ -30,7 +30,7 @@ type Query {
 type PageInfo {
   startCursor: String
   endCursor: String
-  hasPreviousPage: Boolean
+  hasPreviousPage: Boolean!
   hasNextPage: Boolean!
 }
 
@@ -44,7 +44,12 @@ type Vehicle {
   year: Int
   mintedAt: Time!
   aftermarketDevice: AftermarketDevice
-  privileges(first: Int, after: String): PrivilegesConnection!
+  privileges(
+    first: Int
+    after: String
+    last: Int
+    before: String
+  ): PrivilegesConnection!
   syntheticDevice: SyntheticDevice
 }
 

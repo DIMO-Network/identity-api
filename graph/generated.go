@@ -116,7 +116,7 @@ type ComplexityRoot struct {
 		MintedAt          func(childComplexity int) int
 		Model             func(childComplexity int) int
 		Owner             func(childComplexity int) int
-		Privileges        func(childComplexity int, first *int, after *string) int
+		Privileges        func(childComplexity int, first *int, after *string, last *int, before *string) int
 		SyntheticDevice   func(childComplexity int) int
 		Year              func(childComplexity int) int
 	}
@@ -143,7 +143,7 @@ type QueryResolver interface {
 }
 type VehicleResolver interface {
 	AftermarketDevice(ctx context.Context, obj *model.Vehicle) (*model.AftermarketDevice, error)
-	Privileges(ctx context.Context, obj *model.Vehicle, first *int, after *string) (*model.PrivilegesConnection, error)
+	Privileges(ctx context.Context, obj *model.Vehicle, first *int, after *string, last *int, before *string) (*model.PrivilegesConnection, error)
 	SyntheticDevice(ctx context.Context, obj *model.Vehicle) (*model.SyntheticDevice, error)
 }
 
@@ -460,7 +460,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Vehicle.Privileges(childComplexity, args["first"].(*int), args["after"].(*string)), true
+		return e.complexity.Vehicle.Privileges(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
 
 	case "Vehicle.syntheticDevice":
 		if e.complexity.Vehicle.SyntheticDevice == nil {
@@ -772,6 +772,24 @@ func (ec *executionContext) field_Vehicle_privileges_args(ctx context.Context, r
 		}
 	}
 	args["after"] = arg1
+	var arg2 *int
+	if tmp, ok := rawArgs["last"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+		arg2, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["last"] = arg2
+	var arg3 *string
+	if tmp, ok := rawArgs["before"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+		arg3, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["before"] = arg3
 	return args, nil
 }
 
@@ -1530,11 +1548,14 @@ func (ec *executionContext) _PageInfo_hasPreviousPage(ctx context.Context, field
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*bool)
+	res := resTmp.(bool)
 	fc.Result = res
-	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_PageInfo_hasPreviousPage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2850,7 +2871,7 @@ func (ec *executionContext) _Vehicle_privileges(ctx context.Context, field graph
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Vehicle().Privileges(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string))
+		return ec.resolvers.Vehicle().Privileges(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5190,6 +5211,9 @@ func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet,
 			out.Values[i] = ec._PageInfo_endCursor(ctx, field, obj)
 		case "hasPreviousPage":
 			out.Values[i] = ec._PageInfo_hasPreviousPage(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "hasNextPage":
 			out.Values[i] = ec._PageInfo_hasNextPage(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

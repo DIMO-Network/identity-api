@@ -72,10 +72,6 @@ func (v *Repository) createVehiclesResponse(totalCount int64, vehicles models.Ve
 func (v *Repository) GetAccessibleVehicles(ctx context.Context, addr common.Address, first *int, after *string, last *int, before *string) (*gmodel.VehicleConnection, error) {
 	limit := defaultPageSize
 
-	if err := helpers.ValidateFirstLast(first, last); err != nil {
-		return nil, err
-	}
-
 	if first != nil {
 		limit = *first
 	} else if last != nil {
