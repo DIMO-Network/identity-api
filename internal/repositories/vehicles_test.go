@@ -537,6 +537,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 	before := "MQ=="
 	startCrsr := "Mg=="
 	endCrsr := "Mw=="
+
 	res, err := o.repo.GetAccessibleVehicles(o.ctx, *wallet, nil, nil, &last, &before)
 	o.NoError(err)
 
