@@ -19,6 +19,17 @@ type AftermarketDeviceEdge struct {
 	Node   *AftermarketDevice `json:"node"`
 }
 
+type Definition struct {
+	URI               *string               `json:"uri,omitempty"`
+	Make              *string               `json:"make,omitempty"`
+	Model             *string               `json:"model,omitempty"`
+	Year              *int                  `json:"year,omitempty"`
+	MintedAt          time.Time             `json:"mintedAt"`
+	AftermarketDevice *AftermarketDevice    `json:"aftermarketDevice,omitempty"`
+	Privileges        *PrivilegesConnection `json:"privileges"`
+	SyntheticDevice   *SyntheticDevice      `json:"syntheticDevice,omitempty"`
+}
+
 type PageInfo struct {
 	StartCursor     *string `json:"startCursor,omitempty"`
 	EndCursor       *string `json:"endCursor,omitempty"`
@@ -54,13 +65,11 @@ type SyntheticDevice struct {
 type Vehicle struct {
 	ID                int                   `json:"id"`
 	Owner             common.Address        `json:"owner"`
-	Make              *string               `json:"make,omitempty"`
-	Model             *string               `json:"model,omitempty"`
-	Year              *int                  `json:"year,omitempty"`
 	MintedAt          time.Time             `json:"mintedAt"`
 	AftermarketDevice *AftermarketDevice    `json:"aftermarketDevice,omitempty"`
 	Privileges        *PrivilegesConnection `json:"privileges"`
 	SyntheticDevice   *SyntheticDevice      `json:"syntheticDevice,omitempty"`
+	Definition        *Definition           `json:"definition,omitempty"`
 }
 
 type VehicleConnection struct {

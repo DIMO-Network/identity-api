@@ -82,3 +82,11 @@ type SyntheticDeviceNodeBurnedData struct {
 	VehicleNode         *big.Int
 	Owner               common.Address
 }
+
+type DeviceDefinition struct {
+	Type struct {
+		Make  string
+		Model string
+		Year  int
+	}
+}

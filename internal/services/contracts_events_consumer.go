@@ -3,8 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
-	"strconv"
-	"strings"
+	"net/http"
 	"time"
 
 	"github.com/DIMO-Network/identity-api/internal/config"
@@ -19,9 +18,10 @@ import (
 )
 
 type ContractsEventsConsumer struct {
-	dbs      db.Store
-	log      *zerolog.Logger
-	settings *config.Settings
+	dbs        db.Store
+	log        *zerolog.Logger
+	settings   *config.Settings
+	httpClient *http.Client
 }
 
 type EventName string
@@ -52,6 +52,9 @@ func NewContractsEventsConsumer(dbs db.Store, log *zerolog.Logger, settings *con
 		dbs:      dbs,
 		log:      log,
 		settings: settings,
+		httpClient: &http.Client{
+			Timeout: 10 * time.Second,
+		},
 	}
 }
 
@@ -144,24 +147,37 @@ func (c *ContractsEventsConsumer) handleVehicleAttributeSetEvent(ctx context.Con
 	}
 
 	switch args.Attribute {
-	case "Make":
-		veh.Make = null.StringFrom(args.Info)
-	case "Model":
-		veh.Model = null.StringFrom(args.Info)
-	case "Year":
-		year, err := strconv.Atoi(args.Info)
+	case "Make", "Model", "Year":
+		c.log.Debug().Str("Attribute", args.Attribute).Msg("ignoring MMY attributes")
+		return nil
+	case "Definition URI":
+		res, err := c.httpClient.Get(args.Info)
 		if err != nil {
 			return err
 		}
-		veh.Year = null.IntFrom(year)
+		defer res.Body.Close()
+
+		if res.StatusCode != http.StatusOK {
+			return fmt.Errorf("device definition URI returned status code %d", res.StatusCode)
+		}
+
+		var ddf DeviceDefinition
+		if err := json.NewDecoder(res.Body).Decode(&ddf); err != nil {
+			return fmt.Errorf("couldn't parse device definition response: %w", err)
+		}
+
+		veh.Make = null.StringFrom(ddf.Type.Make)
+		veh.Model = null.StringFrom(ddf.Type.Model)
+		veh.Year = null.IntFrom(ddf.Type.Year)
+		veh.DefinitionURI = null.StringFrom(args.Info)
+
+		cols := models.VehicleColumns
+		_, err = veh.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(cols.DefinitionURI, cols.Make, cols.Model, cols.Year))
+
+		return err
 	default:
 		return fmt.Errorf("unrecognized vehicle attribute %q", args.Attribute)
 	}
-
-	colToLower := strings.ToLower(args.Attribute)
-
-	_, err = veh.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(colToLower))
-	return err
 }
 
 func (c *ContractsEventsConsumer) handleVehicleTransferEvent(ctx context.Context, e *ContractEventData) error {

@@ -30,10 +30,13 @@ func VehicleToAPI(v *models.Vehicle) *gmodel.Vehicle {
 	return &gmodel.Vehicle{
 		ID:       v.ID,
 		Owner:    common.BytesToAddress(v.OwnerAddress),
-		Make:     v.Make.Ptr(),
-		Model:    v.Model.Ptr(),
-		Year:     v.Year.Ptr(),
 		MintedAt: v.MintedAt,
+		Definition: &gmodel.Definition{
+			URI:   v.DefinitionURI.Ptr(),
+			Make:  v.Make.Ptr(),
+			Model: v.Model.Ptr(),
+			Year:  v.Year.Ptr(),
+		},
 	}
 }
 
