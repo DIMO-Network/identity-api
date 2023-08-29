@@ -37,8 +37,14 @@ func VehicleToAPI(v *models.Vehicle) *gmodel.Vehicle {
 	}
 }
 
-func (v *Repository) createVehiclesResponse(totalCount int64, vehicles models.VehicleSlice, hasNext bool) *gmodel.VehicleConnection {
-	endCursr := helpers.IDToCursor(vehicles[len(vehicles)-1].ID)
+func (v *Repository) createVehiclesResponse(totalCount int64, vehicles models.VehicleSlice, hasNext bool, hasPrevious bool) *gmodel.VehicleConnection {
+	endCursr, startCursr := "", ""
+	if hasNext {
+		endCursr = helpers.IDToCursor(vehicles[len(vehicles)-1].ID)
+	}
+	if hasPrevious {
+		startCursr = helpers.IDToCursor(vehicles[0].ID)
+	}
 
 	var vEdges []*gmodel.VehicleEdge
 	for _, v := range vehicles {
@@ -53,13 +59,30 @@ func (v *Repository) createVehiclesResponse(totalCount int64, vehicles models.Ve
 	res := &gmodel.VehicleConnection{
 		TotalCount: int(totalCount),
 		PageInfo: &gmodel.PageInfo{
-			HasNextPage: hasNext,
-			EndCursor:   &endCursr,
+			HasNextPage:     hasNext,
+			HasPreviousPage: hasPrevious,
+			StartCursor:     &startCursr,
+			EndCursor:       &endCursr,
 		},
 		Edges: vEdges,
 	}
 
 	return res
+}
+
+func applyPaginationDirectionFromCursor(cursor *string, isAfter bool, queryMods *[]qm.QueryMod) (*[]qm.QueryMod, error) {
+	id, err := helpers.CursorToID(*cursor)
+	if err != nil {
+		return nil, err
+	}
+
+	if isAfter {
+		*queryMods = append(*queryMods, models.VehicleWhere.ID.LT(id))
+	} else {
+		*queryMods = append(*queryMods, models.VehicleWhere.ID.GT(id))
+	}
+
+	return queryMods, nil
 }
 
 // GetAccessibleVehicles godoc
@@ -113,18 +136,24 @@ func (v *Repository) GetAccessibleVehicles(ctx context.Context, addr common.Addr
 		}, nil
 	}
 
-	if after != nil {
-		afterID, err := helpers.CursorToID(*after)
-		if err != nil {
-			return nil, err
-		}
+	if totalCount < int64(limit) {
+		limit = int(totalCount)
+	}
 
-		queryMods = append(queryMods, models.VehicleWhere.ID.LT(afterID))
+	if after != nil {
+		applyPaginationDirectionFromCursor(after, true, &queryMods)
+	} else if before != nil {
+		applyPaginationDirectionFromCursor(before, false, &queryMods)
+	}
+
+	orderBy := "DESC"
+	if before != nil {
+		orderBy = "ASC"
 	}
 
 	queryMods = append(queryMods,
 		qm.Limit(limit+1),
-		qm.OrderBy(models.VehicleColumns.ID+" DESC"),
+		qm.OrderBy(models.VehicleColumns.ID+" "+orderBy),
 	)
 
 	all, err := models.Vehicles(queryMods...).All(ctx, v.pdb.DBS().Reader)
@@ -139,12 +168,16 @@ func (v *Repository) GetAccessibleVehicles(ctx context.Context, addr common.Addr
 		}, nil
 	}
 
-	hasNext := len(all) > limit
-	if hasNext {
+	hasNext, hasPrevious := before != nil, after != nil
+	if first != nil && *first+1 == len(all) {
+		hasNext = true
+		all = all[:limit]
+	} else if last != nil && *last+1 == len(all) {
+		hasPrevious = true
 		all = all[:limit]
 	}
 
-	return v.createVehiclesResponse(totalCount, all, hasNext), nil
+	return v.createVehiclesResponse(totalCount, all, hasNext, hasPrevious), nil
 }
 
 func (r *Repository) GetVehicle(ctx context.Context, id int) (*gmodel.Vehicle, error) {
