@@ -70,10 +70,10 @@ func (v *Repository) createVehiclesResponse(totalCount int64, vehicles models.Ve
 	return res
 }
 
-func applyPaginationDirectionFromCursor(cursor *string, isAfter bool, queryMods *[]qm.QueryMod) (*[]qm.QueryMod, error) {
+func applyPaginationDirectionFromCursor(cursor *string, isAfter bool, queryMods *[]qm.QueryMod) error {
 	id, err := helpers.CursorToID(*cursor)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if isAfter {
@@ -82,7 +82,7 @@ func applyPaginationDirectionFromCursor(cursor *string, isAfter bool, queryMods 
 		*queryMods = append(*queryMods, models.VehicleWhere.ID.GT(id))
 	}
 
-	return queryMods, nil
+	return nil
 }
 
 // GetAccessibleVehicles godoc
@@ -141,9 +141,13 @@ func (v *Repository) GetAccessibleVehicles(ctx context.Context, addr common.Addr
 	}
 
 	if after != nil {
-		applyPaginationDirectionFromCursor(after, true, &queryMods)
+		if err := applyPaginationDirectionFromCursor(after, true, &queryMods); err != nil {
+			return nil, err
+		}
 	} else if before != nil {
-		applyPaginationDirectionFromCursor(before, false, &queryMods)
+		if err := applyPaginationDirectionFromCursor(before, false, &queryMods); err != nil {
+			return nil, err
+		}
 	}
 
 	orderBy := "DESC"
