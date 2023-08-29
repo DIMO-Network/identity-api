@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"fmt"
+	"log"
 	"testing"
 	"time"
 
@@ -424,4 +425,77 @@ func (o *AccessibleVehiclesRepoTestSuite) TestVehiclesMultiplePrivsOnOne() {
 	}
 
 	o.Exactly(expected, res.Edges)
+}
+
+func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_PreviousPage() {
+	_, wallet, err := test.GenerateWallet()
+	o.NoError(err)
+
+	currTime := time.Now().UTC().Truncate(time.Second)
+	vehicles := []models.Vehicle{
+		{
+			ID:           1,
+			OwnerAddress: wallet.Bytes(),
+			Make:         null.StringFrom("Toyota"),
+			Model:        null.StringFrom("Camry"),
+			Year:         null.IntFrom(2020),
+			MintedAt:     currTime,
+		},
+		{
+			ID:           2,
+			OwnerAddress: wallet.Bytes(),
+			Make:         null.StringFrom("Toyota"),
+			Model:        null.StringFrom("Camry"),
+			Year:         null.IntFrom(2022),
+			MintedAt:     currTime,
+		},
+		{
+			ID:           3,
+			OwnerAddress: wallet.Bytes(),
+			Make:         null.StringFrom("Toyota"),
+			Model:        null.StringFrom("Corolla"),
+			Year:         null.IntFrom(2023),
+			MintedAt:     currTime,
+		},
+		{
+			ID:           4,
+			OwnerAddress: wallet.Bytes(),
+			Make:         null.StringFrom("Toyota"),
+			Model:        null.StringFrom("Highlander"),
+			Year:         null.IntFrom(2020),
+			MintedAt:     currTime,
+		},
+	}
+
+	for _, v := range vehicles {
+		if err := v.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer()); err != nil {
+			o.NoError(err)
+		}
+	}
+
+	last := 2
+	before := "Mw=="
+	res, err := o.repo.GetAccessibleVehicles(o.ctx, *wallet, nil, nil, &last, &before)
+	o.NoError(err)
+
+	log.Println(len(res.Edges), "------")
+	// log.Println(res.TotalCount, res.Edges[0].Cursor, res.Edges[1].Cursor, len(res.Edges), res.PageInfo)
+	/* o.Equal(len(vehicles), res.TotalCount)
+	o.Equal(res.PageInfo.HasNextPage, false)
+
+	expected := []*gmodel.VehicleEdge{
+		{
+			Node: &gmodel.Vehicle{
+				ID:       1,
+				Owner:    common.BytesToAddress(wallet.Bytes()),
+				Make:     &vehicles[0].Make.String,
+				Model:    &vehicles[0].Model.String,
+				Year:     &vehicles[0].Year.Int,
+				MintedAt: vehicles[0].MintedAt,
+			},
+			Cursor: "MQ==",
+		},
+	}
+
+	o.Exactly(expected, res.Edges) */
 }

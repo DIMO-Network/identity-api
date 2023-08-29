@@ -38,13 +38,7 @@ func VehicleToAPI(v *models.Vehicle) *gmodel.Vehicle {
 }
 
 func (v *Repository) createVehiclesResponse(totalCount int64, vehicles models.VehicleSlice, hasNext bool, hasPrevious bool) *gmodel.VehicleConnection {
-	endCursr, startCursr := "", ""
-	if hasNext {
-		endCursr = helpers.IDToCursor(vehicles[len(vehicles)-1].ID)
-	}
-	if hasPrevious {
-		startCursr = helpers.IDToCursor(vehicles[0].ID)
-	}
+	endCursr, startCursr := helpers.IDToCursor(vehicles[len(vehicles)-1].ID), helpers.IDToCursor(vehicles[0].ID)
 
 	var vEdges []*gmodel.VehicleEdge
 	for _, v := range vehicles {
