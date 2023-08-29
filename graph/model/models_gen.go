@@ -27,8 +27,10 @@ type Definition struct {
 }
 
 type PageInfo struct {
-	EndCursor   *string `json:"endCursor,omitempty"`
-	HasNextPage bool    `json:"hasNextPage"`
+	StartCursor     *string `json:"startCursor,omitempty"`
+	EndCursor       *string `json:"endCursor,omitempty"`
+	HasPreviousPage bool    `json:"hasPreviousPage"`
+	HasNextPage     bool    `json:"hasNextPage"`
 }
 
 type Privilege struct {

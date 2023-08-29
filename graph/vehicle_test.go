@@ -52,7 +52,7 @@ func (s *VehicleTestSuite) TearDownSuite() {
 	s.dbCont.Terminate(context.TODO()) //nolint
 }
 
-func (s *VehicleTestSuite) Test_GraphQL_HttpRequest(query string, variables map[string]any, expected any) error {
+func (s *VehicleTestSuite) Test_Vehicle(query string, variables map[string]any, expected any) error {
 	req := Request{
 		Query:     query,
 		Variables: variables,

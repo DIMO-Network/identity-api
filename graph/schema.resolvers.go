@@ -21,13 +21,13 @@ func (r *aftermarketDeviceResolver) Vehicle(ctx context.Context, obj *model.Afte
 }
 
 // AccessibleVehicles is the resolver for the accessibleVehicles field.
-func (r *queryResolver) AccessibleVehicles(ctx context.Context, address common.Address, first *int, after *string) (*model.VehicleConnection, error) {
-	return r.Repo.GetAccessibleVehicles(ctx, address, first, after)
+func (r *queryResolver) AccessibleVehicles(ctx context.Context, address common.Address, first *int, after *string, last *int, before *string) (*model.VehicleConnection, error) {
+	return r.Repo.GetAccessibleVehicles(ctx, address, first, after, last, before)
 }
 
 // OwnedAftermarketDevices is the resolver for the ownedAftermarketDevices field.
-func (r *queryResolver) OwnedAftermarketDevices(ctx context.Context, address common.Address, first *int, after *string) (*model.AftermarketDeviceConnection, error) {
-	return r.Repo.GetOwnedAftermarketDevices(ctx, address, first, after)
+func (r *queryResolver) OwnedAftermarketDevices(ctx context.Context, address common.Address, first *int, after *string, last *int, before *string) (*model.AftermarketDeviceConnection, error) {
+	return r.Repo.GetOwnedAftermarketDevices(ctx, address, first, after, last, before)
 }
 
 // Vehicle is the resolver for the vehicle field.
@@ -41,8 +41,8 @@ func (r *vehicleResolver) AftermarketDevice(ctx context.Context, obj *model.Vehi
 }
 
 // Privileges is the resolver for the privileges field.
-func (r *vehicleResolver) Privileges(ctx context.Context, obj *model.Vehicle, first *int, after *string) (*model.PrivilegesConnection, error) {
-	return r.Repo.GetPrivilegesForVehicle(ctx, obj.ID, first, after)
+func (r *vehicleResolver) Privileges(ctx context.Context, obj *model.Vehicle, first *int, after *string, last *int, before *string) (*model.PrivilegesConnection, error) {
+	return r.Repo.GetPrivilegesForVehicle(ctx, obj.ID, first, after, last, before)
 }
 
 // SyntheticDevice is the resolver for the syntheticDevice field.

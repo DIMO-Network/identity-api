@@ -117,7 +117,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Success() {
 	}
 
 	first := 3
-	res, err := o.repo.GetAccessibleVehicles(o.ctx, *wallet, &first, nil)
+	res, err := o.repo.GetAccessibleVehicles(o.ctx, *wallet, &first, nil, nil, nil)
 	o.NoError(err)
 
 	o.Equal(2, res.TotalCount)
@@ -195,7 +195,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination(
 	}
 
 	first := 1
-	res, err := o.repo.GetAccessibleVehicles(o.ctx, *wallet, &first, nil)
+	res, err := o.repo.GetAccessibleVehicles(o.ctx, *wallet, &first, nil, nil, nil)
 	o.NoError(err)
 
 	o.Equal(len(vehicles), res.TotalCount)
@@ -260,7 +260,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 
 	first := 1
 	after := "Mg=="
-	res, err := o.repo.GetAccessibleVehicles(o.ctx, *wallet, &first, &after)
+	res, err := o.repo.GetAccessibleVehicles(o.ctx, *wallet, &first, &after, nil, nil)
 	o.NoError(err)
 
 	o.Equal(len(vehicles), res.TotalCount)
@@ -343,7 +343,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_OwnedByUser
 	}
 
 	first := 3
-	res, err := o.repo.GetAccessibleVehicles(o.ctx, *wallet, &first, nil)
+	res, err := o.repo.GetAccessibleVehicles(o.ctx, *wallet, &first, nil, nil, nil)
 	o.NoError(err)
 
 	o.Equal(2, res.TotalCount)
@@ -447,7 +447,7 @@ func (o *AccessibleVehiclesRepoTestSuite) TestVehiclesMultiplePrivsOnOne() {
 	}
 
 	first := 3
-	res, err := o.repo.GetAccessibleVehicles(o.ctx, *wallet, &first, nil)
+	res, err := o.repo.GetAccessibleVehicles(o.ctx, *wallet, &first, nil, nil, nil)
 	o.NoError(err)
 
 	o.Equal(2, res.TotalCount)
