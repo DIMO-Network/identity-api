@@ -39,9 +39,6 @@ type PageInfo {
 type Vehicle {
   id: BigInt!
   owner: Address!
-  make: String
-  model: String
-  year: Int
   mintedAt: Time!
   aftermarketDevice: AftermarketDevice
   privileges(
@@ -51,6 +48,14 @@ type Vehicle {
     before: String
   ): PrivilegesConnection!
   syntheticDevice: SyntheticDevice
+  definition: Definition
+}
+
+type Definition {
+  uri: String
+  make: String
+  model: String
+  year: Int
 }
 
 type VehicleEdge {

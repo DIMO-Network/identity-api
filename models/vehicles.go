@@ -24,65 +24,72 @@ import (
 
 // Vehicle is an object representing the database table.
 type Vehicle struct {
-	ID           int         `boil:"id" json:"id" toml:"id" yaml:"id"`
-	OwnerAddress []byte      `boil:"owner_address" json:"owner_address" toml:"owner_address" yaml:"owner_address"`
-	Make         null.String `boil:"make" json:"make,omitempty" toml:"make" yaml:"make,omitempty"`
-	Model        null.String `boil:"model" json:"model,omitempty" toml:"model" yaml:"model,omitempty"`
-	Year         null.Int    `boil:"year" json:"year,omitempty" toml:"year" yaml:"year,omitempty"`
-	MintedAt     time.Time   `boil:"minted_at" json:"minted_at" toml:"minted_at" yaml:"minted_at"`
+	ID            int         `boil:"id" json:"id" toml:"id" yaml:"id"`
+	OwnerAddress  []byte      `boil:"owner_address" json:"owner_address" toml:"owner_address" yaml:"owner_address"`
+	Make          null.String `boil:"make" json:"make,omitempty" toml:"make" yaml:"make,omitempty"`
+	Model         null.String `boil:"model" json:"model,omitempty" toml:"model" yaml:"model,omitempty"`
+	Year          null.Int    `boil:"year" json:"year,omitempty" toml:"year" yaml:"year,omitempty"`
+	MintedAt      time.Time   `boil:"minted_at" json:"minted_at" toml:"minted_at" yaml:"minted_at"`
+	DefinitionURI null.String `boil:"definition_uri" json:"definition_uri,omitempty" toml:"definition_uri" yaml:"definition_uri,omitempty"`
 
 	R *vehicleR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L vehicleL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var VehicleColumns = struct {
-	ID           string
-	OwnerAddress string
-	Make         string
-	Model        string
-	Year         string
-	MintedAt     string
+	ID            string
+	OwnerAddress  string
+	Make          string
+	Model         string
+	Year          string
+	MintedAt      string
+	DefinitionURI string
 }{
-	ID:           "id",
-	OwnerAddress: "owner_address",
-	Make:         "make",
-	Model:        "model",
-	Year:         "year",
-	MintedAt:     "minted_at",
+	ID:            "id",
+	OwnerAddress:  "owner_address",
+	Make:          "make",
+	Model:         "model",
+	Year:          "year",
+	MintedAt:      "minted_at",
+	DefinitionURI: "definition_uri",
 }
 
 var VehicleTableColumns = struct {
-	ID           string
-	OwnerAddress string
-	Make         string
-	Model        string
-	Year         string
-	MintedAt     string
+	ID            string
+	OwnerAddress  string
+	Make          string
+	Model         string
+	Year          string
+	MintedAt      string
+	DefinitionURI string
 }{
-	ID:           "vehicles.id",
-	OwnerAddress: "vehicles.owner_address",
-	Make:         "vehicles.make",
-	Model:        "vehicles.model",
-	Year:         "vehicles.year",
-	MintedAt:     "vehicles.minted_at",
+	ID:            "vehicles.id",
+	OwnerAddress:  "vehicles.owner_address",
+	Make:          "vehicles.make",
+	Model:         "vehicles.model",
+	Year:          "vehicles.year",
+	MintedAt:      "vehicles.minted_at",
+	DefinitionURI: "vehicles.definition_uri",
 }
 
 // Generated where
 
 var VehicleWhere = struct {
-	ID           whereHelperint
-	OwnerAddress whereHelper__byte
-	Make         whereHelpernull_String
-	Model        whereHelpernull_String
-	Year         whereHelpernull_Int
-	MintedAt     whereHelpertime_Time
+	ID            whereHelperint
+	OwnerAddress  whereHelper__byte
+	Make          whereHelpernull_String
+	Model         whereHelpernull_String
+	Year          whereHelpernull_Int
+	MintedAt      whereHelpertime_Time
+	DefinitionURI whereHelpernull_String
 }{
-	ID:           whereHelperint{field: "\"identity_api\".\"vehicles\".\"id\""},
-	OwnerAddress: whereHelper__byte{field: "\"identity_api\".\"vehicles\".\"owner_address\""},
-	Make:         whereHelpernull_String{field: "\"identity_api\".\"vehicles\".\"make\""},
-	Model:        whereHelpernull_String{field: "\"identity_api\".\"vehicles\".\"model\""},
-	Year:         whereHelpernull_Int{field: "\"identity_api\".\"vehicles\".\"year\""},
-	MintedAt:     whereHelpertime_Time{field: "\"identity_api\".\"vehicles\".\"minted_at\""},
+	ID:            whereHelperint{field: "\"identity_api\".\"vehicles\".\"id\""},
+	OwnerAddress:  whereHelper__byte{field: "\"identity_api\".\"vehicles\".\"owner_address\""},
+	Make:          whereHelpernull_String{field: "\"identity_api\".\"vehicles\".\"make\""},
+	Model:         whereHelpernull_String{field: "\"identity_api\".\"vehicles\".\"model\""},
+	Year:          whereHelpernull_Int{field: "\"identity_api\".\"vehicles\".\"year\""},
+	MintedAt:      whereHelpertime_Time{field: "\"identity_api\".\"vehicles\".\"minted_at\""},
+	DefinitionURI: whereHelpernull_String{field: "\"identity_api\".\"vehicles\".\"definition_uri\""},
 }
 
 // VehicleRels is where relationship names are stored.
@@ -133,9 +140,9 @@ func (r *vehicleR) GetSyntheticDevices() SyntheticDeviceSlice {
 type vehicleL struct{}
 
 var (
-	vehicleAllColumns            = []string{"id", "owner_address", "make", "model", "year", "minted_at"}
+	vehicleAllColumns            = []string{"id", "owner_address", "make", "model", "year", "minted_at", "definition_uri"}
 	vehicleColumnsWithoutDefault = []string{"id", "owner_address", "minted_at"}
-	vehicleColumnsWithDefault    = []string{"make", "model", "year"}
+	vehicleColumnsWithDefault    = []string{"make", "model", "year", "definition_uri"}
 	vehiclePrimaryKeyColumns     = []string{"id"}
 	vehicleGeneratedColumns      = []string{}
 )

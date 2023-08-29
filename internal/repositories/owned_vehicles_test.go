@@ -27,7 +27,7 @@ type OwnedVehiclesRepoTestSuite struct {
 	settings  config.Settings
 }
 
-const migrationsDir = "../../migrations"
+// const migrationsDir = "../../migrations"
 
 func (s *OwnedVehiclesRepoTestSuite) SetupSuite() {
 	s.ctx = context.Background()
@@ -120,11 +120,13 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Success() {
 	expected := []*gmodel.VehicleEdge{
 		{
 			Node: &gmodel.Vehicle{
-				ID:         2,
-				Owner:      common.BytesToAddress(wallet.Bytes()),
-				Make:       &vehicles[1].Make.String,
-				Model:      &vehicles[1].Model.String,
-				Year:       &vehicles[1].Year.Int,
+				ID:    2,
+				Owner: common.BytesToAddress(wallet.Bytes()),
+				Definition: &gmodel.Definition{
+					Make:  &vehicles[1].Make.String,
+					Model: &vehicles[1].Model.String,
+					Year:  &vehicles[1].Year.Int,
+				},
 				MintedAt:   vehicles[1].MintedAt,
 				Privileges: nil,
 			},
@@ -132,11 +134,13 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Success() {
 		},
 		{
 			Node: &gmodel.Vehicle{
-				ID:         1,
-				Owner:      common.BytesToAddress(wallet.Bytes()),
-				Make:       &vehicles[0].Make.String,
-				Model:      &vehicles[0].Model.String,
-				Year:       &vehicles[0].Year.Int,
+				ID:    1,
+				Owner: common.BytesToAddress(wallet.Bytes()),
+				Definition: &gmodel.Definition{
+					Make:  &vehicles[0].Make.String,
+					Model: &vehicles[0].Model.String,
+					Year:  &vehicles[0].Year.Int,
+				},
 				MintedAt:   vehicles[0].MintedAt,
 				Privileges: nil,
 			},
@@ -187,11 +191,13 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination() {
 	expected := []*gmodel.VehicleEdge{
 		{
 			Node: &gmodel.Vehicle{
-				ID:         2,
-				Owner:      common.BytesToAddress(wallet.Bytes()),
-				Make:       &vehicles[1].Make.String,
-				Model:      &vehicles[1].Model.String,
-				Year:       &vehicles[1].Year.Int,
+				ID:    2,
+				Owner: common.BytesToAddress(wallet.Bytes()),
+				Definition: &gmodel.Definition{
+					Make:  &vehicles[1].Make.String,
+					Model: &vehicles[1].Model.String,
+					Year:  &vehicles[1].Year.Int,
+				},
 				MintedAt:   vehicles[1].MintedAt,
 				Privileges: nil,
 			},
@@ -243,11 +249,13 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination_NextPage()
 	expected := []*gmodel.VehicleEdge{
 		{
 			Node: &gmodel.Vehicle{
-				ID:         1,
-				Owner:      common.BytesToAddress(wallet.Bytes()),
-				Make:       &vehicles[0].Make.String,
-				Model:      &vehicles[0].Model.String,
-				Year:       &vehicles[0].Year.Int,
+				ID:    1,
+				Owner: common.BytesToAddress(wallet.Bytes()),
+				Definition: &gmodel.Definition{
+					Make:  &vehicles[0].Make.String,
+					Model: &vehicles[0].Model.String,
+					Year:  &vehicles[0].Year.Int,
+				},
 				MintedAt:   vehicles[0].MintedAt,
 				Privileges: nil,
 			},
