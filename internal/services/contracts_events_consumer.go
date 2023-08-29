@@ -12,16 +12,16 @@ import (
 	"github.com/DIMO-Network/shared/db"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/goccy/go-json"
-	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
 type ContractsEventsConsumer struct {
-	dbs      db.Store
-	log      *zerolog.Logger
-	settings *config.Settings
+	dbs        db.Store
+	log        *zerolog.Logger
+	settings   *config.Settings
+	httpClient *http.Client
 }
 
 type EventName string
@@ -52,6 +52,9 @@ func NewContractsEventsConsumer(dbs db.Store, log *zerolog.Logger, settings *con
 		dbs:      dbs,
 		log:      log,
 		settings: settings,
+		httpClient: &http.Client{
+			Timeout: 10 * time.Second,
+		},
 	}
 }
 
@@ -148,23 +151,19 @@ func (c *ContractsEventsConsumer) handleVehicleAttributeSetEvent(ctx context.Con
 		c.log.Debug().Str("Attribute", args.Attribute).Msg("ignoring MMY attributes")
 		return nil
 	case "Definition URI":
-		client := http.Client{
-			Timeout: 10 * time.Second,
-		}
-		res, err := client.Get(args.Info)
+		res, err := c.httpClient.Get(args.Info)
 		if err != nil {
 			return err
 		}
 		defer res.Body.Close()
 
 		if res.StatusCode != http.StatusOK {
-			return fmt.Errorf("error occurred fetching device Definition for device with token %d: %d", args.TokenID, res.StatusCode)
+			return fmt.Errorf("device definition URI returned status code %d", res.StatusCode)
 		}
 
-		ddf := DeviceDefinition{}
-		err = json.NewDecoder(res.Body).Decode(&ddf)
-		if err != nil {
-			return errors.Wrap(err, "failed to marshal json from device definition")
+		var ddf DeviceDefinition
+		if err := json.NewDecoder(res.Body).Decode(&ddf); err != nil {
+			return fmt.Errorf("couldn't parse device definition response: %w", err)
 		}
 
 		veh.Make = null.StringFrom(ddf.Type.Make)
@@ -172,7 +171,8 @@ func (c *ContractsEventsConsumer) handleVehicleAttributeSetEvent(ctx context.Con
 		veh.Year = null.IntFrom(ddf.Type.Year)
 		veh.DefinitionURI = null.StringFrom(args.Info)
 
-		_, err = veh.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.VehicleColumns.Make, models.VehicleColumns.Model, models.VehicleColumns.Year, models.VehicleColumns.DefinitionURI))
+		cols := models.VehicleColumns
+		_, err = veh.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(cols.DefinitionURI, cols.Make, cols.Model, cols.Year))
 
 		return err
 	default:
