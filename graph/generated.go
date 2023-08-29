@@ -72,8 +72,10 @@ type ComplexityRoot struct {
 	}
 
 	PageInfo struct {
-		EndCursor   func(childComplexity int) int
-		HasNextPage func(childComplexity int) int
+		EndCursor       func(childComplexity int) int
+		HasNextPage     func(childComplexity int) int
+		HasPreviousPage func(childComplexity int) int
+		StartCursor     func(childComplexity int) int
 	}
 
 	Privilege struct {
@@ -95,8 +97,8 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		AccessibleVehicles      func(childComplexity int, address common.Address, first *int, after *string) int
-		OwnedAftermarketDevices func(childComplexity int, address common.Address, first *int, after *string) int
+		AccessibleVehicles      func(childComplexity int, address common.Address, first *int, after *string, last *int, before *string) int
+		OwnedAftermarketDevices func(childComplexity int, address common.Address, first *int, after *string, last *int, before *string) int
 		Vehicle                 func(childComplexity int, id int) int
 	}
 
@@ -114,7 +116,7 @@ type ComplexityRoot struct {
 		MintedAt          func(childComplexity int) int
 		Model             func(childComplexity int) int
 		Owner             func(childComplexity int) int
-		Privileges        func(childComplexity int, first *int, after *string) int
+		Privileges        func(childComplexity int, first *int, after *string, last *int, before *string) int
 		SyntheticDevice   func(childComplexity int) int
 		Year              func(childComplexity int) int
 	}
@@ -135,13 +137,13 @@ type AftermarketDeviceResolver interface {
 	Vehicle(ctx context.Context, obj *model.AftermarketDevice) (*model.Vehicle, error)
 }
 type QueryResolver interface {
-	AccessibleVehicles(ctx context.Context, address common.Address, first *int, after *string) (*model.VehicleConnection, error)
-	OwnedAftermarketDevices(ctx context.Context, address common.Address, first *int, after *string) (*model.AftermarketDeviceConnection, error)
+	AccessibleVehicles(ctx context.Context, address common.Address, first *int, after *string, last *int, before *string) (*model.VehicleConnection, error)
+	OwnedAftermarketDevices(ctx context.Context, address common.Address, first *int, after *string, last *int, before *string) (*model.AftermarketDeviceConnection, error)
 	Vehicle(ctx context.Context, id int) (*model.Vehicle, error)
 }
 type VehicleResolver interface {
 	AftermarketDevice(ctx context.Context, obj *model.Vehicle) (*model.AftermarketDevice, error)
-	Privileges(ctx context.Context, obj *model.Vehicle, first *int, after *string) (*model.PrivilegesConnection, error)
+	Privileges(ctx context.Context, obj *model.Vehicle, first *int, after *string, last *int, before *string) (*model.PrivilegesConnection, error)
 	SyntheticDevice(ctx context.Context, obj *model.Vehicle) (*model.SyntheticDevice, error)
 }
 
@@ -265,6 +267,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PageInfo.HasNextPage(childComplexity), true
 
+	case "PageInfo.hasPreviousPage":
+		if e.complexity.PageInfo.HasPreviousPage == nil {
+			break
+		}
+
+		return e.complexity.PageInfo.HasPreviousPage(childComplexity), true
+
+	case "PageInfo.startCursor":
+		if e.complexity.PageInfo.StartCursor == nil {
+			break
+		}
+
+		return e.complexity.PageInfo.StartCursor(childComplexity), true
+
 	case "Privilege.expiresAt":
 		if e.complexity.Privilege.ExpiresAt == nil {
 			break
@@ -338,7 +354,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.AccessibleVehicles(childComplexity, args["address"].(common.Address), args["first"].(*int), args["after"].(*string)), true
+		return e.complexity.Query.AccessibleVehicles(childComplexity, args["address"].(common.Address), args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
 
 	case "Query.ownedAftermarketDevices":
 		if e.complexity.Query.OwnedAftermarketDevices == nil {
@@ -350,7 +366,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.OwnedAftermarketDevices(childComplexity, args["address"].(common.Address), args["first"].(*int), args["after"].(*string)), true
+		return e.complexity.Query.OwnedAftermarketDevices(childComplexity, args["address"].(common.Address), args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
 
 	case "Query.vehicle":
 		if e.complexity.Query.Vehicle == nil {
@@ -444,7 +460,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Vehicle.Privileges(childComplexity, args["first"].(*int), args["after"].(*string)), true
+		return e.complexity.Vehicle.Privileges(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
 
 	case "Vehicle.syntheticDevice":
 		if e.complexity.Vehicle.SyntheticDevice == nil {
@@ -648,6 +664,24 @@ func (ec *executionContext) field_Query_accessibleVehicles_args(ctx context.Cont
 		}
 	}
 	args["after"] = arg2
+	var arg3 *int
+	if tmp, ok := rawArgs["last"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+		arg3, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["last"] = arg3
+	var arg4 *string
+	if tmp, ok := rawArgs["before"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+		arg4, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["before"] = arg4
 	return args, nil
 }
 
@@ -681,6 +715,24 @@ func (ec *executionContext) field_Query_ownedAftermarketDevices_args(ctx context
 		}
 	}
 	args["after"] = arg2
+	var arg3 *int
+	if tmp, ok := rawArgs["last"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+		arg3, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["last"] = arg3
+	var arg4 *string
+	if tmp, ok := rawArgs["before"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+		arg4, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["before"] = arg4
 	return args, nil
 }
 
@@ -720,6 +772,24 @@ func (ec *executionContext) field_Vehicle_privileges_args(ctx context.Context, r
 		}
 	}
 	args["after"] = arg1
+	var arg2 *int
+	if tmp, ok := rawArgs["last"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+		arg2, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["last"] = arg2
+	var arg3 *string
+	if tmp, ok := rawArgs["before"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+		arg3, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["before"] = arg3
 	return args, nil
 }
 
@@ -1254,8 +1324,12 @@ func (ec *executionContext) fieldContext_AftermarketDeviceConnection_pageInfo(ct
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
 			case "endCursor":
 				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
 			case "hasNextPage":
 				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
 			}
@@ -1371,6 +1445,47 @@ func (ec *executionContext) fieldContext_AftermarketDeviceEdge_node(ctx context.
 	return fc, nil
 }
 
+func (ec *executionContext) _PageInfo_startCursor(ctx context.Context, field graphql.CollectedField, obj *model.PageInfo) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PageInfo_startCursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.StartCursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PageInfo_startCursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PageInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _PageInfo_endCursor(ctx context.Context, field graphql.CollectedField, obj *model.PageInfo) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_PageInfo_endCursor(ctx, field)
 	if err != nil {
@@ -1407,6 +1522,50 @@ func (ec *executionContext) fieldContext_PageInfo_endCursor(ctx context.Context,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PageInfo_hasPreviousPage(ctx context.Context, field graphql.CollectedField, obj *model.PageInfo) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.HasPreviousPage, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PageInfo_hasPreviousPage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PageInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -1863,8 +2022,12 @@ func (ec *executionContext) fieldContext_PrivilegesConnection_pageInfo(ctx conte
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
 			case "endCursor":
 				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
 			case "hasNextPage":
 				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
 			}
@@ -1888,7 +2051,7 @@ func (ec *executionContext) _Query_accessibleVehicles(ctx context.Context, field
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().AccessibleVehicles(rctx, fc.Args["address"].(common.Address), fc.Args["first"].(*int), fc.Args["after"].(*string))
+		return ec.resolvers.Query().AccessibleVehicles(rctx, fc.Args["address"].(common.Address), fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1951,7 +2114,7 @@ func (ec *executionContext) _Query_ownedAftermarketDevices(ctx context.Context, 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().OwnedAftermarketDevices(rctx, fc.Args["address"].(common.Address), fc.Args["first"].(*int), fc.Args["after"].(*string))
+		return ec.resolvers.Query().OwnedAftermarketDevices(rctx, fc.Args["address"].(common.Address), fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2708,7 +2871,7 @@ func (ec *executionContext) _Vehicle_privileges(ctx context.Context, field graph
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Vehicle().Privileges(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string))
+		return ec.resolvers.Vehicle().Privileges(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2941,8 +3104,12 @@ func (ec *executionContext) fieldContext_VehicleConnection_pageInfo(ctx context.
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
 			case "endCursor":
 				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
 			case "hasNextPage":
 				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
 			}
@@ -5038,8 +5205,15 @@ func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet,
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("PageInfo")
+		case "startCursor":
+			out.Values[i] = ec._PageInfo_startCursor(ctx, field, obj)
 		case "endCursor":
 			out.Values[i] = ec._PageInfo_endCursor(ctx, field, obj)
+		case "hasPreviousPage":
+			out.Values[i] = ec._PageInfo_hasPreviousPage(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "hasNextPage":
 			out.Values[i] = ec._PageInfo_hasNextPage(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

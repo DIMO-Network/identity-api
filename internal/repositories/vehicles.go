@@ -2,7 +2,6 @@ package repositories
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
@@ -63,13 +62,20 @@ func (v *Repository) createVehiclesResponse(totalCount int64, vehicles models.Ve
 	return res
 }
 
-func (v *Repository) GetAccessibleVehicles(ctx context.Context, addr common.Address, first *int, after *string) (*gmodel.VehicleConnection, error) {
+// GetAccessibleVehicles godoc
+// @Description gets devices for an owner address
+// @Param addr [common.Address] "eth address of owner"
+// @Param first [*int] "the number of devices to return per page"
+// @Param after [*string] "base64 string representing a device tokenID. This is a pointer to where we start fetching devices from on each page"
+// @Param last [*int] "the number of devices to return from previous pages"
+// @Param before [*string] "base64 string representing a device tokenID. Pointer to where we start fetching devices from previous pages"
+func (v *Repository) GetAccessibleVehicles(ctx context.Context, addr common.Address, first *int, after *string, last *int, before *string) (*gmodel.VehicleConnection, error) {
 	limit := defaultPageSize
+
 	if first != nil {
 		limit = *first
-		if limit <= 0 {
-			return nil, errors.New("invalid value provided for number of vehicles to retrieve")
-		}
+	} else if last != nil {
+		limit = *last
 	}
 
 	queryMods := []qm.QueryMod{

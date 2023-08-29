@@ -45,7 +45,7 @@ func TestAftermarketDeviceNodeMintMultiResponse(t *testing.T) {
 	adController := New(pdb)
 	first := 2
 	after := "NA==" // 4
-	res, err := adController.GetOwnedAftermarketDevices(ctx, aftermarketDeviceNodeMintedArgs.Owner, &first, &after)
+	res, err := adController.GetOwnedAftermarketDevices(ctx, aftermarketDeviceNodeMintedArgs.Owner, &first, &after, nil, nil)
 	assert.NoError(t, err)
 
 	fmt.Println(res)

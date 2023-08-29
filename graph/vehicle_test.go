@@ -49,10 +49,10 @@ func (s *VehicleTestSuite) SetupSuite() {
 }
 
 func (s *VehicleTestSuite) TearDownSuite() {
-	s.dbCont.Terminate(context.TODO())
+	s.dbCont.Terminate(context.TODO()) //nolint
 }
 
-func (s *VehicleTestSuite) test(query string, variables map[string]any, expected any) error {
+func (s *VehicleTestSuite) Test_Vehicle(query string, variables map[string]any, expected any) error {
 	req := Request{
 		Query:     query,
 		Variables: variables,
