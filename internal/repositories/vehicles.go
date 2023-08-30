@@ -10,6 +10,7 @@ import (
 	"github.com/DIMO-Network/shared/db"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"golang.org/x/exp/slices"
 )
 
 const (
@@ -147,9 +148,13 @@ func (v *Repository) GetAccessibleVehicles(ctx context.Context, addr common.Addr
 		}
 	}
 
+	orderBy := " DESC"
+	if before != nil {
+		orderBy = " ASC"
+	}
 	queryMods = append(queryMods,
 		qm.Limit(limit+1),
-		qm.OrderBy(models.VehicleColumns.ID+" DESC"),
+		qm.OrderBy(models.VehicleColumns.ID+orderBy),
 	)
 
 	all, err := models.Vehicles(queryMods...).All(ctx, v.pdb.DBS().Reader)
@@ -171,6 +176,10 @@ func (v *Repository) GetAccessibleVehicles(ctx context.Context, addr common.Addr
 	} else if last != nil && *last+1 == len(all) {
 		hasPrevious = true
 		all = all[:limit]
+	}
+
+	if before != nil {
+		slices.Reverse(all)
 	}
 
 	return v.createVehiclesResponse(totalCount, all, hasNext, hasPrevious), nil
