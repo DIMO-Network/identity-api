@@ -1,19 +1,19 @@
 module github.com/DIMO-Network/identity-api
 
-go 1.20
+go 1.21
 
 require (
 	github.com/99designs/gqlgen v0.17.36
-	github.com/DIMO-Network/shared v0.10.2
+	github.com/DIMO-Network/shared v0.10.3
 	github.com/Shopify/sarama v1.38.1
 	github.com/docker/go-connections v0.4.0
 	github.com/ethereum/go-ethereum v1.12.2
 	github.com/friendsofgo/errors v0.9.2
 	github.com/goccy/go-json v0.10.2
-	github.com/gofiber/fiber/v2 v2.48.0
+	github.com/gofiber/fiber/v2 v2.49.0
 	github.com/golang-jwt/jwt/v5 v5.0.0
 	github.com/graph-gophers/dataloader/v7 v7.1.0
-	github.com/jarcoal/httpmock v1.1.0
+	github.com/jarcoal/httpmock v1.3.1
 	github.com/pkg/errors v0.9.1
 	github.com/pressly/goose/v3 v3.15.0
 	github.com/rs/zerolog v1.30.0
@@ -22,7 +22,7 @@ require (
 	github.com/vektah/gqlparser/v2 v2.5.8
 	github.com/vmihailenco/msgpack/v5 v5.3.5
 	github.com/volatiletech/null/v8 v8.1.2
-	github.com/volatiletech/sqlboiler/v4 v4.14.2
+	github.com/volatiletech/sqlboiler/v4 v4.15.0
 	github.com/volatiletech/strmangle v0.0.5
 )
 
@@ -55,7 +55,7 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golang/snappy v0.0.5-0.20220116011046-fa5810519dcb // indirect
-	github.com/google/uuid v1.3.0 // indirect
+	github.com/google/uuid v1.3.1 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
@@ -72,7 +72,7 @@ require (
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
-	github.com/mattn/go-runewidth v0.0.14 // indirect
+	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/moby/patternmatcher v0.5.0 // indirect
 	github.com/moby/sys/sequential v0.5.0 // indirect
