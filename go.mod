@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/99designs/gqlgen v0.17.36
-	github.com/DIMO-Network/shared v0.10.2
+	github.com/DIMO-Network/shared v0.10.3
 	github.com/Shopify/sarama v1.38.1
 	github.com/docker/go-connections v0.4.0
 	github.com/ethereum/go-ethereum v1.12.2
@@ -13,7 +13,7 @@ require (
 	github.com/gofiber/fiber/v2 v2.49.0
 	github.com/golang-jwt/jwt/v5 v5.0.0
 	github.com/graph-gophers/dataloader/v7 v7.1.0
-	github.com/jarcoal/httpmock v1.1.0
+	github.com/jarcoal/httpmock v1.3.1
 	github.com/pkg/errors v0.9.1
 	github.com/pressly/goose/v3 v3.15.0
 	github.com/rs/zerolog v1.30.0
