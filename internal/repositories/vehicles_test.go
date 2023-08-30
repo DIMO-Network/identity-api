@@ -534,8 +534,8 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 	}
 
 	last := 2
-	before := "MQ=="
-	startCrsr := "Mg=="
+	before := "Mg=="
+	startCrsr := "NA=="
 	endCrsr := "Mw=="
 
 	res, err := o.repo.GetAccessibleVehicles(o.ctx, *wallet, nil, nil, &last, &before)
@@ -546,26 +546,26 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 	o.Equal(res.PageInfo, &gmodel.PageInfo{
 		StartCursor:     &startCrsr,
 		EndCursor:       &endCrsr,
-		HasPreviousPage: true,
+		HasPreviousPage: false,
 		HasNextPage:     true,
 	})
 	expected := []*gmodel.VehicleEdge{
 		{
 			Node: &gmodel.Vehicle{
-				ID:                2,
+				ID:                4,
 				Owner:             common.BytesToAddress(wallet.Bytes()),
-				MintedAt:          vehicles[1].MintedAt,
+				MintedAt:          vehicles[3].MintedAt,
 				AftermarketDevice: nil,
 				Privileges:        nil,
 				SyntheticDevice:   nil,
 				Definition: &gmodel.Definition{
 					URI:   nil,
-					Make:  &vehicles[1].Make.String,
-					Model: &vehicles[1].Model.String,
-					Year:  &vehicles[1].Year.Int,
+					Make:  &vehicles[3].Make.String,
+					Model: &vehicles[3].Model.String,
+					Year:  &vehicles[3].Year.Int,
 				},
 			},
-			Cursor: "Mg==",
+			Cursor: "NA==",
 		},
 		{
 			Node: &gmodel.Vehicle{

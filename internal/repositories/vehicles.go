@@ -67,8 +67,8 @@ func (v *Repository) createVehiclesResponse(totalCount int64, vehicles models.Ve
 	return res
 }
 
-func applyPaginationDirectionFromCursor(cursor *string, isAfter bool, queryMods *[]qm.QueryMod) error {
-	id, err := helpers.CursorToID(*cursor)
+func applyPaginationDirectionFromCursor(cursor string, isAfter bool, queryMods *[]qm.QueryMod) error {
+	id, err := helpers.CursorToID(cursor)
 	if err != nil {
 		return err
 	}
@@ -138,23 +138,18 @@ func (v *Repository) GetAccessibleVehicles(ctx context.Context, addr common.Addr
 	}
 
 	if after != nil {
-		if err := applyPaginationDirectionFromCursor(after, true, &queryMods); err != nil {
+		if err := applyPaginationDirectionFromCursor(*after, true, &queryMods); err != nil {
 			return nil, err
 		}
 	} else if before != nil {
-		if err := applyPaginationDirectionFromCursor(before, false, &queryMods); err != nil {
+		if err := applyPaginationDirectionFromCursor(*before, false, &queryMods); err != nil {
 			return nil, err
 		}
-	}
-
-	orderBy := "DESC"
-	if before != nil {
-		orderBy = "ASC"
 	}
 
 	queryMods = append(queryMods,
 		qm.Limit(limit+1),
-		qm.OrderBy(models.VehicleColumns.ID+" "+orderBy),
+		qm.OrderBy(models.VehicleColumns.ID+" DESC"),
 	)
 
 	all, err := models.Vehicles(queryMods...).All(ctx, v.pdb.DBS().Reader)

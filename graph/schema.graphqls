@@ -56,15 +56,6 @@ type Definition {
   make: String
   model: String
   year: Int
-  mintedAt: Time!
-  aftermarketDevice: AftermarketDevice
-  privileges(
-    first: Int
-    after: String
-    last: Int
-    before: String
-  ): PrivilegesConnection!
-  syntheticDevice: SyntheticDevice
 }
 
 type VehicleEdge {
