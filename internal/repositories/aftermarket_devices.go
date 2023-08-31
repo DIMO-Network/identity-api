@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/DIMO-Network/identity-api/graph/model"
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/models"
@@ -96,6 +97,16 @@ func (r *Repository) GetOwnedAftermarketDevices(ctx context.Context, addr common
 		)
 	}
 
+	if len(ads) == 0 {
+		return &model.AftermarketDeviceConnection{
+			TotalCount: int(ownedADCount),
+			PageInfo: &model.PageInfo{
+				HasNextPage:     hasNextPage,
+				HasPreviousPage: hasPreviousPage,
+			},
+		}, nil
+	}
+
 	endCursr, startCursr := helpers.IDToCursor(ads[len(ads)-1].ID), helpers.IDToCursor(ads[0].ID)
 
 	res := &gmodel.AftermarketDeviceConnection{
@@ -107,10 +118,6 @@ func (r *Repository) GetOwnedAftermarketDevices(ctx context.Context, addr common
 			HasNextPage:     hasNextPage,
 			HasPreviousPage: hasPreviousPage,
 		},
-	}
-
-	if len(ads) == 0 {
-		return res, nil
 	}
 
 	res.PageInfo.EndCursor = &adEdges[len(adEdges)-1].Cursor
