@@ -770,7 +770,7 @@ func Test_HandleVehicle_Transferred_Event(t *testing.T) {
 	assert.Equal(t, vehicleTransferredData.To.Bytes(), veh[0].OwnerAddress)
 }
 
-func Test_HandleVehicle_Transferred_From_Zero_Event_ShouldDelete(t *testing.T) {
+func Test_HandleVehicle_Transferred_To_Zero_Event_ShouldDelete(t *testing.T) {
 	ctx := context.Background()
 	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
 	contractEventData.EventName = "Transfer"
@@ -812,6 +812,17 @@ func Test_HandleVehicle_Transferred_From_Zero_Event_ShouldDelete(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
+	privilege := models.Privilege{
+		TokenID:     tkID,
+		PrivilegeID: 1,
+		UserAddress: wallet.Bytes(),
+		SetAt:       currTime,
+		ExpiresAt:   currTime.Add(time.Hour),
+	}
+
+	err = privilege.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err)
+
 	consumer.ExpectConsumePartition(settings.ContractsEventTopic, 0, 0).YieldMessage(&sarama.ConsumerMessage{Value: expectedBytes})
 
 	outputTest, err := consumer.ConsumePartition(settings.ContractsEventTopic, 0, 0)
@@ -831,9 +842,14 @@ func Test_HandleVehicle_Transferred_From_Zero_Event_ShouldDelete(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Len(t, veh, 0)
+
+	priv, err := models.Privileges().All(ctx, pdb.DBS().Reader.DB)
+	assert.NoError(t, err)
+
+	assert.Len(t, priv, 0)
 }
 
-func Test_HandleVehicle_Transferred_From_Zero_Event_NoDelete_SyntheticDevice(t *testing.T) {
+func Test_HandleVehicle_Transferred_To_Zero_Event_NoDelete_SyntheticDevice(t *testing.T) {
 	ctx := context.Background()
 	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
 	contractEventData.EventName = "Transfer"
@@ -900,7 +916,7 @@ func Test_HandleVehicle_Transferred_From_Zero_Event_NoDelete_SyntheticDevice(t *
 	assert.NoError(t, err)
 
 	err = contractEventConsumer.Process(ctx, &e)
-	assert.NoError(t, err)
+	assert.Error(t, err)
 
 	veh, err := models.Vehicles(
 		models.VehicleWhere.ID.EQ(tkID),
@@ -908,12 +924,11 @@ func Test_HandleVehicle_Transferred_From_Zero_Event_NoDelete_SyntheticDevice(t *
 	assert.NoError(t, err)
 
 	assert.Len(t, veh, 1)
-
 	assert.Equal(t, tkID, veh[0].ID)
-	assert.Equal(t, vehicleTransferredData.To.Bytes(), veh[0].OwnerAddress)
+	assert.Equal(t, vehicle.OwnerAddress, veh[0].OwnerAddress)
 }
 
-func Test_HandleVehicle_Transferred_From_Zero_Event_NoDelete_AfterMarketDevice(t *testing.T) {
+func Test_HandleVehicle_Transferred_To_Zero_Event_NoDelete_AfterMarketDevice(t *testing.T) {
 	ctx := context.Background()
 	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
 	contractEventData.EventName = "Transfer"
@@ -975,7 +990,7 @@ func Test_HandleVehicle_Transferred_From_Zero_Event_NoDelete_AfterMarketDevice(t
 	assert.NoError(t, err)
 
 	err = contractEventConsumer.Process(ctx, &e)
-	assert.NoError(t, err)
+	assert.Error(t, err)
 
 	veh, err := models.Vehicles(
 		models.VehicleWhere.ID.EQ(tkID),
@@ -983,7 +998,6 @@ func Test_HandleVehicle_Transferred_From_Zero_Event_NoDelete_AfterMarketDevice(t
 	assert.NoError(t, err)
 
 	assert.Len(t, veh, 1)
-
 	assert.Equal(t, tkID, veh[0].ID)
-	assert.Equal(t, vehicleTransferredData.To.Bytes(), veh[0].OwnerAddress)
+	assert.Equal(t, vehicle.OwnerAddress, veh[0].OwnerAddress)
 }

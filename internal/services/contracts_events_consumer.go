@@ -15,7 +15,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
 type ContractsEventsConsumer struct {
@@ -189,26 +188,17 @@ func (c *ContractsEventsConsumer) handleVehicleTransferEvent(ctx context.Context
 		return err
 	}
 
-	if args.To == zeroAddress {
-		veh, err := models.Vehicles(
-			models.VehicleWhere.ID.EQ(int(args.TokenID.Int64())),
-			qm.Load(models.VehicleRels.AftermarketDevice),
-			qm.Load(models.VehicleRels.SyntheticDevices),
-		).One(ctx, c.dbs.DBS().Reader)
-		if err != nil {
-			return err
-		}
-
-		if veh.R.AftermarketDevice == nil && veh.R.SyntheticDevices == nil {
-			_, err := veh.Delete(ctx, c.dbs.DBS().Writer)
-			return err
-		}
-	}
-
 	vehicle := models.Vehicle{
 		ID:           int(args.TokenID.Int64()),
 		OwnerAddress: args.To.Bytes(),
 		MintedAt:     e.Block.Time,
+	}
+
+	if args.To == zeroAddress {
+		if _, err := vehicle.Delete(ctx, c.dbs.DBS().Writer); err != nil {
+			return err
+		}
+		return nil
 	}
 
 	// Insert is the mint case.
