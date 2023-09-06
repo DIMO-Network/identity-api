@@ -195,10 +195,8 @@ func (c *ContractsEventsConsumer) handleVehicleTransferEvent(ctx context.Context
 	}
 
 	if args.To == zeroAddress {
-		if _, err := vehicle.Delete(ctx, c.dbs.DBS().Writer); err != nil {
-			return err
-		}
-		return nil
+		_, err := vehicle.Delete(ctx, c.dbs.DBS().Writer)
+		return err
 	}
 
 	// Insert is the mint case.
