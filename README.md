@@ -38,3 +38,7 @@ flowchart TD
 
 Add a migrations:
 `$ goose -dir migrations create <migration_name> sql`
+
+## License
+
+[Apache 2.0](LICENSE)
