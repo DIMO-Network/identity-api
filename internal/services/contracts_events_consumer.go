@@ -208,6 +208,11 @@ func (c *ContractsEventsConsumer) handleVehicleTransferEvent(ctx context.Context
 		MintedAt:     e.Block.Time,
 	}
 
+	if args.To == zeroAddress {
+		_, err := vehicle.Delete(ctx, c.dbs.DBS().Writer)
+		return err
+	}
+
 	// Insert is the mint case.
 	if err := vehicle.Upsert(
 		ctx,

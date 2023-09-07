@@ -93,6 +93,9 @@ models:
     fields:
       vehicle:
         resolver: true
+    extraFields:
+      VehicleID:
+        type: "*int"
   Vehicle:
     fields:
       aftermarketDevice:
