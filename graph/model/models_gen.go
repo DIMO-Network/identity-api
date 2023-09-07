@@ -19,6 +19,12 @@ type AftermarketDeviceEdge struct {
 	Node   *AftermarketDevice `json:"node"`
 }
 
+type DCNConnection struct {
+	Node      string         `json:"node"`
+	Owner     common.Address `json:"owner"`
+	ExpiresAt time.Time      `json:"expiresAt"`
+}
+
 type Definition struct {
 	URI   *string `json:"uri,omitempty"`
 	Make  *string `json:"make,omitempty"`

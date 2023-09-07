@@ -5,6 +5,7 @@
 scalar Time
 scalar Address
 scalar BigInt
+scalar Bytes
 
 type Query {
   accessibleVehicles(
@@ -23,6 +24,7 @@ type Query {
     before: String
   ): AftermarketDeviceConnection!
   vehicle(id: Int!): Vehicle!
+  dcn(node: Bytes!): DCNConnection!
 }
 
 # Shared Types
@@ -120,4 +122,10 @@ type SyntheticDevice {
   integrationId: BigInt!
   address: Address!
   mintedAt: Time!
+}
+
+type DCNConnection {
+  node: Bytes!
+  owner: Address!
+  expiresAt: Time!
 }

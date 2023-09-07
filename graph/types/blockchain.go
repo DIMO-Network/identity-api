@@ -26,6 +26,21 @@ func UnmarshalAddress(v interface{}) (common.Address, error) {
 	}
 }
 
+func MarshalBytes(b []byte) graphql.Marshaler {
+	return graphql.WriterFunc(func(w io.Writer) {
+		_, _ = io.WriteString(w, strconv.Quote(string(b)))
+	})
+}
+
+func UnMarshalBytes(b interface{}) ([]byte, error) {
+	byt, ok := b.(string)
+	if !ok {
+		return []byte{}, fmt.Errorf("value must be a string")
+	}
+
+	return []byte(byt), nil
+}
+
 func MarshalInt(x int) graphql.Marshaler {
 	return graphql.WriterFunc(func(w io.Writer) {
 		_, _ = io.WriteString(w, strconv.Quote(strconv.Itoa(x)))

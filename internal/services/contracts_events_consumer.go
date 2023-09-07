@@ -39,6 +39,9 @@ const (
 	AftermarketDeviceNodeMintedEvent   EventName = "AftermarketDeviceNodeMinted"
 	SyntheticDeviceNodeMinted          EventName = "SyntheticDeviceNodeMinted"
 	SyntheticDeviceNodeBurned          EventName = "SyntheticDeviceNodeBurned"
+	NewNode                            EventName = "NewNode"
+	NewResolver                        EventName = "NewResolver"
+	NewExpiration                      EventName = "NewExpiration"
 )
 
 func (r EventName) String() string {
@@ -71,6 +74,7 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 	registryAddr := common.HexToAddress(c.settings.DIMORegistryAddr)
 	vehicleNFTAddr := common.HexToAddress(c.settings.VehicleNFTAddr)
 	aftermarketDeviceAddr := common.HexToAddress(c.settings.AftermarketDeviceAddr)
+	dimoDCNRegistryAddr := common.HexToAddress(c.settings.DimoDCNRegistryAddr)
 
 	var data ContractEventData
 	if err := json.Unmarshal(event.Data, &data); err != nil {
@@ -112,6 +116,16 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 		switch eventName {
 		case Transfer:
 			return c.handleAftermarketDeviceTransferredEvent(ctx, &data)
+		}
+
+	case dimoDCNRegistryAddr:
+		switch eventName {
+		case NewNode:
+			return c.handleNewDcnNode(ctx, &data)
+		case NewResolver:
+			return c.handleNewDcnResolver(ctx, &data)
+		case NewExpiration:
+			return c.handleNewDCNExpiration(ctx, &data)
 		}
 	}
 
