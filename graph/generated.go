@@ -53,7 +53,7 @@ type ComplexityRoot struct {
 		Address     func(childComplexity int) int
 		Beneficiary func(childComplexity int) int
 		ID          func(childComplexity int) int
-		IMEI        func(childComplexity int) int
+		Imei        func(childComplexity int) int
 		MintedAt    func(childComplexity int) int
 		Owner       func(childComplexity int) int
 		Serial      func(childComplexity int) int
@@ -193,11 +193,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.AftermarketDevice.ID(childComplexity), true
 
 	case "AftermarketDevice.imei":
-		if e.complexity.AftermarketDevice.IMEI == nil {
+		if e.complexity.AftermarketDevice.Imei == nil {
 			break
 		}
 
-		return e.complexity.AftermarketDevice.IMEI(childComplexity), true
+		return e.complexity.AftermarketDevice.Imei(childComplexity), true
 
 	case "AftermarketDevice.mintedAt":
 		if e.complexity.AftermarketDevice.MintedAt == nil {
@@ -1113,7 +1113,7 @@ func (ec *executionContext) _AftermarketDevice_imei(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.IMEI, nil
+		return obj.Imei, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
