@@ -6,7 +6,7 @@ on:
 jobs:
   build:
     name: buildpushdev
-    runs-on: self-hosted
+    runs-on: self-hosted,small
     steps:
       - uses: actions/checkout@v3
 
