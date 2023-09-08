@@ -8,7 +8,7 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -v -o /bin/identity-api .
+RUN go build -v -o /bin/identity-api ./cmd/identity-api
 
 FROM gcr.io/distroless/static-debian11 AS release
 
