@@ -1,13 +1,13 @@
 package types
 
 import (
-	"encoding/hex"
 	"fmt"
 	"io"
 	"strconv"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
 func MarshalAddress(addr common.Address) graphql.Marshaler {
@@ -27,7 +27,7 @@ func UnmarshalAddress(v interface{}) (common.Address, error) {
 
 func MarshalBytes(b []byte) graphql.Marshaler {
 	return graphql.WriterFunc(func(w io.Writer) {
-		_, _ = io.WriteString(w, strconv.Quote("0x"+hex.EncodeToString(b)))
+		_, _ = io.WriteString(w, strconv.Quote(hexutil.Encode(b)))
 	})
 }
 
