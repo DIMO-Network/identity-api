@@ -1,7 +1,7 @@
 package types
 
 import (
-	"encoding/json"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"strconv"
@@ -27,21 +27,17 @@ func UnmarshalAddress(v interface{}) (common.Address, error) {
 
 func MarshalBytes(b []byte) graphql.Marshaler {
 	return graphql.WriterFunc(func(w io.Writer) {
-		out, _ := json.Marshal(b)
-		_, _ = io.WriteString(w, string(out))
+		_, _ = io.WriteString(w, strconv.Quote("0x"+hex.EncodeToString(b)))
 	})
 }
 
 func UnmarshalBytes(v interface{}) ([]byte, error) {
-	switch v := v.(type) {
-	case string:
-		out, _ := json.Marshal(v)
-		return out, nil
-	case []byte:
-		return v, nil
-	default:
-		return nil, fmt.Errorf("value must be a string")
+	s, ok := v.(string)
+	if !ok {
+		return nil, fmt.Errorf("type %T not a string", v)
 	}
+
+	return common.FromHex(s), nil
 }
 
 func MarshalInt(x int) graphql.Marshaler {
