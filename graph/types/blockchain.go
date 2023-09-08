@@ -32,13 +32,15 @@ func MarshalBytes(b []byte) graphql.Marshaler {
 	})
 }
 
-func UnMarshalBytes(b interface{}) ([]byte, error) {
-	byt, ok := b.(string)
-	if !ok {
-		return []byte{}, fmt.Errorf("value must be a string")
+func UnmarshalBytes(v interface{}) ([]byte, error) {
+	switch v := v.(type) {
+	case string:
+		return []byte(v), nil
+	case []byte:
+		return v, nil
+	default:
+		return nil, fmt.Errorf("value must be a string")
 	}
-
-	return []byte(byt), nil
 }
 
 func MarshalInt(x int) graphql.Marshaler {

@@ -22,38 +22,13 @@ func (c *ContractsEventsConsumer) handleNewDcnNode(ctx context.Context, e *Contr
 		Node:         args.Node,
 		OwnerAddress: args.Owner.Bytes(),
 	}
+
 	err := dcn.Insert(ctx, c.dbs.DBS().Writer, boil.Infer())
 	if err != nil {
-		return nil
+		return err
 	}
 
 	logger.Info().Str("Node", string(args.Node)).Msg(NewNode.String() + " Event processed successfuly")
-
-	return nil
-}
-
-func (c *ContractsEventsConsumer) handleNewDcnResolver(ctx context.Context, e *ContractEventData) error {
-	logger := c.log.With().Str("EventName", NewExpiration.String()).Logger()
-
-	var args NewDCNResolverEventData
-	if err := json.Unmarshal(e.Arguments, &args); err != nil {
-		return err
-	}
-
-	dcn, err := models.DCNS(
-		models.DCNWhere.Node.EQ(args.Node),
-	).One(ctx, c.dbs.DBS().Reader)
-	if err != nil {
-		return err
-	}
-
-	dcn.ResolverAddress = null.BytesFrom(args.Resolver.Bytes())
-	_, err = dcn.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.DCNColumns.ResolverAddress))
-	if err != nil {
-		return err
-	}
-
-	logger.Info().Str("Node", string(args.Node)).Msg(NewExpiration.String() + " Event processed successfuly")
 
 	return nil
 }

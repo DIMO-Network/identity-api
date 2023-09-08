@@ -36,10 +36,11 @@ type AftermarketDeviceEdge struct {
 	Node   *AftermarketDevice `json:"node"`
 }
 
-type DCNConnection struct {
-	Node      string         `json:"node"`
+type Dcn struct {
+	Node      []byte         `json:"node"`
 	Owner     common.Address `json:"owner"`
 	ExpiresAt time.Time      `json:"expiresAt"`
+	MintedAt  time.Time      `json:"mintedAt"`
 }
 
 type Definition struct {

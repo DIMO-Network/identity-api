@@ -96,11 +96,6 @@ type NewDCNNodeEventData struct {
 	Owner common.Address
 }
 
-type NewDCNResolverEventData struct {
-	Node     []byte
-	Resolver common.Address
-}
-
 type NewDCNExpirationEventData struct {
 	Node       []byte
 	Expiration int

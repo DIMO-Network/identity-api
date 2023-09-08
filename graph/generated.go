@@ -71,8 +71,9 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
-	DCNConnection struct {
+	DCN struct {
 		ExpiresAt func(childComplexity int) int
+		MintedAt  func(childComplexity int) int
 		Node      func(childComplexity int) int
 		Owner     func(childComplexity int) int
 	}
@@ -111,7 +112,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		AccessibleVehicles      func(childComplexity int, address common.Address, first *int, after *string, last *int, before *string) int
-		Dcn                     func(childComplexity int, node string) int
+		Dcn                     func(childComplexity int, node []byte) int
 		OwnedAftermarketDevices func(childComplexity int, address common.Address, first *int, after *string, last *int, before *string) int
 		Vehicle                 func(childComplexity int, id int) int
 	}
@@ -152,7 +153,7 @@ type QueryResolver interface {
 	AccessibleVehicles(ctx context.Context, address common.Address, first *int, after *string, last *int, before *string) (*model.VehicleConnection, error)
 	OwnedAftermarketDevices(ctx context.Context, address common.Address, first *int, after *string, last *int, before *string) (*model.AftermarketDeviceConnection, error)
 	Vehicle(ctx context.Context, id int) (*model.Vehicle, error)
-	Dcn(ctx context.Context, node string) (*model.DCNConnection, error)
+	Dcn(ctx context.Context, node []byte) (*model.Dcn, error)
 }
 type VehicleResolver interface {
 	AftermarketDevice(ctx context.Context, obj *model.Vehicle) (*model.AftermarketDevice, error)
@@ -266,26 +267,33 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.AftermarketDeviceEdge.Node(childComplexity), true
 
-	case "DCNConnection.expiresAt":
-		if e.complexity.DCNConnection.ExpiresAt == nil {
+	case "DCN.expiresAt":
+		if e.complexity.DCN.ExpiresAt == nil {
 			break
 		}
 
-		return e.complexity.DCNConnection.ExpiresAt(childComplexity), true
+		return e.complexity.DCN.ExpiresAt(childComplexity), true
 
-	case "DCNConnection.node":
-		if e.complexity.DCNConnection.Node == nil {
+	case "DCN.mintedAt":
+		if e.complexity.DCN.MintedAt == nil {
 			break
 		}
 
-		return e.complexity.DCNConnection.Node(childComplexity), true
+		return e.complexity.DCN.MintedAt(childComplexity), true
 
-	case "DCNConnection.owner":
-		if e.complexity.DCNConnection.Owner == nil {
+	case "DCN.node":
+		if e.complexity.DCN.Node == nil {
 			break
 		}
 
-		return e.complexity.DCNConnection.Owner(childComplexity), true
+		return e.complexity.DCN.Node(childComplexity), true
+
+	case "DCN.owner":
+		if e.complexity.DCN.Owner == nil {
+			break
+		}
+
+		return e.complexity.DCN.Owner(childComplexity), true
 
 	case "Definition.make":
 		if e.complexity.Definition.Make == nil {
@@ -428,7 +436,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Dcn(childComplexity, args["node"].(string)), true
+		return e.complexity.Query.Dcn(childComplexity, args["node"].([]byte)), true
 
 	case "Query.ownedAftermarketDevices":
 		if e.complexity.Query.OwnedAftermarketDevices == nil {
@@ -748,10 +756,10 @@ func (ec *executionContext) field_Query_accessibleVehicles_args(ctx context.Cont
 func (ec *executionContext) field_Query_dcn_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
+	var arg0 []byte
 	if tmp, ok := rawArgs["node"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("node"))
-		arg0, err = ec.unmarshalNBytes2string(ctx, tmp)
+		arg0, err = ec.unmarshalNBytes2ᚕbyte(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1516,8 +1524,8 @@ func (ec *executionContext) fieldContext_AftermarketDeviceEdge_node(ctx context.
 	return fc, nil
 }
 
-func (ec *executionContext) _DCNConnection_node(ctx context.Context, field graphql.CollectedField, obj *model.DCNConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DCNConnection_node(ctx, field)
+func (ec *executionContext) _DCN_node(ctx context.Context, field graphql.CollectedField, obj *model.Dcn) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DCN_node(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1542,14 +1550,14 @@ func (ec *executionContext) _DCNConnection_node(ctx context.Context, field graph
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.([]byte)
 	fc.Result = res
-	return ec.marshalNBytes2string(ctx, field.Selections, res)
+	return ec.marshalNBytes2ᚕbyte(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DCNConnection_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DCN_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "DCNConnection",
+		Object:     "DCN",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -1560,8 +1568,8 @@ func (ec *executionContext) fieldContext_DCNConnection_node(ctx context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _DCNConnection_owner(ctx context.Context, field graphql.CollectedField, obj *model.DCNConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DCNConnection_owner(ctx, field)
+func (ec *executionContext) _DCN_owner(ctx context.Context, field graphql.CollectedField, obj *model.Dcn) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DCN_owner(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1591,9 +1599,9 @@ func (ec *executionContext) _DCNConnection_owner(ctx context.Context, field grap
 	return ec.marshalNAddress2githubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DCNConnection_owner(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DCN_owner(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "DCNConnection",
+		Object:     "DCN",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -1604,8 +1612,8 @@ func (ec *executionContext) fieldContext_DCNConnection_owner(ctx context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _DCNConnection_expiresAt(ctx context.Context, field graphql.CollectedField, obj *model.DCNConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DCNConnection_expiresAt(ctx, field)
+func (ec *executionContext) _DCN_expiresAt(ctx context.Context, field graphql.CollectedField, obj *model.Dcn) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DCN_expiresAt(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1635,9 +1643,53 @@ func (ec *executionContext) _DCNConnection_expiresAt(ctx context.Context, field 
 	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DCNConnection_expiresAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DCN_expiresAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "DCNConnection",
+		Object:     "DCN",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DCN_mintedAt(ctx context.Context, field graphql.CollectedField, obj *model.Dcn) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DCN_mintedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MintedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DCN_mintedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DCN",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -2615,7 +2667,7 @@ func (ec *executionContext) _Query_dcn(ctx context.Context, field graphql.Collec
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Dcn(rctx, fc.Args["node"].(string))
+		return ec.resolvers.Query().Dcn(rctx, fc.Args["node"].([]byte))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2627,9 +2679,9 @@ func (ec *executionContext) _Query_dcn(ctx context.Context, field graphql.Collec
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.DCNConnection)
+	res := resTmp.(*model.Dcn)
 	fc.Result = res
-	return ec.marshalNDCNConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDCNConnection(ctx, field.Selections, res)
+	return ec.marshalNDCN2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDcn(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_dcn(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2641,13 +2693,15 @@ func (ec *executionContext) fieldContext_Query_dcn(ctx context.Context, field gr
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "node":
-				return ec.fieldContext_DCNConnection_node(ctx, field)
+				return ec.fieldContext_DCN_node(ctx, field)
 			case "owner":
-				return ec.fieldContext_DCNConnection_owner(ctx, field)
+				return ec.fieldContext_DCN_owner(ctx, field)
 			case "expiresAt":
-				return ec.fieldContext_DCNConnection_expiresAt(ctx, field)
+				return ec.fieldContext_DCN_expiresAt(ctx, field)
+			case "mintedAt":
+				return ec.fieldContext_DCN_mintedAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type DCNConnection", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type DCN", field.Name)
 		},
 	}
 	defer func() {
@@ -5544,29 +5598,34 @@ func (ec *executionContext) _AftermarketDeviceEdge(ctx context.Context, sel ast.
 	return out
 }
 
-var dCNConnectionImplementors = []string{"DCNConnection"}
+var dCNImplementors = []string{"DCN"}
 
-func (ec *executionContext) _DCNConnection(ctx context.Context, sel ast.SelectionSet, obj *model.DCNConnection) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, dCNConnectionImplementors)
+func (ec *executionContext) _DCN(ctx context.Context, sel ast.SelectionSet, obj *model.Dcn) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dCNImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("DCNConnection")
+			out.Values[i] = graphql.MarshalString("DCN")
 		case "node":
-			out.Values[i] = ec._DCNConnection_node(ctx, field, obj)
+			out.Values[i] = ec._DCN_node(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		case "owner":
-			out.Values[i] = ec._DCNConnection_owner(ctx, field, obj)
+			out.Values[i] = ec._DCN_owner(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		case "expiresAt":
-			out.Values[i] = ec._DCNConnection_expiresAt(ctx, field, obj)
+			out.Values[i] = ec._DCN_expiresAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "mintedAt":
+			out.Values[i] = ec._DCN_mintedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -6717,13 +6776,19 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) unmarshalNBytes2string(ctx context.Context, v interface{}) (string, error) {
-	res, err := graphql.UnmarshalString(v)
+func (ec *executionContext) unmarshalNBytes2ᚕbyte(ctx context.Context, v interface{}) ([]byte, error) {
+	res, err := types.UnmarshalBytes(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNBytes2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
-	res := graphql.MarshalString(v)
+func (ec *executionContext) marshalNBytes2ᚕbyte(ctx context.Context, sel ast.SelectionSet, v []byte) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	res := types.MarshalBytes(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -6732,18 +6797,18 @@ func (ec *executionContext) marshalNBytes2string(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) marshalNDCNConnection2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDCNConnection(ctx context.Context, sel ast.SelectionSet, v model.DCNConnection) graphql.Marshaler {
-	return ec._DCNConnection(ctx, sel, &v)
+func (ec *executionContext) marshalNDCN2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDcn(ctx context.Context, sel ast.SelectionSet, v model.Dcn) graphql.Marshaler {
+	return ec._DCN(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNDCNConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDCNConnection(ctx context.Context, sel ast.SelectionSet, v *model.DCNConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNDCN2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDcn(ctx context.Context, sel ast.SelectionSet, v *model.Dcn) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._DCNConnection(ctx, sel, v)
+	return ec._DCN(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {

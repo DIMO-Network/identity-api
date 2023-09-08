@@ -2,13 +2,13 @@ package services
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/DIMO-Network/identity-api/internal/config"
-	"github.com/DIMO-Network/identity-api/internal/helpers"
 	test "github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared"
@@ -37,11 +37,11 @@ func (o *DCNConsumerTestSuite) SetupSuite() {
 	o.pdb, o.container = test.StartContainerDatabase(o.ctx, o.T(), "../../migrations")
 
 	o.settings = config.Settings{
-		DimoDCNRegistryAddr: contractEventData.Contract.String(),
+		DCNRegistryAddr:     contractEventData.Contract.String(),
 		DIMORegistryChainID: 80001,
 	}
 
-	o.logger = zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
+	o.logger = zerolog.New(os.Stdout).With().Timestamp().Str("app", test.DBSettings.Name).Logger()
 }
 
 // TearDownTest after each test truncate tables
@@ -63,13 +63,22 @@ func TestDCNConsumerTestSuite(t *testing.T) {
 	suite.Run(t, new(DCNConsumerTestSuite))
 }
 
+func generateNode() []byte {
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		panic(err)
+	}
+
+	return b
+}
+
 func (o *DCNConsumerTestSuite) Test_NewNode_Consume_Success() {
 	contractEventData.EventName = NewNode.String()
 	_, wallet, err := test.GenerateWallet()
 	o.NoError(err)
 
 	var eventData = NewDCNNodeEventData{
-		Node:  []byte("0xc6e7df5e7b4f2a278906862b612058"),
+		Node:  generateNode(),
 		Owner: *wallet,
 	}
 
@@ -100,55 +109,6 @@ func (o *DCNConsumerTestSuite) Test_NewNode_Consume_Success() {
 	o.Equal(eventData.Owner.Bytes(), dcn[0].OwnerAddress)
 }
 
-func (o *DCNConsumerTestSuite) Test_NewDCNResolver_Consume_Success() {
-	contractEventData.EventName = NewResolver.String()
-	_, addr, err := test.GenerateWallet()
-	o.NoError(err)
-
-	_, owner, err := test.GenerateWallet()
-	o.NoError(err)
-
-	var eventData = NewDCNResolverEventData{
-		Node:     []byte("0xc6e7df5e7b4f2a278906862b612058"),
-		Resolver: *addr,
-	}
-
-	config := mocks.NewTestConfig()
-	consumer := mocks.NewConsumer(o.T(), config)
-
-	d := models.DCN{
-		Node:         eventData.Node,
-		OwnerAddress: owner.Bytes(),
-	}
-
-	err = d.Insert(o.ctx, o.pdb.DBS().Writer.DB, boil.Infer())
-	o.NoError(err)
-
-	contractEventConsumer := NewContractsEventsConsumer(o.pdb, &o.logger, &o.settings)
-	expectedBytes := eventBytes(eventData, contractEventData, o.T())
-
-	consumer.ExpectConsumePartition(o.settings.ContractsEventTopic, 0, 0).YieldMessage(&sarama.ConsumerMessage{Value: expectedBytes})
-
-	outputTest, err := consumer.ConsumePartition(o.settings.ContractsEventTopic, 0, 0)
-	o.NoError(err)
-
-	m := <-outputTest.Messages()
-	var e shared.CloudEvent[json.RawMessage]
-	err = json.Unmarshal(m.Value, &e)
-	o.NoError(err)
-
-	err = contractEventConsumer.Process(o.ctx, &e)
-	o.NoError(err)
-
-	dcn, err := models.DCNS().All(o.ctx, o.pdb.DBS().Reader.DB)
-	o.NoError(err)
-
-	o.Len(dcn, 1)
-	o.Equal(eventData.Node, dcn[0].Node)
-	o.Equal(owner.Bytes(), dcn[0].OwnerAddress)
-	o.Equal(addr.Bytes(), dcn[0].ResolverAddress.Bytes)
-}
-
 func (o *DCNConsumerTestSuite) Test_NewDCNExpiration_Consume_Success() {
 	contractEventData.EventName = NewExpiration.String()
 	_, addr, err := test.GenerateWallet()
@@ -160,7 +120,7 @@ func (o *DCNConsumerTestSuite) Test_NewDCNExpiration_Consume_Success() {
 	currTime := time.Now().UTC().Truncate(time.Second)
 
 	var eventData = NewDCNExpirationEventData{
-		Node:       []byte("0xc6e7df5e7b4f2a278906862b612058"),
+		Node:       generateNode(),
 		Expiration: int(currTime.Unix()),
 	}
 

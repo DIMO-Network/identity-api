@@ -31,7 +31,7 @@ type Query {
     before: String
   ): AftermarketDeviceConnection!
   vehicle(id: Int!): Vehicle!
-  dcn(node: Bytes!): DCNConnection!
+  dcn(node: Bytes!): DCN!
 }
 
 # Shared Types
@@ -155,8 +155,9 @@ type SyntheticDevice {
   mintedAt: Time!
 }
 
-type DCNConnection {
+type DCN {
   node: Bytes!
   owner: Address!
   expiresAt: Time!
+  mintedAt: Time!
 }

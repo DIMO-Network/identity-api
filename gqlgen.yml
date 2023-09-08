@@ -87,8 +87,6 @@ models:
       - github.com/99designs/gqlgen/graphql.Int32
   Address:
     model: github.com/DIMO-Network/identity-api/graph/types.Address
-  Byte:
-    model: github.com/DIMO-Network/identity-api/graph/types.Byte
   AftermarketDevice:
     fields:
       vehicle:
@@ -107,3 +105,5 @@ models:
   BigInt:
     model:
       - github.com/DIMO-Network/identity-api/graph/types.Int
+  Bytes:
+    model: github.com/DIMO-Network/identity-api/graph/types.Bytes

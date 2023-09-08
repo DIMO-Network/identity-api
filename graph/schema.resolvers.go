@@ -37,7 +37,7 @@ func (r *queryResolver) Vehicle(ctx context.Context, id int) (*model.Vehicle, er
 }
 
 // Dcn is the resolver for the dcn field.
-func (r *queryResolver) Dcn(ctx context.Context, node string) (*model.DCNConnection, error) {
+func (r *queryResolver) Dcn(ctx context.Context, node []byte) (*model.Dcn, error) {
 	panic(fmt.Errorf("not implemented: Dcn - dcn"))
 }
 
