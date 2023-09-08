@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"crypto/rand"
 	"encoding/base64"
 	"strconv"
 
@@ -31,4 +32,13 @@ func IDToCursor(id int) string {
 
 func WithSchema(tableName string) string {
 	return "identity_api." + tableName
+}
+
+func GenerateDCNNode() []byte {
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		panic(err)
+	}
+
+	return b
 }

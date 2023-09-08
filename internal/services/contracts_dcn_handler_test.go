@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"crypto/rand"
 	"fmt"
 	"os"
 	"testing"
@@ -63,22 +62,13 @@ func TestDCNConsumerTestSuite(t *testing.T) {
 	suite.Run(t, new(DCNConsumerTestSuite))
 }
 
-func generateNode() []byte {
-	b := make([]byte, 32)
-	if _, err := rand.Read(b); err != nil {
-		panic(err)
-	}
-
-	return b
-}
-
 func (o *DCNConsumerTestSuite) Test_NewNode_Consume_Success() {
 	contractEventData.EventName = NewNode.String()
 	_, wallet, err := test.GenerateWallet()
 	o.NoError(err)
 
 	var eventData = NewDCNNodeEventData{
-		Node:  generateNode(),
+		Node:  test.GenerateDCNNode(),
 		Owner: *wallet,
 	}
 
@@ -120,7 +110,7 @@ func (o *DCNConsumerTestSuite) Test_NewDCNExpiration_Consume_Success() {
 	currTime := time.Now().UTC().Truncate(time.Second)
 
 	var eventData = NewDCNExpirationEventData{
-		Node:       generateNode(),
+		Node:       test.GenerateDCNNode(),
 		Expiration: int(currTime.Unix()),
 	}
 

@@ -158,6 +158,6 @@ type SyntheticDevice {
 type DCN {
   node: Bytes!
   owner: Address!
-  expiresAt: Time!
-  mintedAt: Time!
+  expiresAt: Time
+  mintedAt: Time
 }
