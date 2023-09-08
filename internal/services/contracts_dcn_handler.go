@@ -41,17 +41,12 @@ func (c *ContractsEventsConsumer) handleNewDCNExpiration(ctx context.Context, e 
 		return err
 	}
 
-	dcn, err := models.DCNS(
-		models.DCNWhere.Node.EQ(args.Node),
-	).One(ctx, c.dbs.DBS().Reader)
-	if err != nil {
-		return err
+	dcn := models.DCN{
+		Node:       args.Node,
+		Expiration: null.TimeFrom(time.Unix(int64(args.Expiration), 0)),
 	}
 
-	dcn.Expiration = null.TimeFrom(
-		time.Unix(int64(args.Expiration), 0),
-	)
-	_, err = dcn.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.DCNColumns.Expiration))
+	_, err := dcn.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.DCNColumns.Expiration))
 	if err != nil {
 		return err
 	}

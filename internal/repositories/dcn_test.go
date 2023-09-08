@@ -2,7 +2,6 @@ package repositories
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -67,8 +66,7 @@ func (o *DCNRepoTestSuite) Test_GetDCNByNode_Success() {
 	err = d.Insert(o.ctx, o.pdb.DBS().Writer.DB, boil.Infer())
 	o.NoError(err)
 
-	out, _ := json.Marshal(node)
-	dcn, err := o.repo.GetDCNByNode(o.ctx, out)
+	dcn, err := o.repo.GetDCNByNode(o.ctx, node)
 	o.NoError(err)
 
 	o.Equal(dcn.Owner.Bytes(), wallet.Bytes())
