@@ -18,7 +18,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
-	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
@@ -101,8 +100,6 @@ func (o *DCNConsumerTestSuite) Test_NewNode_Consume_Success() {
 
 func (o *DCNConsumerTestSuite) Test_NewDCNExpiration_Consume_Success() {
 	contractEventData.EventName = NewExpiration.String()
-	_, addr, err := test.GenerateWallet()
-	o.NoError(err)
 
 	_, owner, err := test.GenerateWallet()
 	o.NoError(err)
@@ -118,9 +115,8 @@ func (o *DCNConsumerTestSuite) Test_NewDCNExpiration_Consume_Success() {
 	consumer := mocks.NewConsumer(o.T(), config)
 
 	d := models.DCN{
-		Node:            eventData.Node,
-		OwnerAddress:    owner.Bytes(),
-		ResolverAddress: null.BytesFrom(addr.Bytes()),
+		Node:         eventData.Node,
+		OwnerAddress: owner.Bytes(),
 	}
 
 	err = d.Insert(o.ctx, o.pdb.DBS().Writer.DB, boil.Infer())
@@ -148,6 +144,5 @@ func (o *DCNConsumerTestSuite) Test_NewDCNExpiration_Consume_Success() {
 	o.Len(dcn, 1)
 	o.Equal(eventData.Node, dcn[0].Node)
 	o.Equal(owner.Bytes(), dcn[0].OwnerAddress)
-	o.Equal(addr.Bytes(), dcn[0].ResolverAddress.Bytes)
 	o.Equal(currTime, dcn[0].Expiration.Time)
 }
