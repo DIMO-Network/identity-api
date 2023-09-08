@@ -17,14 +17,12 @@ func MarshalAddress(addr common.Address) graphql.Marshaler {
 }
 
 func UnmarshalAddress(v interface{}) (common.Address, error) {
-	switch v := v.(type) {
-	case string:
-		return common.HexToAddress(v), nil
-	case byte:
-		return common.BytesToAddress([]byte{v}), nil
-	default:
-		return common.Address{}, fmt.Errorf("%T is not a string", v)
+	s, ok := v.(string)
+	if !ok {
+		return common.Address{}, fmt.Errorf("type %T not a string", v)
 	}
+
+	return common.HexToAddress(s), nil
 }
 
 func MarshalBytes(b []byte) graphql.Marshaler {
