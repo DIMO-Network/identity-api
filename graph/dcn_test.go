@@ -3,8 +3,10 @@ package graph
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/99designs/gqlgen/client"
 	"github.com/99designs/gqlgen/graphql/handler"
@@ -80,4 +82,35 @@ func TestDCNQuery(t *testing.T) {
 	assert.Equal("0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045", dcnr.DCN.Owner)
 	assert.Nil(dcnr.DCN.ExpiresAt)
 
+	currTime := time.Now().UTC().Truncate(time.Second)
+
+	err = contractEventConsumer.Process(ctx, &shared.CloudEvent[json.RawMessage]{
+		Source: "chain/137",
+		Type:   "zone.dimo.contract.event",
+		Data: json.RawMessage(fmt.Sprintf(`
+		{
+			"contract": "0xE9F4dfE02f895DC17E2e146e578873c9095bA293",
+			"eventName": "NewExpiration",
+			"arguments": {
+				"node": "ZmUlXZ4s/E7W0wZChcTSDIZK+B3A0myUxTgPZ/ndV+0=",
+				"expiration": %d
+			}
+		}
+	`, int(currTime.Unix())))})
+	require.NoError(err)
+
+	c.MustPost(`
+		query DCN($node: Bytes!) {
+			dcn(node: $node) {
+				node
+				owner
+				expiresAt
+			}
+		}
+	`, &dcnr, client.Var("node", "0x6665255d9e2cfc4ed6d3064285c4d20c864af81dc0d26c94c5380f67f9dd57ed"))
+
+	expected, err := time.Parse(time.RFC3339, *dcnr.DCN.ExpiresAt)
+
+	assert.NoError(err)
+	assert.Equal(expected, currTime)
 }

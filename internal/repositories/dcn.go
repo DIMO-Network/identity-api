@@ -10,8 +10,9 @@ import (
 
 func DCNToAPI(d *models.DCN) *gmodel.Dcn {
 	return &gmodel.Dcn{
-		Owner: common.BytesToAddress(d.OwnerAddress),
-		Node:  d.Node,
+		Owner:     common.BytesToAddress(d.OwnerAddress),
+		Node:      d.Node,
+		ExpiresAt: d.Expiration.Ptr(),
 	}
 }
 
