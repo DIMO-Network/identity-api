@@ -35,6 +35,11 @@ func (r *queryResolver) Vehicle(ctx context.Context, id int) (*model.Vehicle, er
 	return r.Repo.GetVehicle(ctx, id)
 }
 
+// Dcn is the resolver for the dcn field.
+func (r *queryResolver) Dcn(ctx context.Context, node []byte) (*model.Dcn, error) {
+	return r.Repo.GetDCNByNode(ctx, node)
+}
+
 // AftermarketDevice is the resolver for the aftermarketDevice field.
 func (r *vehicleResolver) AftermarketDevice(ctx context.Context, obj *model.Vehicle) (*model.AftermarketDevice, error) {
 	return loader.GetAftermarketDeviceByVehicleID(ctx, obj.ID)

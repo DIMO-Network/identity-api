@@ -12,6 +12,7 @@ scalar Address
 An integer of arbitrary precision, decimal-encoded. Typically a uint256.
 """
 scalar BigInt
+scalar Bytes
 
 type Query {
   accessibleVehicles(
@@ -30,6 +31,7 @@ type Query {
     before: String
   ): AftermarketDeviceConnection!
   vehicle(id: Int!): Vehicle!
+  dcn(node: Bytes!): DCN!
 }
 
 # Shared Types
@@ -151,4 +153,11 @@ type SyntheticDevice {
   integrationId: BigInt!
   address: Address!
   mintedAt: Time!
+}
+
+type DCN {
+  node: Bytes!
+  owner: Address!
+  expiresAt: Time
+  mintedAt: Time
 }

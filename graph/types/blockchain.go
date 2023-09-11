@@ -7,6 +7,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
 func MarshalAddress(addr common.Address) graphql.Marshaler {
@@ -22,6 +23,21 @@ func UnmarshalAddress(v interface{}) (common.Address, error) {
 	}
 
 	return common.HexToAddress(s), nil
+}
+
+func MarshalBytes(b []byte) graphql.Marshaler {
+	return graphql.WriterFunc(func(w io.Writer) {
+		_, _ = io.WriteString(w, strconv.Quote(hexutil.Encode(b)))
+	})
+}
+
+func UnmarshalBytes(v interface{}) ([]byte, error) {
+	s, ok := v.(string)
+	if !ok {
+		return nil, fmt.Errorf("type %T not a string", v)
+	}
+
+	return common.FromHex(s), nil
 }
 
 func MarshalInt(x int) graphql.Marshaler {
