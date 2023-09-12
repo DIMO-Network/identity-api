@@ -146,3 +146,51 @@ func (o *DCNConsumerTestSuite) Test_NewDCNExpiration_Consume_Success() {
 	o.Equal(owner.Bytes(), dcn[0].OwnerAddress)
 	o.Equal(currTime, dcn[0].Expiration.Time)
 }
+
+func (o *DCNConsumerTestSuite) Test_DCNNameChanged_Consume_Success() {
+	contractEventData.EventName = NameChanged.String()
+
+	_, owner, err := test.GenerateWallet()
+	o.NoError(err)
+
+	newName := "SomeMockName"
+	var eventData = DCNNameChangedEventData{
+		Node: test.GenerateDCNNode(),
+		Name: newName,
+	}
+
+	config := mocks.NewTestConfig()
+	consumer := mocks.NewConsumer(o.T(), config)
+
+	d := models.DCN{
+		Node:         eventData.Node,
+		OwnerAddress: owner.Bytes(),
+	}
+
+	err = d.Insert(o.ctx, o.pdb.DBS().Writer.DB, boil.Infer())
+	o.NoError(err)
+
+	contractEventConsumer := NewContractsEventsConsumer(o.pdb, &o.logger, &o.settings)
+	expectedBytes := eventBytes(eventData, contractEventData, o.T())
+
+	consumer.ExpectConsumePartition(o.settings.ContractsEventTopic, 0, 0).YieldMessage(&sarama.ConsumerMessage{Value: expectedBytes})
+
+	outputTest, err := consumer.ConsumePartition(o.settings.ContractsEventTopic, 0, 0)
+	o.NoError(err)
+
+	m := <-outputTest.Messages()
+	var e shared.CloudEvent[json.RawMessage]
+	err = json.Unmarshal(m.Value, &e)
+	o.NoError(err)
+
+	err = contractEventConsumer.Process(o.ctx, &e)
+	o.NoError(err)
+
+	dcn, err := models.DCNS().All(o.ctx, o.pdb.DBS().Reader.DB)
+	o.NoError(err)
+
+	o.Len(dcn, 1)
+	o.Equal(eventData.Node, dcn[0].Node)
+	o.Equal(owner.Bytes(), dcn[0].OwnerAddress)
+	o.Equal(eventData.Name, dcn[0].Name.String)
+}

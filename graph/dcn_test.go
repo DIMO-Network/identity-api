@@ -63,6 +63,7 @@ func TestDCNQuery(t *testing.T) {
 			Node      string
 			Owner     string
 			ExpiresAt *string
+			Name      *string
 		}
 	}
 
@@ -113,4 +114,35 @@ func TestDCNQuery(t *testing.T) {
 
 	assert.NoError(err)
 	assert.Equal(expected, currTime)
+
+	// NameChanged
+	mockName := "SomeMockName"
+	err = contractEventConsumer.Process(ctx, &shared.CloudEvent[json.RawMessage]{
+		Source: "chain/137",
+		Type:   "zone.dimo.contract.event",
+		Data: json.RawMessage(fmt.Sprintf(`
+		{
+			"contract": "0xE9F4dfE02f895DC17E2e146e578873c9095bA293",
+			"eventName": "NameChanged",
+			"arguments": {
+				"node": "ZmUlXZ4s/E7W0wZChcTSDIZK+B3A0myUxTgPZ/ndV+0=",
+				"_name": "%s"
+			}
+		}
+	`, mockName))})
+	require.NoError(err)
+
+	c.MustPost(`
+		query DCN($node: Bytes!) {
+			dcn(node: $node) {
+				node
+				owner
+				expiresAt
+				name
+			}
+		}
+	`, &dcnr, client.Var("node", "0x6665255d9e2cfc4ed6d3064285c4d20c864af81dc0d26c94c5380f67f9dd57ed"))
+
+	assert.NoError(err)
+	assert.Equal(*dcnr.DCN.Name, mockName)
 }

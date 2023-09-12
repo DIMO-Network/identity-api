@@ -41,6 +41,7 @@ type Dcn struct {
 	Owner     common.Address `json:"owner"`
 	ExpiresAt *time.Time     `json:"expiresAt,omitempty"`
 	MintedAt  *time.Time     `json:"mintedAt,omitempty"`
+	Name      *string        `json:"name,omitempty"`
 }
 
 type Definition struct {

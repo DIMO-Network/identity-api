@@ -160,4 +160,5 @@ type DCN {
   owner: Address!
   expiresAt: Time
   mintedAt: Time
+  name: String
 }

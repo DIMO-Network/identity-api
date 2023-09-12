@@ -41,6 +41,7 @@ const (
 	SyntheticDeviceNodeBurned          EventName = "SyntheticDeviceNodeBurned"
 	NewNode                            EventName = "NewNode"
 	NewExpiration                      EventName = "NewExpiration"
+	NameChanged                        EventName = "NameChanged"
 )
 
 func (r EventName) String() string {
@@ -123,6 +124,8 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 			return c.handleNewDcnNode(ctx, &data)
 		case NewExpiration:
 			return c.handleNewDCNExpiration(ctx, &data)
+		case NameChanged:
+			return c.handleNameChanged(ctx, &data)
 		}
 	}
 
