@@ -3,14 +3,14 @@ module github.com/DIMO-Network/identity-api
 go 1.21
 
 require (
-	github.com/99designs/gqlgen v0.17.36
-	github.com/DIMO-Network/shared v0.10.3
+	github.com/99designs/gqlgen v0.17.37
+	github.com/DIMO-Network/shared v0.10.4
 	github.com/Shopify/sarama v1.38.1
 	github.com/docker/go-connections v0.4.0
-	github.com/ethereum/go-ethereum v1.12.2
+	github.com/ethereum/go-ethereum v1.13.0
 	github.com/friendsofgo/errors v0.9.2
 	github.com/goccy/go-json v0.10.2
-	github.com/gofiber/fiber/v2 v2.49.0
+	github.com/gofiber/fiber/v2 v2.49.1
 	github.com/golang-jwt/jwt/v5 v5.0.0
 	github.com/graph-gophers/dataloader/v7 v7.1.0
 	github.com/jarcoal/httpmock v1.3.1
@@ -19,7 +19,7 @@ require (
 	github.com/rs/zerolog v1.30.0
 	github.com/stretchr/testify v1.8.4
 	github.com/testcontainers/testcontainers-go v0.23.0
-	github.com/vektah/gqlparser/v2 v2.5.8
+	github.com/vektah/gqlparser/v2 v2.5.9
 	github.com/vmihailenco/msgpack/v5 v5.3.5
 	github.com/volatiletech/null/v8 v8.1.2
 	github.com/volatiletech/sqlboiler/v4 v4.15.0
@@ -90,18 +90,18 @@ require (
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/urfave/cli/v2 v2.25.5 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasthttp v1.48.0 // indirect
+	github.com/valyala/fasthttp v1.49.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/volatiletech/inflect v0.0.1 // indirect
 	github.com/volatiletech/randomize v0.0.1 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
-	golang.org/x/crypto v0.10.0 // indirect
+	golang.org/x/crypto v0.12.0 // indirect
 	golang.org/x/exp v0.0.0-20230810033253-352e893a4cad // indirect
 	golang.org/x/mod v0.12.0 // indirect
 	golang.org/x/net v0.11.0 // indirect
 	golang.org/x/sys v0.11.0 // indirect
-	golang.org/x/text v0.11.0 // indirect
+	golang.org/x/text v0.12.0 // indirect
 	golang.org/x/tools v0.10.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230525234030-28d5490b6b19 // indirect
