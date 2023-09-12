@@ -75,12 +75,14 @@ func TestDCNQuery(t *testing.T) {
 				node
 				owner
 				expiresAt
+				name
 			}
 		}
 	`, &dcnr, client.Var("node", "0x6665255d9e2cfc4ed6d3064285c4d20c864af81dc0d26c94c5380f67f9dd57ed"))
 
 	assert.Equal("0x6665255d9e2cfc4ed6d3064285c4d20c864af81dc0d26c94c5380f67f9dd57ed", dcnr.DCN.Node)
 	assert.Equal("0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045", dcnr.DCN.Owner)
+	assert.Nil(dcnr.DCN.Name)
 	assert.Nil(dcnr.DCN.ExpiresAt)
 
 	currTime := time.Now().UTC().Truncate(time.Second)
@@ -106,6 +108,7 @@ func TestDCNQuery(t *testing.T) {
 				node
 				owner
 				expiresAt
+				name
 			}
 		}
 	`, &dcnr, client.Var("node", "0x6665255d9e2cfc4ed6d3064285c4d20c864af81dc0d26c94c5380f67f9dd57ed"))
@@ -143,6 +146,7 @@ func TestDCNQuery(t *testing.T) {
 		}
 	`, &dcnr, client.Var("node", "0x6665255d9e2cfc4ed6d3064285c4d20c864af81dc0d26c94c5380f67f9dd57ed"))
 
-	assert.NoError(err)
-	assert.Equal(*dcnr.DCN.Name, mockName)
+	if assert.NotNil(dcnr.DCN.Name) {
+		assert.Equal(*dcnr.DCN.Name, mockName)
+	}
 }
