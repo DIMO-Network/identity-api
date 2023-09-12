@@ -114,7 +114,6 @@ func TestDCNQuery(t *testing.T) {
 	`, &dcnr, client.Var("node", "0x6665255d9e2cfc4ed6d3064285c4d20c864af81dc0d26c94c5380f67f9dd57ed"))
 
 	expected, err := time.Parse(time.RFC3339, *dcnr.DCN.ExpiresAt)
-
 	assert.NoError(err)
 	assert.Equal(expected, currTime)
 
@@ -147,6 +146,6 @@ func TestDCNQuery(t *testing.T) {
 	`, &dcnr, client.Var("node", "0x6665255d9e2cfc4ed6d3064285c4d20c864af81dc0d26c94c5380f67f9dd57ed"))
 
 	if assert.NotNil(dcnr.DCN.Name) {
-		assert.Equal(*dcnr.DCN.Name, mockName)
+		assert.Equal(mockName, *dcnr.DCN.Name)
 	}
 }
