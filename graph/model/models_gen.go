@@ -37,10 +37,12 @@ type AftermarketDeviceEdge struct {
 }
 
 type Dcn struct {
-	Node      []byte         `json:"node"`
-	Owner     common.Address `json:"owner"`
-	ExpiresAt *time.Time     `json:"expiresAt,omitempty"`
-	MintedAt  *time.Time     `json:"mintedAt,omitempty"`
+	// The namehash of the domain.
+	Node  []byte         `json:"node"`
+	Owner common.Address `json:"owner"`
+	// The block timestamp at which the domain will cease to be valid.
+	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
+	MintedAt  *time.Time `json:"mintedAt,omitempty"`
 }
 
 type Definition struct {
