@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/DIMO-Network/identity-api/models"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/goccy/go-json"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -28,7 +29,7 @@ func (c *ContractsEventsConsumer) handleNewDcnNode(ctx context.Context, e *Contr
 		return err
 	}
 
-	logger.Info().Str("Node", string(args.Node)).Msg(NewNode.String() + " Event processed successfuly")
+	logger.Info().Str("Node", hexutil.Encode(args.Node)).Msg(NewNode.String() + " Event processed successfuly")
 
 	return nil
 }
@@ -51,7 +52,7 @@ func (c *ContractsEventsConsumer) handleNewDCNExpiration(ctx context.Context, e 
 		return err
 	}
 
-	logger.Info().Str("Node", string(args.Node)).Msg(NewExpiration.String() + " Event processed successfuly")
+	logger.Info().Str("Node", hexutil.Encode(args.Node)).Msg(NewExpiration.String() + " Event processed successfuly")
 
 	return nil
 }
@@ -75,7 +76,7 @@ func (c *ContractsEventsConsumer) handleNameChanged(ctx context.Context, e *Cont
 		return err
 	}
 
-	logger.Info().Str("Node", string(args.Node)).Msg(eventName + " Event processed successfuly")
+	logger.Info().Str("Node", hexutil.Encode(args.Node)).Msg(eventName + " Event processed successfuly")
 
 	return nil
 }

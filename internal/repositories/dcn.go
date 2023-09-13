@@ -13,7 +13,7 @@ func DCNToAPI(d *models.DCN) *gmodel.Dcn {
 		Owner:     common.BytesToAddress(d.OwnerAddress),
 		Node:      d.Node,
 		ExpiresAt: d.Expiration.Ptr(),
-		Name:      &d.Name.String,
+		Name:      d.Name.Ptr(),
 	}
 }
 

@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"testing"
 	"time"
@@ -14,6 +15,7 @@ import (
 	"github.com/DIMO-Network/shared/db"
 	"github.com/Shopify/sarama"
 	"github.com/Shopify/sarama/mocks"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/goccy/go-json"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/suite"
@@ -36,6 +38,7 @@ func (o *DCNConsumerTestSuite) SetupSuite() {
 
 	o.settings = config.Settings{
 		DCNRegistryAddr:     contractEventData.Contract.String(),
+		DCNResolverAddr:     "0x60627326F55054Ea448e0a7BC750785bD65EF757",
 		DIMORegistryChainID: 80001,
 	}
 
@@ -140,7 +143,7 @@ func (o *DCNConsumerTestSuite) Test_NewDCNExpiration_Consume_Success() {
 
 	dcn, err := models.DCNS().All(o.ctx, o.pdb.DBS().Reader.DB)
 	o.NoError(err)
-
+	log.Println(dcn[0].Expiration.Time, "--", currTime, "sss")
 	o.Len(dcn, 1)
 	o.Equal(eventData.Node, dcn[0].Node)
 	o.Equal(owner.Bytes(), dcn[0].OwnerAddress)
@@ -148,8 +151,9 @@ func (o *DCNConsumerTestSuite) Test_NewDCNExpiration_Consume_Success() {
 }
 
 func (o *DCNConsumerTestSuite) Test_DCNNameChanged_Consume_Success() {
-	contractEventData.EventName = NameChanged.String()
-
+	cEventData := contractEventData
+	cEventData.EventName = NameChanged.String()
+	cEventData.Contract = common.HexToAddress("0x60627326F55054Ea448e0a7BC750785bD65EF757")
 	_, owner, err := test.GenerateWallet()
 	o.NoError(err)
 
@@ -171,7 +175,7 @@ func (o *DCNConsumerTestSuite) Test_DCNNameChanged_Consume_Success() {
 	o.NoError(err)
 
 	contractEventConsumer := NewContractsEventsConsumer(o.pdb, &o.logger, &o.settings)
-	expectedBytes := eventBytes(eventData, contractEventData, o.T())
+	expectedBytes := eventBytes(eventData, cEventData, o.T())
 
 	consumer.ExpectConsumePartition(o.settings.ContractsEventTopic, 0, 0).YieldMessage(&sarama.ConsumerMessage{Value: expectedBytes})
 

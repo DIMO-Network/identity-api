@@ -36,6 +36,7 @@ func TestDCNQuery(t *testing.T) {
 	settings := config.Settings{
 		DCNRegistryAddr:     "0xE9F4dfE02f895DC17E2e146e578873c9095bA293", // For realism.
 		DIMORegistryChainID: 137,
+		DCNResolverAddr:     "0x60627326F55054Ea448e0a7BC750785bD65EF757",
 	}
 
 	contractEventConsumer := services.NewContractsEventsConsumer(pdb, &logger, &settings)
@@ -124,7 +125,7 @@ func TestDCNQuery(t *testing.T) {
 		Type:   "zone.dimo.contract.event",
 		Data: json.RawMessage(fmt.Sprintf(`
 		{
-			"contract": "0xE9F4dfE02f895DC17E2e146e578873c9095bA293",
+			"contract": "0x60627326F55054Ea448e0a7BC750785bD65EF757",
 			"eventName": "NameChanged",
 			"arguments": {
 				"node": "ZmUlXZ4s/E7W0wZChcTSDIZK+B3A0myUxTgPZ/ndV+0=",
