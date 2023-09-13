@@ -156,8 +156,14 @@ type SyntheticDevice {
 }
 
 type DCN {
+  """
+  The namehash of the domain.
+  """
   node: Bytes!
   owner: Address!
+  """
+  The block timestamp at which the domain will cease to be valid.
+  """
   expiresAt: Time
   mintedAt: Time
   name: String
