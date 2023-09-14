@@ -36,6 +36,7 @@ func TestDCNQuery(t *testing.T) {
 	settings := config.Settings{
 		DCNRegistryAddr:     "0xE9F4dfE02f895DC17E2e146e578873c9095bA293", // For realism.
 		DIMORegistryChainID: 137,
+		DCNResolverAddr:     "0x60627326F55054Ea448e0a7BC750785bD65EF757",
 	}
 
 	contractEventConsumer := services.NewContractsEventsConsumer(pdb, &logger, &settings)
@@ -63,6 +64,7 @@ func TestDCNQuery(t *testing.T) {
 			Node      string
 			Owner     string
 			ExpiresAt *string
+			Name      *string
 		}
 	}
 
@@ -74,12 +76,14 @@ func TestDCNQuery(t *testing.T) {
 				node
 				owner
 				expiresAt
+				name
 			}
 		}
 	`, &dcnr, client.Var("node", "0x6665255d9e2cfc4ed6d3064285c4d20c864af81dc0d26c94c5380f67f9dd57ed"))
 
 	assert.Equal("0x6665255d9e2cfc4ed6d3064285c4d20c864af81dc0d26c94c5380f67f9dd57ed", dcnr.DCN.Node)
 	assert.Equal("0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045", dcnr.DCN.Owner)
+	assert.Nil(dcnr.DCN.Name)
 	assert.Nil(dcnr.DCN.ExpiresAt)
 
 	currTime := time.Now().UTC().Truncate(time.Second)
@@ -105,12 +109,44 @@ func TestDCNQuery(t *testing.T) {
 				node
 				owner
 				expiresAt
+				name
 			}
 		}
 	`, &dcnr, client.Var("node", "0x6665255d9e2cfc4ed6d3064285c4d20c864af81dc0d26c94c5380f67f9dd57ed"))
 
 	expected, err := time.Parse(time.RFC3339, *dcnr.DCN.ExpiresAt)
-
 	assert.NoError(err)
 	assert.Equal(expected, currTime)
+
+	// NameChanged
+	mockName := "SomeMockName"
+	err = contractEventConsumer.Process(ctx, &shared.CloudEvent[json.RawMessage]{
+		Source: "chain/137",
+		Type:   "zone.dimo.contract.event",
+		Data: json.RawMessage(fmt.Sprintf(`
+		{
+			"contract": "0x60627326F55054Ea448e0a7BC750785bD65EF757",
+			"eventName": "NameChanged",
+			"arguments": {
+				"node": "ZmUlXZ4s/E7W0wZChcTSDIZK+B3A0myUxTgPZ/ndV+0=",
+				"_name": "%s"
+			}
+		}
+	`, mockName))})
+	require.NoError(err)
+
+	c.MustPost(`
+		query DCN($node: Bytes!) {
+			dcn(node: $node) {
+				node
+				owner
+				expiresAt
+				name
+			}
+		}
+	`, &dcnr, client.Var("node", "0x6665255d9e2cfc4ed6d3064285c4d20c864af81dc0d26c94c5380f67f9dd57ed"))
+
+	if assert.NotNil(dcnr.DCN.Name) {
+		assert.Equal(mockName, *dcnr.DCN.Name)
+	}
 }

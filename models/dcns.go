@@ -24,9 +24,10 @@ import (
 
 // DCN is an object representing the database table.
 type DCN struct {
-	Node         []byte    `boil:"node" json:"node" toml:"node" yaml:"node"`
-	OwnerAddress []byte    `boil:"owner_address" json:"owner_address" toml:"owner_address" yaml:"owner_address"`
-	Expiration   null.Time `boil:"expiration" json:"expiration,omitempty" toml:"expiration" yaml:"expiration,omitempty"`
+	Node         []byte      `boil:"node" json:"node" toml:"node" yaml:"node"`
+	OwnerAddress []byte      `boil:"owner_address" json:"owner_address" toml:"owner_address" yaml:"owner_address"`
+	Expiration   null.Time   `boil:"expiration" json:"expiration,omitempty" toml:"expiration" yaml:"expiration,omitempty"`
+	Name         null.String `boil:"name" json:"name,omitempty" toml:"name" yaml:"name,omitempty"`
 
 	R *dcnR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L dcnL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -36,20 +37,24 @@ var DCNColumns = struct {
 	Node         string
 	OwnerAddress string
 	Expiration   string
+	Name         string
 }{
 	Node:         "node",
 	OwnerAddress: "owner_address",
 	Expiration:   "expiration",
+	Name:         "name",
 }
 
 var DCNTableColumns = struct {
 	Node         string
 	OwnerAddress string
 	Expiration   string
+	Name         string
 }{
 	Node:         "dcns.node",
 	OwnerAddress: "dcns.owner_address",
 	Expiration:   "dcns.expiration",
+	Name:         "dcns.name",
 }
 
 // Generated where
@@ -82,10 +87,12 @@ var DCNWhere = struct {
 	Node         whereHelper__byte
 	OwnerAddress whereHelper__byte
 	Expiration   whereHelpernull_Time
+	Name         whereHelpernull_String
 }{
 	Node:         whereHelper__byte{field: "\"identity_api\".\"dcns\".\"node\""},
 	OwnerAddress: whereHelper__byte{field: "\"identity_api\".\"dcns\".\"owner_address\""},
 	Expiration:   whereHelpernull_Time{field: "\"identity_api\".\"dcns\".\"expiration\""},
+	Name:         whereHelpernull_String{field: "\"identity_api\".\"dcns\".\"name\""},
 }
 
 // DCNRels is where relationship names are stored.
@@ -105,9 +112,9 @@ func (*dcnR) NewStruct() *dcnR {
 type dcnL struct{}
 
 var (
-	dcnAllColumns            = []string{"node", "owner_address", "expiration"}
+	dcnAllColumns            = []string{"node", "owner_address", "expiration", "name"}
 	dcnColumnsWithoutDefault = []string{"node", "owner_address"}
-	dcnColumnsWithDefault    = []string{"expiration"}
+	dcnColumnsWithDefault    = []string{"expiration", "name"}
 	dcnPrimaryKeyColumns     = []string{"node"}
 	dcnGeneratedColumns      = []string{}
 )

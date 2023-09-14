@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"testing"
 	"time"
@@ -14,6 +15,7 @@ import (
 	"github.com/DIMO-Network/shared/db"
 	"github.com/Shopify/sarama"
 	"github.com/Shopify/sarama/mocks"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/goccy/go-json"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/suite"
@@ -36,6 +38,7 @@ func (o *DCNConsumerTestSuite) SetupSuite() {
 
 	o.settings = config.Settings{
 		DCNRegistryAddr:     contractEventData.Contract.String(),
+		DCNResolverAddr:     "0x60627326F55054Ea448e0a7BC750785bD65EF757",
 		DIMORegistryChainID: 80001,
 	}
 
@@ -140,9 +143,58 @@ func (o *DCNConsumerTestSuite) Test_NewDCNExpiration_Consume_Success() {
 
 	dcn, err := models.DCNS().All(o.ctx, o.pdb.DBS().Reader.DB)
 	o.NoError(err)
-
+	log.Println(dcn[0].Expiration.Time, "--", currTime, "sss")
 	o.Len(dcn, 1)
 	o.Equal(eventData.Node, dcn[0].Node)
 	o.Equal(owner.Bytes(), dcn[0].OwnerAddress)
 	o.Equal(currTime, dcn[0].Expiration.Time)
+}
+
+func (o *DCNConsumerTestSuite) Test_DCNNameChanged_Consume_Success() {
+	cEventData := contractEventData
+	cEventData.EventName = NameChanged.String()
+	cEventData.Contract = common.HexToAddress("0x60627326F55054Ea448e0a7BC750785bD65EF757")
+	_, owner, err := test.GenerateWallet()
+	o.NoError(err)
+
+	newName := "SomeMockName"
+	var eventData = DCNNameChangedEventData{
+		Node: test.GenerateDCNNode(),
+		Name: newName,
+	}
+
+	config := mocks.NewTestConfig()
+	consumer := mocks.NewConsumer(o.T(), config)
+
+	d := models.DCN{
+		Node:         eventData.Node,
+		OwnerAddress: owner.Bytes(),
+	}
+
+	err = d.Insert(o.ctx, o.pdb.DBS().Writer.DB, boil.Infer())
+	o.NoError(err)
+
+	contractEventConsumer := NewContractsEventsConsumer(o.pdb, &o.logger, &o.settings)
+	expectedBytes := eventBytes(eventData, cEventData, o.T())
+
+	consumer.ExpectConsumePartition(o.settings.ContractsEventTopic, 0, 0).YieldMessage(&sarama.ConsumerMessage{Value: expectedBytes})
+
+	outputTest, err := consumer.ConsumePartition(o.settings.ContractsEventTopic, 0, 0)
+	o.NoError(err)
+
+	m := <-outputTest.Messages()
+	var e shared.CloudEvent[json.RawMessage]
+	err = json.Unmarshal(m.Value, &e)
+	o.NoError(err)
+
+	err = contractEventConsumer.Process(o.ctx, &e)
+	o.NoError(err)
+
+	dcn, err := models.DCNS().All(o.ctx, o.pdb.DBS().Reader.DB)
+	o.NoError(err)
+
+	o.Len(dcn, 1)
+	o.Equal(eventData.Node, dcn[0].Node)
+	o.Equal(owner.Bytes(), dcn[0].OwnerAddress)
+	o.Equal(eventData.Name, dcn[0].Name.String)
 }

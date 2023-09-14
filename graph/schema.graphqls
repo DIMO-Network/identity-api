@@ -166,4 +166,5 @@ type DCN {
   """
   expiresAt: Time
   mintedAt: Time
+  name: String
 }
