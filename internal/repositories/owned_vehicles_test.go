@@ -120,8 +120,9 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Success() {
 	expected := []*gmodel.VehicleEdge{
 		{
 			Node: &gmodel.Vehicle{
-				ID:    2,
-				Owner: common.BytesToAddress(wallet.Bytes()),
+				ID:      "V_kQI=",
+				TokenID: 2,
+				Owner:   common.BytesToAddress(wallet.Bytes()),
 				Definition: &gmodel.Definition{
 					Make:  &vehicles[1].Make.String,
 					Model: &vehicles[1].Model.String,
@@ -134,8 +135,9 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Success() {
 		},
 		{
 			Node: &gmodel.Vehicle{
-				ID:    1,
-				Owner: common.BytesToAddress(wallet.Bytes()),
+				ID:      "V_kQE=",
+				TokenID: 1,
+				Owner:   common.BytesToAddress(wallet.Bytes()),
 				Definition: &gmodel.Definition{
 					Make:  &vehicles[0].Make.String,
 					Model: &vehicles[0].Model.String,
@@ -191,8 +193,9 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination() {
 	expected := []*gmodel.VehicleEdge{
 		{
 			Node: &gmodel.Vehicle{
-				ID:    2,
-				Owner: common.BytesToAddress(wallet.Bytes()),
+				ID:      "V_kQI=",
+				TokenID: 2,
+				Owner:   common.BytesToAddress(wallet.Bytes()),
 				Definition: &gmodel.Definition{
 					Make:  &vehicles[1].Make.String,
 					Model: &vehicles[1].Model.String,
@@ -249,8 +252,9 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination_NextPage()
 	expected := []*gmodel.VehicleEdge{
 		{
 			Node: &gmodel.Vehicle{
-				ID:    1,
-				Owner: common.BytesToAddress(wallet.Bytes()),
+				ID:      "V_kQE=",
+				TokenID: 1,
+				Owner:   common.BytesToAddress(wallet.Bytes()),
 				Definition: &gmodel.Definition{
 					Make:  &vehicles[0].Make.String,
 					Model: &vehicles[0].Model.String,

@@ -6,9 +6,12 @@ package graph
 
 import (
 	"context"
+	"errors"
+	"strings"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/loader"
+	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -18,6 +21,18 @@ func (r *aftermarketDeviceResolver) Vehicle(ctx context.Context, obj *model.Afte
 		return nil, nil
 	}
 	return loader.GetVehicleByID(ctx, *obj.VehicleID)
+}
+
+// Node is the resolver for the node field.
+func (r *queryResolver) Node(ctx context.Context, id string) (model.Node, error) {
+	if strings.HasPrefix(id, "V_") {
+		ti, err := repositories.VehicleIDToToken(id)
+		if err != nil {
+			return nil, err
+		}
+		return r.Repo.GetVehicle(ctx, ti)
+	}
+	return nil, errors.New("unrecognized global id")
 }
 
 // AccessibleVehicles is the resolver for the accessibleVehicles field.
@@ -42,17 +57,17 @@ func (r *queryResolver) Dcn(ctx context.Context, node []byte) (*model.Dcn, error
 
 // AftermarketDevice is the resolver for the aftermarketDevice field.
 func (r *vehicleResolver) AftermarketDevice(ctx context.Context, obj *model.Vehicle) (*model.AftermarketDevice, error) {
-	return loader.GetAftermarketDeviceByVehicleID(ctx, obj.ID)
+	return loader.GetAftermarketDeviceByVehicleID(ctx, obj.TokenID)
 }
 
 // Privileges is the resolver for the privileges field.
 func (r *vehicleResolver) Privileges(ctx context.Context, obj *model.Vehicle, first *int, after *string, last *int, before *string) (*model.PrivilegesConnection, error) {
-	return r.Repo.GetPrivilegesForVehicle(ctx, obj.ID, first, after, last, before)
+	return r.Repo.GetPrivilegesForVehicle(ctx, obj.TokenID, first, after, last, before)
 }
 
 // SyntheticDevice is the resolver for the syntheticDevice field.
 func (r *vehicleResolver) SyntheticDevice(ctx context.Context, obj *model.Vehicle) (*model.SyntheticDevice, error) {
-	return loader.GetSyntheticDeviceByVehicleID(ctx, obj.ID)
+	return loader.GetSyntheticDeviceByVehicleID(ctx, obj.TokenID)
 }
 
 // AftermarketDevice returns AftermarketDeviceResolver implementation.

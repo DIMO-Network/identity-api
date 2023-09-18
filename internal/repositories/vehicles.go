@@ -1,7 +1,12 @@
 package repositories
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
+	"errors"
+	"fmt"
+	"strings"
 	"time"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
@@ -9,6 +14,7 @@ import (
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/vmihailenco/msgpack/v5"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
@@ -26,9 +32,20 @@ func New(pdb db.Store) *Repository {
 	}
 }
 
+type vehiclePrimaryKey struct {
+	TokenID int
+}
+
 func VehicleToAPI(v *models.Vehicle) *gmodel.Vehicle {
+	var b bytes.Buffer
+	e := msgpack.NewEncoder(&b)
+	e.UseArrayEncodedStructs(true)
+
+	_ = e.Encode(vehiclePrimaryKey{TokenID: v.ID})
+
 	return &gmodel.Vehicle{
-		ID:       v.ID,
+		ID:       "V_" + base64.StdEncoding.EncodeToString(b.Bytes()),
+		TokenID:  v.ID,
 		Owner:    common.BytesToAddress(v.OwnerAddress),
 		MintedAt: v.MintedAt,
 		Definition: &gmodel.Definition{
@@ -38,6 +55,27 @@ func VehicleToAPI(v *models.Vehicle) *gmodel.Vehicle {
 			Year:  v.Year.Ptr(),
 		},
 	}
+}
+
+func VehicleIDToToken(id string) (int, error) {
+	if !strings.HasPrefix(id, "V_") {
+		return 0, errors.New("id lacks the V_ prefix")
+	}
+
+	id = id[2:]
+
+	b, err := base64.StdEncoding.DecodeString(id)
+	if err != nil {
+		return 0, err
+	}
+
+	var pk vehiclePrimaryKey
+	d := msgpack.NewDecoder(bytes.NewBuffer(b))
+	if err := d.Decode(&pk); err != nil {
+		return 0, fmt.Errorf("error decoding vehicle id: %w", err)
+	}
+
+	return pk.TokenID, nil
 }
 
 func (v *Repository) createVehiclesResponse(totalCount int64, vehicles models.VehicleSlice, hasNext bool) *gmodel.VehicleConnection {

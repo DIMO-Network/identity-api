@@ -85,7 +85,7 @@ func TestResolver(t *testing.T) {
 		c.MustPost(`{ownedAftermarketDevices(address: "46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4", first: 1) {edges {node {id owner}}}}`, &resp)
 		b, _ := json.Marshal(resp)
 		fmt.Println(string(b))
-		assert.Equal(`{"ownedAftermarketDevices":{"edges":[{"node":{"id":"100","owner":"0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"}}]}}`, string(b))
+		assert.JSONEq(`{"ownedAftermarketDevices":{"edges":[{"node":{"id":"100","owner":"0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"}}]}}`, string(b))
 	})
 
 	t.Run("ownedAftermarketDevices, search after", func(t *testing.T) {
@@ -93,37 +93,37 @@ func TestResolver(t *testing.T) {
 		c.MustPost(`{ownedAftermarketDevices(address: "46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4" after: "MQ==") {edges {node {id owner}}}}`, &resp)
 		b, _ := json.Marshal(resp)
 		fmt.Println(string(b))
-		assert.Equal(`{"ownedAftermarketDevices":{"edges":[]}}`, string(b))
+		assert.JSONEq(`{"ownedAftermarketDevices":{"edges":[]}}`, string(b))
 	})
 
 	t.Run("ownedAftermarketDevices and linked vehicle", func(t *testing.T) {
 		var resp interface{}
-		c.MustPost(`{ownedAftermarketDevices(address: "46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4") {edges {node {id owner vehicle{id owner}}}}}`, &resp)
+		c.MustPost(`{ownedAftermarketDevices(address: "46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4") {edges {node {id owner vehicle{tokenId owner}}}}}`, &resp)
 		b, _ := json.Marshal(resp)
 		fmt.Println(string(b))
-		assert.Equal(
-			`{"ownedAftermarketDevices":{"edges":[{"node":{"id":"100","owner":"0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4","vehicle":null}},{"node":{"id":"1","owner":"0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4","vehicle":{"id":"11","owner":"0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"}}}]}}`,
+		assert.JSONEq(
+			`{"ownedAftermarketDevices":{"edges":[{"node":{"id":"100","owner":"0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4","vehicle":null}},{"node":{"id":"1","owner":"0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4","vehicle":{"tokenId":"11","owner":"0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"}}}]}}`,
 			string(b))
 	})
 
 	t.Run("accessibleVehicles", func(t *testing.T) {
 		var resp interface{}
-		c.MustPost(`{accessibleVehicles(address: "46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4") {edges {node {id owner}}}}`, &resp)
+		c.MustPost(`{accessibleVehicles(address: "46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4") {edges {node {tokenId owner}}}}`, &resp)
 		b, _ := json.Marshal(resp)
 		fmt.Println(string(b))
-		assert.Equal(
-			`{"accessibleVehicles":{"edges":[{"node":{"id":"11","owner":"0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"}}]}}`,
+		assert.JSONEq(
+			`{"accessibleVehicles":{"edges":[{"node":{"tokenId":"11","owner":"0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"}}]}}`,
 			string(b))
 	})
 
 	t.Run("accessibleVehicles and syntheticDevices", func(t *testing.T) {
 		var resp interface{}
 		c.MustPost(`{
-			accessibleVehicles(address: "46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4") {edges {node {id owner syntheticDevice {id}}}}}`, &resp)
+			accessibleVehicles(address: "46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4") {edges {node {tokenId owner syntheticDevice {id}}}}}`, &resp)
 		b, _ := json.Marshal(resp)
 		fmt.Println(string(b))
-		assert.Equal(
-			`{"accessibleVehicles":{"edges":[{"node":{"id":"11","owner":"0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4","syntheticDevice":{"id":"1"}}}]}}`,
+		assert.JSONEq(
+			`{"accessibleVehicles":{"edges":[{"node":{"tokenId":"11","owner":"0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4","syntheticDevice":{"id":"1"}}}]}}`,
 			string(b))
 	})
 }
