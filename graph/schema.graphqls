@@ -18,6 +18,13 @@ A general byte representation
 """
 scalar Bytes
 
+directive @oneOf on OBJECT | INPUT_OBJECT | FIELD_DEFINITION
+
+input DCNInput @oneOf {
+  node: Bytes
+  name: String
+}
+
 type Query {
   accessibleVehicles(
     address: Address!
@@ -36,7 +43,7 @@ type Query {
   ): AftermarketDeviceConnection!
   vehicle(id: Int!): Vehicle!
 
-  dcn(node: Bytes!): DCN!
+  dcn(input: DCNInput!): DCN!
 }
 
 # Shared Types
