@@ -100,3 +100,8 @@ type NewDCNExpirationEventData struct {
 	Node       []byte
 	Expiration int
 }
+
+type DCNNameChangedEventData struct {
+	Node []byte
+	Name string `json:"_name"`
+}
