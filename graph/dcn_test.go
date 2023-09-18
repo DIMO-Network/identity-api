@@ -10,21 +10,25 @@ import (
 
 	"github.com/99designs/gqlgen/client"
 	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
+	test "github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/loader"
 	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/internal/services"
+	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/volatiletech/null/v8"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
 func TestDCNQuery(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
-
 	ctx := context.Background()
 
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDir)
@@ -39,9 +43,22 @@ func TestDCNQuery(t *testing.T) {
 		DCNResolverAddr:     "0x60627326F55054Ea448e0a7BC750785bD65EF757",
 	}
 
+	_, wallet, err := test.GenerateWallet()
+	assert.NoError(err)
+	veh := models.Vehicle{
+		ID:            1,
+		OwnerAddress:  wallet.Bytes(),
+		Make:          null.StringFrom("Toyota"),
+		Model:         null.StringFrom("Corolla"),
+		Year:          null.IntFrom(2000),
+		DefinitionURI: null.StringFrom("mockUri"),
+	}
+	err = veh.Insert(ctx, pdb.DBS().Writer.DB, boil.Infer())
+	assert.NoError(err)
+
 	contractEventConsumer := services.NewContractsEventsConsumer(pdb, &logger, &settings)
 
-	err := contractEventConsumer.Process(ctx, &shared.CloudEvent[json.RawMessage]{
+	err = contractEventConsumer.Process(ctx, &shared.CloudEvent[json.RawMessage]{
 		Source: "chain/137",
 		Type:   "zone.dimo.contract.event",
 		Data: json.RawMessage(`
@@ -65,6 +82,7 @@ func TestDCNQuery(t *testing.T) {
 			Owner     string
 			ExpiresAt *string
 			Name      *string
+			Vehicle   *model.Vehicle
 		}
 	}
 

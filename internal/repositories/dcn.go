@@ -14,11 +14,14 @@ func DCNToAPI(d *models.DCN) *gmodel.Dcn {
 		Node:      d.Node,
 		ExpiresAt: d.Expiration.Ptr(),
 		Name:      d.Name.Ptr(),
+		VehicleID: d.VehicleID.Ptr(),
 	}
 }
 
 func (r *Repository) GetDCNByNode(ctx context.Context, node []byte) (*gmodel.Dcn, error) {
-	dcn, err := models.DCNS(models.DCNWhere.Node.EQ(node)).One(ctx, r.pdb.DBS().Reader)
+	dcn, err := models.DCNS(
+		models.DCNWhere.Node.EQ(node),
+	).One(ctx, r.pdb.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}

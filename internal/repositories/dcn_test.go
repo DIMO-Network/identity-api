@@ -11,6 +11,7 @@ import (
 	"github.com/DIMO-Network/shared/db"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
@@ -57,11 +58,22 @@ func (o *DCNRepoTestSuite) Test_GetDCNByNode_Success() {
 	_, wallet, err := test.GenerateWallet()
 	o.NoError(err)
 
+	_, wallet2, err := test.GenerateWallet()
+	o.NoError(err)
+
 	node := test.GenerateDCNNode()
 	d := models.DCN{
 		Node:         node,
 		OwnerAddress: wallet.Bytes(),
+		VehicleID:    null.IntFrom(1),
 	}
+
+	veh := models.Vehicle{
+		ID:           1,
+		OwnerAddress: wallet2.Bytes(),
+	}
+	err = veh.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer())
+	o.NoError(err)
 
 	err = d.Insert(o.ctx, o.pdb.DBS().Writer.DB, boil.Infer())
 	o.NoError(err)
@@ -71,4 +83,5 @@ func (o *DCNRepoTestSuite) Test_GetDCNByNode_Success() {
 
 	o.Equal(dcn.Owner.Bytes(), wallet.Bytes())
 	o.Equal(dcn.Node, node)
+	o.Equal(*dcn.VehicleID, 1)
 }

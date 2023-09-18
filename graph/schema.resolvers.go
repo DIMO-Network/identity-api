@@ -20,6 +20,14 @@ func (r *aftermarketDeviceResolver) Vehicle(ctx context.Context, obj *model.Afte
 	return loader.GetVehicleByID(ctx, *obj.VehicleID)
 }
 
+// Vehicle is the resolver for the vehicle field.
+func (r *dCNResolver) Vehicle(ctx context.Context, obj *model.Dcn) (*model.Vehicle, error) {
+	if obj.VehicleID == nil {
+		return nil, nil
+	}
+	return loader.GetVehicleByID(ctx, *obj.VehicleID)
+}
+
 // AccessibleVehicles is the resolver for the accessibleVehicles field.
 func (r *queryResolver) AccessibleVehicles(ctx context.Context, address common.Address, first *int, after *string, last *int, before *string) (*model.VehicleConnection, error) {
 	return r.Repo.GetAccessibleVehicles(ctx, address, first, after, last, before)
@@ -55,10 +63,18 @@ func (r *vehicleResolver) SyntheticDevice(ctx context.Context, obj *model.Vehicl
 	return loader.GetSyntheticDeviceByVehicleID(ctx, obj.ID)
 }
 
+// Dcn is the resolver for the dcn field.
+func (r *vehicleResolver) Dcn(ctx context.Context, obj *model.Vehicle) (*model.Dcn, error) {
+	return loader.GetDCNByVehicleID(ctx, obj.ID)
+}
+
 // AftermarketDevice returns AftermarketDeviceResolver implementation.
 func (r *Resolver) AftermarketDevice() AftermarketDeviceResolver {
 	return &aftermarketDeviceResolver{r}
 }
+
+// DCN returns DCNResolver implementation.
+func (r *Resolver) DCN() DCNResolver { return &dCNResolver{r} }
 
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
@@ -67,5 +83,6 @@ func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 func (r *Resolver) Vehicle() VehicleResolver { return &vehicleResolver{r} }
 
 type aftermarketDeviceResolver struct{ *Resolver }
+type dCNResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type vehicleResolver struct{ *Resolver }
