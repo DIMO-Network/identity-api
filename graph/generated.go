@@ -116,7 +116,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		AccessibleVehicles      func(childComplexity int, address common.Address, first *int, after *string, last *int, before *string) int
-		Dcn                     func(childComplexity int, input model.DCNInput) int
+		Dcn                     func(childComplexity int, by model.DCNBy) int
 		OwnedAftermarketDevices func(childComplexity int, address common.Address, first *int, after *string, last *int, before *string) int
 		Vehicle                 func(childComplexity int, id int) int
 	}
@@ -161,7 +161,7 @@ type QueryResolver interface {
 	AccessibleVehicles(ctx context.Context, address common.Address, first *int, after *string, last *int, before *string) (*model.VehicleConnection, error)
 	OwnedAftermarketDevices(ctx context.Context, address common.Address, first *int, after *string, last *int, before *string) (*model.AftermarketDeviceConnection, error)
 	Vehicle(ctx context.Context, id int) (*model.Vehicle, error)
-	Dcn(ctx context.Context, input model.DCNInput) (*model.Dcn, error)
+	Dcn(ctx context.Context, by model.DCNBy) (*model.Dcn, error)
 }
 type VehicleResolver interface {
 	AftermarketDevice(ctx context.Context, obj *model.Vehicle) (*model.AftermarketDevice, error)
@@ -460,7 +460,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Dcn(childComplexity, args["input"].(model.DCNInput)), true
+		return e.complexity.Query.Dcn(childComplexity, args["by"].(model.DCNBy)), true
 
 	case "Query.ownedAftermarketDevices":
 		if e.complexity.Query.OwnedAftermarketDevices == nil {
@@ -618,7 +618,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	rc := graphql.GetOperationContext(ctx)
 	ec := executionContext{rc, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
-		ec.unmarshalInputDCNInput,
+		ec.unmarshalInputDCNBy,
 	)
 	first := true
 
@@ -789,15 +789,15 @@ func (ec *executionContext) field_Query_accessibleVehicles_args(ctx context.Cont
 func (ec *executionContext) field_Query_dcn_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.DCNInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNDCNInput2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDCNInput(ctx, tmp)
+	var arg0 model.DCNBy
+	if tmp, ok := rawArgs["by"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("by"))
+		arg0, err = ec.unmarshalNDCNBy2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDCNBy(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["input"] = arg0
+	args["by"] = arg0
 	return args, nil
 }
 
@@ -2798,7 +2798,7 @@ func (ec *executionContext) _Query_dcn(ctx context.Context, field graphql.Collec
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Dcn(rctx, fc.Args["input"].(model.DCNInput))
+		return ec.resolvers.Query().Dcn(rctx, fc.Args["by"].(model.DCNBy))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5596,8 +5596,8 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(ctx context.Conte
 
 // region    **************************** input.gotpl *****************************
 
-func (ec *executionContext) unmarshalInputDCNInput(ctx context.Context, obj interface{}) (model.DCNInput, error) {
-	var it model.DCNInput
+func (ec *executionContext) unmarshalInputDCNBy(ctx context.Context, obj interface{}) (model.DCNBy, error) {
+	var it model.DCNBy
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -7133,8 +7133,8 @@ func (ec *executionContext) marshalNDCN2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋident
 	return ec._DCN(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNDCNInput2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDCNInput(ctx context.Context, v interface{}) (model.DCNInput, error) {
-	res, err := ec.unmarshalInputDCNInput(ctx, v)
+func (ec *executionContext) unmarshalNDCNBy2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDCNBy(ctx context.Context, v interface{}) (model.DCNBy, error) {
+	res, err := ec.unmarshalInputDCNBy(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 

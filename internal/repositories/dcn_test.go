@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/config"
 	test "github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/models"
@@ -67,7 +68,9 @@ func (o *DCNRepoTestSuite) Test_GetDCNByNode_Success() {
 		OwnerAddress: wallet.Bytes(),
 		VehicleID:    null.IntFrom(1),
 	}
-
+	params := model.DCNBy{
+		Node: node,
+	}
 	veh := models.Vehicle{
 		ID:           1,
 		OwnerAddress: wallet2.Bytes(),
@@ -78,10 +81,67 @@ func (o *DCNRepoTestSuite) Test_GetDCNByNode_Success() {
 	err = d.Insert(o.ctx, o.pdb.DBS().Writer.DB, boil.Infer())
 	o.NoError(err)
 
-	dcn, err := o.repo.GetDCNByNode(o.ctx, node)
+	dcn, err := o.repo.GetDCN(o.ctx, params)
 	o.NoError(err)
 
 	o.Equal(dcn.Owner.Bytes(), wallet.Bytes())
 	o.Equal(dcn.Node, node)
 	o.Equal(*dcn.VehicleID, 1)
+}
+
+func (o *DCNRepoTestSuite) Test_GetDCNByName_Success() {
+	_, wallet, err := test.GenerateWallet()
+	o.NoError(err)
+
+	_, wallet2, err := test.GenerateWallet()
+	o.NoError(err)
+
+	node := test.GenerateDCNNode()
+	dcnName := "mockName.dimo"
+	d := models.DCN{
+		Node:         node,
+		OwnerAddress: wallet.Bytes(),
+		VehicleID:    null.IntFrom(1),
+		Name:         null.StringFrom(dcnName),
+	}
+	params := model.DCNBy{
+		Name: &dcnName,
+	}
+	veh := models.Vehicle{
+		ID:           1,
+		OwnerAddress: wallet2.Bytes(),
+	}
+	err = veh.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer())
+	o.NoError(err)
+
+	err = d.Insert(o.ctx, o.pdb.DBS().Writer.DB, boil.Infer())
+	o.NoError(err)
+
+	dcn, err := o.repo.GetDCN(o.ctx, params)
+	o.NoError(err)
+
+	o.Equal(dcn.Owner.Bytes(), wallet.Bytes())
+	o.Equal(dcn.Node, node)
+	o.Equal(*dcn.VehicleID, 1)
+}
+
+func (o *DCNRepoTestSuite) Test_GetDCNFail_When_NodeAndNameProvided() {
+	node := test.GenerateDCNNode()
+	dcnName := "mockName.dimo"
+
+	params := model.DCNBy{
+		Name: &dcnName,
+		Node: node,
+	}
+	dcn, err := o.repo.GetDCN(o.ctx, params)
+	o.Nil(dcn)
+	o.ErrorContains(err, "please provide one of Name or Node but not both")
+}
+
+func (o *DCNRepoTestSuite) Test_GetDCNFail_When_Neither_NodeAndNameProvided() {
+
+	params := model.DCNBy{}
+	dcn, err := o.repo.GetDCN(o.ctx, params)
+	o.Nil(dcn)
+	o.ErrorContains(err, "please provide either Name or Node")
 }

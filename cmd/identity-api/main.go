@@ -10,7 +10,6 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/mitchellh/mapstructure"
 
 	"github.com/DIMO-Network/identity-api/graph"
 	"github.com/DIMO-Network/identity-api/internal/config"
@@ -57,22 +56,6 @@ func main() {
 		Repo: repo,
 	}}
 	cfg.Directives.OneOf = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
-		// Value is still string at this point because it has not been serialized into proper format
-		var inp struct {
-			Name string
-			Node string
-		}
-		if er := mapstructure.Decode(obj, &inp); er != nil {
-			return nil, er
-		}
-
-		if inp.Name != "" && len(inp.Node) > 0 {
-			return nil, fmt.Errorf("please provide one of Name or Node but not both")
-		}
-
-		if inp.Name == "" && len(inp.Node) == 0 {
-			return nil, fmt.Errorf("please provide either Name or Node")
-		}
 		return next(ctx)
 	}
 

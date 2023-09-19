@@ -52,7 +52,7 @@ type Dcn struct {
 	VehicleID *int     `json:"-"`
 }
 
-type DCNInput struct {
+type DCNBy struct {
 	Node []byte  `json:"node,omitempty"`
 	Name *string `json:"name,omitempty"`
 }

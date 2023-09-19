@@ -20,7 +20,7 @@ scalar Bytes
 
 directive @oneOf on OBJECT | INPUT_OBJECT | FIELD_DEFINITION
 
-input DCNInput @oneOf {
+input DCNBy @oneOf {
   node: Bytes
   name: String
 }
@@ -43,7 +43,7 @@ type Query {
   ): AftermarketDeviceConnection!
   vehicle(id: Int!): Vehicle!
 
-  dcn(input: DCNInput!): DCN!
+  dcn(by: DCNBy!): DCN!
 }
 
 # Shared Types

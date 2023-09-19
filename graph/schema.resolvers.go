@@ -6,7 +6,6 @@ package graph
 
 import (
 	"context"
-	"log"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/loader"
@@ -45,9 +44,8 @@ func (r *queryResolver) Vehicle(ctx context.Context, id int) (*model.Vehicle, er
 }
 
 // Dcn is the resolver for the dcn field.
-func (r *queryResolver) Dcn(ctx context.Context, input model.DCNInput) (*model.Dcn, error) {
-	log.Println(input.Node, "-------", input.Name, "-------")
-	return r.Repo.GetDCNByNode(ctx, input.Node)
+func (r *queryResolver) Dcn(ctx context.Context, by model.DCNBy) (*model.Dcn, error) {
+	return r.Repo.GetDCN(ctx, by)
 }
 
 // AftermarketDevice is the resolver for the aftermarketDevice field.
