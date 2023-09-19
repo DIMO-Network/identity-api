@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/99designs/gqlgen/client"
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/config"
@@ -73,8 +74,11 @@ func TestDCNQuery(t *testing.T) {
 	`)})
 
 	require.NoError(err)
-
-	c := client.New(loader.Middleware(pdb, handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: resolver}))))
+	cfg := Config{Resolvers: resolver}
+	cfg.Directives.OneOf = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
+		return next(ctx)
+	}
+	c := client.New(loader.Middleware(pdb, handler.NewDefaultServer(NewExecutableSchema(cfg))))
 
 	type response struct {
 		DCN struct {
@@ -87,17 +91,18 @@ func TestDCNQuery(t *testing.T) {
 	}
 
 	var dcnr response
-
+	req := map[string]string{}
+	req["node"] = "0x6665255d9e2cfc4ed6d3064285c4d20c864af81dc0d26c94c5380f67f9dd57ed"
 	c.MustPost(`
-		query DCN($node: Bytes!) {
-			dcn(node: $node) {
+		query DCN($input:DCNBy!) {
+			dcn(by: $input) {
 				node
 				owner
 				expiresAt
 				name
 			}
 		}
-	`, &dcnr, client.Var("node", "0x6665255d9e2cfc4ed6d3064285c4d20c864af81dc0d26c94c5380f67f9dd57ed"))
+	`, &dcnr, client.Var("input", req))
 
 	assert.Equal("0x6665255d9e2cfc4ed6d3064285c4d20c864af81dc0d26c94c5380f67f9dd57ed", dcnr.DCN.Node)
 	assert.Equal("0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045", dcnr.DCN.Owner)
@@ -105,7 +110,6 @@ func TestDCNQuery(t *testing.T) {
 	assert.Nil(dcnr.DCN.ExpiresAt)
 
 	currTime := time.Now().UTC().Truncate(time.Second)
-
 	err = contractEventConsumer.Process(ctx, &shared.CloudEvent[json.RawMessage]{
 		Source: "chain/137",
 		Type:   "zone.dimo.contract.event",
@@ -122,15 +126,15 @@ func TestDCNQuery(t *testing.T) {
 	require.NoError(err)
 
 	c.MustPost(`
-		query DCN($node: Bytes!) {
-			dcn(node: $node) {
+		query DCN($input:DCNBy!) {
+			dcn(by: $input) {
 				node
 				owner
 				expiresAt
 				name
 			}
 		}
-	`, &dcnr, client.Var("node", "0x6665255d9e2cfc4ed6d3064285c4d20c864af81dc0d26c94c5380f67f9dd57ed"))
+	`, &dcnr, client.Var("input", req))
 
 	expected, err := time.Parse(time.RFC3339, *dcnr.DCN.ExpiresAt)
 	assert.NoError(err)
@@ -138,31 +142,34 @@ func TestDCNQuery(t *testing.T) {
 
 	// NameChanged
 	mockName := "SomeMockName"
+
 	err = contractEventConsumer.Process(ctx, &shared.CloudEvent[json.RawMessage]{
 		Source: "chain/137",
 		Type:   "zone.dimo.contract.event",
 		Data: json.RawMessage(fmt.Sprintf(`
-		{
-			"contract": "0x60627326F55054Ea448e0a7BC750785bD65EF757",
-			"eventName": "NameChanged",
-			"arguments": {
-				"node": "ZmUlXZ4s/E7W0wZChcTSDIZK+B3A0myUxTgPZ/ndV+0=",
-				"_name": "%s"
-			}
-		}
-	`, mockName))})
+	   		{
+	   			"contract": "0x60627326F55054Ea448e0a7BC750785bD65EF757",
+	   			"eventName": "NameChanged",
+	   			"arguments": {
+	   				"node": "ZmUlXZ4s/E7W0wZChcTSDIZK+B3A0myUxTgPZ/ndV+0=",
+	   				"_name": "%s"
+	   			}
+	   		}
+
+	   `, mockName))})
 	require.NoError(err)
 
 	c.MustPost(`
-		query DCN($node: Bytes!) {
-			dcn(node: $node) {
-				node
-				owner
-				expiresAt
-				name
-			}
-		}
-	`, &dcnr, client.Var("node", "0x6665255d9e2cfc4ed6d3064285c4d20c864af81dc0d26c94c5380f67f9dd57ed"))
+	   	query DCN($input:DCNBy!) {
+	   		dcn(by: $input) {
+	   			node
+	   			owner
+	   			expiresAt
+	   			name
+	   		}
+	   	}
+
+	   `, &dcnr, client.Var("input", req))
 
 	if assert.NotNil(dcnr.DCN.Name) {
 		assert.Equal(mockName, *dcnr.DCN.Name)
