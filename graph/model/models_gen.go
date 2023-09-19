@@ -47,10 +47,14 @@ type Dcn struct {
 }
 
 type Definition struct {
-	URI   *string `json:"uri,omitempty"`
-	Make  *string `json:"make,omitempty"`
-	Model *string `json:"model,omitempty"`
-	Year  *int    `json:"year,omitempty"`
+	URI               *string               `json:"uri,omitempty"`
+	Make              *string               `json:"make,omitempty"`
+	Model             *string               `json:"model,omitempty"`
+	Year              *int                  `json:"year,omitempty"`
+	MintedAt          time.Time             `json:"mintedAt"`
+	AftermarketDevice *AftermarketDevice    `json:"aftermarketDevice,omitempty"`
+	Privileges        *PrivilegesConnection `json:"privileges"`
+	SyntheticDevice   *SyntheticDevice      `json:"syntheticDevice,omitempty"`
 }
 
 type PageInfo struct {
