@@ -167,7 +167,7 @@ type DCN {
   """
   node: Bytes!
   """
-  ETH address of domain owner.
+  Ethereum address of domain owner.
   """
   owner: Address!
   """
