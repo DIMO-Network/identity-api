@@ -183,7 +183,7 @@ type DCN {
   """
   name: String
   """
-  Device the domain is attached to.
+  Vehicle the domain is attached to.
   """
   vehicle: Vehicle
 }
