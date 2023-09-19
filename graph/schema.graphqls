@@ -175,7 +175,7 @@ type DCN {
   """
   expiresAt: Time
   """
-  The block timestamp of when the domain was created.
+  The block timestamp at which the domain was created.
   """
   mintedAt: Time
   """
