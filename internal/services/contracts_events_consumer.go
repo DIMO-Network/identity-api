@@ -39,6 +39,9 @@ const (
 	AftermarketDeviceNodeMintedEvent   EventName = "AftermarketDeviceNodeMinted"
 	SyntheticDeviceNodeMinted          EventName = "SyntheticDeviceNodeMinted"
 	SyntheticDeviceNodeBurned          EventName = "SyntheticDeviceNodeBurned"
+	NewNode                            EventName = "NewNode"
+	NewExpiration                      EventName = "NewExpiration"
+	NameChanged                        EventName = "NameChanged"
 )
 
 func (r EventName) String() string {
@@ -71,6 +74,8 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 	registryAddr := common.HexToAddress(c.settings.DIMORegistryAddr)
 	vehicleNFTAddr := common.HexToAddress(c.settings.VehicleNFTAddr)
 	aftermarketDeviceAddr := common.HexToAddress(c.settings.AftermarketDeviceAddr)
+	DCNRegistryAddr := common.HexToAddress(c.settings.DCNRegistryAddr)
+	DCNResolverAddr := common.HexToAddress(c.settings.DCNResolverAddr)
 
 	var data ContractEventData
 	if err := json.Unmarshal(event.Data, &data); err != nil {
@@ -112,6 +117,19 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 		switch eventName {
 		case Transfer:
 			return c.handleAftermarketDeviceTransferredEvent(ctx, &data)
+		}
+
+	case DCNRegistryAddr:
+		switch eventName {
+		case NewNode:
+			return c.handleNewDcnNode(ctx, &data)
+		case NewExpiration:
+			return c.handleNewDCNExpiration(ctx, &data)
+		}
+	case DCNResolverAddr:
+		switch eventName {
+		case NameChanged:
+			return c.handleNameChanged(ctx, &data)
 		}
 	}
 
@@ -192,6 +210,11 @@ func (c *ContractsEventsConsumer) handleVehicleTransferEvent(ctx context.Context
 		ID:           int(args.TokenID.Int64()),
 		OwnerAddress: args.To.Bytes(),
 		MintedAt:     e.Block.Time,
+	}
+
+	if args.To == zeroAddress {
+		_, err := vehicle.Delete(ctx, c.dbs.DBS().Writer)
+		return err
 	}
 
 	// Insert is the mint case.

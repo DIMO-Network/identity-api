@@ -8,6 +8,23 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+type AftermarketDevice struct {
+	ID int `json:"id"`
+	// The Ethereum address for the device.
+	Address *common.Address `json:"address,omitempty"`
+	Owner   common.Address  `json:"owner"`
+	Serial  *string         `json:"serial,omitempty"`
+	// The International Mobile Equipment Identity (IMEI) for the device.
+	Imei *string `json:"imei,omitempty"`
+	// The time at which this device was minted.
+	MintedAt time.Time `json:"mintedAt"`
+	// The vehicle, if any, with which the device is paired.
+	Vehicle *Vehicle `json:"vehicle,omitempty"`
+	// The beneficiary for this device, who receives any associated rewards. Defaults to the owner.
+	Beneficiary common.Address `json:"beneficiary"`
+	VehicleID   *int           `json:"-"`
+}
+
 type AftermarketDeviceConnection struct {
 	TotalCount int                      `json:"totalCount"`
 	Edges      []*AftermarketDeviceEdge `json:"edges"`
@@ -19,15 +36,21 @@ type AftermarketDeviceEdge struct {
 	Node   *AftermarketDevice `json:"node"`
 }
 
+type Dcn struct {
+	// The namehash of the domain.
+	Node  []byte         `json:"node"`
+	Owner common.Address `json:"owner"`
+	// The block timestamp at which the domain will cease to be valid.
+	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
+	MintedAt  *time.Time `json:"mintedAt,omitempty"`
+	Name      *string    `json:"name,omitempty"`
+}
+
 type Definition struct {
-	URI               *string               `json:"uri,omitempty"`
-	Make              *string               `json:"make,omitempty"`
-	Model             *string               `json:"model,omitempty"`
-	Year              *int                  `json:"year,omitempty"`
-	MintedAt          time.Time             `json:"mintedAt"`
-	AftermarketDevice *AftermarketDevice    `json:"aftermarketDevice,omitempty"`
-	Privileges        *PrivilegesConnection `json:"privileges"`
-	SyntheticDevice   *SyntheticDevice      `json:"syntheticDevice,omitempty"`
+	URI   *string `json:"uri,omitempty"`
+	Make  *string `json:"make,omitempty"`
+	Model *string `json:"model,omitempty"`
+	Year  *int    `json:"year,omitempty"`
 }
 
 type PageInfo struct {
@@ -38,10 +61,13 @@ type PageInfo struct {
 }
 
 type Privilege struct {
-	ID        int            `json:"id"`
-	User      common.Address `json:"user"`
-	SetAt     time.Time      `json:"setAt"`
-	ExpiresAt time.Time      `json:"expiresAt"`
+	ID int `json:"id"`
+	// The user holding the privilege.
+	User common.Address `json:"user"`
+	// When this privilege was last set.
+	SetAt time.Time `json:"setAt"`
+	// The time at which the privilege expires.
+	ExpiresAt time.Time `json:"expiresAt"`
 }
 
 type PrivilegeEdge struct {

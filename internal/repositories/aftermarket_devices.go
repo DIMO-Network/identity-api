@@ -130,7 +130,7 @@ func AftermarketDeviceToAPI(d *models.AftermarketDevice) *gmodel.AftermarketDevi
 		Address:     helpers.BytesToAddr(d.Address),
 		Owner:       common.BytesToAddress(d.Owner),
 		Serial:      d.Serial.Ptr(),
-		IMEI:        d.Imei.Ptr(),
+		Imei:        d.Imei.Ptr(),
 		Beneficiary: common.BytesToAddress(d.Beneficiary),
 		VehicleID:   d.VehicleID.Ptr(),
 		MintedAt:    d.MintedAt,

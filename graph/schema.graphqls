@@ -1,10 +1,18 @@
-# GraphQL schema example
-#
-# https://gqlgen.com/getting-started/
-
+"""
+A point in time, encoded per RFC-3999.
+"""
 scalar Time
+
+"""
+A 20-byte Ethereum address, encoded as a hex string with 0x prefix and checksummed.
+"""
 scalar Address
+
+"""
+An integer of arbitrary precision, decimal-encoded. Typically a uint256.
+"""
 scalar BigInt
+scalar Bytes
 
 type Query {
   accessibleVehicles(
@@ -23,6 +31,7 @@ type Query {
     before: String
   ): AftermarketDeviceConnection!
   vehicle(id: Int!): Vehicle!
+  dcn(node: Bytes!): DCN!
 }
 
 # Shared Types
@@ -73,12 +82,27 @@ type VehicleConnection {
 
 type AftermarketDevice {
   id: BigInt!
+  """
+  The Ethereum address for the device.
+  """
   address: Address
   owner: Address!
   serial: String
+  """
+  The International Mobile Equipment Identity (IMEI) for the device.
+  """
   imei: String
+  """
+  The time at which this device was minted.
+  """
   mintedAt: Time!
+  """
+  The vehicle, if any, with which the device is paired.
+  """
   vehicle: Vehicle
+  """
+  The beneficiary for this device, who receives any associated rewards. Defaults to the owner.
+  """
   beneficiary: Address!
 }
 
@@ -97,8 +121,17 @@ type AftermarketDeviceEdge {
 
 type Privilege {
   id: Int!
+  """
+  The user holding the privilege.
+  """
   user: Address!
+  """
+  When this privilege was last set.
+  """
   setAt: Time!
+  """
+  The time at which the privilege expires.
+  """
   expiresAt: Time!
 }
 
@@ -120,4 +153,18 @@ type SyntheticDevice {
   integrationId: BigInt!
   address: Address!
   mintedAt: Time!
+}
+
+type DCN {
+  """
+  The namehash of the domain.
+  """
+  node: Bytes!
+  owner: Address!
+  """
+  The block timestamp at which the domain will cease to be valid.
+  """
+  expiresAt: Time
+  mintedAt: Time
+  name: String
 }

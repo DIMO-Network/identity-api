@@ -90,3 +90,18 @@ type DeviceDefinition struct {
 		Year  int
 	}
 }
+
+type NewDCNNodeEventData struct {
+	Node  []byte
+	Owner common.Address
+}
+
+type NewDCNExpirationEventData struct {
+	Node       []byte
+	Expiration int
+}
+
+type DCNNameChangedEventData struct {
+	Node []byte
+	Name string `json:"_name"`
+}

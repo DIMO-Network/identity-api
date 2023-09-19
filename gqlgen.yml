@@ -91,6 +91,9 @@ models:
     fields:
       vehicle:
         resolver: true
+    extraFields:
+      VehicleID:
+        type: "*int"
   Vehicle:
     fields:
       aftermarketDevice:
@@ -102,3 +105,5 @@ models:
   BigInt:
     model:
       - github.com/DIMO-Network/identity-api/graph/types.Int
+  Bytes:
+    model: github.com/DIMO-Network/identity-api/graph/types.Bytes
