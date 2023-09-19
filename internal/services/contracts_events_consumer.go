@@ -42,6 +42,7 @@ const (
 	NewNode                            EventName = "NewNode"
 	NewExpiration                      EventName = "NewExpiration"
 	NameChanged                        EventName = "NameChanged"
+	VehicleIdChanged                   EventName = "VehicleIdChanged"
 )
 
 func (r EventName) String() string {
@@ -130,6 +131,8 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 		switch eventName {
 		case NameChanged:
 			return c.handleNameChanged(ctx, &data)
+		case VehicleIdChanged:
+			return c.handleVehicleIdChanged(ctx, &data)
 		}
 	}
 

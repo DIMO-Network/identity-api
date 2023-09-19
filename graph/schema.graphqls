@@ -12,6 +12,10 @@ scalar Address
 An integer of arbitrary precision, decimal-encoded. Typically a uint256.
 """
 scalar BigInt
+
+"""
+A general byte representation with Hex encoding
+"""
 scalar Bytes
 
 type Query {
@@ -31,6 +35,7 @@ type Query {
     before: String
   ): AftermarketDeviceConnection!
   vehicle(id: Int!): Vehicle!
+
   dcn(node: Bytes!): DCN!
 }
 
@@ -58,6 +63,7 @@ type Vehicle {
   ): PrivilegesConnection!
   syntheticDevice: SyntheticDevice
   definition: Definition
+  dcn: DCN
 }
 
 type Definition {
@@ -160,11 +166,24 @@ type DCN {
   The namehash of the domain.
   """
   node: Bytes!
+  """
+  Ethereum address of domain owner.
+  """
   owner: Address!
   """
   The block timestamp at which the domain will cease to be valid.
   """
   expiresAt: Time
+  """
+  The block timestamp at which the domain was created.
+  """
   mintedAt: Time
+  """
+  Human readable name of the domain.
+  """
   name: String
+  """
+  Vehicle the domain is attached to.
+  """
+  vehicle: Vehicle
 }

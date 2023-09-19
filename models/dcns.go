@@ -28,6 +28,7 @@ type DCN struct {
 	OwnerAddress []byte      `boil:"owner_address" json:"owner_address" toml:"owner_address" yaml:"owner_address"`
 	Expiration   null.Time   `boil:"expiration" json:"expiration,omitempty" toml:"expiration" yaml:"expiration,omitempty"`
 	Name         null.String `boil:"name" json:"name,omitempty" toml:"name" yaml:"name,omitempty"`
+	VehicleID    null.Int    `boil:"vehicle_id" json:"vehicle_id,omitempty" toml:"vehicle_id" yaml:"vehicle_id,omitempty"`
 
 	R *dcnR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L dcnL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -38,11 +39,13 @@ var DCNColumns = struct {
 	OwnerAddress string
 	Expiration   string
 	Name         string
+	VehicleID    string
 }{
 	Node:         "node",
 	OwnerAddress: "owner_address",
 	Expiration:   "expiration",
 	Name:         "name",
+	VehicleID:    "vehicle_id",
 }
 
 var DCNTableColumns = struct {
@@ -50,11 +53,13 @@ var DCNTableColumns = struct {
 	OwnerAddress string
 	Expiration   string
 	Name         string
+	VehicleID    string
 }{
 	Node:         "dcns.node",
 	OwnerAddress: "dcns.owner_address",
 	Expiration:   "dcns.expiration",
 	Name:         "dcns.name",
+	VehicleID:    "dcns.vehicle_id",
 }
 
 // Generated where
@@ -88,19 +93,25 @@ var DCNWhere = struct {
 	OwnerAddress whereHelper__byte
 	Expiration   whereHelpernull_Time
 	Name         whereHelpernull_String
+	VehicleID    whereHelpernull_Int
 }{
 	Node:         whereHelper__byte{field: "\"identity_api\".\"dcns\".\"node\""},
 	OwnerAddress: whereHelper__byte{field: "\"identity_api\".\"dcns\".\"owner_address\""},
 	Expiration:   whereHelpernull_Time{field: "\"identity_api\".\"dcns\".\"expiration\""},
 	Name:         whereHelpernull_String{field: "\"identity_api\".\"dcns\".\"name\""},
+	VehicleID:    whereHelpernull_Int{field: "\"identity_api\".\"dcns\".\"vehicle_id\""},
 }
 
 // DCNRels is where relationship names are stored.
 var DCNRels = struct {
-}{}
+	Vehicle string
+}{
+	Vehicle: "Vehicle",
+}
 
 // dcnR is where relationships are stored.
 type dcnR struct {
+	Vehicle *Vehicle `boil:"Vehicle" json:"Vehicle" toml:"Vehicle" yaml:"Vehicle"`
 }
 
 // NewStruct creates a new relationship struct
@@ -108,13 +119,20 @@ func (*dcnR) NewStruct() *dcnR {
 	return &dcnR{}
 }
 
+func (r *dcnR) GetVehicle() *Vehicle {
+	if r == nil {
+		return nil
+	}
+	return r.Vehicle
+}
+
 // dcnL is where Load methods for each relationship are stored.
 type dcnL struct{}
 
 var (
-	dcnAllColumns            = []string{"node", "owner_address", "expiration", "name"}
+	dcnAllColumns            = []string{"node", "owner_address", "expiration", "name", "vehicle_id"}
 	dcnColumnsWithoutDefault = []string{"node", "owner_address"}
-	dcnColumnsWithDefault    = []string{"expiration", "name"}
+	dcnColumnsWithDefault    = []string{"expiration", "name", "vehicle_id"}
 	dcnPrimaryKeyColumns     = []string{"node"}
 	dcnGeneratedColumns      = []string{}
 )
@@ -395,6 +413,221 @@ func (q dcnQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, 
 	}
 
 	return count > 0, nil
+}
+
+// Vehicle pointed to by the foreign key.
+func (o *DCN) Vehicle(mods ...qm.QueryMod) vehicleQuery {
+	queryMods := []qm.QueryMod{
+		qm.Where("\"id\" = ?", o.VehicleID),
+	}
+
+	queryMods = append(queryMods, mods...)
+
+	return Vehicles(queryMods...)
+}
+
+// LoadVehicle allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for an N-1 relationship.
+func (dcnL) LoadVehicle(ctx context.Context, e boil.ContextExecutor, singular bool, maybeDCN interface{}, mods queries.Applicator) error {
+	var slice []*DCN
+	var object *DCN
+
+	if singular {
+		var ok bool
+		object, ok = maybeDCN.(*DCN)
+		if !ok {
+			object = new(DCN)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeDCN)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeDCN))
+			}
+		}
+	} else {
+		s, ok := maybeDCN.(*[]*DCN)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeDCN)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeDCN))
+			}
+		}
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &dcnR{}
+		}
+		if !queries.IsNil(object.VehicleID) {
+			args = append(args, object.VehicleID)
+		}
+
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &dcnR{}
+			}
+
+			for _, a := range args {
+				if queries.Equal(a, obj.VehicleID) {
+					continue Outer
+				}
+			}
+
+			if !queries.IsNil(obj.VehicleID) {
+				args = append(args, obj.VehicleID)
+			}
+
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`identity_api.vehicles`),
+		qm.WhereIn(`identity_api.vehicles.id in ?`, args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load Vehicle")
+	}
+
+	var resultSlice []*Vehicle
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice Vehicle")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results of eager load for vehicles")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for vehicles")
+	}
+
+	if len(vehicleAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+
+	if len(resultSlice) == 0 {
+		return nil
+	}
+
+	if singular {
+		foreign := resultSlice[0]
+		object.R.Vehicle = foreign
+		if foreign.R == nil {
+			foreign.R = &vehicleR{}
+		}
+		foreign.R.DCNS = append(foreign.R.DCNS, object)
+		return nil
+	}
+
+	for _, local := range slice {
+		for _, foreign := range resultSlice {
+			if queries.Equal(local.VehicleID, foreign.ID) {
+				local.R.Vehicle = foreign
+				if foreign.R == nil {
+					foreign.R = &vehicleR{}
+				}
+				foreign.R.DCNS = append(foreign.R.DCNS, local)
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// SetVehicle of the dcn to the related item.
+// Sets o.R.Vehicle to related.
+// Adds o to related.R.DCNS.
+func (o *DCN) SetVehicle(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Vehicle) error {
+	var err error
+	if insert {
+		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
+			return errors.Wrap(err, "failed to insert into foreign table")
+		}
+	}
+
+	updateQuery := fmt.Sprintf(
+		"UPDATE \"identity_api\".\"dcns\" SET %s WHERE %s",
+		strmangle.SetParamNames("\"", "\"", 1, []string{"vehicle_id"}),
+		strmangle.WhereClause("\"", "\"", 2, dcnPrimaryKeyColumns),
+	)
+	values := []interface{}{related.ID, o.Node}
+
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, updateQuery)
+		fmt.Fprintln(writer, values)
+	}
+	if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	queries.Assign(&o.VehicleID, related.ID)
+	if o.R == nil {
+		o.R = &dcnR{
+			Vehicle: related,
+		}
+	} else {
+		o.R.Vehicle = related
+	}
+
+	if related.R == nil {
+		related.R = &vehicleR{
+			DCNS: DCNSlice{o},
+		}
+	} else {
+		related.R.DCNS = append(related.R.DCNS, o)
+	}
+
+	return nil
+}
+
+// RemoveVehicle relationship.
+// Sets o.R.Vehicle to nil.
+// Removes o from all passed in related items' relationships struct.
+func (o *DCN) RemoveVehicle(ctx context.Context, exec boil.ContextExecutor, related *Vehicle) error {
+	var err error
+
+	queries.SetScanner(&o.VehicleID, nil)
+	if _, err = o.Update(ctx, exec, boil.Whitelist("vehicle_id")); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	if o.R != nil {
+		o.R.Vehicle = nil
+	}
+	if related == nil || related.R == nil {
+		return nil
+	}
+
+	for i, ri := range related.R.DCNS {
+		if queries.Equal(o.VehicleID, ri.VehicleID) {
+			continue
+		}
+
+		ln := len(related.R.DCNS)
+		if ln > 1 && i < ln-1 {
+			related.R.DCNS[i] = related.R.DCNS[ln-1]
+		}
+		related.R.DCNS = related.R.DCNS[:ln-1]
+		break
+	}
+	return nil
 }
 
 // DCNS retrieves all the records using an executor.
