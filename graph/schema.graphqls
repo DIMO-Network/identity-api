@@ -14,7 +14,7 @@ An integer of arbitrary precision, decimal-encoded. Typically a uint256.
 scalar BigInt
 
 """
-A general byte representation
+A general byte representation with Hex encoding
 """
 scalar Bytes
 
