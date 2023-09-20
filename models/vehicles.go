@@ -95,10 +95,12 @@ var VehicleWhere = struct {
 // VehicleRels is where relationship names are stored.
 var VehicleRels = struct {
 	AftermarketDevice string
+	DCNS              string
 	TokenPrivileges   string
 	SyntheticDevices  string
 }{
 	AftermarketDevice: "AftermarketDevice",
+	DCNS:              "DCNS",
 	TokenPrivileges:   "TokenPrivileges",
 	SyntheticDevices:  "SyntheticDevices",
 }
@@ -106,6 +108,7 @@ var VehicleRels = struct {
 // vehicleR is where relationships are stored.
 type vehicleR struct {
 	AftermarketDevice *AftermarketDevice   `boil:"AftermarketDevice" json:"AftermarketDevice" toml:"AftermarketDevice" yaml:"AftermarketDevice"`
+	DCNS              DCNSlice             `boil:"DCNS" json:"DCNS" toml:"DCNS" yaml:"DCNS"`
 	TokenPrivileges   PrivilegeSlice       `boil:"TokenPrivileges" json:"TokenPrivileges" toml:"TokenPrivileges" yaml:"TokenPrivileges"`
 	SyntheticDevices  SyntheticDeviceSlice `boil:"SyntheticDevices" json:"SyntheticDevices" toml:"SyntheticDevices" yaml:"SyntheticDevices"`
 }
@@ -120,6 +123,13 @@ func (r *vehicleR) GetAftermarketDevice() *AftermarketDevice {
 		return nil
 	}
 	return r.AftermarketDevice
+}
+
+func (r *vehicleR) GetDCNS() DCNSlice {
+	if r == nil {
+		return nil
+	}
+	return r.DCNS
 }
 
 func (r *vehicleR) GetTokenPrivileges() PrivilegeSlice {
@@ -436,6 +446,20 @@ func (o *Vehicle) AftermarketDevice(mods ...qm.QueryMod) aftermarketDeviceQuery 
 	return AftermarketDevices(queryMods...)
 }
 
+// DCNS retrieves all the dcn's DCNS with an executor.
+func (o *Vehicle) DCNS(mods ...qm.QueryMod) dcnQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"identity_api\".\"dcns\".\"vehicle_id\"=?", o.ID),
+	)
+
+	return DCNS(queryMods...)
+}
+
 // TokenPrivileges retrieves all the privilege's Privileges with an executor via token_id column.
 func (o *Vehicle) TokenPrivileges(mods ...qm.QueryMod) privilegeQuery {
 	var queryMods []qm.QueryMod
@@ -571,6 +595,120 @@ func (vehicleL) LoadAftermarketDevice(ctx context.Context, e boil.ContextExecuto
 				local.R.AftermarketDevice = foreign
 				if foreign.R == nil {
 					foreign.R = &aftermarketDeviceR{}
+				}
+				foreign.R.Vehicle = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadDCNS allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (vehicleL) LoadDCNS(ctx context.Context, e boil.ContextExecutor, singular bool, maybeVehicle interface{}, mods queries.Applicator) error {
+	var slice []*Vehicle
+	var object *Vehicle
+
+	if singular {
+		var ok bool
+		object, ok = maybeVehicle.(*Vehicle)
+		if !ok {
+			object = new(Vehicle)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeVehicle)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeVehicle))
+			}
+		}
+	} else {
+		s, ok := maybeVehicle.(*[]*Vehicle)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeVehicle)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeVehicle))
+			}
+		}
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &vehicleR{}
+		}
+		args = append(args, object.ID)
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &vehicleR{}
+			}
+
+			for _, a := range args {
+				if queries.Equal(a, obj.ID) {
+					continue Outer
+				}
+			}
+
+			args = append(args, obj.ID)
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`identity_api.dcns`),
+		qm.WhereIn(`identity_api.dcns.vehicle_id in ?`, args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load dcns")
+	}
+
+	var resultSlice []*DCN
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice dcns")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on dcns")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for dcns")
+	}
+
+	if len(dcnAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.DCNS = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &dcnR{}
+			}
+			foreign.R.Vehicle = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if queries.Equal(local.ID, foreign.VehicleID) {
+				local.R.DCNS = append(local.R.DCNS, foreign)
+				if foreign.R == nil {
+					foreign.R = &dcnR{}
 				}
 				foreign.R.Vehicle = local
 				break
@@ -879,6 +1017,133 @@ func (o *Vehicle) RemoveAftermarketDevice(ctx context.Context, exec boil.Context
 	}
 
 	related.R.Vehicle = nil
+
+	return nil
+}
+
+// AddDCNS adds the given related objects to the existing relationships
+// of the vehicle, optionally inserting them as new records.
+// Appends related to o.R.DCNS.
+// Sets related.R.Vehicle appropriately.
+func (o *Vehicle) AddDCNS(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*DCN) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			queries.Assign(&rel.VehicleID, o.ID)
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"identity_api\".\"dcns\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"vehicle_id"}),
+				strmangle.WhereClause("\"", "\"", 2, dcnPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.Node}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			queries.Assign(&rel.VehicleID, o.ID)
+		}
+	}
+
+	if o.R == nil {
+		o.R = &vehicleR{
+			DCNS: related,
+		}
+	} else {
+		o.R.DCNS = append(o.R.DCNS, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &dcnR{
+				Vehicle: o,
+			}
+		} else {
+			rel.R.Vehicle = o
+		}
+	}
+	return nil
+}
+
+// SetDCNS removes all previously related items of the
+// vehicle replacing them completely with the passed
+// in related items, optionally inserting them as new records.
+// Sets o.R.Vehicle's DCNS accordingly.
+// Replaces o.R.DCNS with related.
+// Sets related.R.Vehicle's DCNS accordingly.
+func (o *Vehicle) SetDCNS(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*DCN) error {
+	query := "update \"identity_api\".\"dcns\" set \"vehicle_id\" = null where \"vehicle_id\" = $1"
+	values := []interface{}{o.ID}
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, query)
+		fmt.Fprintln(writer, values)
+	}
+	_, err := exec.ExecContext(ctx, query, values...)
+	if err != nil {
+		return errors.Wrap(err, "failed to remove relationships before set")
+	}
+
+	if o.R != nil {
+		for _, rel := range o.R.DCNS {
+			queries.SetScanner(&rel.VehicleID, nil)
+			if rel.R == nil {
+				continue
+			}
+
+			rel.R.Vehicle = nil
+		}
+		o.R.DCNS = nil
+	}
+
+	return o.AddDCNS(ctx, exec, insert, related...)
+}
+
+// RemoveDCNS relationships from objects passed in.
+// Removes related items from R.DCNS (uses pointer comparison, removal does not keep order)
+// Sets related.R.Vehicle.
+func (o *Vehicle) RemoveDCNS(ctx context.Context, exec boil.ContextExecutor, related ...*DCN) error {
+	if len(related) == 0 {
+		return nil
+	}
+
+	var err error
+	for _, rel := range related {
+		queries.SetScanner(&rel.VehicleID, nil)
+		if rel.R != nil {
+			rel.R.Vehicle = nil
+		}
+		if _, err = rel.Update(ctx, exec, boil.Whitelist("vehicle_id")); err != nil {
+			return err
+		}
+	}
+	if o.R == nil {
+		return nil
+	}
+
+	for _, rel := range related {
+		for i, ri := range o.R.DCNS {
+			if rel != ri {
+				continue
+			}
+
+			ln := len(o.R.DCNS)
+			if ln > 1 && i < ln-1 {
+				o.R.DCNS[i] = o.R.DCNS[ln-1]
+			}
+			o.R.DCNS = o.R.DCNS[:ln-1]
+			break
+		}
+	}
 
 	return nil
 }

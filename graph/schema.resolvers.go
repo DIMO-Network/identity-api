@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+	"errors"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/loader"
@@ -14,6 +15,14 @@ import (
 
 // Vehicle is the resolver for the vehicle field.
 func (r *aftermarketDeviceResolver) Vehicle(ctx context.Context, obj *model.AftermarketDevice) (*model.Vehicle, error) {
+	if obj.VehicleID == nil {
+		return nil, nil
+	}
+	return loader.GetVehicleByID(ctx, *obj.VehicleID)
+}
+
+// Vehicle is the resolver for the vehicle field.
+func (r *dCNResolver) Vehicle(ctx context.Context, obj *model.Dcn) (*model.Vehicle, error) {
 	if obj.VehicleID == nil {
 		return nil, nil
 	}
@@ -36,8 +45,24 @@ func (r *queryResolver) Vehicle(ctx context.Context, id int) (*model.Vehicle, er
 }
 
 // Dcn is the resolver for the dcn field.
-func (r *queryResolver) Dcn(ctx context.Context, node []byte) (*model.Dcn, error) {
-	return r.Repo.GetDCNByNode(ctx, node)
+func (r *queryResolver) Dcn(ctx context.Context, by model.DCNBy) (*model.Dcn, error) {
+	if by.Name != nil && len(by.Node) > 0 {
+		return nil, errors.New("provide one of Name or Node but not both")
+	}
+
+	if by.Name == nil && len(by.Node) == 0 {
+		return nil, errors.New("provide either Name or Node")
+	}
+
+	if len(by.Node) > 0 && len(by.Node) < 32 {
+		return nil, errors.New("invalid node provided")
+	}
+
+	if by.Name != nil {
+		return r.Repo.GetDCNByName(ctx, *by.Name)
+	}
+
+	return r.Repo.GetDCNByNode(ctx, by.Node)
 }
 
 // AftermarketDevice is the resolver for the aftermarketDevice field.
@@ -55,10 +80,18 @@ func (r *vehicleResolver) SyntheticDevice(ctx context.Context, obj *model.Vehicl
 	return loader.GetSyntheticDeviceByVehicleID(ctx, obj.ID)
 }
 
+// Dcn is the resolver for the dcn field.
+func (r *vehicleResolver) Dcn(ctx context.Context, obj *model.Vehicle) (*model.Dcn, error) {
+	return loader.GetDCNByVehicleID(ctx, obj.ID)
+}
+
 // AftermarketDevice returns AftermarketDeviceResolver implementation.
 func (r *Resolver) AftermarketDevice() AftermarketDeviceResolver {
 	return &aftermarketDeviceResolver{r}
 }
+
+// DCN returns DCNResolver implementation.
+func (r *Resolver) DCN() DCNResolver { return &dCNResolver{r} }
 
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
@@ -67,5 +100,6 @@ func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 func (r *Resolver) Vehicle() VehicleResolver { return &vehicleResolver{r} }
 
 type aftermarketDeviceResolver struct{ *Resolver }
+type dCNResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type vehicleResolver struct{ *Resolver }

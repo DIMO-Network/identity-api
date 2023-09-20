@@ -38,12 +38,23 @@ type AftermarketDeviceEdge struct {
 
 type Dcn struct {
 	// The namehash of the domain.
-	Node      []byte         `json:"node"`
-	Owner     common.Address `json:"owner"`
+	Node []byte `json:"node"`
+	// ETH address of domain owner.
+	Owner common.Address `json:"owner"`
 	// The block timestamp at which the domain will cease to be valid.
-	ExpiresAt *time.Time     `json:"expiresAt,omitempty"`
-	MintedAt  *time.Time     `json:"mintedAt,omitempty"`
-	Name      *string        `json:"name,omitempty"`
+	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
+	// The block timestamp of when the domain was created.
+	MintedAt *time.Time `json:"mintedAt,omitempty"`
+	// Human readable name of the domain.
+	Name *string `json:"name,omitempty"`
+	// Device the domain is attached to.
+	Vehicle   *Vehicle `json:"vehicle,omitempty"`
+	VehicleID *int     `json:"-"`
+}
+
+type DCNBy struct {
+	Node []byte  `json:"node,omitempty"`
+	Name *string `json:"name,omitempty"`
 }
 
 type Definition struct {
@@ -100,6 +111,7 @@ type Vehicle struct {
 	Privileges        *PrivilegesConnection `json:"privileges"`
 	SyntheticDevice   *SyntheticDevice      `json:"syntheticDevice,omitempty"`
 	Definition        *Definition           `json:"definition,omitempty"`
+	Dcn               *Dcn                  `json:"dcn,omitempty"`
 }
 
 type VehicleConnection struct {
