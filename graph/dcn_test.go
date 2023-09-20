@@ -142,7 +142,6 @@ func TestDCNQuery(t *testing.T) {
 
 	// NameChanged
 	mockName := "SomeMockName"
-
 	err = contractEventConsumer.Process(ctx, &shared.CloudEvent[json.RawMessage]{
 		Source: "chain/137",
 		Type:   "zone.dimo.contract.event",
