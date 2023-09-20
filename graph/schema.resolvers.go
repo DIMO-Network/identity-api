@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+	"errors"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/loader"
@@ -45,7 +46,23 @@ func (r *queryResolver) Vehicle(ctx context.Context, id int) (*model.Vehicle, er
 
 // Dcn is the resolver for the dcn field.
 func (r *queryResolver) Dcn(ctx context.Context, by model.DCNBy) (*model.Dcn, error) {
-	return r.Repo.GetDCN(ctx, by)
+	if by.Name != nil && len(by.Node) > 0 {
+		return nil, errors.New("provide one of Name or Node but not both")
+	}
+
+	if by.Name == nil && len(by.Node) == 0 {
+		return nil, errors.New("provide either Name or Node")
+	}
+
+	if len(by.Node) > 0 && len(by.Node) < 32 {
+		return nil, errors.New("invalid node provided")
+	}
+
+	if by.Name != nil {
+		return r.Repo.GetDCNByName(ctx, *by.Name)
+	}
+
+	return r.Repo.GetDCNByNode(ctx, by.Node)
 }
 
 // AftermarketDevice is the resolver for the aftermarketDevice field.
