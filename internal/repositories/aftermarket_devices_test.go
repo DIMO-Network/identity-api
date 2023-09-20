@@ -31,6 +31,7 @@ func TestAftermarketDeviceNodeMintMultiResponse(t *testing.T) {
 			ID:          i,
 			Owner:       aftermarketDeviceNodeMintedArgs.Owner.Bytes(),
 			Beneficiary: aftermarketDeviceNodeMintedArgs.Owner.Bytes(),
+			Address:     aftermarketDeviceNodeMintedArgs.AftermarketDeviceAddress.Bytes(),
 		}
 
 		err := ad.Insert(ctx, pdb.DBS().Writer, boil.Infer())

@@ -11,9 +11,9 @@ import (
 type AftermarketDevice struct {
 	ID int `json:"id"`
 	// The Ethereum address for the device.
-	Address *common.Address `json:"address,omitempty"`
-	Owner   common.Address  `json:"owner"`
-	Serial  *string         `json:"serial,omitempty"`
+	Address common.Address `json:"address"`
+	Owner   common.Address `json:"owner"`
+	Serial  *string        `json:"serial,omitempty"`
 	// The International Mobile Equipment Identity (IMEI) for the device.
 	Imei *string `json:"imei,omitempty"`
 	// The time at which this device was minted.
@@ -58,14 +58,10 @@ type DCNBy struct {
 }
 
 type Definition struct {
-	URI               *string               `json:"uri,omitempty"`
-	Make              *string               `json:"make,omitempty"`
-	Model             *string               `json:"model,omitempty"`
-	Year              *int                  `json:"year,omitempty"`
-	MintedAt          time.Time             `json:"mintedAt"`
-	AftermarketDevice *AftermarketDevice    `json:"aftermarketDevice,omitempty"`
-	Privileges        *PrivilegesConnection `json:"privileges"`
-	SyntheticDevice   *SyntheticDevice      `json:"syntheticDevice,omitempty"`
+	URI   *string `json:"uri,omitempty"`
+	Make  *string `json:"make,omitempty"`
+	Model *string `json:"model,omitempty"`
+	Year  *int    `json:"year,omitempty"`
 }
 
 type PageInfo struct {

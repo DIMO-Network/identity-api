@@ -98,7 +98,7 @@ type AftermarketDevice {
   """
   The Ethereum address for the device.
   """
-  address: Address
+  address: Address!
   owner: Address!
   serial: String
   """
