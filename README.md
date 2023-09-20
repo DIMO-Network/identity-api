@@ -20,9 +20,7 @@ flowchart TD
     Vehicle <--> Aftermarket
     Vehicle <--> Synthetic
     Privilege --> Vehicle
-    Vehicle --> User
-    Aftermarket --> User
-    Privilege --> User
+    Vehicle <--> DCN
 ```
 
 - Vehicles
