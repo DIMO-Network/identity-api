@@ -18,7 +18,7 @@ A general byte representation
 """
 scalar Bytes
 
-directive @oneOf on OBJECT | INPUT_OBJECT | FIELD_DEFINITION
+directive @oneOf on INPUT_OBJECT
 
 input DCNBy @oneOf {
   node: Bytes

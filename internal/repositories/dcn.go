@@ -2,7 +2,7 @@ package repositories
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
@@ -21,9 +21,9 @@ func DCNToAPI(d *models.DCN) *gmodel.Dcn {
 	}
 }
 
-func (r *Repository) getDCNByNode(ctx context.Context, dcnParams model.DCNBy) (*gmodel.Dcn, error) {
+func (r *Repository) getDCNByNode(ctx context.Context, node []byte) (*gmodel.Dcn, error) {
 	dcn, err := models.DCNS(
-		models.DCNWhere.Node.EQ(dcnParams.Node),
+		models.DCNWhere.Node.EQ(node),
 	).One(ctx, r.pdb.DBS().Reader)
 	if err != nil {
 		return nil, err
@@ -32,9 +32,9 @@ func (r *Repository) getDCNByNode(ctx context.Context, dcnParams model.DCNBy) (*
 	return DCNToAPI(dcn), nil
 }
 
-func (r *Repository) getDCNByName(ctx context.Context, dcnParams model.DCNBy) (*gmodel.Dcn, error) {
+func (r *Repository) getDCNByName(ctx context.Context, name string) (*gmodel.Dcn, error) {
 	dcn, err := models.DCNS(
-		models.DCNWhere.Name.EQ(null.StringFrom(*dcnParams.Name)),
+		models.DCNWhere.Name.EQ(null.StringFrom(name)),
 	).One(ctx, r.pdb.DBS().Reader)
 	if err != nil {
 		return nil, err
@@ -45,16 +45,16 @@ func (r *Repository) getDCNByName(ctx context.Context, dcnParams model.DCNBy) (*
 
 func (r *Repository) GetDCN(ctx context.Context, params model.DCNBy) (*gmodel.Dcn, error) {
 	if params.Name != nil && len(params.Node) > 0 {
-		return nil, fmt.Errorf("please provide one of Name or Node but not both")
+		return nil, errors.New("provide one of Name or Node but not both")
 	}
 
 	if params.Name == nil && len(params.Node) == 0 {
-		return nil, fmt.Errorf("please provide either Name or Node")
+		return nil, errors.New("provide either Name or Node")
 	}
 
 	if params.Name != nil {
-		return r.getDCNByName(ctx, params)
+		return r.getDCNByName(ctx, *params.Name)
 	}
 
-	return r.getDCNByNode(ctx, params)
+	return r.getDCNByNode(ctx, params.Node)
 }
