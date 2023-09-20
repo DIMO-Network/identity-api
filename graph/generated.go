@@ -1712,11 +1712,14 @@ func (ec *executionContext) _DCN_mintedAt(ctx context.Context, field graphql.Col
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*time.Time)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_DCN_mintedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5889,6 +5892,9 @@ func (ec *executionContext) _DCN(ctx context.Context, sel ast.SelectionSet, obj 
 			out.Values[i] = ec._DCN_expiresAt(ctx, field, obj)
 		case "mintedAt":
 			out.Values[i] = ec._DCN_mintedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "name":
 			out.Values[i] = ec._DCN_name(ctx, field, obj)
 		case "vehicle":

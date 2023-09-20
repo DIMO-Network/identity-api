@@ -184,7 +184,7 @@ type DCN {
   """
   The block timestamp of when the domain was created.
   """
-  mintedAt: Time
+  mintedAt: Time!
   """
   Human readable name of the domain.
   """

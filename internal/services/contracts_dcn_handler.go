@@ -22,6 +22,7 @@ func (c *ContractsEventsConsumer) handleNewDcnNode(ctx context.Context, e *Contr
 	dcn := models.DCN{
 		Node:         args.Node,
 		OwnerAddress: args.Owner.Bytes(),
+		MintedAt:     e.Block.Time,
 	}
 
 	err := dcn.Insert(ctx, c.dbs.DBS().Writer, boil.Infer())

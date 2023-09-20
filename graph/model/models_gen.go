@@ -44,7 +44,7 @@ type Dcn struct {
 	// The block timestamp at which the domain will cease to be valid.
 	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
 	// The block timestamp of when the domain was created.
-	MintedAt *time.Time `json:"mintedAt,omitempty"`
+	MintedAt time.Time `json:"mintedAt"`
 	// Human readable name of the domain.
 	Name *string `json:"name,omitempty"`
 	// Device the domain is attached to.

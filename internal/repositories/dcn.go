@@ -16,6 +16,7 @@ func DCNToAPI(d *models.DCN) *gmodel.Dcn {
 		ExpiresAt: d.Expiration.Ptr(),
 		Name:      d.Name.Ptr(),
 		VehicleID: d.VehicleID.Ptr(),
+		MintedAt:  d.MintedAt,
 	}
 }
 

@@ -29,6 +29,7 @@ type DCN struct {
 	Expiration   null.Time   `boil:"expiration" json:"expiration,omitempty" toml:"expiration" yaml:"expiration,omitempty"`
 	Name         null.String `boil:"name" json:"name,omitempty" toml:"name" yaml:"name,omitempty"`
 	VehicleID    null.Int    `boil:"vehicle_id" json:"vehicle_id,omitempty" toml:"vehicle_id" yaml:"vehicle_id,omitempty"`
+	MintedAt     time.Time   `boil:"minted_at" json:"minted_at" toml:"minted_at" yaml:"minted_at"`
 
 	R *dcnR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L dcnL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -40,12 +41,14 @@ var DCNColumns = struct {
 	Expiration   string
 	Name         string
 	VehicleID    string
+	MintedAt     string
 }{
 	Node:         "node",
 	OwnerAddress: "owner_address",
 	Expiration:   "expiration",
 	Name:         "name",
 	VehicleID:    "vehicle_id",
+	MintedAt:     "minted_at",
 }
 
 var DCNTableColumns = struct {
@@ -54,12 +57,14 @@ var DCNTableColumns = struct {
 	Expiration   string
 	Name         string
 	VehicleID    string
+	MintedAt     string
 }{
 	Node:         "dcns.node",
 	OwnerAddress: "dcns.owner_address",
 	Expiration:   "dcns.expiration",
 	Name:         "dcns.name",
 	VehicleID:    "dcns.vehicle_id",
+	MintedAt:     "dcns.minted_at",
 }
 
 // Generated where
@@ -94,12 +99,14 @@ var DCNWhere = struct {
 	Expiration   whereHelpernull_Time
 	Name         whereHelpernull_String
 	VehicleID    whereHelpernull_Int
+	MintedAt     whereHelpertime_Time
 }{
 	Node:         whereHelper__byte{field: "\"identity_api\".\"dcns\".\"node\""},
 	OwnerAddress: whereHelper__byte{field: "\"identity_api\".\"dcns\".\"owner_address\""},
 	Expiration:   whereHelpernull_Time{field: "\"identity_api\".\"dcns\".\"expiration\""},
 	Name:         whereHelpernull_String{field: "\"identity_api\".\"dcns\".\"name\""},
 	VehicleID:    whereHelpernull_Int{field: "\"identity_api\".\"dcns\".\"vehicle_id\""},
+	MintedAt:     whereHelpertime_Time{field: "\"identity_api\".\"dcns\".\"minted_at\""},
 }
 
 // DCNRels is where relationship names are stored.
@@ -130,8 +137,8 @@ func (r *dcnR) GetVehicle() *Vehicle {
 type dcnL struct{}
 
 var (
-	dcnAllColumns            = []string{"node", "owner_address", "expiration", "name", "vehicle_id"}
-	dcnColumnsWithoutDefault = []string{"node", "owner_address"}
+	dcnAllColumns            = []string{"node", "owner_address", "expiration", "name", "vehicle_id", "minted_at"}
+	dcnColumnsWithoutDefault = []string{"node", "owner_address", "minted_at"}
 	dcnColumnsWithDefault    = []string{"expiration", "name", "vehicle_id"}
 	dcnPrimaryKeyColumns     = []string{"node"}
 	dcnGeneratedColumns      = []string{}
