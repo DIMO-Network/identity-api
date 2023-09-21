@@ -155,8 +155,6 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceMintedEvent(ctx context
 		Beneficiary: args.Owner.Bytes(),
 	}
 
-	fmt.Println("XDD what's going on here")
-
 	cols := models.AftermarketDeviceColumns
 
 	return ad.Upsert(
