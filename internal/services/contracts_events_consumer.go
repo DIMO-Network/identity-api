@@ -29,20 +29,20 @@ type EventName string
 var zeroAddress common.Address
 
 const (
-	Transfer                           EventName = "Transfer"
-	VehicleAttributeSet                EventName = "VehicleAttributeSet"
-	AftermarketDeviceAttributeSetEvent EventName = "AftermarketDeviceAttributeSet"
-	PrivilegeSet                       EventName = "PrivilegeSet"
-	AftermarketDevicePairedEvent       EventName = "AftermarketDevicePaired"
-	AftermarketDeviceUnpairedEvent     EventName = "AftermarketDeviceUnpaired"
-	BeneficiarySetEvent                EventName = "BeneficiarySet"
-	AftermarketDeviceNodeMintedEvent   EventName = "AftermarketDeviceNodeMinted"
-	SyntheticDeviceNodeMinted          EventName = "SyntheticDeviceNodeMinted"
-	SyntheticDeviceNodeBurned          EventName = "SyntheticDeviceNodeBurned"
-	NewNode                            EventName = "NewNode"
-	NewExpiration                      EventName = "NewExpiration"
-	NameChanged                        EventName = "NameChanged"
-	VehicleIdChanged                   EventName = "VehicleIdChanged"
+	Transfer                      EventName = "Transfer"
+	VehicleAttributeSet           EventName = "VehicleAttributeSet"
+	AftermarketDeviceAttributeSet EventName = "AftermarketDeviceAttributeSet"
+	PrivilegeSet                  EventName = "PrivilegeSet"
+	AftermarketDevicePaired       EventName = "AftermarketDevicePaired"
+	AftermarketDeviceUnpaired     EventName = "AftermarketDeviceUnpaired"
+	BeneficiarySetEvent           EventName = "BeneficiarySet"
+	AftermarketDeviceNodeMinted   EventName = "AftermarketDeviceNodeMinted"
+	SyntheticDeviceNodeMinted     EventName = "SyntheticDeviceNodeMinted"
+	SyntheticDeviceNodeBurned     EventName = "SyntheticDeviceNodeBurned"
+	NewNode                       EventName = "NewNode"
+	NewExpiration                 EventName = "NewExpiration"
+	NameChanged                   EventName = "NameChanged"
+	VehicleIdChanged              EventName = "VehicleIdChanged"
 )
 
 func (r EventName) String() string {
@@ -92,13 +92,13 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 		switch eventName {
 		case VehicleAttributeSet:
 			return c.handleVehicleAttributeSetEvent(ctx, &data)
-		case AftermarketDeviceNodeMintedEvent:
+		case AftermarketDeviceNodeMinted:
 			return c.handleAftermarketDeviceMintedEvent(ctx, &data)
-		case AftermarketDeviceAttributeSetEvent:
+		case AftermarketDeviceAttributeSet:
 			return c.handleAftermarketDeviceAttributeSetEvent(ctx, &data)
-		case AftermarketDevicePairedEvent:
+		case AftermarketDevicePaired:
 			return c.handleAftermarketDevicePairedEvent(ctx, &data)
-		case AftermarketDeviceUnpairedEvent:
+		case AftermarketDeviceUnpaired:
 			return c.handleAftermarketDeviceUnpairedEvent(ctx, &data)
 		case BeneficiarySetEvent:
 			return c.handleBeneficiarySetEvent(ctx, &data)
