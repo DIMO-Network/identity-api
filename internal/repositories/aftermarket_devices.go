@@ -127,7 +127,7 @@ func (r *Repository) GetOwnedAftermarketDevices(ctx context.Context, addr common
 func AftermarketDeviceToAPI(d *models.AftermarketDevice) *gmodel.AftermarketDevice {
 	return &gmodel.AftermarketDevice{
 		ID:          d.ID,
-		Address:     helpers.BytesToAddr(d.Address),
+		Address:     common.BytesToAddress(d.Address),
 		Owner:       common.BytesToAddress(d.Owner),
 		Serial:      d.Serial.Ptr(),
 		Imei:        d.Imei.Ptr(),

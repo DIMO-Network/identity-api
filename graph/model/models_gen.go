@@ -11,9 +11,9 @@ import (
 type AftermarketDevice struct {
 	ID int `json:"id"`
 	// The Ethereum address for the device.
-	Address *common.Address `json:"address,omitempty"`
-	Owner   common.Address  `json:"owner"`
-	Serial  *string         `json:"serial,omitempty"`
+	Address common.Address `json:"address"`
+	Owner   common.Address `json:"owner"`
+	Serial  *string        `json:"serial,omitempty"`
 	// The International Mobile Equipment Identity (IMEI) for the device.
 	Imei *string `json:"imei,omitempty"`
 	// The time at which this device was minted.
@@ -38,12 +38,23 @@ type AftermarketDeviceEdge struct {
 
 type Dcn struct {
 	// The namehash of the domain.
-	Node  []byte         `json:"node"`
+	Node []byte `json:"node"`
+	// ETH address of domain owner.
 	Owner common.Address `json:"owner"`
 	// The block timestamp at which the domain will cease to be valid.
 	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
-	MintedAt  *time.Time `json:"mintedAt,omitempty"`
-	Name      *string    `json:"name,omitempty"`
+	// The block timestamp of when the domain was created.
+	MintedAt time.Time `json:"mintedAt"`
+	// Human readable name of the domain.
+	Name *string `json:"name,omitempty"`
+	// Device the domain is attached to.
+	Vehicle   *Vehicle `json:"vehicle,omitempty"`
+	VehicleID *int     `json:"-"`
+}
+
+type DCNBy struct {
+	Node []byte  `json:"node,omitempty"`
+	Name *string `json:"name,omitempty"`
 }
 
 type Definition struct {
@@ -96,6 +107,7 @@ type Vehicle struct {
 	Privileges        *PrivilegesConnection `json:"privileges"`
 	SyntheticDevice   *SyntheticDevice      `json:"syntheticDevice,omitempty"`
 	Definition        *Definition           `json:"definition,omitempty"`
+	Dcn               *Dcn                  `json:"dcn,omitempty"`
 }
 
 type VehicleConnection struct {

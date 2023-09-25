@@ -42,6 +42,7 @@ const (
 	NewNode                            EventName = "NewNode"
 	NewExpiration                      EventName = "NewExpiration"
 	NameChanged                        EventName = "NameChanged"
+	VehicleIdChanged                   EventName = "VehicleIdChanged"
 )
 
 func (r EventName) String() string {
@@ -130,6 +131,8 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 		switch eventName {
 		case NameChanged:
 			return c.handleNameChanged(ctx, &data)
+		case VehicleIdChanged:
+			return c.handleVehicleIdChanged(ctx, &data)
 		}
 	}
 
@@ -145,12 +148,23 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceMintedEvent(ctx context
 	}
 
 	ad := models.AftermarketDevice{
-		ID:      int(args.TokenID.Int64()),
-		Address: null.BytesFrom(args.AftermarketDeviceAddress.Bytes()),
+		ID:          int(args.TokenID.Int64()),
+		Address:     args.AftermarketDeviceAddress.Bytes(),
+		Owner:       args.Owner.Bytes(),
+		MintedAt:    e.Block.Time,
+		Beneficiary: args.Owner.Bytes(),
 	}
 
-	_, err := ad.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.AftermarketDeviceColumns.Address))
-	return err
+	cols := models.AftermarketDeviceColumns
+
+	return ad.Upsert(
+		ctx,
+		c.dbs.DBS().Writer,
+		false,
+		[]string{cols.ID},
+		boil.None(),
+		boil.Whitelist(cols.ID, cols.Address, cols.Owner, cols.MintedAt, cols.Beneficiary),
+	)
 }
 
 func (c *ContractsEventsConsumer) handleVehicleAttributeSetEvent(ctx context.Context, e *ContractEventData) error {
@@ -337,21 +351,24 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceTransferredEvent(ctx co
 		return err
 	}
 
+	if args.From == zeroAddress {
+		// We handle mints via AftermarketDeviceNodeMinted.
+		return nil
+	}
+
 	ad := models.AftermarketDevice{
 		ID:          int(args.TokenID.Int64()),
 		Owner:       args.To.Bytes(),
-		MintedAt:    e.Block.Time,
 		Beneficiary: args.To.Bytes(),
 	}
 
-	return ad.Upsert(
+	_, err := ad.Update(
 		ctx,
 		c.dbs.DBS().Writer,
-		true,
-		[]string{models.AftermarketDeviceColumns.ID},
 		boil.Whitelist(models.AftermarketDeviceColumns.Owner, models.AftermarketDeviceColumns.Beneficiary),
-		boil.Whitelist(models.AftermarketDeviceColumns.ID, models.AftermarketDeviceColumns.Owner, models.AftermarketDeviceColumns.MintedAt, models.AftermarketDeviceColumns.Beneficiary),
 	)
+
+	return err
 }
 
 func (c *ContractsEventsConsumer) handleBeneficiarySetEvent(ctx context.Context, e *ContractEventData) error {

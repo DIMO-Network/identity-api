@@ -105,3 +105,8 @@ type DCNNameChangedEventData struct {
 	Node []byte
 	Name string `json:"_name"`
 }
+
+type DCNVehicleIdChangedEventData struct {
+	Node      []byte
+	VehicleID *big.Int `json:"vehicleId_"`
+}

@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 
@@ -51,9 +52,15 @@ func main() {
 
 	repo := repositories.New(dbs)
 
-	s := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{
+	cfg := graph.Config{Resolvers: &graph.Resolver{
 		Repo: repo,
-	}}))
+	}}
+	cfg.Directives.OneOf = func(ctx context.Context, _ any, next graphql.Resolver) (any, error) {
+		// The directive on its own is advisory; everything is enforced inside of the resolver
+		return next(ctx)
+	}
+
+	s := handler.NewDefaultServer(graph.NewExecutableSchema(cfg))
 
 	srv := loader.Middleware(dbs, s)
 
