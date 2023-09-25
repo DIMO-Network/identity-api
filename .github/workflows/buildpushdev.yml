@@ -27,3 +27,12 @@ jobs:
           file: ./resources/docker/Dockerfile
           push: true
           tags: dimozone/identity-api:${{ steps.slug.outputs.sha7 }}, dimozone/identity-api:latest
+
+      - name: Update Image Version in the worker HelmChart values.yaml
+        uses: fjogeleit/yaml-update-action@master
+        with:
+          valueFile: 'charts/identity-api/values.yaml'
+          propertyPath: 'image.tag'
+          value: ${{ steps.slug.outputs.sha7 }}
+          branch: main
+          message: 'Update Image Version to ${{ steps.slug.outputs.sha7 }}'
