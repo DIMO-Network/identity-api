@@ -215,7 +215,7 @@ func (c *ContractsEventsConsumer) handleVehicleAttributeSetEvent(ctx context.Con
 func (c *ContractsEventsConsumer) handleVehicleTransferEvent(ctx context.Context, e *ContractEventData) error {
 	logger := c.log.With().Str("EventName", Transfer.String()).Logger()
 
-	var args TransferEventData
+	var args TransferData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
 		return err
 	}
@@ -346,7 +346,7 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceUnpairedEvent(ctx conte
 }
 
 func (c *ContractsEventsConsumer) handleAftermarketDeviceTransferredEvent(ctx context.Context, e *ContractEventData) error {
-	var args TransferEventData
+	var args TransferData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
 		return err
 	}
@@ -372,7 +372,7 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceTransferredEvent(ctx co
 }
 
 func (c *ContractsEventsConsumer) handleBeneficiarySetEvent(ctx context.Context, e *ContractEventData) error {
-	var args BeneficiarySetEventData
+	var args BeneficiarySetData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
 		return err
 	}

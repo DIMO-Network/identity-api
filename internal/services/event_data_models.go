@@ -50,7 +50,7 @@ type AftermarketDevicePairData struct {
 	Owner                 common.Address
 }
 
-type TransferEventData struct {
+type TransferData struct {
 	From    common.Address
 	To      common.Address
 	TokenID *big.Int
@@ -63,7 +63,7 @@ type PrivilegeSetData struct {
 	Expires *big.Int
 }
 
-type BeneficiarySetEventData struct {
+type BeneficiarySetData struct {
 	IdProxyAddress common.Address
 	NodeId         *big.Int
 	Beneficiary    common.Address
@@ -91,22 +91,22 @@ type DeviceDefinition struct {
 	}
 }
 
-type NewDCNNodeEventData struct {
+type NewDCNNodeData struct {
 	Node  []byte
 	Owner common.Address
 }
 
-type NewDCNExpirationEventData struct {
+type NewDCNExpirationData struct {
 	Node       []byte
 	Expiration int
 }
 
-type DCNNameChangedEventData struct {
+type DCNNameChangedData struct {
 	Node []byte
 	Name string `json:"_name"`
 }
 
-type DCNVehicleIdChangedEventData struct {
+type DCNVehicleIdChangedData struct {
 	Node      []byte
 	VehicleID *big.Int `json:"vehicleId_"`
 }

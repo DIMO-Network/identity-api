@@ -71,7 +71,7 @@ func (o *DCNConsumerTestSuite) Test_NewNode_Consume_Success() {
 	_, wallet, err := test.GenerateWallet()
 	o.NoError(err)
 
-	var eventData = NewDCNNodeEventData{
+	var eventData = NewDCNNodeData{
 		Node:  test.GenerateDCNNode(),
 		Owner: *wallet,
 	}
@@ -111,7 +111,7 @@ func (o *DCNConsumerTestSuite) Test_NewDCNExpiration_Consume_Success() {
 
 	currTime := time.Now().UTC().Truncate(time.Second)
 
-	var eventData = NewDCNExpirationEventData{
+	var eventData = NewDCNExpirationData{
 		Node:       test.GenerateDCNNode(),
 		Expiration: int(currTime.Unix()),
 	}
@@ -160,7 +160,7 @@ func (o *DCNConsumerTestSuite) Test_DCNNameChanged_Consume_Success() {
 	o.NoError(err)
 
 	newName := "SomeMockName"
-	var eventData = DCNNameChangedEventData{
+	var eventData = DCNNameChangedData{
 		Node: test.GenerateDCNNode(),
 		Name: newName,
 	}
@@ -213,7 +213,7 @@ func (o *DCNConsumerTestSuite) Test_DCN_VehicleIDChanged_Consume_Success() {
 	o.NoError(err)
 
 	vehicleID := 1
-	var eventData = DCNVehicleIdChangedEventData{
+	var eventData = DCNVehicleIdChangedData{
 		Node:      test.GenerateDCNNode(),
 		VehicleID: big.NewInt(int64(vehicleID)),
 	}
