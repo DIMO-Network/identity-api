@@ -41,7 +41,7 @@ spec:
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          command: ['sh', '-c', "/identity-api migrate"]
+          command: ["/identity-api", "migrate"]
           envFrom:
           - configMapRef:
               name: {{ include "identity-api.fullname" . }}-config
