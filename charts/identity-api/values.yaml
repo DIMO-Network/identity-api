@@ -2,7 +2,7 @@ replicaCount: 1
 image:
   repository: dimozone/identity-api
   pullPolicy: IfNotPresent
-  tag: 0ceff0e
+  tag: 12a9509
 imagePullSecrets: []
 nameOverride: ''
 fullnameOverride: ''
@@ -29,7 +29,7 @@ env:
   PORT: 8080
   MON_PORT: 8888
   KAFKA_BROKERS: kafka-dev-dimo-kafka-kafka-brokers:9092
-  CONTRACT_EVENTS_TOPIC: topic.contract.event
+  CONTRACT_EVENT_TOPIC: topic.contract.event
   DIMO_REGISTRY_CHAIN_ID: 80001
   DIMO_REGISTRY_ADDR: '0x4De1bCf2B7E851E31216fC07989caA902A604784'
   VEHICLE_NFT_ADDR: '0x90c4d6113ec88dd4bdf12f26db2b3998fd13a144'
