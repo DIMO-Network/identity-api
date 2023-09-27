@@ -68,6 +68,7 @@ func Test_GetOwnedAftermarketDevices_Pagination_PreviousPage(t *testing.T) {
 			ID:          i,
 			Owner:       aftermarketDeviceNodeMintedArgs.Owner.Bytes(),
 			Beneficiary: aftermarketDeviceNodeMintedArgs.Owner.Bytes(),
+			Address:     aftermarketDeviceNodeMintedArgs.AftermarketDeviceAddress.Bytes(),
 		})
 	}
 
@@ -103,6 +104,7 @@ func Test_GetOwnedAftermarketDevices_Pagination_PreviousPage(t *testing.T) {
 				ID:          3,
 				Owner:       common.BytesToAddress(ad[2].Owner),
 				Beneficiary: common.BytesToAddress(ad[2].Beneficiary),
+				Address:     common.BytesToAddress(ad[2].Address),
 			},
 			Cursor: "Mw==",
 		},
@@ -111,6 +113,7 @@ func Test_GetOwnedAftermarketDevices_Pagination_PreviousPage(t *testing.T) {
 				ID:          2,
 				Owner:       common.BytesToAddress(ad[1].Owner),
 				Beneficiary: common.BytesToAddress(ad[1].Beneficiary),
+				Address:     common.BytesToAddress(ad[1].Address),
 			},
 			Cursor: "Mg==",
 		},
