@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/DIMO-Network/identity-api/graph/model"
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/models"
@@ -98,9 +97,9 @@ func (r *Repository) GetOwnedAftermarketDevices(ctx context.Context, addr common
 	}
 
 	if len(ads) == 0 {
-		return &model.AftermarketDeviceConnection{
+		return &gmodel.AftermarketDeviceConnection{
 			TotalCount: int(ownedADCount),
-			PageInfo: &model.PageInfo{
+			PageInfo: &gmodel.PageInfo{
 				HasNextPage:     hasNextPage,
 				HasPreviousPage: hasPreviousPage,
 			},
