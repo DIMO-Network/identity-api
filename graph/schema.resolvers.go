@@ -29,9 +29,9 @@ func (r *dCNResolver) Vehicle(ctx context.Context, obj *model.Dcn) (*model.Vehic
 	return loader.GetVehicleByID(ctx, *obj.VehicleID)
 }
 
-// AccessibleVehicles is the resolver for the accessibleVehicles field.
-func (r *queryResolver) AccessibleVehicles(ctx context.Context, address common.Address, first *int, after *string, last *int, before *string) (*model.VehicleConnection, error) {
-	return r.Repo.GetAccessibleVehicles(ctx, address, first, after, last, before)
+// Vehicles is the resolver for the vehicles field.
+func (r *queryResolver) Vehicles(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.VehiclesFilter) (*model.VehicleConnection, error) {
+	return r.Repo.GetVehicles(ctx, first, after, last, before, filterBy)
 }
 
 // OwnedAftermarketDevices is the resolver for the ownedAftermarketDevices field.

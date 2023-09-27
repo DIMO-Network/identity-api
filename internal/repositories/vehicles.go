@@ -2,6 +2,8 @@ package repositories
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"time"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
@@ -42,78 +44,86 @@ func VehicleToAPI(v *models.Vehicle) *gmodel.Vehicle {
 }
 
 func (v *Repository) createVehiclesResponse(totalCount int64, vehicles models.VehicleSlice, hasNext bool, hasPrevious bool) *gmodel.VehicleConnection {
-	endCursr, startCursr := helpers.IDToCursor(vehicles[len(vehicles)-1].ID), helpers.IDToCursor(vehicles[0].ID)
+	var endCur, startCur *string
+	if len(vehicles) != 0 {
+		ec := helpers.IDToCursor(vehicles[len(vehicles)-1].ID)
+		endCur = &ec
 
-	var vEdges []*gmodel.VehicleEdge
-	for _, v := range vehicles {
-		edge := &gmodel.VehicleEdge{
+		sc := helpers.IDToCursor(vehicles[0].ID)
+		startCur = &sc
+	}
+
+	edges := make([]*gmodel.VehicleEdge, len(vehicles))
+	for i, v := range vehicles {
+		edges[i] = &gmodel.VehicleEdge{
 			Node:   VehicleToAPI(v),
 			Cursor: helpers.IDToCursor(v.ID),
 		}
-
-		vEdges = append(vEdges, edge)
 	}
 
 	res := &gmodel.VehicleConnection{
-		TotalCount: int(totalCount),
+		Edges: edges,
 		PageInfo: &gmodel.PageInfo{
+			EndCursor:       endCur,
 			HasNextPage:     hasNext,
 			HasPreviousPage: hasPrevious,
-			StartCursor:     &startCursr,
-			EndCursor:       &endCursr,
+			StartCursor:     startCur,
 		},
-		Edges: vEdges,
+		TotalCount: int(totalCount),
 	}
 
 	return res
 }
 
-func applyPaginationDirectionFromCursor(cursor string, isAfter bool, queryMods *[]qm.QueryMod) error {
-	id, err := helpers.CursorToID(cursor)
-	if err != nil {
-		return err
-	}
+const maxPageSize = 100
 
-	if isAfter {
-		*queryMods = append(*queryMods, qm.Where("id < ?", id))
-	} else {
-		*queryMods = append(*queryMods, qm.Where("id > ?", id))
-	}
-
-	return nil
-}
-
-// GetAccessibleVehicles godoc
+// GetVehicles godoc
 // @Description gets devices for an owner address
 // @Param addr [common.Address] "eth address of owner"
 // @Param first [*int] "the number of devices to return per page"
 // @Param after [*string] "base64 string representing a device tokenID. This is a pointer to where we start fetching devices from on each page"
 // @Param last [*int] "the number of devices to return from previous pages"
 // @Param before [*string] "base64 string representing a device tokenID. Pointer to where we start fetching devices from previous pages"
-func (v *Repository) GetAccessibleVehicles(ctx context.Context, addr common.Address, first *int, after *string, last *int, before *string) (*gmodel.VehicleConnection, error) {
-	limit := defaultPageSize
+func (v *Repository) GetVehicles(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *gmodel.VehiclesFilter) (*gmodel.VehicleConnection, error) {
+	var limit int
 
 	if first != nil {
+		if last != nil {
+			return nil, errors.New("Pass `first` or `last`, but not both.")
+		}
+		if *first > maxPageSize {
+			return nil, fmt.Errorf("The value %d for `first` exceeds the limit %d.", *last, maxPageSize)
+		}
 		limit = *first
-	} else if last != nil {
+	} else {
+		if last == nil {
+			return nil, errors.New("Provide `first` or `last`.")
+		}
+		if *last > maxPageSize {
+			return nil, fmt.Errorf("The value %d for `last` exceeds the limit %d.", *last, maxPageSize)
+		}
 		limit = *last
 	}
 
-	queryMods := []qm.QueryMod{
-		qm.Select("DISTINCT ON (" + models.VehicleTableColumns.ID + ") " + helpers.WithSchema(models.TableNames.Vehicles) + ".*"),
-		qm.LeftOuterJoin(
-			helpers.WithSchema(models.TableNames.Privileges) + " ON " + models.VehicleTableColumns.ID + " = " + models.PrivilegeTableColumns.TokenID,
-		),
-		qm.Expr(
-			models.VehicleWhere.OwnerAddress.EQ(addr.Bytes()),
-			qm.Or2(
-				qm.Expr(
-					models.PrivilegeWhere.UserAddress.EQ(addr.Bytes()),
-					models.PrivilegeWhere.ExpiresAt.GTE(time.Now()),
+	var queryMods []qm.QueryMod
+
+	if filterBy != nil && filterBy.Privileged != nil {
+		addr := *filterBy.Privileged
+		queryMods = []qm.QueryMod{
+			qm.Select("DISTINCT ON (" + models.VehicleTableColumns.ID + ") " + helpers.WithSchema(models.TableNames.Vehicles) + ".*"),
+			qm.LeftOuterJoin(
+				helpers.WithSchema(models.TableNames.Privileges) + " ON " + models.VehicleTableColumns.ID + " = " + models.PrivilegeTableColumns.TokenID,
+			),
+			qm.Expr(
+				models.VehicleWhere.OwnerAddress.EQ(addr.Bytes()),
+				qm.Or2(
+					qm.Expr(
+						models.PrivilegeWhere.UserAddress.EQ(addr.Bytes()),
+						models.PrivilegeWhere.ExpiresAt.GTE(time.Now()),
+					),
 				),
 			),
-		),
-		// Use limit + 1 here to check if there's a next page.
+		}
 	}
 
 	totalCount, err := models.Vehicles(
@@ -126,35 +136,33 @@ func (v *Repository) GetAccessibleVehicles(ctx context.Context, addr common.Addr
 		return nil, err
 	}
 
-	if totalCount == 0 {
-		return &gmodel.VehicleConnection{
-			TotalCount: 0,
-			Edges:      []*gmodel.VehicleEdge{},
-			PageInfo:   &gmodel.PageInfo{},
-		}, nil
-	}
-
-	if totalCount < int64(limit) {
-		limit = int(totalCount)
-	}
-
 	if after != nil {
-		if err := applyPaginationDirectionFromCursor(*after, true, &queryMods); err != nil {
+		afterID, err := helpers.CursorToID(*after)
+		if err != nil {
 			return nil, err
 		}
-	} else if before != nil {
-		if err := applyPaginationDirectionFromCursor(*before, false, &queryMods); err != nil {
-			return nil, err
-		}
+
+		queryMods = append(queryMods, models.VehicleWhere.ID.LT(afterID))
 	}
 
-	orderBy := " DESC"
 	if before != nil {
-		orderBy = " ASC"
+		beforeID, err := helpers.CursorToID(*before)
+		if err != nil {
+			return nil, err
+		}
+
+		queryMods = append(queryMods, models.VehicleWhere.ID.GT(beforeID))
 	}
+
+	orderBy := "DESC"
+	if before != nil {
+		orderBy = "ASC"
+	}
+
 	queryMods = append(queryMods,
+		// Use limit + 1 here to check if there's another page.
 		qm.Limit(limit+1),
-		qm.OrderBy(models.VehicleColumns.ID+orderBy),
+		qm.OrderBy(models.VehicleColumns.ID+" "+orderBy),
 	)
 
 	all, err := models.Vehicles(queryMods...).All(ctx, v.pdb.DBS().Reader)
@@ -162,18 +170,14 @@ func (v *Repository) GetAccessibleVehicles(ctx context.Context, addr common.Addr
 		return nil, err
 	}
 
-	if len(all) == 0 {
-		return &gmodel.VehicleConnection{
-			TotalCount: int(totalCount),
-			Edges:      []*gmodel.VehicleEdge{},
-		}, nil
-	}
+	// We assume that cursors come from real elements.
+	hasNext := before != nil
+	hasPrevious := after != nil
 
-	hasNext, hasPrevious := before != nil, after != nil
-	if first != nil && *first+1 == len(all) {
+	if first != nil && len(all) == limit+1 {
 		hasNext = true
 		all = all[:limit]
-	} else if last != nil && *last+1 == len(all) {
+	} else if last != nil && len(all) == limit+1 {
 		hasPrevious = true
 		all = all[:limit]
 	}

@@ -59,13 +59,19 @@ func (r *Repository) GetOwnedAftermarketDevices(ctx context.Context, addr common
 	)
 
 	if after != nil {
-		if err := applyPaginationDirectionFromCursor(*after, true, &queryMods); err != nil {
+		afterID, err := helpers.CursorToID(*after)
+		if err != nil {
 			return nil, err
 		}
+
+		queryMods = append(queryMods, models.AftermarketDeviceWhere.ID.LT(afterID))
 	} else if before != nil {
-		if err := applyPaginationDirectionFromCursor(*before, false, &queryMods); err != nil {
+		beforeID, err := helpers.CursorToID(*before)
+		if err != nil {
 			return nil, err
 		}
+
+		queryMods = append(queryMods, models.AftermarketDeviceWhere.ID.GT(beforeID))
 	}
 
 	ads, err := models.AftermarketDevices(queryMods...).All(ctx, r.pdb.DBS().Reader)

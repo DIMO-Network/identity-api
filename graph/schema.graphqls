@@ -25,14 +25,12 @@ input DCNBy @oneOf {
   name: String
 }
 
+input VehiclesFilter {
+  privileged: Address
+}
+
 type Query {
-  accessibleVehicles(
-    address: Address!
-    first: Int
-    after: String
-    last: Int
-    before: String
-  ): VehicleConnection!
+  vehicles(first: Int, after: String, last: Int, before: String, filterBy: VehiclesFilter): VehicleConnection!
 
   ownedAftermarketDevices(
     address: Address!
