@@ -14,7 +14,7 @@ import (
 func (c *ContractsEventsConsumer) handleNewDcnNode(ctx context.Context, e *ContractEventData) error {
 	logger := c.log.With().Str("EventName", NewNode.String()).Logger()
 
-	var args NewDCNNodeEventData
+	var args NewDCNNodeData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
 		return err
 	}
@@ -38,7 +38,7 @@ func (c *ContractsEventsConsumer) handleNewDcnNode(ctx context.Context, e *Contr
 func (c *ContractsEventsConsumer) handleNewDCNExpiration(ctx context.Context, e *ContractEventData) error {
 	logger := c.log.With().Str("EventName", NewExpiration.String()).Logger()
 
-	var args NewDCNExpirationEventData
+	var args NewDCNExpirationData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
 		return err
 	}
@@ -62,7 +62,7 @@ func (c *ContractsEventsConsumer) handleNameChanged(ctx context.Context, e *Cont
 	eventName := NameChanged.String()
 	logger := c.log.With().Str("EventName", eventName).Logger()
 
-	var args DCNNameChangedEventData
+	var args DCNNameChangedData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
 		return err
 	}
@@ -86,7 +86,7 @@ func (c *ContractsEventsConsumer) handleVehicleIdChanged(ctx context.Context, e 
 	eventName := VehicleIdChanged.String()
 	logger := c.log.With().Str("EventName", eventName).Logger()
 
-	var args DCNVehicleIdChangedEventData
+	var args DCNVehicleIdChangedData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
 		return err
 	}

@@ -1,21 +1,33 @@
-FROM golang:1.21 as build
+FROM golang:1.21 AS build
 
-WORKDIR /src/identity-api
+RUN useradd -u 10001 dimo
 
-COPY go.mod go.sum ./
+WORKDIR /go/src/github.com/DIMO-Network/identity-api/
+COPY . /go/src/github.com/DIMO-Network/identity-api/
 
-RUN go mod download
+ENV CGO_ENABLED=0
+ENV GOOS=linux
+ENV GOFLAGS=-mod=vendor
 
-COPY . .
+RUN ls
+RUN go mod tidy
+RUN go mod vendor
+RUN make install
 
-RUN go build -v -o /bin/identity-api ./cmd/identity-api
+FROM busybox AS package
 
-FROM gcr.io/distroless/static-debian11 AS release
+LABEL maintainer="DIMO <hello@dimo.zone>"
 
-COPY --from=build /bin/identity-api /identity-api
+WORKDIR /
+
+COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=build /etc/passwd /etc/passwd
+COPY --from=build /go/src/github.com/DIMO-Network/identity-api/target/bin/identity-api .
+COPY --from=build /go/src/github.com/DIMO-Network/identity-api/migrations /migrations
+
+USER dimo
 
 EXPOSE 8080
+EXPOSE 8888
 
-USER nonroot:nonroot
-
-ENTRYPOINT ["/identity-api"]
+CMD /identity-api

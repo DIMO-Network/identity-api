@@ -1,0 +1,97 @@
+replicaCount: 1
+image:
+  repository: dimozone/identity-api
+  pullPolicy: IfNotPresent
+  tag: fd2644f
+imagePullSecrets: []
+nameOverride: ''
+fullnameOverride: ''
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ''
+podAnnotations: {}
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1001
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - all
+cronJob:
+  enabled: false
+  schedule: 0 0 * * 0
+env:
+  DB_PORT: 5432
+  DB_NAME: identity_api
+  PORT: 8080
+  MON_PORT: 8888
+  KAFKA_BROKERS: kafka-dev-dimo-kafka-kafka-brokers:9092
+  CONTRACT_EVENT_TOPIC: topic.contract.event
+  DIMO_REGISTRY_CHAIN_ID: 80001
+  DIMO_REGISTRY_ADDR: '0x4De1bCf2B7E851E31216fC07989caA902A604784'
+  VEHICLE_NFT_ADDR: '0x90c4d6113ec88dd4bdf12f26db2b3998fd13a144'
+  AFTERMARKET_DEVICE_CONTRACT_ADDRESS: '0xcf9Af64522162da85164a714c23a7705E6e466b3'
+  DCN_REGISTRY_ADDR: '0x2daeF6FF0E2B61aaBF9ADDE1aFDAfDb4f0f1E660'
+  DCN_RESOLVER_ADDR: '0x7CE3b10571b1ca517dEf45D5F81850467eC8dd2D'
+service:
+  type: ClusterIP
+  ports:
+    mon-http:
+      port: 8888
+      targetPort: mon-http
+      protocol: TCP
+    http:
+      port: 8080
+      targetPort: http
+      protocol: TCP
+ports:
+  - name: mon-http
+    containerPort: 8888
+    protocol: TCP
+  - name: http
+    containerPort: 8080
+    protocol: TCP
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/auth-tls-secret: ingress/cf-origin-ca
+    nginx.ingress.kubernetes.io/auth-tls-verify-client: 'on'
+    nginx.ingress.kubernetes.io/enable-cors: 'true'
+    nginx.ingress.kubernetes.io/cors-allow-origin: https://app.dev.dimo.zone
+    nginx.ingress.kubernetes.io/limit-rps: '3'
+    external-dns.alpha.kubernetes.io/hostname: identity-api.dev.dimo.zone
+  hosts:
+    - host: identity-api.dev.dimo.zone
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+resources:
+  limits:
+    cpu: 250m
+    memory: 384Mi
+  requests:
+    cpu: 100m
+    memory: 192Mi
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+nodeSelector: {}
+tolerations: []
+affinity: {}
+podDisruptionBudget:
+  minAvailable: 0
+kafka:
+  clusterName: kafka-dev-dimo-kafka
+  topics: []
+serviceMonitor:
+  enabled: true
+  path: /metrics
+  port: mon-http
+  interval: 30s

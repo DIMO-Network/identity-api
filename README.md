@@ -1,5 +1,7 @@
 # identity-api
 
+Makefile temporarily offline :)
+
 Run `make` to see some helpful sub-commands:
 
 ```

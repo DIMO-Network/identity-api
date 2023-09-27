@@ -5,11 +5,15 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/adaptor"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/DIMO-Network/identity-api/graph"
 	"github.com/DIMO-Network/identity-api/internal/config"
@@ -60,6 +64,8 @@ func main() {
 		return next(ctx)
 	}
 
+	serveMonitoring(strconv.Itoa(settings.MonPort), &logger)
+
 	s := handler.NewDefaultServer(graph.NewExecutableSchema(cfg))
 
 	srv := loader.Middleware(dbs, s)
@@ -86,4 +92,21 @@ func startContractEventsConsumer(ctx context.Context, logger *zerolog.Logger, se
 	}
 
 	logger.Info().Msg("Contract events consumer started.")
+}
+
+func serveMonitoring(port string, logger *zerolog.Logger) *fiber.App {
+	logger.Info().Str("port", port).Msg("Starting monitoring web server.")
+
+	monApp := fiber.New(fiber.Config{DisableStartupMessage: true})
+
+	monApp.Get("/", func(c *fiber.Ctx) error { return nil })
+	monApp.Get("/metrics", adaptor.HTTPHandler(promhttp.Handler()))
+
+	go func() {
+		if err := monApp.Listen(":" + port); err != nil {
+			logger.Fatal().Err(err).Str("port", port).Msg("Failed to start monitoring web server.")
+		}
+	}()
+
+	return monApp
 }

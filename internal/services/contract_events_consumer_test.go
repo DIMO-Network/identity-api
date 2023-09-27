@@ -314,7 +314,7 @@ func TestHandleAftermarketDeviceTransferredEventExistingTokenID(t *testing.T) {
 	contractEventData.EventName = "Transfer"
 	contractEventData.Contract = common.HexToAddress(aftermarketDeviceAddr)
 
-	var aftermarketDeviceTransferredData = TransferEventData{
+	var aftermarketDeviceTransferredData = TransferData{
 		From:    common.HexToAddress("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		To:      common.HexToAddress("0x55a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		TokenID: big.NewInt(100),
@@ -379,7 +379,7 @@ func TestHandleBeneficiarySetEvent(t *testing.T) {
 	contractEventData.EventName = "BeneficiarySet"
 	contractEventData.Contract = common.HexToAddress(aftermarketDeviceAddr)
 
-	var beneficiarySetData = BeneficiarySetEventData{
+	var beneficiarySetData = BeneficiarySetData{
 		IdProxyAddress: common.HexToAddress(aftermarketDeviceAddr),
 		Beneficiary:    common.HexToAddress("0x55b6D41bd932244Dd08186e4c19F1a7E48cbcDg3"),
 		NodeId:         big.NewInt(100),
@@ -436,7 +436,7 @@ func TestHandleClearBeneficiaryEvent(t *testing.T) {
 	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
 	contractEventData.EventName = "BeneficiarySet"
 
-	var beneficiarySetData = BeneficiarySetEventData{
+	var beneficiarySetData = BeneficiarySetData{
 		IdProxyAddress: common.HexToAddress(aftermarketDeviceAddr),
 		Beneficiary:    zeroAddress,
 		NodeId:         big.NewInt(100),
@@ -735,7 +735,7 @@ func Test_HandleVehicle_Transferred_Event(t *testing.T) {
 	contractEventData.EventName = "Transfer"
 
 	tkID := 100
-	var vehicleTransferredData = TransferEventData{
+	var vehicleTransferredData = TransferData{
 		From:    common.HexToAddress("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		To:      common.HexToAddress("0x55a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		TokenID: big.NewInt(int64(tkID)),
@@ -787,7 +787,7 @@ func Test_HandleVehicle_Transferred_To_Zero_Event_ShouldDelete(t *testing.T) {
 	assert.NoError(t, err)
 
 	tkID := 100
-	var vehicleTransferredData = TransferEventData{
+	var vehicleTransferredData = TransferData{
 		From:    *wallet,
 		To:      zeroAddress,
 		TokenID: big.NewInt(int64(tkID)),
@@ -869,7 +869,7 @@ func Test_HandleVehicle_Transferred_To_Zero_Event_NoDelete_SyntheticDevice(t *te
 	assert.NoError(t, err)
 
 	tkID := 100
-	var vehicleTransferredData = TransferEventData{
+	var vehicleTransferredData = TransferData{
 		From:    *wallet,
 		To:      zeroAddress,
 		TokenID: big.NewInt(int64(tkID)),
@@ -945,7 +945,7 @@ func Test_HandleVehicle_Transferred_To_Zero_Event_NoDelete_AfterMarketDevice(t *
 	assert.NoError(t, err)
 
 	tkID := 100
-	var vehicleTransferredData = TransferEventData{
+	var vehicleTransferredData = TransferData{
 		From:    *wallet,
 		To:      zeroAddress,
 		TokenID: big.NewInt(int64(tkID)),
