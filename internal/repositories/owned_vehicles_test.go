@@ -111,7 +111,7 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Success() {
 	}
 
 	first := 3
-	res, err := s.repo.GetAccessibleVehicles(s.ctx, *wallet, &first, nil, nil, nil)
+	res, err := s.repo.GetVehicles(s.ctx, &first, nil, nil, nil, &gmodel.VehiclesFilter{Privileged: wallet})
 	s.NoError(err)
 
 	s.Equal(2, res.TotalCount)
@@ -182,7 +182,7 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination() {
 	}
 
 	first := 1
-	res, err := s.repo.GetAccessibleVehicles(s.ctx, *wallet, &first, nil, nil, nil)
+	res, err := s.repo.GetVehicles(s.ctx, &first, nil, nil, nil, &gmodel.VehiclesFilter{Privileged: wallet})
 	s.NoError(err)
 
 	s.Equal(len(vehicles), res.TotalCount)
@@ -240,7 +240,7 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination_NextPage()
 
 	first := 1
 	after := "Mg=="
-	res, err := s.repo.GetAccessibleVehicles(s.ctx, *wallet, &first, &after, nil, nil)
+	res, err := s.repo.GetVehicles(s.ctx, &first, &after, nil, nil, &gmodel.VehiclesFilter{Privileged: wallet})
 	s.NoError(err)
 
 	s.Len(vehicles, res.TotalCount)

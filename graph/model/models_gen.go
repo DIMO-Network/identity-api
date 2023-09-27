@@ -120,3 +120,7 @@ type VehicleEdge struct {
 	Node   *Vehicle `json:"node"`
 	Cursor string   `json:"cursor"`
 }
+
+type VehiclesFilter struct {
+	Privileged *common.Address `json:"privileged,omitempty"`
+}
