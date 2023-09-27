@@ -75,9 +75,9 @@ func applyPaginationDirectionFromCursor(cursor string, isAfter bool, queryMods *
 	}
 
 	if isAfter {
-		*queryMods = append(*queryMods, models.VehicleWhere.ID.LT(id))
+		*queryMods = append(*queryMods, qm.Where("id < ?", id))
 	} else {
-		*queryMods = append(*queryMods, models.VehicleWhere.ID.GT(id))
+		*queryMods = append(*queryMods, qm.Where("id > ?", id))
 	}
 
 	return nil
