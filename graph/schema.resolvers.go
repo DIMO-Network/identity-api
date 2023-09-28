@@ -6,7 +6,7 @@ package graph
 
 import (
 	"context"
-	"errors"
+	"fmt"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/loader"
@@ -43,25 +43,14 @@ func (r *queryResolver) Vehicle(ctx context.Context, id int) (*model.Vehicle, er
 	return r.Repo.GetVehicle(ctx, id)
 }
 
+// AftermarketDevice is the resolver for the aftermarketDevice field.
+func (r *queryResolver) AftermarketDevice(ctx context.Context, by model.AftermarketDeviceBy) (*model.AftermarketDevice, error) {
+	panic(fmt.Errorf("not implemented: AftermarketDevice - aftermarketDevice"))
+}
+
 // Dcn is the resolver for the dcn field.
 func (r *queryResolver) Dcn(ctx context.Context, by model.DCNBy) (*model.Dcn, error) {
-	if by.Name != nil && len(by.Node) > 0 {
-		return nil, errors.New("provide one of Name or Node but not both")
-	}
-
-	if by.Name == nil && len(by.Node) == 0 {
-		return nil, errors.New("provide either Name or Node")
-	}
-
-	if len(by.Node) > 0 && len(by.Node) < 32 {
-		return nil, errors.New("invalid node provided")
-	}
-
-	if by.Name != nil {
-		return r.Repo.GetDCNByName(ctx, *by.Name)
-	}
-
-	return r.Repo.GetDCNByNode(ctx, by.Node)
+	return r.Repo.GetDCN(ctx, by)
 }
 
 // AftermarketDevice is the resolver for the aftermarketDevice field.

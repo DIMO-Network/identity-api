@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"errors"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/models"
@@ -18,6 +19,26 @@ func DCNToAPI(d *models.DCN) *gmodel.Dcn {
 		VehicleID: d.VehicleID.Ptr(),
 		MintedAt:  d.MintedAt,
 	}
+}
+
+func (r *Repository) GetDCN(ctx context.Context, by gmodel.DCNBy) (*gmodel.Dcn, error) {
+	if by.Name != nil && len(by.Node) > 0 {
+		return nil, errors.New("Provide one of `name` or `node`, but not both.")
+	}
+
+	if by.Name == nil && len(by.Node) == 0 {
+		return nil, errors.New("Provide one of `name` or `node`.")
+	}
+
+	if len(by.Node) != 0 && len(by.Node) != 32 {
+		return nil, errors.New("`node` must have length 32.")
+	}
+
+	if len(by.Node) != 0 {
+		return r.GetDCNByNode(ctx, by.Node)
+	}
+
+	return r.GetDCNByName(ctx, *by.Name)
 }
 
 func (r *Repository) GetDCNByNode(ctx context.Context, node []byte) (*gmodel.Dcn, error) {

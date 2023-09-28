@@ -25,6 +25,13 @@ input DCNBy @oneOf {
   name: String
 }
 
+input AftermarketDeviceBy @oneOf {
+  id: BigInt
+  address: Address
+  serial: String
+}
+
+
 input VehiclesFilter {
   privileged: Address
 }
@@ -50,6 +57,8 @@ type Query {
   ): AftermarketDeviceConnection!
 
   vehicle(id: Int!): Vehicle!
+
+  aftermarketDevice(by: AftermarketDeviceBy!): AftermarketDevice!
 
   dcn(by: DCNBy!): DCN!
 }
