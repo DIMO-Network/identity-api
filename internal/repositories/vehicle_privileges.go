@@ -70,12 +70,12 @@ func (p *Repository) createPrivilegeResponse(privs models.PrivilegeSlice, totalC
 	return res, nil
 }
 
-func (p *Repository) GetPrivilegesForVehicle(ctx context.Context, tokenID int, first *int, after *string, last *int, before *string) (*gmodel.PrivilegesConnection, error) {
+func (p *Repository) GetPrivilegesForVehicle(ctx context.Context, tokenID int, filterBy gmodel.PrivilegeFilterBy) (*gmodel.PrivilegesConnection, error) {
 	pHelp := helpers.PaginationHelper[PrivilegeCursor]{}
 
 	limit := defaultPageSize
-	if first != nil {
-		limit = *first
+	if filterBy.First != nil {
+		limit = *filterBy.First
 		if limit <= 0 {
 			return nil, errors.New("invalid value provided for number of privileges to retrieve")
 		}
@@ -84,6 +84,10 @@ func (p *Repository) GetPrivilegesForVehicle(ctx context.Context, tokenID int, f
 	queryMods := []qm.QueryMod{
 		models.PrivilegeWhere.TokenID.EQ(tokenID),
 		models.PrivilegeWhere.ExpiresAt.GTE(time.Now()),
+	}
+
+	if filterBy.User != nil {
+		queryMods = append(queryMods, models.PrivilegeWhere.UserAddress.EQ(filterBy.User.Bytes()))
 	}
 
 	totalCount, err := models.Privileges(queryMods...).Count(ctx, p.pdb.DBS().Reader)
@@ -98,8 +102,8 @@ func (p *Repository) GetPrivilegesForVehicle(ctx context.Context, tokenID int, f
 		}, nil
 	}
 
-	if after != nil {
-		afterCursor, err := pHelp.DecodeCursor(*after)
+	if filterBy.After != nil {
+		afterCursor, err := pHelp.DecodeCursor(*filterBy.After)
 		if err != nil {
 			return nil, err
 		}

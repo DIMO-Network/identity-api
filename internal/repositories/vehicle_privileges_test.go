@@ -96,7 +96,7 @@ func (s *VehiclesPrivilegesRepoTestSuite) Test_GetVehiclePrivileges_Success() {
 		}
 	}
 
-	res, err := s.repo.GetPrivilegesForVehicle(s.ctx, 1, nil, nil, nil, nil)
+	res, err := s.repo.GetPrivilegesForVehicle(s.ctx, 1, model.PrivilegeFilterBy{})
 	s.NoError(err)
 
 	pHelp := &helpers.PaginationHelper[PrivilegeCursor]{}
@@ -187,7 +187,7 @@ func (s *VehiclesPrivilegesRepoTestSuite) Test_Privileges_NoExpiredPrivilege_Pag
 	}
 
 	limit := 2
-	res, err := s.repo.GetPrivilegesForVehicle(s.ctx, 1, &limit, nil, nil, nil)
+	res, err := s.repo.GetPrivilegesForVehicle(s.ctx, 1, model.PrivilegeFilterBy{First: &limit})
 	s.NoError(err)
 
 	pHelp := &helpers.PaginationHelper[PrivilegeCursor]{}
@@ -278,7 +278,7 @@ func (s *VehiclesPrivilegesRepoTestSuite) Test_Privileges_Pagination_Success() {
 	}
 
 	limit := 1
-	res, err := s.repo.GetPrivilegesForVehicle(s.ctx, 1, &limit, nil, nil, nil)
+	res, err := s.repo.GetPrivilegesForVehicle(s.ctx, 1, model.PrivilegeFilterBy{First: &limit})
 	s.NoError(err)
 
 	pHelp := &helpers.PaginationHelper[PrivilegeCursor]{}
@@ -309,7 +309,10 @@ func (s *VehiclesPrivilegesRepoTestSuite) Test_Privileges_Pagination_Success() {
 	}
 	s.Exactly(expected, res)
 
-	res, err = s.repo.GetPrivilegesForVehicle(s.ctx, 1, &limit, res.PageInfo.EndCursor, nil, nil)
+	res, err = s.repo.GetPrivilegesForVehicle(s.ctx, 1, model.PrivilegeFilterBy{
+		First: &limit,
+		After: res.PageInfo.EndCursor,
+	})
 	s.NoError(err)
 
 	cursor, err = pHelp.EncodeCursor(PrivilegeCursor{

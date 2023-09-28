@@ -25,6 +25,14 @@ input DCNBy @oneOf {
   name: String
 }
 
+input PrivilegeFilterBy {
+  first: Int
+  after: String
+  last: Int
+  before: String
+  user: Address
+}
+
 input VehiclesFilter {
   privileged: Address
 }
@@ -60,12 +68,7 @@ type Vehicle {
   owner: Address!
   mintedAt: Time!
   aftermarketDevice: AftermarketDevice
-  privileges(
-    first: Int
-    after: String
-    last: Int
-    before: String
-  ): PrivilegesConnection!
+  privileges(filterBy: PrivilegeFilterBy!): PrivilegesConnection!
   syntheticDevice: SyntheticDevice
   definition: Definition
   dcn: DCN

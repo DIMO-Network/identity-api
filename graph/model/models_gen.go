@@ -86,6 +86,14 @@ type PrivilegeEdge struct {
 	Cursor string     `json:"cursor"`
 }
 
+type PrivilegeFilterBy struct {
+	First  *int            `json:"first,omitempty"`
+	After  *string         `json:"after,omitempty"`
+	Last   *int            `json:"last,omitempty"`
+	Before *string         `json:"before,omitempty"`
+	User   *common.Address `json:"user,omitempty"`
+}
+
 type PrivilegesConnection struct {
 	TotalCount int              `json:"totalCount"`
 	Edges      []*PrivilegeEdge `json:"edges"`
