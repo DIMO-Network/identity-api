@@ -90,7 +90,7 @@ func TestResolver(t *testing.T) {
 
 	t.Run("ownedAftermarketDevices, search after", func(t *testing.T) {
 		var resp interface{}
-		c.MustPost(`{aftermarketDevices(filterBy: {owner: "46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"}, after: "MQ==") {edges {node {id owner}}}}`, &resp)
+		c.MustPost(`{aftermarketDevices(filterBy: {owner: "46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"}, after: "MQ==", first: 5) {edges {node {id owner}}}}`, &resp)
 		b, _ := json.Marshal(resp)
 		fmt.Println(string(b))
 		assert.Equal(`{"aftermarketDevices":{"edges":[]}}`, string(b))
@@ -98,7 +98,7 @@ func TestResolver(t *testing.T) {
 
 	t.Run("ownedAftermarketDevices and linked vehicle", func(t *testing.T) {
 		var resp interface{}
-		c.MustPost(`{aftermarketDevices(filterBy: {owner: "46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"}) {edges {node {id owner vehicle{id owner}}}}}`, &resp)
+		c.MustPost(`{aftermarketDevices(filterBy: {owner: "46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"}, first: 5) {edges {node {id owner vehicle{id owner}}}}}`, &resp)
 		b, _ := json.Marshal(resp)
 		fmt.Println(string(b))
 		assert.Equal(
