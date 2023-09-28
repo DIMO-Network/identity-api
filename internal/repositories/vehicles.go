@@ -91,6 +91,9 @@ func (v *Repository) GetVehicles(ctx context.Context, first *int, after *string,
 		if last != nil {
 			return nil, errors.New("Pass `first` or `last`, but not both.")
 		}
+		if *first < 0 {
+			return nil, errors.New("The value for `first` cannot be negative.")
+		}
 		if *first > maxPageSize {
 			return nil, fmt.Errorf("The value %d for `first` exceeds the limit %d.", *last, maxPageSize)
 		}
@@ -98,6 +101,9 @@ func (v *Repository) GetVehicles(ctx context.Context, first *int, after *string,
 	} else {
 		if last == nil {
 			return nil, errors.New("Provide `first` or `last`.")
+		}
+		if *last < 0 {
+			return nil, errors.New("The value for `last` cannot be negative.")
 		}
 		if *last > maxPageSize {
 			return nil, fmt.Errorf("The value %d for `last` exceeds the limit %d.", *last, maxPageSize)
