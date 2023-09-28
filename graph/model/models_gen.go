@@ -36,6 +36,10 @@ type AftermarketDeviceEdge struct {
 	Node   *AftermarketDevice `json:"node"`
 }
 
+type AftermarketDevicesFilter struct {
+	Owner *common.Address `json:"owner,omitempty"`
+}
+
 type Dcn struct {
 	// The namehash of the domain.
 	Node []byte `json:"node"`

@@ -29,16 +29,26 @@ input VehiclesFilter {
   privileged: Address
 }
 
-type Query {
-  vehicles(first: Int, after: String, last: Int, before: String, filterBy: VehiclesFilter): VehicleConnection!
+input AftermarketDevicesFilter {
+  owner: Address
+}
 
-  ownedAftermarketDevices(
-    address: Address!
+type Query {
+  vehicles(
     first: Int
     after: String
     last: Int
     before: String
+    filterBy: VehiclesFilter
+  ): VehicleConnection!
+  aftermarketDevices(
+    first: Int
+    after: String
+    last: Int
+    before: String
+    filterBy: AftermarketDevicesFilter
   ): AftermarketDeviceConnection!
+
   vehicle(id: Int!): Vehicle!
 
   dcn(by: DCNBy!): DCN!
