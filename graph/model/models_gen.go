@@ -25,6 +25,12 @@ type AftermarketDevice struct {
 	VehicleID   *int           `json:"-"`
 }
 
+type AftermarketDeviceBy struct {
+	ID      *int            `json:"id,omitempty"`
+	Address *common.Address `json:"address,omitempty"`
+	Serial  *string         `json:"serial,omitempty"`
+}
+
 type AftermarketDeviceConnection struct {
 	TotalCount int                      `json:"totalCount"`
 	Edges      []*AftermarketDeviceEdge `json:"edges"`
@@ -34,6 +40,10 @@ type AftermarketDeviceConnection struct {
 type AftermarketDeviceEdge struct {
 	Cursor string             `json:"cursor"`
 	Node   *AftermarketDevice `json:"node"`
+}
+
+type AftermarketDevicesFilter struct {
+	Owner *common.Address `json:"owner,omitempty"`
 }
 
 type Dcn struct {

@@ -47,7 +47,7 @@ func TestAftermarketDeviceNodeMintMultiResponse(t *testing.T) {
 	adController := New(pdb)
 	first := 2
 	after := "NA==" // 4
-	res, err := adController.GetOwnedAftermarketDevices(ctx, aftermarketDeviceNodeMintedArgs.Owner, &first, &after, nil, nil)
+	res, err := adController.GetAftermarketDevices(ctx, &first, &after, nil, nil, &model.AftermarketDevicesFilter{Owner: &aftermarketDeviceNodeMintedArgs.Owner})
 	assert.NoError(t, err)
 
 	fmt.Println(res)
@@ -86,7 +86,7 @@ func Test_GetOwnedAftermarketDevices_Pagination_PreviousPage(t *testing.T) {
 	before := "MQ=="
 	startCrsr := "Mw=="
 	endCrsr := "Mg=="
-	res, err := adController.GetOwnedAftermarketDevices(ctx, aftermarketDeviceNodeMintedArgs.Owner, nil, nil, &last, &before)
+	res, err := adController.GetAftermarketDevices(ctx, nil, nil, &last, &before, &model.AftermarketDevicesFilter{Owner: &aftermarketDeviceNodeMintedArgs.Owner})
 	assert.NoError(t, err)
 
 	assert.Len(t, res.Edges, 2)

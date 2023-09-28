@@ -82,27 +82,27 @@ func TestResolver(t *testing.T) {
 
 	t.Run("ownedAftermarketDevices, return only one response", func(t *testing.T) {
 		var resp interface{}
-		c.MustPost(`{ownedAftermarketDevices(address: "46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4", first: 1) {edges {node {id owner}}}}`, &resp)
+		c.MustPost(`{aftermarketDevices(filterBy: {owner: "46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"}, first: 1) {edges {node {id owner}}}}`, &resp)
 		b, _ := json.Marshal(resp)
 		fmt.Println(string(b))
-		assert.Equal(`{"ownedAftermarketDevices":{"edges":[{"node":{"id":"100","owner":"0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"}}]}}`, string(b))
+		assert.Equal(`{"aftermarketDevices":{"edges":[{"node":{"id":"100","owner":"0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"}}]}}`, string(b))
 	})
 
 	t.Run("ownedAftermarketDevices, search after", func(t *testing.T) {
 		var resp interface{}
-		c.MustPost(`{ownedAftermarketDevices(address: "46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4" after: "MQ==") {edges {node {id owner}}}}`, &resp)
+		c.MustPost(`{aftermarketDevices(filterBy: {owner: "46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"}, after: "MQ==", first: 5) {edges {node {id owner}}}}`, &resp)
 		b, _ := json.Marshal(resp)
 		fmt.Println(string(b))
-		assert.Equal(`{"ownedAftermarketDevices":{"edges":[]}}`, string(b))
+		assert.Equal(`{"aftermarketDevices":{"edges":[]}}`, string(b))
 	})
 
 	t.Run("ownedAftermarketDevices and linked vehicle", func(t *testing.T) {
 		var resp interface{}
-		c.MustPost(`{ownedAftermarketDevices(address: "46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4") {edges {node {id owner vehicle{id owner}}}}}`, &resp)
+		c.MustPost(`{aftermarketDevices(filterBy: {owner: "46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"}, first: 5) {edges {node {id owner vehicle{id owner}}}}}`, &resp)
 		b, _ := json.Marshal(resp)
 		fmt.Println(string(b))
 		assert.Equal(
-			`{"ownedAftermarketDevices":{"edges":[{"node":{"id":"100","owner":"0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4","vehicle":null}},{"node":{"id":"1","owner":"0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4","vehicle":{"id":"11","owner":"0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"}}}]}}`,
+			`{"aftermarketDevices":{"edges":[{"node":{"id":"100","owner":"0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4","vehicle":null}},{"node":{"id":"1","owner":"0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4","vehicle":{"id":"11","owner":"0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"}}}]}}`,
 			string(b))
 	})
 

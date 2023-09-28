@@ -91,6 +91,9 @@ func (v *Repository) GetVehicles(ctx context.Context, first *int, after *string,
 		if last != nil {
 			return nil, errors.New("Pass `first` or `last`, but not both.")
 		}
+		if *first < 0 {
+			return nil, errors.New("The value for `first` cannot be negative.")
+		}
 		if *first > maxPageSize {
 			return nil, fmt.Errorf("The value %d for `first` exceeds the limit %d.", *last, maxPageSize)
 		}
@@ -99,12 +102,16 @@ func (v *Repository) GetVehicles(ctx context.Context, first *int, after *string,
 		if last == nil {
 			return nil, errors.New("Provide `first` or `last`.")
 		}
+		if *last < 0 {
+			return nil, errors.New("The value for `last` cannot be negative.")
+		}
 		if *last > maxPageSize {
 			return nil, fmt.Errorf("The value %d for `last` exceeds the limit %d.", *last, maxPageSize)
 		}
 		limit = *last
 	}
 
+	var totalCount int64
 	var queryMods []qm.QueryMod
 
 	if filterBy != nil && filterBy.Privileged != nil {
@@ -124,16 +131,25 @@ func (v *Repository) GetVehicles(ctx context.Context, first *int, after *string,
 				),
 			),
 		}
-	}
 
-	totalCount, err := models.Vehicles(
-		// We're performing this because SQLBoiler doesn't understand DISTINCT ON. If we use
-		// the original version of queryMods the entire SELECT clause will be replaced by
-		// SELECT COUNT(*), and we'll probably over-count the number of vehicles.
-		append([]qm.QueryMod{qm.Distinct(models.VehicleTableColumns.ID)}, queryMods[1:]...)...,
-	).Count(ctx, v.pdb.DBS().Reader)
-	if err != nil {
-		return nil, err
+		var err error
+		totalCount, err = models.Vehicles(
+			// We're performing this because SQLBoiler doesn't understand DISTINCT ON. If we use
+			// the original version of queryMods the entire SELECT clause will be replaced by
+			// SELECT COUNT(*), and we'll probably over-count the number of vehicles.
+			append([]qm.QueryMod{qm.Distinct(models.VehicleTableColumns.ID)}, queryMods[1:]...)...,
+		).Count(ctx, v.pdb.DBS().Reader)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		// TODO(elffjs): Ugly.
+		queryMods = []qm.QueryMod{}
+		var err error
+		totalCount, err = models.Vehicles().Count(ctx, v.pdb.DBS().Reader)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if after != nil {
