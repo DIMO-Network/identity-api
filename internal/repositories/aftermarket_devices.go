@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
@@ -20,33 +21,41 @@ import (
 // @Param last [*int] "the number of devices to return from previous pages"
 // @Param before [*string] "base64 string representing a device tokenID. Pointer to where we start fetching devices from previous pages"
 func (r *Repository) GetAftermarketDevices(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *gmodel.AftermarketDevicesFilter) (*gmodel.AftermarketDeviceConnection, error) {
+	var limit int
+
+	if first != nil {
+		if last != nil {
+			return nil, errors.New("Pass `first` or `last`, but not both.")
+		}
+		if *first < 0 {
+			return nil, errors.New("The value for `first` cannot be negative.")
+		}
+		if *first > maxPageSize {
+			return nil, fmt.Errorf("The value %d for `first` exceeds the limit %d.", *last, maxPageSize)
+		}
+		limit = *first
+	} else {
+		if last == nil {
+			return nil, errors.New("Provide `first` or `last`.")
+		}
+		if *last < 0 {
+			return nil, errors.New("The value for `last` cannot be negative.")
+		}
+		if *last > maxPageSize {
+			return nil, fmt.Errorf("The value %d for `last` exceeds the limit %d.", *last, maxPageSize)
+		}
+		limit = *last
+	}
+
 	where := []qm.QueryMod{}
 
 	if filterBy != nil && filterBy.Owner != nil {
 		where = append(where, models.AftermarketDeviceWhere.Owner.EQ(filterBy.Owner.Bytes()))
 	}
 
-	ownedADCount, err := models.AftermarketDevices(where...).Count(ctx, r.pdb.DBS().Reader)
+	adCount, err := models.AftermarketDevices(where...).Count(ctx, r.pdb.DBS().Reader)
 	if err != nil {
 		return nil, err
-	}
-
-	limit := defaultPageSize
-	if first != nil {
-		limit = *first
-	} else if last != nil {
-		limit = *last
-	}
-	if limit < 1 {
-		return nil, errors.New("invalid pagination parameter provided")
-	}
-
-	if ownedADCount == 0 {
-		return &gmodel.AftermarketDeviceConnection{
-			TotalCount: int(ownedADCount),
-			Edges:      []*gmodel.AftermarketDeviceEdge{},
-			PageInfo:   &gmodel.PageInfo{},
-		}, nil
 	}
 
 	orderBy := " DESC"
@@ -76,26 +85,28 @@ func (r *Repository) GetAftermarketDevices(ctx context.Context, first *int, afte
 		queryMods = append(queryMods, models.AftermarketDeviceWhere.ID.GT(beforeID))
 	}
 
-	ads, err := models.AftermarketDevices(queryMods...).All(ctx, r.pdb.DBS().Reader)
+	all, err := models.AftermarketDevices(queryMods...).All(ctx, r.pdb.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}
 
-	hasNextPage, hasPreviousPage := before != nil, after != nil
-	if first != nil && *first+1 == len(ads) {
-		hasNextPage = true
-		ads = ads[:limit]
-	} else if last != nil && *last+1 == len(ads) {
-		hasPreviousPage = true
-		ads = ads[:limit]
+	hasNext := before != nil
+	hasPrevious := after != nil
+
+	if first != nil && len(all) == limit+1 {
+		hasNext = true
+		all = all[:limit]
+	} else if last != nil && len(all) == limit+1 {
+		hasPrevious = true
+		all = all[:limit]
 	}
 
 	if before != nil {
-		slices.Reverse(ads)
+		slices.Reverse(all)
 	}
 
 	var adEdges []*gmodel.AftermarketDeviceEdge
-	for _, d := range ads {
+	for _, d := range all {
 		adEdges = append(adEdges,
 			&gmodel.AftermarketDeviceEdge{
 				Node:   AftermarketDeviceToAPI(d),
@@ -104,30 +115,27 @@ func (r *Repository) GetAftermarketDevices(ctx context.Context, first *int, afte
 		)
 	}
 
-	if len(ads) == 0 {
-		return &gmodel.AftermarketDeviceConnection{
-			TotalCount: int(ownedADCount),
-			PageInfo: &gmodel.PageInfo{
-				HasNextPage:     hasNextPage,
-				HasPreviousPage: hasPreviousPage,
-			},
-		}, nil
+	var endCur, startCur *string
+
+	if len(all) != 0 {
+		ec := helpers.IDToCursor(all[len(all)-1].ID)
+		endCur = &ec
+
+		sc := helpers.IDToCursor(all[0].ID)
+		startCur = &sc
 	}
 
-	endCursr, startCursr := helpers.IDToCursor(ads[len(ads)-1].ID), helpers.IDToCursor(ads[0].ID)
-
 	res := &gmodel.AftermarketDeviceConnection{
-		TotalCount: int(ownedADCount),
+		TotalCount: int(adCount),
 		Edges:      adEdges,
 		PageInfo: &gmodel.PageInfo{
-			StartCursor:     &startCursr,
-			EndCursor:       &endCursr,
-			HasNextPage:     hasNextPage,
-			HasPreviousPage: hasPreviousPage,
+			StartCursor:     startCur,
+			EndCursor:       endCur,
+			HasNextPage:     hasNext,
+			HasPreviousPage: hasPrevious,
 		},
 	}
 
-	res.PageInfo.EndCursor = &adEdges[len(adEdges)-1].Cursor
 	return res, nil
 }
 
