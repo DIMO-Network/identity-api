@@ -22,16 +22,8 @@ func DCNToAPI(d *models.DCN) *gmodel.Dcn {
 }
 
 func (r *Repository) GetDCN(ctx context.Context, by gmodel.DCNBy) (*gmodel.Dcn, error) {
-	if by.Name != nil && len(by.Node) > 0 {
-		return nil, errors.New("Provide one of `name` or `node`, but not both.")
-	}
-
-	if by.Name == nil && len(by.Node) == 0 {
-		return nil, errors.New("Provide one of `name` or `node`.")
-	}
-
-	if len(by.Node) != 0 && len(by.Node) != 32 {
-		return nil, errors.New("`node` must have length 32.")
+	if countTrue(len(by.Node) != 0, by.Name != nil) != 1 {
+		return nil, errors.New("Provide exactly one of `name` or `node`.")
 	}
 
 	if len(by.Node) != 0 {
@@ -42,6 +34,10 @@ func (r *Repository) GetDCN(ctx context.Context, by gmodel.DCNBy) (*gmodel.Dcn, 
 }
 
 func (r *Repository) GetDCNByNode(ctx context.Context, node []byte) (*gmodel.Dcn, error) {
+	if len(node) != common.HashLength {
+		return nil, errors.New("`node` must be 32 bytes long")
+	}
+
 	dcn, err := models.DCNS(
 		models.DCNWhere.Node.EQ(node),
 	).One(ctx, r.pdb.DBS().Reader)
