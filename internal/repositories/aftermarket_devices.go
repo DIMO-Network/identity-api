@@ -9,6 +9,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"golang.org/x/exp/slices"
 )
@@ -139,6 +140,30 @@ func (r *Repository) GetAftermarketDevices(ctx context.Context, first *int, afte
 	return res, nil
 }
 
+func (r *Repository) GetAftermarketDevice(ctx context.Context, by gmodel.AftermarketDeviceBy) (*gmodel.AftermarketDevice, error) {
+	if countTrue(by.Address != nil, by.ID != nil, by.Serial != nil) != 1 {
+		return nil, errors.New("Pass in exactly one of `address`, `id`, or `serial`.")
+	}
+
+	var qm qm.QueryMod
+
+	switch {
+	case by.Address != nil:
+		qm = models.AftermarketDeviceWhere.Address.EQ(by.Address.Bytes())
+	case by.ID != nil:
+		qm = models.AftermarketDeviceWhere.ID.EQ(*by.ID)
+	case by.Serial != nil:
+		qm = models.AftermarketDeviceWhere.Serial.EQ(null.StringFrom(*by.Serial))
+	}
+
+	ad, err := models.AftermarketDevices(qm).One(ctx, r.pdb.DBS().Reader)
+	if err != nil {
+		return nil, err
+	}
+
+	return AftermarketDeviceToAPI(ad), nil
+}
+
 func AftermarketDeviceToAPI(d *models.AftermarketDevice) *gmodel.AftermarketDevice {
 	return &gmodel.AftermarketDevice{
 		ID:          d.ID,
@@ -150,4 +175,16 @@ func AftermarketDeviceToAPI(d *models.AftermarketDevice) *gmodel.AftermarketDevi
 		VehicleID:   d.VehicleID.Ptr(),
 		MintedAt:    d.MintedAt,
 	}
+}
+
+func countTrue(ps ...bool) int {
+	out := 0
+
+	for _, p := range ps {
+		if p {
+			out++
+		}
+	}
+
+	return out
 }
