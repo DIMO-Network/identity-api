@@ -19,9 +19,11 @@ import (
 // @Param after [*string] "base64 string representing a device tokenID. This is a pointer to where we start fetching devices from on each page"
 // @Param last [*int] "the number of devices to return from previous pages"
 // @Param before [*string] "base64 string representing a device tokenID. Pointer to where we start fetching devices from previous pages"
-func (r *Repository) GetOwnedAftermarketDevices(ctx context.Context, addr common.Address, first *int, after *string, last *int, before *string) (*gmodel.AftermarketDeviceConnection, error) {
-	where := []qm.QueryMod{
-		models.AftermarketDeviceWhere.Owner.EQ(addr.Bytes()),
+func (r *Repository) GetAftermarketDevices(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *gmodel.AftermarketDevicesFilter) (*gmodel.AftermarketDeviceConnection, error) {
+	where := []qm.QueryMod{}
+
+	if filterBy != nil && filterBy.Owner != nil {
+		where = append(where, models.AftermarketDeviceWhere.Owner.EQ(filterBy.Owner.Bytes()))
 	}
 
 	ownedADCount, err := models.AftermarketDevices(where...).Count(ctx, r.pdb.DBS().Reader)

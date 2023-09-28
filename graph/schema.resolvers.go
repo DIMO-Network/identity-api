@@ -10,7 +10,6 @@ import (
 
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/loader"
-	"github.com/ethereum/go-ethereum/common"
 )
 
 // Vehicle is the resolver for the vehicle field.
@@ -34,9 +33,9 @@ func (r *queryResolver) Vehicles(ctx context.Context, first *int, after *string,
 	return r.Repo.GetVehicles(ctx, first, after, last, before, filterBy)
 }
 
-// OwnedAftermarketDevices is the resolver for the ownedAftermarketDevices field.
-func (r *queryResolver) OwnedAftermarketDevices(ctx context.Context, address common.Address, first *int, after *string, last *int, before *string) (*model.AftermarketDeviceConnection, error) {
-	return r.Repo.GetOwnedAftermarketDevices(ctx, address, first, after, last, before)
+// AftermarketDevices is the resolver for the aftermarketDevices field.
+func (r *queryResolver) AftermarketDevices(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.AftermarketDevicesFilter) (*model.AftermarketDeviceConnection, error) {
+	return r.Repo.GetAftermarketDevices(ctx, first, after, last, before, filterBy)
 }
 
 // Vehicle is the resolver for the vehicle field.
