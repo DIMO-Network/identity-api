@@ -1,0 +1,51 @@
+replicaCount: 2
+image:
+  repository: dimozone/identity-api
+  pullPolicy: IfNotPresent
+  tag: 0.4.0
+cronJob:
+  enabled: false
+  schedule: 0 0 * * 0
+env:
+  ENVIRONMENT: prod
+  KAFKA_BROKERS: kafka-prod-dimo-kafka-kafka-brokers:9092
+  JWT_KEY_SET_URL: https://auth.dimo.zone/keys
+  DEVICES_API_GRPC_ADDR: devices-api-prod:8086
+  ELASTIC_INDEX: devices-status-prod-*
+  DATA_FETCH_ENABLED: true
+  BUNDLR_ENABLED: false
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/auth-tls-secret: ingress/cf-origin-ca
+    nginx.ingress.kubernetes.io/auth-tls-verify-client: 'on'
+    nginx.ingress.kubernetes.io/enable-cors: 'true'
+    nginx.ingress.kubernetes.io/cors-allow-origin: https://app.dimo.zone
+    nginx.ingress.kubernetes.io/limit-rps: '9'
+    external-dns.alpha.kubernetes.io/hostname: identity-api.dimo.zone
+  hosts:
+    - host: identity-api.dimo.zone
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+resources:
+  limits:
+    cpu: 1
+    memory: 1024Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+nodeSelector: {}
+tolerations: []
+affinity: {}
+podDisruptionBudget:
+  minAvailable: 1
+kafka:
+  clusterName: kafka-prod-dimo-kafka

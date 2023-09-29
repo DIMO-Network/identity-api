@@ -12,28 +12,57 @@ scalar Address
 An integer of arbitrary precision, decimal-encoded. Typically a uint256.
 """
 scalar BigInt
+
+"""
+A general byte representation
+"""
 scalar Bytes
+
+directive @oneOf on INPUT_OBJECT
+
+input DCNBy @oneOf {
+  node: Bytes
+  name: String
+}
+
+input AftermarketDeviceBy @oneOf {
+  id: BigInt
+  address: Address
+  serial: String
+}
+
+
+input VehiclesFilter {
+  privileged: Address
+}
+
+input AftermarketDevicesFilter {
+  owner: Address
+}
 
 type Query {
   node(id: ID!): Node
 
-  accessibleVehicles(
-    address: Address!
+  vehicles(
     first: Int
     after: String
     last: Int
     before: String
+    filterBy: VehiclesFilter
   ): VehicleConnection!
-
-  ownedAftermarketDevices(
-    address: Address!
+  aftermarketDevices(
     first: Int
     after: String
     last: Int
     before: String
+    filterBy: AftermarketDevicesFilter
   ): AftermarketDeviceConnection!
+
   vehicle(id: Int!): Vehicle!
-  dcn(node: Bytes!): DCN!
+
+  aftermarketDevice(by: AftermarketDeviceBy!): AftermarketDevice!
+
+  dcn(by: DCNBy!): DCN!
 }
 
 # Shared Types
@@ -65,6 +94,7 @@ type Vehicle implements Node {
   ): PrivilegesConnection!
   syntheticDevice: SyntheticDevice
   definition: Definition
+  dcn: DCN
 }
 
 type Definition {
@@ -92,7 +122,7 @@ type AftermarketDevice {
   """
   The Ethereum address for the device.
   """
-  address: Address
+  address: Address!
   owner: Address!
   serial: String
   """
@@ -167,11 +197,24 @@ type DCN {
   The namehash of the domain.
   """
   node: Bytes!
+  """
+  ETH address of domain owner.
+  """
   owner: Address!
   """
   The block timestamp at which the domain will cease to be valid.
   """
   expiresAt: Time
-  mintedAt: Time
+  """
+  The block timestamp of when the domain was created.
+  """
+  mintedAt: Time!
+  """
+  Human readable name of the domain.
+  """
   name: String
+  """
+  Device the domain is attached to.
+  """
+  vehicle: Vehicle
 }

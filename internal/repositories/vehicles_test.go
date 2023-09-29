@@ -117,7 +117,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Success() {
 	}
 
 	first := 3
-	res, err := o.repo.GetAccessibleVehicles(o.ctx, *wallet, &first, nil, nil, nil)
+	res, err := o.repo.GetVehicles(o.ctx, &first, nil, nil, nil, &gmodel.VehiclesFilter{Privileged: wallet})
 	o.NoError(err)
 
 	o.Equal(2, res.TotalCount)
@@ -197,7 +197,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination(
 	}
 
 	first := 1
-	res, err := o.repo.GetAccessibleVehicles(o.ctx, *wallet, &first, nil, nil, nil)
+	res, err := o.repo.GetVehicles(o.ctx, &first, nil, nil, nil, &gmodel.VehiclesFilter{Privileged: wallet})
 	o.NoError(err)
 
 	o.Equal(len(vehicles), res.TotalCount)
@@ -263,7 +263,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 
 	first := 1
 	after := "Mg=="
-	res, err := o.repo.GetAccessibleVehicles(o.ctx, *wallet, &first, &after, nil, nil)
+	res, err := o.repo.GetVehicles(o.ctx, &first, &after, nil, nil, &gmodel.VehiclesFilter{Privileged: wallet})
 	o.NoError(err)
 
 	o.Equal(len(vehicles), res.TotalCount)
@@ -347,7 +347,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_OwnedByUser
 	}
 
 	first := 3
-	res, err := o.repo.GetAccessibleVehicles(o.ctx, *wallet, &first, nil, nil, nil)
+	res, err := o.repo.GetVehicles(o.ctx, &first, nil, nil, nil, &gmodel.VehiclesFilter{Privileged: wallet})
 	o.NoError(err)
 
 	o.Equal(2, res.TotalCount)
@@ -453,7 +453,7 @@ func (o *AccessibleVehiclesRepoTestSuite) TestVehiclesMultiplePrivsOnOne() {
 	}
 
 	first := 3
-	res, err := o.repo.GetAccessibleVehicles(o.ctx, *wallet, &first, nil, nil, nil)
+	res, err := o.repo.GetVehicles(o.ctx, &first, nil, nil, nil, &gmodel.VehiclesFilter{Privileged: wallet})
 	o.NoError(err)
 
 	o.Equal(2, res.TotalCount)
@@ -492,5 +492,401 @@ func (o *AccessibleVehiclesRepoTestSuite) TestVehiclesMultiplePrivsOnOne() {
 		},
 	}
 
+	o.Exactly(expected, res.Edges)
+}
+
+func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_PreviousPage() {
+	_, wallet, err := test.GenerateWallet()
+	o.NoError(err)
+
+	currTime := time.Now().UTC().Truncate(time.Second)
+	vehicles := []models.Vehicle{
+		{
+			ID:           1,
+			OwnerAddress: wallet.Bytes(),
+			Make:         null.StringFrom("Toyota"),
+			Model:        null.StringFrom("Camry"),
+			Year:         null.IntFrom(2020),
+			MintedAt:     currTime,
+		},
+		{
+			ID:           2,
+			OwnerAddress: wallet.Bytes(),
+			Make:         null.StringFrom("Toyota"),
+			Model:        null.StringFrom("Rav4"),
+			Year:         null.IntFrom(2022),
+			MintedAt:     currTime,
+		},
+		{
+			ID:           3,
+			OwnerAddress: wallet.Bytes(),
+			Make:         null.StringFrom("Toyota"),
+			Model:        null.StringFrom("Corolla"),
+			Year:         null.IntFrom(2023),
+			MintedAt:     currTime,
+		},
+		{
+			ID:           4,
+			OwnerAddress: wallet.Bytes(),
+			Make:         null.StringFrom("Toyota"),
+			Model:        null.StringFrom("Highlander"),
+			Year:         null.IntFrom(2018),
+			MintedAt:     currTime,
+		},
+	}
+
+	for _, v := range vehicles {
+		if err := v.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer()); err != nil {
+			o.NoError(err)
+		}
+	}
+
+	last := 2
+	before := "MQ=="
+	startCrsr := "Mw=="
+	endCrsr := "Mg=="
+	res, err := o.repo.GetVehicles(o.ctx, nil, nil, &last, &before, &gmodel.VehiclesFilter{Privileged: wallet})
+	o.NoError(err)
+
+	o.Len(res.Edges, 2)
+	o.Equal(res.TotalCount, 4)
+	o.Equal(res.PageInfo, &gmodel.PageInfo{
+		StartCursor:     &startCrsr,
+		EndCursor:       &endCrsr,
+		HasPreviousPage: true,
+		HasNextPage:     true,
+	})
+	expected := []*gmodel.VehicleEdge{
+		{
+			Node: &gmodel.Vehicle{
+				ID:                "V_kQM=",
+				TokenID:           3,
+				Owner:             common.BytesToAddress(wallet.Bytes()),
+				MintedAt:          vehicles[2].MintedAt,
+				AftermarketDevice: nil,
+				Privileges:        nil,
+				SyntheticDevice:   nil,
+				Definition: &gmodel.Definition{
+					URI:   nil,
+					Make:  &vehicles[2].Make.String,
+					Model: &vehicles[2].Model.String,
+					Year:  &vehicles[2].Year.Int,
+				},
+			},
+			Cursor: "Mw==",
+		},
+		{
+			Node: &gmodel.Vehicle{
+				ID:                "V_kQI=",
+				TokenID:           2,
+				Owner:             common.BytesToAddress(wallet.Bytes()),
+				MintedAt:          vehicles[1].MintedAt,
+				AftermarketDevice: nil,
+				Privileges:        nil,
+				SyntheticDevice:   nil,
+				Definition: &gmodel.Definition{
+					URI:   nil,
+					Make:  &vehicles[1].Make.String,
+					Model: &vehicles[1].Model.String,
+					Year:  &vehicles[1].Year.Int,
+				},
+			},
+			Cursor: "Mg==",
+		},
+	}
+	o.Exactly(expected, res.Edges)
+}
+
+func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_AfterBefore() {
+	_, wallet, err := test.GenerateWallet()
+	o.NoError(err)
+
+	currTime := time.Now().UTC().Truncate(time.Second)
+	vehicles := []models.Vehicle{
+		{
+			ID:           1,
+			OwnerAddress: wallet.Bytes(),
+			Make:         null.StringFrom("Toyota"),
+			Model:        null.StringFrom("Camry"),
+			Year:         null.IntFrom(2020),
+			MintedAt:     currTime,
+		},
+		{
+			ID:           2,
+			OwnerAddress: wallet.Bytes(),
+			Make:         null.StringFrom("Toyota"),
+			Model:        null.StringFrom("Rav4"),
+			Year:         null.IntFrom(2022),
+			MintedAt:     currTime,
+		},
+		{
+			ID:           3,
+			OwnerAddress: wallet.Bytes(),
+			Make:         null.StringFrom("Toyota"),
+			Model:        null.StringFrom("Corolla"),
+			Year:         null.IntFrom(2023),
+			MintedAt:     currTime,
+		},
+		{
+			ID:           4,
+			OwnerAddress: wallet.Bytes(),
+			Make:         null.StringFrom("Toyota"),
+			Model:        null.StringFrom("Highlander"),
+			Year:         null.IntFrom(2018),
+			MintedAt:     currTime,
+		},
+	}
+
+	for _, v := range vehicles {
+		if err := v.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer()); err != nil {
+			o.NoError(err)
+		}
+	}
+
+	// Order is 4 3 2 1
+	//            ^   ^
+	//            |   |
+	//        after   before
+
+	last := 2
+	after := "Mw=="     // 3
+	before := "MQ=="    // 1
+	startCrsr := "Mg==" // 2
+	endCrsr := "Mg=="
+	res, err := o.repo.GetVehicles(o.ctx, nil, &after, &last, &before, &gmodel.VehiclesFilter{Privileged: wallet})
+	o.NoError(err)
+
+	o.Len(res.Edges, 1)
+	o.Equal(res.TotalCount, 4)
+	o.Equal(&gmodel.PageInfo{
+		StartCursor:     &startCrsr,
+		EndCursor:       &endCrsr,
+		HasPreviousPage: true,
+		HasNextPage:     true,
+	}, res.PageInfo)
+	expected := []*gmodel.VehicleEdge{
+		{
+			Node: &gmodel.Vehicle{
+				ID:                "V_kQI=",
+				TokenID:           2,
+				Owner:             common.BytesToAddress(wallet.Bytes()),
+				MintedAt:          vehicles[0].MintedAt,
+				AftermarketDevice: nil,
+				Privileges:        nil,
+				SyntheticDevice:   nil,
+				Definition: &gmodel.Definition{
+					URI:   nil,
+					Make:  &vehicles[1].Make.String,
+					Model: &vehicles[1].Model.String,
+					Year:  &vehicles[1].Year.Int,
+				},
+			},
+			Cursor: "Mg==",
+		},
+	}
+	o.Exactly(expected, res.Edges)
+}
+
+func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_AfterLast() {
+	_, wallet, err := test.GenerateWallet()
+	o.NoError(err)
+
+	currTime := time.Now().UTC().Truncate(time.Second)
+	vehicles := []models.Vehicle{
+		{
+			ID:           1,
+			OwnerAddress: wallet.Bytes(),
+			Make:         null.StringFrom("Toyota"),
+			Model:        null.StringFrom("Camry"),
+			Year:         null.IntFrom(2020),
+			MintedAt:     currTime,
+		},
+		{
+			ID:           2,
+			OwnerAddress: wallet.Bytes(),
+			Make:         null.StringFrom("Toyota"),
+			Model:        null.StringFrom("Rav4"),
+			Year:         null.IntFrom(2022),
+			MintedAt:     currTime,
+		},
+		{
+			ID:           3,
+			OwnerAddress: wallet.Bytes(),
+			Make:         null.StringFrom("Toyota"),
+			Model:        null.StringFrom("Corolla"),
+			Year:         null.IntFrom(2023),
+			MintedAt:     currTime,
+		},
+		{
+			ID:           4,
+			OwnerAddress: wallet.Bytes(),
+			Make:         null.StringFrom("Toyota"),
+			Model:        null.StringFrom("Highlander"),
+			Year:         null.IntFrom(2018),
+			MintedAt:     currTime,
+		},
+	}
+
+	for _, v := range vehicles {
+		if err := v.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer()); err != nil {
+			o.NoError(err)
+		}
+	}
+
+	last := 2
+	after := "NA=="
+	startCrsr := "Mw=="
+	endCrsr := "Mg=="
+	res, err := o.repo.GetVehicles(o.ctx, nil, &after, &last, nil, &gmodel.VehiclesFilter{Privileged: wallet})
+	o.NoError(err)
+
+	o.Len(res.Edges, 2)
+	o.Equal(res.TotalCount, 4)
+	o.Equal(res.PageInfo, &gmodel.PageInfo{
+		StartCursor:     &startCrsr,
+		EndCursor:       &endCrsr,
+		HasPreviousPage: true,
+		HasNextPage:     false,
+	})
+	expected := []*gmodel.VehicleEdge{
+		{
+			Node: &gmodel.Vehicle{
+				ID:                "V_kQM=",
+				TokenID:           3,
+				Owner:             common.BytesToAddress(wallet.Bytes()),
+				MintedAt:          vehicles[2].MintedAt,
+				AftermarketDevice: nil,
+				Privileges:        nil,
+				SyntheticDevice:   nil,
+				Definition: &gmodel.Definition{
+					URI:   nil,
+					Make:  &vehicles[2].Make.String,
+					Model: &vehicles[2].Model.String,
+					Year:  &vehicles[2].Year.Int,
+				},
+			},
+			Cursor: "Mw==",
+		},
+		{
+			Node: &gmodel.Vehicle{
+				ID:                "V_kQI=",
+				TokenID:           2,
+				Owner:             common.BytesToAddress(wallet.Bytes()),
+				MintedAt:          vehicles[1].MintedAt,
+				AftermarketDevice: nil,
+				Privileges:        nil,
+				SyntheticDevice:   nil,
+				Definition: &gmodel.Definition{
+					URI:   nil,
+					Make:  &vehicles[1].Make.String,
+					Model: &vehicles[1].Model.String,
+					Year:  &vehicles[1].Year.Int,
+				},
+			},
+			Cursor: "Mg==",
+		},
+	}
+	o.Exactly(expected, res.Edges)
+}
+
+func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_BeforeFirst() {
+	_, wallet, err := test.GenerateWallet()
+	o.NoError(err)
+
+	currTime := time.Now().UTC().Truncate(time.Second)
+	vehicles := []models.Vehicle{
+		{
+			ID:           1,
+			OwnerAddress: wallet.Bytes(),
+			Make:         null.StringFrom("Toyota"),
+			Model:        null.StringFrom("Camry"),
+			Year:         null.IntFrom(2020),
+			MintedAt:     currTime,
+		},
+		{
+			ID:           2,
+			OwnerAddress: wallet.Bytes(),
+			Make:         null.StringFrom("Toyota"),
+			Model:        null.StringFrom("Rav4"),
+			Year:         null.IntFrom(2022),
+			MintedAt:     currTime,
+		},
+		{
+			ID:           3,
+			OwnerAddress: wallet.Bytes(),
+			Make:         null.StringFrom("Toyota"),
+			Model:        null.StringFrom("Corolla"),
+			Year:         null.IntFrom(2023),
+			MintedAt:     currTime,
+		},
+		{
+			ID:           4,
+			OwnerAddress: wallet.Bytes(),
+			Make:         null.StringFrom("Toyota"),
+			Model:        null.StringFrom("Highlander"),
+			Year:         null.IntFrom(2018),
+			MintedAt:     currTime,
+		},
+	}
+
+	for _, v := range vehicles {
+		if err := v.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer()); err != nil {
+			o.NoError(err)
+		}
+	}
+
+	first := 2
+	before := "Mg=="
+	startCrsr := "NA=="
+	endCrsr := "Mw=="
+	res, err := o.repo.GetVehicles(o.ctx, &first, nil, nil, &before, &gmodel.VehiclesFilter{Privileged: wallet})
+	o.NoError(err)
+
+	o.Len(res.Edges, 2)
+	o.Equal(res.TotalCount, 4)
+	o.Equal(res.PageInfo, &gmodel.PageInfo{
+		StartCursor:     &startCrsr,
+		EndCursor:       &endCrsr,
+		HasPreviousPage: false,
+		HasNextPage:     true,
+	})
+	expected := []*gmodel.VehicleEdge{
+		{
+			Node: &gmodel.Vehicle{
+				ID:                "V_kQQ=",
+				TokenID:           4,
+				Owner:             common.BytesToAddress(wallet.Bytes()),
+				MintedAt:          vehicles[3].MintedAt,
+				AftermarketDevice: nil,
+				Privileges:        nil,
+				SyntheticDevice:   nil,
+				Definition: &gmodel.Definition{
+					URI:   nil,
+					Make:  &vehicles[3].Make.String,
+					Model: &vehicles[3].Model.String,
+					Year:  &vehicles[3].Year.Int,
+				},
+			},
+			Cursor: "NA==",
+		},
+		{
+			Node: &gmodel.Vehicle{
+				ID:                "V_kQM=",
+				TokenID:           3,
+				Owner:             common.BytesToAddress(wallet.Bytes()),
+				MintedAt:          vehicles[2].MintedAt,
+				AftermarketDevice: nil,
+				Privileges:        nil,
+				SyntheticDevice:   nil,
+				Definition: &gmodel.Definition{
+					URI:   nil,
+					Make:  &vehicles[2].Make.String,
+					Model: &vehicles[2].Model.String,
+					Year:  &vehicles[2].Year.Int,
+				},
+			},
+			Cursor: "Mw==",
+		},
+	}
 	o.Exactly(expected, res.Edges)
 }

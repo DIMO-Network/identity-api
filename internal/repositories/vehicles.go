@@ -16,6 +16,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/vmihailenco/msgpack/v5"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"golang.org/x/exp/slices"
 )
 
 const (
@@ -78,80 +79,113 @@ func VehicleIDToToken(id string) (int, error) {
 	return pk.TokenID, nil
 }
 
-func (v *Repository) createVehiclesResponse(totalCount int64, vehicles models.VehicleSlice, hasNext bool) *gmodel.VehicleConnection {
-	endCursr := helpers.IDToCursor(vehicles[len(vehicles)-1].ID)
+func (v *Repository) createVehiclesResponse(totalCount int64, vehicles models.VehicleSlice, hasNext bool, hasPrevious bool) *gmodel.VehicleConnection {
+	var endCur, startCur *string
+	if len(vehicles) != 0 {
+		ec := helpers.IDToCursor(vehicles[len(vehicles)-1].ID)
+		endCur = &ec
 
-	var vEdges []*gmodel.VehicleEdge
-	for _, v := range vehicles {
-		edge := &gmodel.VehicleEdge{
+		sc := helpers.IDToCursor(vehicles[0].ID)
+		startCur = &sc
+	}
+
+	edges := make([]*gmodel.VehicleEdge, len(vehicles))
+	for i, v := range vehicles {
+		edges[i] = &gmodel.VehicleEdge{
 			Node:   VehicleToAPI(v),
 			Cursor: helpers.IDToCursor(v.ID),
 		}
-
-		vEdges = append(vEdges, edge)
 	}
 
 	res := &gmodel.VehicleConnection{
-		TotalCount: int(totalCount),
+		Edges: edges,
 		PageInfo: &gmodel.PageInfo{
-			HasNextPage: hasNext,
-			EndCursor:   &endCursr,
+			EndCursor:       endCur,
+			HasNextPage:     hasNext,
+			HasPreviousPage: hasPrevious,
+			StartCursor:     startCur,
 		},
-		Edges: vEdges,
+		TotalCount: int(totalCount),
 	}
 
 	return res
 }
 
-// GetAccessibleVehicles godoc
+const maxPageSize = 100
+
+// GetVehicles godoc
 // @Description gets devices for an owner address
 // @Param addr [common.Address] "eth address of owner"
 // @Param first [*int] "the number of devices to return per page"
 // @Param after [*string] "base64 string representing a device tokenID. This is a pointer to where we start fetching devices from on each page"
 // @Param last [*int] "the number of devices to return from previous pages"
 // @Param before [*string] "base64 string representing a device tokenID. Pointer to where we start fetching devices from previous pages"
-func (v *Repository) GetAccessibleVehicles(ctx context.Context, addr common.Address, first *int, after *string, last *int, before *string) (*gmodel.VehicleConnection, error) {
-	limit := defaultPageSize
+func (v *Repository) GetVehicles(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *gmodel.VehiclesFilter) (*gmodel.VehicleConnection, error) {
+	var limit int
 
 	if first != nil {
+		if last != nil {
+			return nil, errors.New("Pass `first` or `last`, but not both.")
+		}
+		if *first < 0 {
+			return nil, errors.New("The value for `first` cannot be negative.")
+		}
+		if *first > maxPageSize {
+			return nil, fmt.Errorf("The value %d for `first` exceeds the limit %d.", *last, maxPageSize)
+		}
 		limit = *first
-	} else if last != nil {
+	} else {
+		if last == nil {
+			return nil, errors.New("Provide `first` or `last`.")
+		}
+		if *last < 0 {
+			return nil, errors.New("The value for `last` cannot be negative.")
+		}
+		if *last > maxPageSize {
+			return nil, fmt.Errorf("The value %d for `last` exceeds the limit %d.", *last, maxPageSize)
+		}
 		limit = *last
 	}
 
-	queryMods := []qm.QueryMod{
-		qm.Select("DISTINCT ON (" + models.VehicleTableColumns.ID + ") " + helpers.WithSchema(models.TableNames.Vehicles) + ".*"),
-		qm.LeftOuterJoin(
-			helpers.WithSchema(models.TableNames.Privileges) + " ON " + models.VehicleTableColumns.ID + " = " + models.PrivilegeTableColumns.TokenID,
-		),
-		qm.Expr(
-			models.VehicleWhere.OwnerAddress.EQ(addr.Bytes()),
-			qm.Or2(
-				qm.Expr(
-					models.PrivilegeWhere.UserAddress.EQ(addr.Bytes()),
-					models.PrivilegeWhere.ExpiresAt.GTE(time.Now()),
+	var totalCount int64
+	var queryMods []qm.QueryMod
+
+	if filterBy != nil && filterBy.Privileged != nil {
+		addr := *filterBy.Privileged
+		queryMods = []qm.QueryMod{
+			qm.Select("DISTINCT ON (" + models.VehicleTableColumns.ID + ") " + helpers.WithSchema(models.TableNames.Vehicles) + ".*"),
+			qm.LeftOuterJoin(
+				helpers.WithSchema(models.TableNames.Privileges) + " ON " + models.VehicleTableColumns.ID + " = " + models.PrivilegeTableColumns.TokenID,
+			),
+			qm.Expr(
+				models.VehicleWhere.OwnerAddress.EQ(addr.Bytes()),
+				qm.Or2(
+					qm.Expr(
+						models.PrivilegeWhere.UserAddress.EQ(addr.Bytes()),
+						models.PrivilegeWhere.ExpiresAt.GTE(time.Now()),
+					),
 				),
 			),
-		),
-		// Use limit + 1 here to check if there's a next page.
-	}
+		}
 
-	totalCount, err := models.Vehicles(
-		// We're performing this because SQLBoiler doesn't understand DISTINCT ON. If we use
-		// the original version of queryMods the entire SELECT clause will be replaced by
-		// SELECT COUNT(*), and we'll probably over-count the number of vehicles.
-		append([]qm.QueryMod{qm.Distinct(models.VehicleTableColumns.ID)}, queryMods[1:]...)...,
-	).Count(ctx, v.pdb.DBS().Reader)
-	if err != nil {
-		return nil, err
-	}
-
-	if totalCount == 0 {
-		return &gmodel.VehicleConnection{
-			TotalCount: 0,
-			Edges:      []*gmodel.VehicleEdge{},
-			PageInfo:   &gmodel.PageInfo{},
-		}, nil
+		var err error
+		totalCount, err = models.Vehicles(
+			// We're performing this because SQLBoiler doesn't understand DISTINCT ON. If we use
+			// the original version of queryMods the entire SELECT clause will be replaced by
+			// SELECT COUNT(*), and we'll probably over-count the number of vehicles.
+			append([]qm.QueryMod{qm.Distinct(models.VehicleTableColumns.ID)}, queryMods[1:]...)...,
+		).Count(ctx, v.pdb.DBS().Reader)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		// TODO(elffjs): Ugly.
+		queryMods = []qm.QueryMod{}
+		var err error
+		totalCount, err = models.Vehicles().Count(ctx, v.pdb.DBS().Reader)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if after != nil {
@@ -163,9 +197,24 @@ func (v *Repository) GetAccessibleVehicles(ctx context.Context, addr common.Addr
 		queryMods = append(queryMods, models.VehicleWhere.ID.LT(afterID))
 	}
 
+	if before != nil {
+		beforeID, err := helpers.CursorToID(*before)
+		if err != nil {
+			return nil, err
+		}
+
+		queryMods = append(queryMods, models.VehicleWhere.ID.GT(beforeID))
+	}
+
+	orderBy := "DESC"
+	if before != nil {
+		orderBy = "ASC"
+	}
+
 	queryMods = append(queryMods,
+		// Use limit + 1 here to check if there's another page.
 		qm.Limit(limit+1),
-		qm.OrderBy(models.VehicleColumns.ID+" DESC"),
+		qm.OrderBy(models.VehicleColumns.ID+" "+orderBy),
 	)
 
 	all, err := models.Vehicles(queryMods...).All(ctx, v.pdb.DBS().Reader)
@@ -173,19 +222,23 @@ func (v *Repository) GetAccessibleVehicles(ctx context.Context, addr common.Addr
 		return nil, err
 	}
 
-	if len(all) == 0 {
-		return &gmodel.VehicleConnection{
-			TotalCount: int(totalCount),
-			Edges:      []*gmodel.VehicleEdge{},
-		}, nil
-	}
+	// We assume that cursors come from real elements.
+	hasNext := before != nil
+	hasPrevious := after != nil
 
-	hasNext := len(all) > limit
-	if hasNext {
+	if first != nil && len(all) == limit+1 {
+		hasNext = true
+		all = all[:limit]
+	} else if last != nil && len(all) == limit+1 {
+		hasPrevious = true
 		all = all[:limit]
 	}
 
-	return v.createVehiclesResponse(totalCount, all, hasNext), nil
+	if before != nil {
+		slices.Reverse(all)
+	}
+
+	return v.createVehiclesResponse(totalCount, all, hasNext, hasPrevious), nil
 }
 
 func (r *Repository) GetVehicle(ctx context.Context, id int) (*gmodel.Vehicle, error) {

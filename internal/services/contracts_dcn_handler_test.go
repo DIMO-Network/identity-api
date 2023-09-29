@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math/big"
 	"os"
 	"testing"
 	"time"
@@ -21,6 +22,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
 type DCNConsumerTestSuite struct {
@@ -69,7 +71,7 @@ func (o *DCNConsumerTestSuite) Test_NewNode_Consume_Success() {
 	_, wallet, err := test.GenerateWallet()
 	o.NoError(err)
 
-	var eventData = NewDCNNodeEventData{
+	var eventData = NewDCNNodeData{
 		Node:  test.GenerateDCNNode(),
 		Owner: *wallet,
 	}
@@ -109,7 +111,7 @@ func (o *DCNConsumerTestSuite) Test_NewDCNExpiration_Consume_Success() {
 
 	currTime := time.Now().UTC().Truncate(time.Second)
 
-	var eventData = NewDCNExpirationEventData{
+	var eventData = NewDCNExpirationData{
 		Node:       test.GenerateDCNNode(),
 		Expiration: int(currTime.Unix()),
 	}
@@ -158,7 +160,7 @@ func (o *DCNConsumerTestSuite) Test_DCNNameChanged_Consume_Success() {
 	o.NoError(err)
 
 	newName := "SomeMockName"
-	var eventData = DCNNameChangedEventData{
+	var eventData = DCNNameChangedData{
 		Node: test.GenerateDCNNode(),
 		Name: newName,
 	}
@@ -197,4 +199,66 @@ func (o *DCNConsumerTestSuite) Test_DCNNameChanged_Consume_Success() {
 	o.Equal(eventData.Node, dcn[0].Node)
 	o.Equal(owner.Bytes(), dcn[0].OwnerAddress)
 	o.Equal(eventData.Name, dcn[0].Name.String)
+}
+
+func (o *DCNConsumerTestSuite) Test_DCN_VehicleIDChanged_Consume_Success() {
+	cEventData := contractEventData
+	cEventData.EventName = VehicleIdChanged.String()
+	cEventData.Contract = common.HexToAddress("0x60627326F55054Ea448e0a7BC750785bD65EF757")
+
+	_, owner, err := test.GenerateWallet()
+	o.NoError(err)
+
+	_, owner2, err := test.GenerateWallet()
+	o.NoError(err)
+
+	vehicleID := 1
+	var eventData = DCNVehicleIdChangedData{
+		Node:      test.GenerateDCNNode(),
+		VehicleID: big.NewInt(int64(vehicleID)),
+	}
+
+	config := mocks.NewTestConfig()
+	consumer := mocks.NewConsumer(o.T(), config)
+
+	veh := models.Vehicle{
+		ID:           vehicleID,
+		OwnerAddress: owner2.Bytes(),
+	}
+	err = veh.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer())
+	o.NoError(err)
+
+	d := models.DCN{
+		Node:         eventData.Node,
+		OwnerAddress: owner.Bytes(),
+	}
+
+	err = d.Insert(o.ctx, o.pdb.DBS().Writer.DB, boil.Infer())
+	o.NoError(err)
+
+	contractEventConsumer := NewContractsEventsConsumer(o.pdb, &o.logger, &o.settings)
+	expectedBytes := eventBytes(eventData, cEventData, o.T())
+
+	consumer.ExpectConsumePartition(o.settings.ContractsEventTopic, 0, 0).YieldMessage(&sarama.ConsumerMessage{Value: expectedBytes})
+
+	outputTest, err := consumer.ConsumePartition(o.settings.ContractsEventTopic, 0, 0)
+	o.NoError(err)
+
+	m := <-outputTest.Messages()
+	var e shared.CloudEvent[json.RawMessage]
+	err = json.Unmarshal(m.Value, &e)
+	o.NoError(err)
+
+	err = contractEventConsumer.Process(o.ctx, &e)
+	o.NoError(err)
+
+	dcn, err := models.DCNS(
+		qm.Load(qm.Rels(models.DCNRels.Vehicle)),
+	).All(o.ctx, o.pdb.DBS().Reader.DB)
+	o.NoError(err)
+
+	o.Len(dcn, 1)
+	o.Equal(eventData.Node, dcn[0].Node)
+	o.Equal(owner.Bytes(), dcn[0].OwnerAddress)
+	o.Equal(vehicleID, dcn[0].R.Vehicle.ID)
 }

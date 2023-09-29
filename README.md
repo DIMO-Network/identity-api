@@ -1,5 +1,7 @@
 # identity-api
 
+Makefile temporarily offline :)
+
 Run `make` to see some helpful sub-commands:
 
 ```
@@ -20,9 +22,7 @@ flowchart TD
     Vehicle <--> Aftermarket
     Vehicle <--> Synthetic
     Privilege --> Vehicle
-    Vehicle --> User
-    Aftermarket --> User
-    Privilege --> User
+    Vehicle <--> DCN
 ```
 
 - Vehicles
