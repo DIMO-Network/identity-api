@@ -14,7 +14,8 @@ type Node interface {
 }
 
 type AftermarketDevice struct {
-	ID int `json:"id"`
+	ID      string `json:"id"`
+	TokenID int    `json:"tokenId"`
 	// The Ethereum address for the device.
 	Address common.Address `json:"address"`
 	Owner   common.Address `json:"owner"`

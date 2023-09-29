@@ -118,7 +118,8 @@ type VehicleConnection {
 # Aftermarket Types
 
 type AftermarketDevice {
-  id: BigInt!
+  id: ID!
+  tokenId: BigInt!
   """
   The Ethereum address for the device.
   """

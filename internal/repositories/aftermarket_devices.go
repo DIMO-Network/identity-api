@@ -1,7 +1,9 @@
 package repositories
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 
@@ -9,6 +11,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/vmihailenco/msgpack/v5"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"golang.org/x/exp/slices"
@@ -164,9 +167,20 @@ func (r *Repository) GetAftermarketDevice(ctx context.Context, by gmodel.Afterma
 	return AftermarketDeviceToAPI(ad), nil
 }
 
+type aftermarketDevicePrimaryKey struct {
+	TokenID int
+}
+
 func AftermarketDeviceToAPI(d *models.AftermarketDevice) *gmodel.AftermarketDevice {
+	var b bytes.Buffer
+	e := msgpack.NewEncoder(&b)
+	e.UseArrayEncodedStructs(true)
+
+	_ = e.Encode(aftermarketDevicePrimaryKey{TokenID: d.ID})
+
 	return &gmodel.AftermarketDevice{
-		ID:          d.ID,
+		ID:          "AD_" + base64.StdEncoding.EncodeToString(b.Bytes()),
+		TokenID:     d.ID,
 		Address:     common.BytesToAddress(d.Address),
 		Owner:       common.BytesToAddress(d.Owner),
 		Serial:      d.Serial.Ptr(),
