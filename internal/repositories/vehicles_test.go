@@ -126,7 +126,8 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Success() {
 	expected := []*gmodel.VehicleEdge{
 		{
 			Node: &gmodel.Vehicle{
-				ID:       2,
+				ID:       "V_kQI=",
+				TokenID:  2,
 				Owner:    common.BytesToAddress(wallet.Bytes()),
 				MintedAt: vehicles[1].MintedAt,
 				Definition: &gmodel.Definition{
@@ -140,7 +141,8 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Success() {
 		},
 		{
 			Node: &gmodel.Vehicle{
-				ID:       1,
+				ID:       "V_kQE=",
+				TokenID:  1,
 				Owner:    common.BytesToAddress(wallet.Bytes()),
 				MintedAt: vehicles[0].MintedAt,
 				Definition: &gmodel.Definition{
@@ -204,7 +206,8 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination(
 	expected := []*gmodel.VehicleEdge{
 		{
 			Node: &gmodel.Vehicle{
-				ID:       2,
+				ID:       "V_kQI=",
+				TokenID:  2,
 				Owner:    common.BytesToAddress(wallet.Bytes()),
 				MintedAt: vehicles[1].MintedAt,
 				Definition: &gmodel.Definition{
@@ -269,7 +272,8 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 	expected := []*gmodel.VehicleEdge{
 		{
 			Node: &gmodel.Vehicle{
-				ID:       1,
+				ID:       "V_kQE=",
+				TokenID:  1,
 				Owner:    common.BytesToAddress(wallet.Bytes()),
 				MintedAt: vehicles[0].MintedAt,
 				Definition: &gmodel.Definition{
@@ -352,7 +356,8 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_OwnedByUser
 	expected := []*gmodel.VehicleEdge{
 		{
 			Node: &gmodel.Vehicle{
-				ID:       2,
+				ID:       "V_kQI=",
+				TokenID:  2,
 				Owner:    common.BytesToAddress(wallet2.Bytes()),
 				MintedAt: vehicles[1].MintedAt,
 				Definition: &gmodel.Definition{
@@ -366,7 +371,8 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_OwnedByUser
 		},
 		{
 			Node: &gmodel.Vehicle{
-				ID:       1,
+				ID:       "V_kQE=",
+				TokenID:  1,
 				Owner:    common.BytesToAddress(wallet.Bytes()),
 				MintedAt: vehicles[0].MintedAt,
 				Definition: &gmodel.Definition{
@@ -456,7 +462,8 @@ func (o *AccessibleVehiclesRepoTestSuite) TestVehiclesMultiplePrivsOnOne() {
 	expected := []*gmodel.VehicleEdge{
 		{
 			Node: &gmodel.Vehicle{
-				ID:       2,
+				ID:       "V_kQI=",
+				TokenID:  2,
 				Owner:    common.BytesToAddress(wallet2.Bytes()),
 				MintedAt: vehicles[1].MintedAt,
 				Definition: &gmodel.Definition{
@@ -470,7 +477,8 @@ func (o *AccessibleVehiclesRepoTestSuite) TestVehiclesMultiplePrivsOnOne() {
 		},
 		{
 			Node: &gmodel.Vehicle{
-				ID:       1,
+				ID:       "V_kQE=",
+				TokenID:  1,
 				Owner:    common.BytesToAddress(wallet.Bytes()),
 				MintedAt: vehicles[0].MintedAt,
 				Definition: &gmodel.Definition{
@@ -551,7 +559,8 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 	expected := []*gmodel.VehicleEdge{
 		{
 			Node: &gmodel.Vehicle{
-				ID:                3,
+				ID:                "V_kQM=",
+				TokenID:           3,
 				Owner:             common.BytesToAddress(wallet.Bytes()),
 				MintedAt:          vehicles[2].MintedAt,
 				AftermarketDevice: nil,
@@ -568,7 +577,8 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 		},
 		{
 			Node: &gmodel.Vehicle{
-				ID:                2,
+				ID:                "V_kQI=",
+				TokenID:           2,
 				Owner:             common.BytesToAddress(wallet.Bytes()),
 				MintedAt:          vehicles[1].MintedAt,
 				AftermarketDevice: nil,
@@ -657,7 +667,8 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 	expected := []*gmodel.VehicleEdge{
 		{
 			Node: &gmodel.Vehicle{
-				ID:                2,
+				ID:                "V_kQI=",
+				TokenID:           2,
 				Owner:             common.BytesToAddress(wallet.Bytes()),
 				MintedAt:          vehicles[0].MintedAt,
 				AftermarketDevice: nil,
@@ -740,7 +751,8 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 	expected := []*gmodel.VehicleEdge{
 		{
 			Node: &gmodel.Vehicle{
-				ID:                3,
+				ID:                "V_kQM=",
+				TokenID:           3,
 				Owner:             common.BytesToAddress(wallet.Bytes()),
 				MintedAt:          vehicles[2].MintedAt,
 				AftermarketDevice: nil,
@@ -757,7 +769,8 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 		},
 		{
 			Node: &gmodel.Vehicle{
-				ID:                2,
+				ID:                "V_kQI=",
+				TokenID:           2,
 				Owner:             common.BytesToAddress(wallet.Bytes()),
 				MintedAt:          vehicles[1].MintedAt,
 				AftermarketDevice: nil,
@@ -840,7 +853,8 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 	expected := []*gmodel.VehicleEdge{
 		{
 			Node: &gmodel.Vehicle{
-				ID:                4,
+				ID:                "V_kQQ=",
+				TokenID:           4,
 				Owner:             common.BytesToAddress(wallet.Bytes()),
 				MintedAt:          vehicles[3].MintedAt,
 				AftermarketDevice: nil,
@@ -857,7 +871,8 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 		},
 		{
 			Node: &gmodel.Vehicle{
-				ID:                3,
+				ID:                "V_kQM=",
+				TokenID:           3,
 				Owner:             common.BytesToAddress(wallet.Bytes()),
 				MintedAt:          vehicles[2].MintedAt,
 				AftermarketDevice: nil,

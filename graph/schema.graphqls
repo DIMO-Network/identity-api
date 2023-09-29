@@ -41,6 +41,8 @@ input AftermarketDevicesFilter {
 }
 
 type Query {
+  node(id: ID!): Node
+
   vehicles(
     first: Int
     after: String
@@ -65,6 +67,10 @@ type Query {
 
 # Shared Types
 
+interface Node {
+  id: ID!
+}
+
 type PageInfo {
   startCursor: String
   endCursor: String
@@ -74,8 +80,9 @@ type PageInfo {
 
 # Vehicles Types
 
-type Vehicle {
-  id: BigInt!
+type Vehicle implements Node {
+  id: ID!
+  tokenId: BigInt!
   owner: Address!
   mintedAt: Time!
   aftermarketDevice: AftermarketDevice

@@ -12,8 +12,8 @@ type PaginationHelper[T any] struct{}
 func (p PaginationHelper[T]) EncodeCursor(cursor T) (string, error) {
 	var b bytes.Buffer
 	e := msgpack.NewEncoder(&b)
-
 	e.UseArrayEncodedStructs(true)
+
 	if err := e.Encode(cursor); err != nil {
 		return "", err
 	}

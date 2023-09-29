@@ -8,6 +8,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+type Node interface {
+	IsNode()
+	GetID() string
+}
+
 type AftermarketDevice struct {
 	ID int `json:"id"`
 	// The Ethereum address for the device.
@@ -110,7 +115,8 @@ type SyntheticDevice struct {
 }
 
 type Vehicle struct {
-	ID                int                   `json:"id"`
+	ID                string                `json:"id"`
+	TokenID           int                   `json:"tokenId"`
 	Owner             common.Address        `json:"owner"`
 	MintedAt          time.Time             `json:"mintedAt"`
 	AftermarketDevice *AftermarketDevice    `json:"aftermarketDevice,omitempty"`
@@ -119,6 +125,9 @@ type Vehicle struct {
 	Definition        *Definition           `json:"definition,omitempty"`
 	Dcn               *Dcn                  `json:"dcn,omitempty"`
 }
+
+func (Vehicle) IsNode()            {}
+func (this Vehicle) GetID() string { return this.ID }
 
 type VehicleConnection struct {
 	TotalCount int            `json:"totalCount"`
