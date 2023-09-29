@@ -31,7 +31,6 @@ input AftermarketDeviceBy @oneOf {
   serial: String
 }
 
-
 input VehiclesFilter {
   privileged: Address
 }
@@ -50,6 +49,7 @@ type Query {
     before: String
     filterBy: VehiclesFilter
   ): VehicleConnection!
+
   aftermarketDevices(
     first: Int
     after: String
@@ -58,7 +58,7 @@ type Query {
     filterBy: AftermarketDevicesFilter
   ): AftermarketDeviceConnection!
 
-  vehicle(id: Int!): Vehicle!
+  vehicle(tokenId: BigInt!): Vehicle!
 
   aftermarketDevice(by: AftermarketDeviceBy!): AftermarketDevice!
 

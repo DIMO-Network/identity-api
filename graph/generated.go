@@ -119,7 +119,7 @@ type ComplexityRoot struct {
 		AftermarketDevices func(childComplexity int, first *int, after *string, last *int, before *string, filterBy *model.AftermarketDevicesFilter) int
 		Dcn                func(childComplexity int, by model.DCNBy) int
 		Node               func(childComplexity int, id string) int
-		Vehicle            func(childComplexity int, id int) int
+		Vehicle            func(childComplexity int, tokenID int) int
 		Vehicles           func(childComplexity int, first *int, after *string, last *int, before *string, filterBy *model.VehiclesFilter) int
 	}
 
@@ -164,7 +164,7 @@ type QueryResolver interface {
 	Node(ctx context.Context, id string) (model.Node, error)
 	Vehicles(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.VehiclesFilter) (*model.VehicleConnection, error)
 	AftermarketDevices(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.AftermarketDevicesFilter) (*model.AftermarketDeviceConnection, error)
-	Vehicle(ctx context.Context, id int) (*model.Vehicle, error)
+	Vehicle(ctx context.Context, tokenID int) (*model.Vehicle, error)
 	AftermarketDevice(ctx context.Context, by model.AftermarketDeviceBy) (*model.AftermarketDevice, error)
 	Dcn(ctx context.Context, by model.DCNBy) (*model.Dcn, error)
 }
@@ -501,7 +501,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Vehicle(childComplexity, args["id"].(int)), true
+		return e.complexity.Query.Vehicle(childComplexity, args["tokenId"].(int)), true
 
 	case "Query.vehicles":
 		if e.complexity.Query.Vehicles == nil {
@@ -874,14 +874,14 @@ func (ec *executionContext) field_Query_vehicle_args(ctx context.Context, rawArg
 	var err error
 	args := map[string]interface{}{}
 	var arg0 int
-	if tmp, ok := rawArgs["id"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+	if tmp, ok := rawArgs["tokenId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokenId"))
+		arg0, err = ec.unmarshalNBigInt2int(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["id"] = arg0
+	args["tokenId"] = arg0
 	return args, nil
 }
 
@@ -2856,7 +2856,7 @@ func (ec *executionContext) _Query_vehicle(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Vehicle(rctx, fc.Args["id"].(int))
+		return ec.resolvers.Query().Vehicle(rctx, fc.Args["tokenId"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

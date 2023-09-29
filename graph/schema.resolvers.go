@@ -53,8 +53,8 @@ func (r *queryResolver) AftermarketDevices(ctx context.Context, first *int, afte
 }
 
 // Vehicle is the resolver for the vehicle field.
-func (r *queryResolver) Vehicle(ctx context.Context, id int) (*model.Vehicle, error) {
-	return r.Repo.GetVehicle(ctx, id)
+func (r *queryResolver) Vehicle(ctx context.Context, tokenID int) (*model.Vehicle, error) {
+	return r.Repo.GetVehicle(ctx, tokenID)
 }
 
 // AftermarketDevice is the resolver for the aftermarketDevice field.
