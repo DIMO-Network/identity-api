@@ -14,208 +14,538 @@ An integer of arbitrary precision, decimal-encoded. Typically a uint256.
 scalar BigInt
 
 """
-A general byte representation
+A general byte representation.
 """
 scalar Bytes
 
+"""
 directive @oneOf on INPUT_OBJECT
+"""
+directive @oneOf(
+  """
+  Indicates the input object can accept multiple input types, providing flexibility in querying.
+  """
+  on INPUT_OBJECT
+)
 
+"""
+An input object used for querying, with the ability to filter based on different criteria related to a DCN (Domain Communication Network).
+"""
 input DCNBy @oneOf {
+  """
+  The bytes representation of the DCN node.
+  """
   node: Bytes
+
+  """
+  The name of the DCN.
+  """
   name: String
 }
 
+"""
+An input object used for querying aftermarket devices, with the ability to filter based on different criteria.
+"""
 input AftermarketDeviceBy @oneOf {
+  """
+  The unique identifier of the aftermarket device.
+  """
   id: BigInt
+
+  """
+  The Ethereum address of the aftermarket device.
+  """
   address: Address
+
+  """
+  The serial number of the aftermarket device.
+  """
   serial: String
 }
 
+"""
+An input object used for filtering vehicles in queries.
+"""
 input VehiclesFilter {
+  """
+  The privileged user's Ethereum address.
+  """
   privileged: Address
 }
 
+"""
+An input object used for filtering aftermarket devices in queries.
+"""
 input AftermarketDevicesFilter {
+  """
+  The owner's Ethereum address.
+  """
   owner: Address
 }
 
+"""
+Root query type for GraphQL API.
+"""
 type Query {
+  """
+  Retrieve a node by its unique ID.
+  """
   node(id: ID!): Node
 
+  """
+  Retrieve a list of vehicles based on various filters.
+  """
   vehicles(
+    """
+    The maximum number of items to return.
+    """
     first: Int
+
+    """
+    A cursor for pagination, indicating the starting point for fetching data.
+    """
     after: String
+
+    """
+    The maximum number of items to return in the reverse direction.
+    """
     last: Int
+
+    """
+    A cursor for pagination, indicating the starting point for fetching data in the reverse direction.
+    """
     before: String
+
+    """
+    Additional filters for querying vehicles.
+    """
     filterBy: VehiclesFilter
   ): VehicleConnection!
 
+  """
+  Retrieve a list of aftermarket devices based on various filters.
+  """
   aftermarketDevices(
+    """
+    The maximum number of items to return.
+    """
     first: Int
+
+    """
+    A cursor for pagination, indicating the starting point for fetching data.
+    """
     after: String
+
+    """
+    The maximum number of items to return in the reverse direction.
+    """
     last: Int
+
+    """
+    A cursor for pagination, indicating the starting point for fetching data in the reverse direction.
+    """
     before: String
+
+    """
+    Additional filters for querying aftermarket devices.
+    """
     filterBy: AftermarketDevicesFilter
   ): AftermarketDeviceConnection!
 
+  """
+  Retrieve a vehicle by its unique token ID.
+  """
   vehicle(tokenId: BigInt!): Vehicle!
 
+  """
+  Retrieve an aftermarket device by specific criteria.
+  """
   aftermarketDevice(by: AftermarketDeviceBy!): AftermarketDevice!
 
+  """
+  Retrieve a DCN (Domain Communication Network) by specific criteria.
+  """
   dcn(by: DCNBy!): DCN!
 }
 
 # Shared Types
 
+"""
+An interface representing a node with a unique ID.
+"""
 interface Node {
+  """
+  The unique identifier of the node.
+  """
   id: ID!
 }
 
+"""
+Represents pagination information for a list of items.
+"""
 type PageInfo {
+  """
+  The cursor for the first item in the current page.
+  """
   startCursor: String
+
+  """
+  The cursor for the last item in the current page.
+  """
   endCursor: String
+
+  """
+  Indicates whether there are previous pages.
+  """
   hasPreviousPage: Boolean!
+
+  """
+  Indicates whether there are more pages to fetch.
+  """
   hasNextPage: Boolean!
 }
 
 # Vehicles Types
 
+"""
+Represents a vehicle with various attributes.
+"""
 type Vehicle implements Node {
+  """
+  The unique identifier of the vehicle.
+  """
   id: ID!
+
+  """
+  The unique token ID of the vehicle.
+  """
   tokenId: BigInt!
+
+  """
+  The Ethereum address of the vehicle owner.
+  """
   owner: Address!
+
+  """
+  The timestamp when the vehicle was minted.
+  """
   mintedAt: Time!
+
+  """
+  The aftermarket device associated with the vehicle.
+  """
   aftermarketDevice: AftermarketDevice
+
+  """
+  Retrieve privileges associated with the vehicle.
+  """
   privileges(
+    """
+    The maximum number of privilege items to return.
+    """
     first: Int
+
+    """
+    A cursor for pagination, indicating the starting point for fetching data.
+    """
     after: String
+
+    """
+    The maximum number of privilege items to return in the reverse direction.
+    """
     last: Int
+
+    """
+    A cursor for pagination, indicating the starting point for fetching data in the reverse direction.
+    """
     before: String
   ): PrivilegesConnection!
+
+  """
+  The synthetic device associated with the vehicle.
+  """
   syntheticDevice: SyntheticDevice
+
+  """
+  The definition of the vehicle, including make, model, year, and URI.
+  """
   definition: Definition
+
+  """
+  The DCN (Domain Communication Network) associated with the vehicle.
+  """
   dcn: DCN
 }
 
+"""
+Represents the definition of a vehicle, including make, model, year, and URI.
+"""
 type Definition {
+  """
+  The URI of the vehicle definition.
+  """
   uri: String
+
+  """
+  The make of the vehicle.
+  """
   make: String
+
+  """
+  The model of the vehicle.
+  """
   model: String
+
+  """
+  The year of the vehicle.
+  """
   year: Int
 }
 
+"""
+Represents an edge in a connection of vehicles.
+"""
 type VehicleEdge {
+  """
+  The vehicle node associated with the edge.
+  """
   node: Vehicle!
+
+  """
+  The cursor representing the position of the edge in the connection.
+  """
   cursor: String!
 }
 
+"""
+Represents a connection of vehicles.
+"""
 type VehicleConnection {
+  """
+  The total number of vehicles in the connection.
+  """
   totalCount: Int!
+
+  """
+  The list of edges representing vehicles in the connection.
+  """
   edges: [VehicleEdge!]!
+
+  """
+  Pagination information for the vehicle connection.
+  """
   pageInfo: PageInfo!
 }
 
 # Aftermarket Types
 
+"""
+Represents an aftermarket device with various attributes.
+"""
 type AftermarketDevice {
-  id: ID!
-  tokenId: BigInt!
   """
-  The Ethereum address for the device.
+  The unique identifier of the aftermarket device.
+  """
+  id: ID!
+
+  """
+  The unique token ID of the aftermarket device.
+  """
+  tokenId: BigInt!
+
+  """
+  The Ethereum address of the aftermarket device.
   """
   address: Address!
+
+  """
+  The Ethereum address of the owner of the aftermarket device.
+  """
   owner: Address!
+
+  """
+  The serial number of the aftermarket device.
+  """
   serial: String
+
   """
   The International Mobile Equipment Identity (IMEI) for the device.
   """
   imei: String
+
   """
-  The time at which this device was minted.
+  The timestamp when the aftermarket device was minted.
   """
   mintedAt: Time!
+
   """
-  The vehicle, if any, with which the device is paired.
+  The vehicle associated with the aftermarket device, if any.
   """
   vehicle: Vehicle
+
   """
-  The beneficiary for this device, who receives any associated rewards. Defaults to the owner.
+  The Ethereum address of the beneficiary for this device, who receives any associated rewards. Defaults to the owner.
   """
   beneficiary: Address!
 }
 
+"""
+Represents a connection of aftermarket devices.
+"""
 type AftermarketDeviceConnection {
+  """
+  The total number of aftermarket devices in the connection.
+  """
   totalCount: Int!
+
+  """
+  The list of edges representing aftermarket devices in the connection.
+  """
   edges: [AftermarketDeviceEdge!]!
+
+  """
+  Pagination information for the aftermarket device connection.
+  """
   pageInfo: PageInfo!
 }
 
+"""
+Represents an edge in a connection of aftermarket devices.
+"""
 type AftermarketDeviceEdge {
+  """
+  The cursor representing the position of the edge in the connection.
+  """
   cursor: String!
+
+  """
+  The aftermarket device node associated with the edge.
+  """
   node: AftermarketDevice!
 }
 
 # Privileges Types
 
+"""
+Represents a privilege with various attributes.
+"""
 type Privilege {
-  id: Int!
   """
-  The user holding the privilege.
+  The unique identifier of the privilege.
+  """
+  id: Int!
+
+  """
+  The Ethereum address of the user holding the privilege.
   """
   user: Address!
+
   """
-  When this privilege was last set.
+  The timestamp when the privilege was last set.
   """
   setAt: Time!
+
   """
-  The time at which the privilege expires.
+  The timestamp when the privilege expires.
   """
   expiresAt: Time!
 }
 
+"""
+Represents an edge in a connection of privileges.
+"""
 type PrivilegeEdge {
+  """
+  The privilege node associated with the edge.
+  """
   node: Privilege!
+
+  """
+  The cursor representing the position of the edge in the connection.
+  """
   cursor: String!
 }
 
+"""
+Represents a connection of privileges.
+"""
 type PrivilegesConnection {
+  """
+  The total number of privileges in the connection.
+  """
   totalCount: Int!
+
+  """
+  The list of edges representing privileges in the connection.
+  """
   edges: [PrivilegeEdge!]!
+
+  """
+  Pagination information for the privilege connection.
+  """
   pageInfo: PageInfo!
 }
 
 # SyntheticDevice Types
 
+"""
+Represents a synthetic device with various attributes.
+"""
 type SyntheticDevice {
+  """
+  The unique token ID of the synthetic device.
+  """
   id: BigInt!
+
+  """
+  The unique integration ID of the synthetic device.
+  """
   integrationId: BigInt!
+
+  """
+  The Ethereum address of the synthetic device.
+  """
   address: Address!
+
+  """
+  The timestamp when the synthetic device was minted.
+  """
   mintedAt: Time!
 }
 
+# DCN Types
+
+"""
+Represents a DCN (Domain Communication Network) with various attributes.
+"""
 type DCN {
   """
   The namehash of the domain.
   """
   node: Bytes!
+
   """
   ETH address of domain owner.
   """
   owner: Address!
+
   """
   The block timestamp at which the domain will cease to be valid.
   """
   expiresAt: Time
+
   """
   The block timestamp of when the domain was created.
   """
   mintedAt: Time!
+
   """
-  Human readable name of the domain.
+  Human-readable name of the domain.
   """
   name: String
+
   """
-  Device the domain is attached to.
+  The vehicle associated with the domain, if any.
   """
   vehicle: Vehicle
 }
