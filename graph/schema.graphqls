@@ -20,16 +20,13 @@ scalar Bytes
 
 """
 directive @oneOf on INPUT_OBJECT
+
+Indicates that the input object can accept multiple input types, providing flexibility in querying.
 """
-directive @oneOf(
-  """
-  Indicates the input object can accept multiple input types, providing flexibility in querying.
-  """
-  on INPUT_OBJECT
-)
+directive @oneOf on INPUT_OBJECT
 
 """
-An input object used for querying, with the ability to filter based on different criteria related to a DCN (Domain Communication Network).
+An input object used for querying, with the ability to filter based on different criteria related to a DCN (DIMO Canonical Name).
 """
 input DCNBy @oneOf {
   """
@@ -38,7 +35,7 @@ input DCNBy @oneOf {
   node: Bytes
 
   """
-  The name of the DCN.
+  The name of the DCN (e.g., reddy.dimo).
   """
   name: String
 }
@@ -163,7 +160,7 @@ type Query {
   aftermarketDevice(by: AftermarketDeviceBy!): AftermarketDevice!
 
   """
-  Retrieve a DCN (Domain Communication Network) by specific criteria.
+  Retrieve a DCN (DIMO Canonical Name) by specific criteria.
   """
   dcn(by: DCNBy!): DCN!
 }
@@ -272,7 +269,7 @@ type Vehicle implements Node {
   definition: Definition
 
   """
-  The DCN (Domain Communication Network) associated with the vehicle.
+  The DCN (DIMO Canonical Name) associated with the vehicle.
   """
   dcn: DCN
 }
@@ -516,7 +513,7 @@ type SyntheticDevice {
 # DCN Types
 
 """
-Represents a DCN (Domain Communication Network) with various attributes.
+Represents a DIMO Canonical Name (DCN) with various attributes.
 """
 type DCN {
   """
@@ -540,7 +537,7 @@ type DCN {
   mintedAt: Time!
 
   """
-  Human-readable name of the domain.
+  Human-readable name of the domain (e.g., reddy.dimo).
   """
   name: String
 
