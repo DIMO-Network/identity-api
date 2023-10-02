@@ -1,10 +1,11 @@
 """
-A point in time, encoded per RFC-3999.
+A point in time, encoded per RFC-3999. Typically these will be in second precision,
+just like the blockchain, and in UTC.
 """
 scalar Time
 
 """
-A 20-byte Ethereum address, encoded as a hex string with 0x prefix and checksummed.
+A 20-byte Ethereum address, encoded as a checksummed hex string with 0x prefix.
 """
 scalar Address
 
@@ -14,10 +15,14 @@ An integer of arbitrary precision, decimal-encoded. Typically a uint256.
 scalar BigInt
 
 """
-A general byte representation
+An array of byte, encoded as a lowercase hex string with 0x prefix.
 """
 scalar Bytes
 
+"""
+This directive on an input object indicates that a client must specify one of the
+fields of the object and no others. Typically used for lookups.
+"""
 directive @oneOf on INPUT_OBJECT
 
 input DCNBy @oneOf {
@@ -32,15 +37,24 @@ input AftermarketDeviceBy @oneOf {
 }
 
 input VehiclesFilter {
+  """
+  Filter for vehicles to which the given address has access. This includes vehicles
+  that this address owns.
+  """
   privileged: Address
 }
 
 input AftermarketDevicesFilter {
+  """
+  Filter for aftermarket devices owned by this address.
+  """
   owner: Address
 }
 
 type Query {
   node(id: ID!): Node
+
+  vehicle(tokenId: BigInt!): Vehicle!
 
   vehicles(
     first: Int
@@ -50,6 +64,8 @@ type Query {
     filterBy: VehiclesFilter
   ): VehicleConnection!
 
+  aftermarketDevice(by: AftermarketDeviceBy!): AftermarketDevice!
+
   aftermarketDevices(
     first: Int
     after: String
@@ -57,10 +73,6 @@ type Query {
     before: String
     filterBy: AftermarketDevicesFilter
   ): AftermarketDeviceConnection!
-
-  vehicle(tokenId: BigInt!): Vehicle!
-
-  aftermarketDevice(by: AftermarketDeviceBy!): AftermarketDevice!
 
   dcn(by: DCNBy!): DCN!
 }
@@ -81,18 +93,43 @@ type PageInfo {
 # Vehicles Types
 
 type Vehicle implements Node {
+  """
+  An opaque global identifier for this vehicle.
+  """
   id: ID!
+  """
+  The ERC-721 token id for the vehicle.
+  """
   tokenId: BigInt!
+  """
+  The Ethereum address of the owner of this vehicle.
+  """
   owner: Address!
+  """
+  The block timestamp at which this vehicle was minted.
+  """
   mintedAt: Time!
+  """
+  The paired aftermarket device, if any.
+  """
   aftermarketDevice: AftermarketDevice
+  """
+  A Relay-style connection listing any active privilege grants on this vehicle.
+  """
   privileges(
     first: Int
     after: String
     last: Int
     before: String
   ): PrivilegesConnection!
+  """
+  The paired synthetic device, if any.
+  """
   syntheticDevice: SyntheticDevice
+  """
+  The device definition for this vehicle; which includes make, model, and year among
+  other things.
+  """
   definition: Definition
   dcn: DCN
 }
@@ -118,20 +155,33 @@ type VehicleConnection {
 # Aftermarket Types
 
 type AftermarketDevice {
+  """
+  An opaque global identifier for this aftermarket device.
+  """
   id: ID!
+  """
+  The ERC-721 token id for the device.
+  """
   tokenId: BigInt!
   """
   The Ethereum address for the device.
   """
   address: Address!
+  """
+  The Ethereum address of the owner of the device.
+  """
   owner: Address!
+  """
+  The serial number on the side of the device. For AutoPis this is a UUID; for Macarons it is
+  a long decimal number.
+  """
   serial: String
   """
   The International Mobile Equipment Identity (IMEI) for the device.
   """
   imei: String
   """
-  The time at which this device was minted.
+  The block timestamp at which this device was minted.
   """
   mintedAt: Time!
   """
@@ -164,11 +214,11 @@ type Privilege {
   """
   user: Address!
   """
-  When this privilege was last set.
+  When this privilege was last set for this user.
   """
   setAt: Time!
   """
-  The time at which the privilege expires.
+  The block timestamp at which the privilege expires.
   """
   expiresAt: Time!
 }
@@ -193,13 +243,17 @@ type SyntheticDevice {
   mintedAt: Time!
 }
 
+"""
+Represents a DIMO Canonical Name. Typically these are human-readable labels for
+vehicles.
+"""
 type DCN {
   """
   The namehash of the domain.
   """
   node: Bytes!
   """
-  ETH address of domain owner.
+  Ethereum address of domain owner.
   """
   owner: Address!
   """
@@ -207,15 +261,15 @@ type DCN {
   """
   expiresAt: Time
   """
-  The block timestamp of when the domain was created.
+  The block timestamp at which the domain was created.
   """
   mintedAt: Time!
   """
-  Human readable name of the domain.
+  Human readable name, if any, for the domain; for example, "reddy.dimo".
   """
   name: String
   """
-  Device the domain is attached to.
+  Vehicle, if any, to which the domain is attached.
   """
   vehicle: Vehicle
 }

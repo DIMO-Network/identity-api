@@ -42,24 +42,24 @@ func (r *queryResolver) Node(ctx context.Context, id string) (model.Node, error)
 	return nil, errors.New("unrecognized global id")
 }
 
-// Vehicles is the resolver for the vehicles field.
-func (r *queryResolver) Vehicles(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.VehiclesFilter) (*model.VehicleConnection, error) {
-	return r.Repo.GetVehicles(ctx, first, after, last, before, filterBy)
-}
-
-// AftermarketDevices is the resolver for the aftermarketDevices field.
-func (r *queryResolver) AftermarketDevices(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.AftermarketDevicesFilter) (*model.AftermarketDeviceConnection, error) {
-	return r.Repo.GetAftermarketDevices(ctx, first, after, last, before, filterBy)
-}
-
 // Vehicle is the resolver for the vehicle field.
 func (r *queryResolver) Vehicle(ctx context.Context, tokenID int) (*model.Vehicle, error) {
 	return r.Repo.GetVehicle(ctx, tokenID)
 }
 
+// Vehicles is the resolver for the vehicles field.
+func (r *queryResolver) Vehicles(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.VehiclesFilter) (*model.VehicleConnection, error) {
+	return r.Repo.GetVehicles(ctx, first, after, last, before, filterBy)
+}
+
 // AftermarketDevice is the resolver for the aftermarketDevice field.
 func (r *queryResolver) AftermarketDevice(ctx context.Context, by model.AftermarketDeviceBy) (*model.AftermarketDevice, error) {
 	return r.Repo.GetAftermarketDevice(ctx, by)
+}
+
+// AftermarketDevices is the resolver for the aftermarketDevices field.
+func (r *queryResolver) AftermarketDevices(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.AftermarketDevicesFilter) (*model.AftermarketDeviceConnection, error) {
+	return r.Repo.GetAftermarketDevices(ctx, first, after, last, before, filterBy)
 }
 
 // Dcn is the resolver for the dcn field.

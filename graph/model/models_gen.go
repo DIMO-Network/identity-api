@@ -14,15 +14,20 @@ type Node interface {
 }
 
 type AftermarketDevice struct {
-	ID      string `json:"id"`
-	TokenID int    `json:"tokenId"`
+	// An opaque global identifier for this aftermarket device.
+	ID string `json:"id"`
+	// The ERC-721 token id for the device.
+	TokenID int `json:"tokenId"`
 	// The Ethereum address for the device.
 	Address common.Address `json:"address"`
-	Owner   common.Address `json:"owner"`
-	Serial  *string        `json:"serial,omitempty"`
+	// The Ethereum address of the owner of the device.
+	Owner common.Address `json:"owner"`
+	// The serial number on the side of the device. For AutoPis this is a UUID; for Macarons it is
+	// a long decimal number.
+	Serial *string `json:"serial,omitempty"`
 	// The International Mobile Equipment Identity (IMEI) for the device.
 	Imei *string `json:"imei,omitempty"`
-	// The time at which this device was minted.
+	// The block timestamp at which this device was minted.
 	MintedAt time.Time `json:"mintedAt"`
 	// The vehicle, if any, with which the device is paired.
 	Vehicle *Vehicle `json:"vehicle,omitempty"`
@@ -49,21 +54,24 @@ type AftermarketDeviceEdge struct {
 }
 
 type AftermarketDevicesFilter struct {
+	// Filter for aftermarket devices owned by this address.
 	Owner *common.Address `json:"owner,omitempty"`
 }
 
+// Represents a DIMO Canonical Name. Typically these are human-readable labels for
+// vehicles.
 type Dcn struct {
 	// The namehash of the domain.
 	Node []byte `json:"node"`
-	// ETH address of domain owner.
+	// Ethereum address of domain owner.
 	Owner common.Address `json:"owner"`
 	// The block timestamp at which the domain will cease to be valid.
 	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
-	// The block timestamp of when the domain was created.
+	// The block timestamp at which the domain was created.
 	MintedAt time.Time `json:"mintedAt"`
-	// Human readable name of the domain.
+	// Human readable name, if any, for the domain; for example, "reddy.dimo".
 	Name *string `json:"name,omitempty"`
-	// Device the domain is attached to.
+	// Vehicle, if any, to which the domain is attached.
 	Vehicle   *Vehicle `json:"vehicle,omitempty"`
 	VehicleID *int     `json:"-"`
 }
@@ -91,9 +99,9 @@ type Privilege struct {
 	ID int `json:"id"`
 	// The user holding the privilege.
 	User common.Address `json:"user"`
-	// When this privilege was last set.
+	// When this privilege was last set for this user.
 	SetAt time.Time `json:"setAt"`
-	// The time at which the privilege expires.
+	// The block timestamp at which the privilege expires.
 	ExpiresAt time.Time `json:"expiresAt"`
 }
 
@@ -116,15 +124,24 @@ type SyntheticDevice struct {
 }
 
 type Vehicle struct {
-	ID                string                `json:"id"`
-	TokenID           int                   `json:"tokenId"`
-	Owner             common.Address        `json:"owner"`
-	MintedAt          time.Time             `json:"mintedAt"`
-	AftermarketDevice *AftermarketDevice    `json:"aftermarketDevice,omitempty"`
-	Privileges        *PrivilegesConnection `json:"privileges"`
-	SyntheticDevice   *SyntheticDevice      `json:"syntheticDevice,omitempty"`
-	Definition        *Definition           `json:"definition,omitempty"`
-	Dcn               *Dcn                  `json:"dcn,omitempty"`
+	// An opaque global identifier for this vehicle.
+	ID string `json:"id"`
+	// The ERC-721 token id for the vehicle.
+	TokenID int `json:"tokenId"`
+	// The Ethereum address of the owner of this vehicle.
+	Owner common.Address `json:"owner"`
+	// The block timestamp at which this vehicle was minted.
+	MintedAt time.Time `json:"mintedAt"`
+	// The paired aftermarket device, if any.
+	AftermarketDevice *AftermarketDevice `json:"aftermarketDevice,omitempty"`
+	// A Relay-style connection listing any active privilege grants on this vehicle.
+	Privileges *PrivilegesConnection `json:"privileges"`
+	// The paired synthetic device, if any.
+	SyntheticDevice *SyntheticDevice `json:"syntheticDevice,omitempty"`
+	// The device definition for this vehicle; which includes make, model, and year among
+	// other things.
+	Definition *Definition `json:"definition,omitempty"`
+	Dcn        *Dcn        `json:"dcn,omitempty"`
 }
 
 func (Vehicle) IsNode()            {}
@@ -142,5 +159,7 @@ type VehicleEdge struct {
 }
 
 type VehiclesFilter struct {
+	// Filter for vehicles to which the given address has access. This includes vehicles
+	// that this address owns.
 	Privileged *common.Address `json:"privileged,omitempty"`
 }
