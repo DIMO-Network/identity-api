@@ -1,4 +1,4 @@
-### Show all of my vehicles
+### Page through my vehicles
 
 ```graphql
 {
@@ -71,3 +71,31 @@ There are 22 total cars in this list and we're only showing 10. To see the next 
   }
 }
 ```
+
+### What's paired with my devices?
+
+```graphql
+{
+  aftermarketDevices(
+    filterBy: {owner: "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"}
+    first: 10
+  ) {
+    edges {
+      node {
+        tokenId
+        vehicle {
+          tokenId
+          owner
+        }
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    totalCount
+  }
+}
+```
+
+Here we follow the link from device to attached vehicle, if any, to see the token id any attached vehicle as well as the owner.
