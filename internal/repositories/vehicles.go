@@ -63,7 +63,7 @@ func VehicleIDToToken(id string) (int, error) {
 		return 0, errors.New("id lacks the V_ prefix")
 	}
 
-	id = id[2:]
+	id = strings.TrimPrefix(id, "V_")
 
 	b, err := base64.StdEncoding.DecodeString(id)
 	if err != nil {

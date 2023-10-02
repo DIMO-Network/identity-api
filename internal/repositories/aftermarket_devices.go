@@ -197,7 +197,7 @@ func AftermarketDeviceIDToToken(id string) (int, error) {
 		return 0, errors.New("id lacks the AD_ prefix")
 	}
 
-	id = id[2:]
+	id = strings.TrimPrefix(id, "AD_")
 
 	b, err := base64.StdEncoding.DecodeString(id)
 	if err != nil {
