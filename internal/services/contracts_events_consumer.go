@@ -182,7 +182,7 @@ func (c *ContractsEventsConsumer) handleVehicleAttributeSetEvent(ctx context.Con
 	case "Make", "Model", "Year":
 		c.log.Debug().Str("Attribute", args.Attribute).Msg("ignoring MMY attributes")
 		return nil
-	case "Definition URI":
+	case "DefinitionURI":
 		res, err := c.httpClient.Get(args.Info)
 		if err != nil {
 			return err
