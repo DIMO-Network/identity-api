@@ -35,7 +35,7 @@ func main() {
 		logger.Fatal().Err(err).Msg("Couldn't load settings.")
 	}
 
-	logger.Info().Msgf("Loaded configuration. Addresses: Registry %s, Vehicle %s.", settings.DIMORegistryAddr, settings.VehicleNFTAddr)
+	logger.Info().Msgf("Loaded configuration. Addresses: Registry %s, Vehicle %s, Aftermarket Device %s.", settings.DIMORegistryAddr, settings.VehicleNFTAddr, settings.AftermarketDeviceAddr)
 
 	if len(os.Args) > 1 && os.Args[1] == "migrate" {
 		command := "up"
