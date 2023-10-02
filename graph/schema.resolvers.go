@@ -39,7 +39,16 @@ func (r *queryResolver) Node(ctx context.Context, id string) (model.Node, error)
 		}
 		return r.Repo.GetVehicle(ctx, ti)
 	}
-	return nil, errors.New("unrecognized global id")
+
+	if strings.HasPrefix(id, "AD_") {
+		ti, err := repositories.AftermarketDeviceIDToToken(id)
+		if err != nil {
+			return nil, err
+		}
+		return r.Repo.GetAftermarketDevice(ctx, model.AftermarketDeviceBy{ID: &ti})
+	}
+
+	return nil, errors.New("Unrecognized global id.")
 }
 
 // Vehicle is the resolver for the vehicle field.

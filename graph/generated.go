@@ -6141,6 +6141,13 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Vehicle(ctx, sel, obj)
+	case model.AftermarketDevice:
+		return ec._AftermarketDevice(ctx, sel, &obj)
+	case *model.AftermarketDevice:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._AftermarketDevice(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -6150,7 +6157,7 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 
 // region    **************************** object.gotpl ****************************
 
-var aftermarketDeviceImplementors = []string{"AftermarketDevice"}
+var aftermarketDeviceImplementors = []string{"AftermarketDevice", "Node"}
 
 func (ec *executionContext) _AftermarketDevice(ctx context.Context, sel ast.SelectionSet, obj *model.AftermarketDevice) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, aftermarketDeviceImplementors)

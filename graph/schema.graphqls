@@ -154,7 +154,7 @@ type VehicleConnection {
 
 # Aftermarket Types
 
-type AftermarketDevice {
+type AftermarketDevice implements Node {
   """
   An opaque global identifier for this aftermarket device.
   """

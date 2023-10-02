@@ -36,6 +36,9 @@ type AftermarketDevice struct {
 	VehicleID   *int           `json:"-"`
 }
 
+func (AftermarketDevice) IsNode()            {}
+func (this AftermarketDevice) GetID() string { return this.ID }
+
 type AftermarketDeviceBy struct {
 	ID      *int            `json:"id,omitempty"`
 	Address *common.Address `json:"address,omitempty"`

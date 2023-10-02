@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"strings"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
@@ -189,6 +190,27 @@ func AftermarketDeviceToAPI(d *models.AftermarketDevice) *gmodel.AftermarketDevi
 		VehicleID:   d.VehicleID.Ptr(),
 		MintedAt:    d.MintedAt,
 	}
+}
+
+func AftermarketDeviceIDToToken(id string) (int, error) {
+	if !strings.HasPrefix(id, "AD_") {
+		return 0, errors.New("id lacks the AD_ prefix")
+	}
+
+	id = id[2:]
+
+	b, err := base64.StdEncoding.DecodeString(id)
+	if err != nil {
+		return 0, err
+	}
+
+	var pk aftermarketDevicePrimaryKey
+	d := msgpack.NewDecoder(bytes.NewBuffer(b))
+	if err := d.Decode(&pk); err != nil {
+		return 0, fmt.Errorf("error decoding vehicle id: %w", err)
+	}
+
+	return pk.TokenID, nil
 }
 
 func countTrue(ps ...bool) int {
