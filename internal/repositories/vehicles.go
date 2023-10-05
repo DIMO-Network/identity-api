@@ -55,6 +55,7 @@ func VehicleToAPI(v *models.Vehicle) *gmodel.Vehicle {
 			Model: v.Model.Ptr(),
 			Year:  v.Year.Ptr(),
 		},
+		ManufacturerID: v.ManufacturerID.Ptr(),
 	}
 }
 

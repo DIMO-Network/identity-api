@@ -120,3 +120,6 @@ models:
         resolver: true
       dcn:
         resolver: true
+    extraFields:
+      ManufacturerID:
+        type: "*int"
