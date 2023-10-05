@@ -108,6 +108,8 @@ models:
     extraFields:
       VehicleID:
         type: "*int"
+      ManufacturerID:
+        type: "*int"
   Vehicle:
     fields:
       manufacturer:

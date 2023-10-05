@@ -34,8 +34,9 @@ type AftermarketDevice struct {
 	// The vehicle, if any, with which the device is paired.
 	Vehicle *Vehicle `json:"vehicle,omitempty"`
 	// The beneficiary for this device, who receives any associated rewards. Defaults to the owner.
-	Beneficiary common.Address `json:"beneficiary"`
-	VehicleID   *int           `json:"-"`
+	Beneficiary    common.Address `json:"beneficiary"`
+	ManufacturerID *int           `json:"-"`
+	VehicleID      *int           `json:"-"`
 }
 
 func (AftermarketDevice) IsNode()            {}

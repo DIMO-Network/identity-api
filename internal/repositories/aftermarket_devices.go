@@ -180,15 +180,16 @@ func AftermarketDeviceToAPI(d *models.AftermarketDevice) *gmodel.AftermarketDevi
 	_ = e.Encode(aftermarketDevicePrimaryKey{TokenID: d.ID})
 
 	return &gmodel.AftermarketDevice{
-		ID:          "AD_" + base64.StdEncoding.EncodeToString(b.Bytes()),
-		TokenID:     d.ID,
-		Address:     common.BytesToAddress(d.Address),
-		Owner:       common.BytesToAddress(d.Owner),
-		Serial:      d.Serial.Ptr(),
-		Imei:        d.Imei.Ptr(),
-		Beneficiary: common.BytesToAddress(d.Beneficiary),
-		VehicleID:   d.VehicleID.Ptr(),
-		MintedAt:    d.MintedAt,
+		ID:             "AD_" + base64.StdEncoding.EncodeToString(b.Bytes()),
+		TokenID:        d.ID,
+		Address:        common.BytesToAddress(d.Address),
+		Owner:          common.BytesToAddress(d.Owner),
+		Serial:         d.Serial.Ptr(),
+		Imei:           d.Imei.Ptr(),
+		Beneficiary:    common.BytesToAddress(d.Beneficiary),
+		VehicleID:      d.VehicleID.Ptr(),
+		MintedAt:       d.MintedAt,
+		ManufacturerID: d.ManufacturerID.Ptr(),
 	}
 }
 
