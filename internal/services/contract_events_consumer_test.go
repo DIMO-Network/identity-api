@@ -693,7 +693,7 @@ func TestHandle_DefinitionUriAttribute_Event_Success(t *testing.T) {
 	tkID := big.NewInt(1)
 	eventData := VehicleAttributeSetData{
 		TokenID:   tkID,
-		Attribute: "Definition URI",
+		Attribute: "DefinitionURI",
 		Info:      mockDefUri,
 	}
 	settings := config.Settings{
