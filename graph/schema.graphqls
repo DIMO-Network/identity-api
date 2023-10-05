@@ -54,18 +54,34 @@ input AftermarketDevicesFilter {
 type Query {
   node(id: ID!): Node
 
+  """
+  View a particular vehicle.
+  """
   vehicle(tokenId: BigInt!): Vehicle!
 
+  """
+  List minted vehicles.
+
+  For now, these are always ordered by token id, descending.
+  """
   vehicles(
     first: Int
     after: String
     last: Int
     before: String
+    """
+    Restrict the vehicles that are shown.
+    """
     filterBy: VehiclesFilter
   ): VehicleConnection!
 
   aftermarketDevice(by: AftermarketDeviceBy!): AftermarketDevice!
 
+  """
+  List aftermarket devices.
+
+  For now, these are always ordered by token id, descending.
+  """
   aftermarketDevices(
     first: Int
     after: String
