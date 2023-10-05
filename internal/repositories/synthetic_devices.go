@@ -34,5 +34,6 @@ func ManufacturerToAPI(m *models.Manufacturer) *gmodel.Manufacturer {
 		ID: "M_" + base64.StdEncoding.EncodeToString(b.Bytes()), TokenID: m.ID,
 		Owner:    common.BytesToAddress(m.Owner),
 		MintedAt: m.MintedAt,
+		Name:     m.Name,
 	}
 }
