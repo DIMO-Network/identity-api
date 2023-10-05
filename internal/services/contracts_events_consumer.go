@@ -31,6 +31,7 @@ var zeroAddress common.Address
 const (
 	Transfer                      EventName = "Transfer"
 	VehicleAttributeSet           EventName = "VehicleAttributeSet"
+	ManufacturerNodeMinted        EventName = "ManufacturerNodeMinted"
 	AftermarketDeviceAttributeSet EventName = "AftermarketDeviceAttributeSet"
 	PrivilegeSet                  EventName = "PrivilegeSet"
 	AftermarketDevicePaired       EventName = "AftermarketDevicePaired"
@@ -90,8 +91,12 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 	switch data.Contract {
 	case registryAddr:
 		switch eventName {
+		case ManufacturerNodeMinted:
+			return c.handleManufacturerNodeMintedEvent(ctx, &data)
+
 		case VehicleAttributeSet:
 			return c.handleVehicleAttributeSetEvent(ctx, &data)
+
 		case AftermarketDeviceNodeMinted:
 			return c.handleAftermarketDeviceMintedEvent(ctx, &data)
 		case AftermarketDeviceAttributeSet:
@@ -102,6 +107,7 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 			return c.handleAftermarketDeviceUnpairedEvent(ctx, &data)
 		case BeneficiarySetEvent:
 			return c.handleBeneficiarySetEvent(ctx, &data)
+
 		case SyntheticDeviceNodeMinted:
 			return c.handleSyntheticDeviceNodeMintedEvent(ctx, &data)
 		case SyntheticDeviceNodeBurned:
@@ -139,6 +145,22 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 	c.log.Debug().Str("event", data.EventName).Msg("Handler not provided for event.")
 
 	return nil
+}
+
+func (c *ContractsEventsConsumer) handleManufacturerNodeMintedEvent(ctx context.Context, e *ContractEventData) error {
+	var args ManufacturerNodeMintedData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	mfr := models.Manufacturer{
+		ID:       int(args.TokenID.Int64()),
+		Name:     args.Name,
+		Owner:    args.Owner.Bytes(),
+		MintedAt: e.Block.Time,
+	}
+
+	return mfr.Upsert(ctx, c.dbs.DBS().Writer, false, []string{models.ManufacturerColumns.ID}, boil.None(), boil.Infer())
 }
 
 func (c *ContractsEventsConsumer) handleAftermarketDeviceMintedEvent(ctx context.Context, e *ContractEventData) error {
