@@ -103,11 +103,15 @@ models:
     fields:
       vehicle:
         resolver: true
+      manufacturer:
+        resolver: true
     extraFields:
       VehicleID:
         type: "*int"
   Vehicle:
     fields:
+      manufacturer:
+        resolver: true
       aftermarketDevice:
         resolver: true
       privileges:

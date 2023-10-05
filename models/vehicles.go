@@ -24,81 +24,90 @@ import (
 
 // Vehicle is an object representing the database table.
 type Vehicle struct {
-	ID            int         `boil:"id" json:"id" toml:"id" yaml:"id"`
-	OwnerAddress  []byte      `boil:"owner_address" json:"owner_address" toml:"owner_address" yaml:"owner_address"`
-	Make          null.String `boil:"make" json:"make,omitempty" toml:"make" yaml:"make,omitempty"`
-	Model         null.String `boil:"model" json:"model,omitempty" toml:"model" yaml:"model,omitempty"`
-	Year          null.Int    `boil:"year" json:"year,omitempty" toml:"year" yaml:"year,omitempty"`
-	MintedAt      time.Time   `boil:"minted_at" json:"minted_at" toml:"minted_at" yaml:"minted_at"`
-	DefinitionURI null.String `boil:"definition_uri" json:"definition_uri,omitempty" toml:"definition_uri" yaml:"definition_uri,omitempty"`
+	ID             int         `boil:"id" json:"id" toml:"id" yaml:"id"`
+	OwnerAddress   []byte      `boil:"owner_address" json:"owner_address" toml:"owner_address" yaml:"owner_address"`
+	Make           null.String `boil:"make" json:"make,omitempty" toml:"make" yaml:"make,omitempty"`
+	Model          null.String `boil:"model" json:"model,omitempty" toml:"model" yaml:"model,omitempty"`
+	Year           null.Int    `boil:"year" json:"year,omitempty" toml:"year" yaml:"year,omitempty"`
+	MintedAt       time.Time   `boil:"minted_at" json:"minted_at" toml:"minted_at" yaml:"minted_at"`
+	DefinitionURI  null.String `boil:"definition_uri" json:"definition_uri,omitempty" toml:"definition_uri" yaml:"definition_uri,omitempty"`
+	ManufacturerID null.Int    `boil:"manufacturer_id" json:"manufacturer_id,omitempty" toml:"manufacturer_id" yaml:"manufacturer_id,omitempty"`
 
 	R *vehicleR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L vehicleL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var VehicleColumns = struct {
-	ID            string
-	OwnerAddress  string
-	Make          string
-	Model         string
-	Year          string
-	MintedAt      string
-	DefinitionURI string
+	ID             string
+	OwnerAddress   string
+	Make           string
+	Model          string
+	Year           string
+	MintedAt       string
+	DefinitionURI  string
+	ManufacturerID string
 }{
-	ID:            "id",
-	OwnerAddress:  "owner_address",
-	Make:          "make",
-	Model:         "model",
-	Year:          "year",
-	MintedAt:      "minted_at",
-	DefinitionURI: "definition_uri",
+	ID:             "id",
+	OwnerAddress:   "owner_address",
+	Make:           "make",
+	Model:          "model",
+	Year:           "year",
+	MintedAt:       "minted_at",
+	DefinitionURI:  "definition_uri",
+	ManufacturerID: "manufacturer_id",
 }
 
 var VehicleTableColumns = struct {
-	ID            string
-	OwnerAddress  string
-	Make          string
-	Model         string
-	Year          string
-	MintedAt      string
-	DefinitionURI string
+	ID             string
+	OwnerAddress   string
+	Make           string
+	Model          string
+	Year           string
+	MintedAt       string
+	DefinitionURI  string
+	ManufacturerID string
 }{
-	ID:            "vehicles.id",
-	OwnerAddress:  "vehicles.owner_address",
-	Make:          "vehicles.make",
-	Model:         "vehicles.model",
-	Year:          "vehicles.year",
-	MintedAt:      "vehicles.minted_at",
-	DefinitionURI: "vehicles.definition_uri",
+	ID:             "vehicles.id",
+	OwnerAddress:   "vehicles.owner_address",
+	Make:           "vehicles.make",
+	Model:          "vehicles.model",
+	Year:           "vehicles.year",
+	MintedAt:       "vehicles.minted_at",
+	DefinitionURI:  "vehicles.definition_uri",
+	ManufacturerID: "vehicles.manufacturer_id",
 }
 
 // Generated where
 
 var VehicleWhere = struct {
-	ID            whereHelperint
-	OwnerAddress  whereHelper__byte
-	Make          whereHelpernull_String
-	Model         whereHelpernull_String
-	Year          whereHelpernull_Int
-	MintedAt      whereHelpertime_Time
-	DefinitionURI whereHelpernull_String
+	ID             whereHelperint
+	OwnerAddress   whereHelper__byte
+	Make           whereHelpernull_String
+	Model          whereHelpernull_String
+	Year           whereHelpernull_Int
+	MintedAt       whereHelpertime_Time
+	DefinitionURI  whereHelpernull_String
+	ManufacturerID whereHelpernull_Int
 }{
-	ID:            whereHelperint{field: "\"identity_api\".\"vehicles\".\"id\""},
-	OwnerAddress:  whereHelper__byte{field: "\"identity_api\".\"vehicles\".\"owner_address\""},
-	Make:          whereHelpernull_String{field: "\"identity_api\".\"vehicles\".\"make\""},
-	Model:         whereHelpernull_String{field: "\"identity_api\".\"vehicles\".\"model\""},
-	Year:          whereHelpernull_Int{field: "\"identity_api\".\"vehicles\".\"year\""},
-	MintedAt:      whereHelpertime_Time{field: "\"identity_api\".\"vehicles\".\"minted_at\""},
-	DefinitionURI: whereHelpernull_String{field: "\"identity_api\".\"vehicles\".\"definition_uri\""},
+	ID:             whereHelperint{field: "\"identity_api\".\"vehicles\".\"id\""},
+	OwnerAddress:   whereHelper__byte{field: "\"identity_api\".\"vehicles\".\"owner_address\""},
+	Make:           whereHelpernull_String{field: "\"identity_api\".\"vehicles\".\"make\""},
+	Model:          whereHelpernull_String{field: "\"identity_api\".\"vehicles\".\"model\""},
+	Year:           whereHelpernull_Int{field: "\"identity_api\".\"vehicles\".\"year\""},
+	MintedAt:       whereHelpertime_Time{field: "\"identity_api\".\"vehicles\".\"minted_at\""},
+	DefinitionURI:  whereHelpernull_String{field: "\"identity_api\".\"vehicles\".\"definition_uri\""},
+	ManufacturerID: whereHelpernull_Int{field: "\"identity_api\".\"vehicles\".\"manufacturer_id\""},
 }
 
 // VehicleRels is where relationship names are stored.
 var VehicleRels = struct {
+	Manufacturer      string
 	AftermarketDevice string
 	DCNS              string
 	TokenPrivileges   string
 	SyntheticDevices  string
 }{
+	Manufacturer:      "Manufacturer",
 	AftermarketDevice: "AftermarketDevice",
 	DCNS:              "DCNS",
 	TokenPrivileges:   "TokenPrivileges",
@@ -107,6 +116,7 @@ var VehicleRels = struct {
 
 // vehicleR is where relationships are stored.
 type vehicleR struct {
+	Manufacturer      *Manufacturer        `boil:"Manufacturer" json:"Manufacturer" toml:"Manufacturer" yaml:"Manufacturer"`
 	AftermarketDevice *AftermarketDevice   `boil:"AftermarketDevice" json:"AftermarketDevice" toml:"AftermarketDevice" yaml:"AftermarketDevice"`
 	DCNS              DCNSlice             `boil:"DCNS" json:"DCNS" toml:"DCNS" yaml:"DCNS"`
 	TokenPrivileges   PrivilegeSlice       `boil:"TokenPrivileges" json:"TokenPrivileges" toml:"TokenPrivileges" yaml:"TokenPrivileges"`
@@ -116,6 +126,13 @@ type vehicleR struct {
 // NewStruct creates a new relationship struct
 func (*vehicleR) NewStruct() *vehicleR {
 	return &vehicleR{}
+}
+
+func (r *vehicleR) GetManufacturer() *Manufacturer {
+	if r == nil {
+		return nil
+	}
+	return r.Manufacturer
 }
 
 func (r *vehicleR) GetAftermarketDevice() *AftermarketDevice {
@@ -150,9 +167,9 @@ func (r *vehicleR) GetSyntheticDevices() SyntheticDeviceSlice {
 type vehicleL struct{}
 
 var (
-	vehicleAllColumns            = []string{"id", "owner_address", "make", "model", "year", "minted_at", "definition_uri"}
+	vehicleAllColumns            = []string{"id", "owner_address", "make", "model", "year", "minted_at", "definition_uri", "manufacturer_id"}
 	vehicleColumnsWithoutDefault = []string{"id", "owner_address", "minted_at"}
-	vehicleColumnsWithDefault    = []string{"make", "model", "year", "definition_uri"}
+	vehicleColumnsWithDefault    = []string{"make", "model", "year", "definition_uri", "manufacturer_id"}
 	vehiclePrimaryKeyColumns     = []string{"id"}
 	vehicleGeneratedColumns      = []string{}
 )
@@ -435,6 +452,17 @@ func (q vehicleQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (bo
 	return count > 0, nil
 }
 
+// Manufacturer pointed to by the foreign key.
+func (o *Vehicle) Manufacturer(mods ...qm.QueryMod) manufacturerQuery {
+	queryMods := []qm.QueryMod{
+		qm.Where("\"id\" = ?", o.ManufacturerID),
+	}
+
+	queryMods = append(queryMods, mods...)
+
+	return Manufacturers(queryMods...)
+}
+
 // AftermarketDevice pointed to by the foreign key.
 func (o *Vehicle) AftermarketDevice(mods ...qm.QueryMod) aftermarketDeviceQuery {
 	queryMods := []qm.QueryMod{
@@ -486,6 +514,130 @@ func (o *Vehicle) SyntheticDevices(mods ...qm.QueryMod) syntheticDeviceQuery {
 	)
 
 	return SyntheticDevices(queryMods...)
+}
+
+// LoadManufacturer allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for an N-1 relationship.
+func (vehicleL) LoadManufacturer(ctx context.Context, e boil.ContextExecutor, singular bool, maybeVehicle interface{}, mods queries.Applicator) error {
+	var slice []*Vehicle
+	var object *Vehicle
+
+	if singular {
+		var ok bool
+		object, ok = maybeVehicle.(*Vehicle)
+		if !ok {
+			object = new(Vehicle)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeVehicle)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeVehicle))
+			}
+		}
+	} else {
+		s, ok := maybeVehicle.(*[]*Vehicle)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeVehicle)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeVehicle))
+			}
+		}
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &vehicleR{}
+		}
+		if !queries.IsNil(object.ManufacturerID) {
+			args = append(args, object.ManufacturerID)
+		}
+
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &vehicleR{}
+			}
+
+			for _, a := range args {
+				if queries.Equal(a, obj.ManufacturerID) {
+					continue Outer
+				}
+			}
+
+			if !queries.IsNil(obj.ManufacturerID) {
+				args = append(args, obj.ManufacturerID)
+			}
+
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`identity_api.manufacturers`),
+		qm.WhereIn(`identity_api.manufacturers.id in ?`, args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load Manufacturer")
+	}
+
+	var resultSlice []*Manufacturer
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice Manufacturer")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results of eager load for manufacturers")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for manufacturers")
+	}
+
+	if len(manufacturerAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+
+	if len(resultSlice) == 0 {
+		return nil
+	}
+
+	if singular {
+		foreign := resultSlice[0]
+		object.R.Manufacturer = foreign
+		if foreign.R == nil {
+			foreign.R = &manufacturerR{}
+		}
+		foreign.R.Vehicles = append(foreign.R.Vehicles, object)
+		return nil
+	}
+
+	for _, local := range slice {
+		for _, foreign := range resultSlice {
+			if queries.Equal(local.ManufacturerID, foreign.ID) {
+				local.R.Manufacturer = foreign
+				if foreign.R == nil {
+					foreign.R = &manufacturerR{}
+				}
+				foreign.R.Vehicles = append(foreign.R.Vehicles, local)
+				break
+			}
+		}
+	}
+
+	return nil
 }
 
 // LoadAftermarketDevice allows an eager lookup of values, cached into the
@@ -944,6 +1096,86 @@ func (vehicleL) LoadSyntheticDevices(ctx context.Context, e boil.ContextExecutor
 		}
 	}
 
+	return nil
+}
+
+// SetManufacturer of the vehicle to the related item.
+// Sets o.R.Manufacturer to related.
+// Adds o to related.R.Vehicles.
+func (o *Vehicle) SetManufacturer(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Manufacturer) error {
+	var err error
+	if insert {
+		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
+			return errors.Wrap(err, "failed to insert into foreign table")
+		}
+	}
+
+	updateQuery := fmt.Sprintf(
+		"UPDATE \"identity_api\".\"vehicles\" SET %s WHERE %s",
+		strmangle.SetParamNames("\"", "\"", 1, []string{"manufacturer_id"}),
+		strmangle.WhereClause("\"", "\"", 2, vehiclePrimaryKeyColumns),
+	)
+	values := []interface{}{related.ID, o.ID}
+
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, updateQuery)
+		fmt.Fprintln(writer, values)
+	}
+	if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	queries.Assign(&o.ManufacturerID, related.ID)
+	if o.R == nil {
+		o.R = &vehicleR{
+			Manufacturer: related,
+		}
+	} else {
+		o.R.Manufacturer = related
+	}
+
+	if related.R == nil {
+		related.R = &manufacturerR{
+			Vehicles: VehicleSlice{o},
+		}
+	} else {
+		related.R.Vehicles = append(related.R.Vehicles, o)
+	}
+
+	return nil
+}
+
+// RemoveManufacturer relationship.
+// Sets o.R.Manufacturer to nil.
+// Removes o from all passed in related items' relationships struct.
+func (o *Vehicle) RemoveManufacturer(ctx context.Context, exec boil.ContextExecutor, related *Manufacturer) error {
+	var err error
+
+	queries.SetScanner(&o.ManufacturerID, nil)
+	if _, err = o.Update(ctx, exec, boil.Whitelist("manufacturer_id")); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	if o.R != nil {
+		o.R.Manufacturer = nil
+	}
+	if related == nil || related.R == nil {
+		return nil
+	}
+
+	for i, ri := range related.R.Vehicles {
+		if queries.Equal(o.ManufacturerID, ri.ManufacturerID) {
+			continue
+		}
+
+		ln := len(related.R.Vehicles)
+		if ln > 1 && i < ln-1 {
+			related.R.Vehicles[i] = related.R.Vehicles[ln-1]
+		}
+		related.R.Vehicles = related.R.Vehicles[:ln-1]
+		break
+	}
 	return nil
 }
 

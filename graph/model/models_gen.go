@@ -18,6 +18,8 @@ type AftermarketDevice struct {
 	ID string `json:"id"`
 	// The ERC-721 token id for the device.
 	TokenID int `json:"tokenId"`
+	// The manufacturer of this aftermarket device.
+	Manufacturer *Manufacturer `json:"manufacturer,omitempty"`
 	// The Ethereum address for the device.
 	Address common.Address `json:"address"`
 	// The Ethereum address of the owner of the device.
@@ -91,6 +93,22 @@ type Definition struct {
 	Year  *int    `json:"year,omitempty"`
 }
 
+type Manufacturer struct {
+	// An opaque global identifier for this manufacturer.
+	ID string `json:"id"`
+	// The ERC-721 token id for the manufacturer.
+	TokenID int `json:"tokenId"`
+	// The name of the manufacturer.
+	Name string `json:"name"`
+	// The Ethereum address of the owner of this manufacturer.
+	Owner common.Address `json:"owner"`
+	// The block timestamp at which this manufacturer was minted.
+	MintedAt time.Time `json:"mintedAt"`
+}
+
+func (Manufacturer) IsNode()            {}
+func (this Manufacturer) GetID() string { return this.ID }
+
 type PageInfo struct {
 	StartCursor     *string `json:"startCursor,omitempty"`
 	EndCursor       *string `json:"endCursor,omitempty"`
@@ -131,6 +149,8 @@ type Vehicle struct {
 	ID string `json:"id"`
 	// The ERC-721 token id for the vehicle.
 	TokenID int `json:"tokenId"`
+	// The manufacturer of this vehicle.
+	Manufacturer *Manufacturer `json:"manufacturer,omitempty"`
 	// The Ethereum address of the owner of this vehicle.
 	Owner common.Address `json:"owner"`
 	// The block timestamp at which this vehicle was minted.

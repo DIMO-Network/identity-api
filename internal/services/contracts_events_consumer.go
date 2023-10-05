@@ -37,6 +37,7 @@ const (
 	AftermarketDevicePaired       EventName = "AftermarketDevicePaired"
 	AftermarketDeviceUnpaired     EventName = "AftermarketDeviceUnpaired"
 	BeneficiarySetEvent           EventName = "BeneficiarySet"
+	VehicleNodeMinted             EventName = "VehicleNodeMinted"
 	AftermarketDeviceNodeMinted   EventName = "AftermarketDeviceNodeMinted"
 	SyntheticDeviceNodeMinted     EventName = "SyntheticDeviceNodeMinted"
 	SyntheticDeviceNodeBurned     EventName = "SyntheticDeviceNodeBurned"
@@ -94,6 +95,8 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 		case ManufacturerNodeMinted:
 			return c.handleManufacturerNodeMintedEvent(ctx, &data)
 
+		case VehicleNodeMinted:
+			return c.handleVehicleNodeMintedEvent(ctx, &data)
 		case VehicleAttributeSet:
 			return c.handleVehicleAttributeSetEvent(ctx, &data)
 
@@ -163,6 +166,31 @@ func (c *ContractsEventsConsumer) handleManufacturerNodeMintedEvent(ctx context.
 	return mfr.Upsert(ctx, c.dbs.DBS().Writer, false, []string{models.ManufacturerColumns.ID}, boil.None(), boil.Infer())
 }
 
+func (c *ContractsEventsConsumer) handleVehicleNodeMintedEvent(ctx context.Context, e *ContractEventData) error {
+	var args VehicleNodeMintedData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	v := models.Vehicle{
+		ID:             int(args.TokenID.Int64()),
+		OwnerAddress:   args.Owner.Bytes(),
+		MintedAt:       e.Block.Time,
+		ManufacturerID: null.IntFrom(int(args.ManufacturerID.Int64())),
+	}
+
+	cols := models.VehicleColumns
+
+	return v.Upsert(
+		ctx,
+		c.dbs.DBS().Writer,
+		false,
+		[]string{cols.ID},
+		boil.None(),
+		boil.Whitelist(cols.ID, cols.OwnerAddress, cols.MintedAt),
+	)
+}
+
 func (c *ContractsEventsConsumer) handleAftermarketDeviceMintedEvent(ctx context.Context, e *ContractEventData) error {
 	var args AftermarketDeviceNodeMintedData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
@@ -170,11 +198,12 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceMintedEvent(ctx context
 	}
 
 	ad := models.AftermarketDevice{
-		ID:          int(args.TokenID.Int64()),
-		Address:     args.AftermarketDeviceAddress.Bytes(),
-		Owner:       args.Owner.Bytes(),
-		MintedAt:    e.Block.Time,
-		Beneficiary: args.Owner.Bytes(),
+		ID:             int(args.TokenID.Int64()),
+		Address:        args.AftermarketDeviceAddress.Bytes(),
+		Owner:          args.Owner.Bytes(),
+		MintedAt:       e.Block.Time,
+		Beneficiary:    args.Owner.Bytes(),
+		ManufacturerID: null.IntFrom(int(args.ManufacturerID.Int64())),
 	}
 
 	cols := models.AftermarketDeviceColumns

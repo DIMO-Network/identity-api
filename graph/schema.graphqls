@@ -106,6 +106,29 @@ type PageInfo {
   hasNextPage: Boolean!
 }
 
+type Manufacturer implements Node {
+  """
+  An opaque global identifier for this manufacturer.
+  """
+  id: ID!
+  """
+  The ERC-721 token id for the manufacturer.
+  """
+  tokenId: BigInt!
+  """
+  The name of the manufacturer.
+  """
+  name: String!
+  """
+  The Ethereum address of the owner of this manufacturer.
+  """
+  owner: Address!
+  """
+  The block timestamp at which this manufacturer was minted.
+  """
+  mintedAt: Time!
+}
+
 # Vehicles Types
 
 type Vehicle implements Node {
@@ -117,6 +140,10 @@ type Vehicle implements Node {
   The ERC-721 token id for the vehicle.
   """
   tokenId: BigInt!
+  """
+  The manufacturer of this vehicle.
+  """
+  manufacturer: Manufacturer
   """
   The Ethereum address of the owner of this vehicle.
   """
@@ -179,6 +206,10 @@ type AftermarketDevice implements Node {
   The ERC-721 token id for the device.
   """
   tokenId: BigInt!
+  """
+  The manufacturer of this aftermarket device.
+  """
+  manufacturer: Manufacturer
   """
   The Ethereum address for the device.
   """

@@ -99,15 +99,36 @@ var ManufacturerWhere = struct {
 
 // ManufacturerRels is where relationship names are stored.
 var ManufacturerRels = struct {
-}{}
+	AftermarketDevices string
+	Vehicles           string
+}{
+	AftermarketDevices: "AftermarketDevices",
+	Vehicles:           "Vehicles",
+}
 
 // manufacturerR is where relationships are stored.
 type manufacturerR struct {
+	AftermarketDevices AftermarketDeviceSlice `boil:"AftermarketDevices" json:"AftermarketDevices" toml:"AftermarketDevices" yaml:"AftermarketDevices"`
+	Vehicles           VehicleSlice           `boil:"Vehicles" json:"Vehicles" toml:"Vehicles" yaml:"Vehicles"`
 }
 
 // NewStruct creates a new relationship struct
 func (*manufacturerR) NewStruct() *manufacturerR {
 	return &manufacturerR{}
+}
+
+func (r *manufacturerR) GetAftermarketDevices() AftermarketDeviceSlice {
+	if r == nil {
+		return nil
+	}
+	return r.AftermarketDevices
+}
+
+func (r *manufacturerR) GetVehicles() VehicleSlice {
+	if r == nil {
+		return nil
+	}
+	return r.Vehicles
 }
 
 // manufacturerL is where Load methods for each relationship are stored.
@@ -397,6 +418,516 @@ func (q manufacturerQuery) Exists(ctx context.Context, exec boil.ContextExecutor
 	}
 
 	return count > 0, nil
+}
+
+// AftermarketDevices retrieves all the aftermarket_device's AftermarketDevices with an executor.
+func (o *Manufacturer) AftermarketDevices(mods ...qm.QueryMod) aftermarketDeviceQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"identity_api\".\"aftermarket_devices\".\"manufacturer_id\"=?", o.ID),
+	)
+
+	return AftermarketDevices(queryMods...)
+}
+
+// Vehicles retrieves all the vehicle's Vehicles with an executor.
+func (o *Manufacturer) Vehicles(mods ...qm.QueryMod) vehicleQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"identity_api\".\"vehicles\".\"manufacturer_id\"=?", o.ID),
+	)
+
+	return Vehicles(queryMods...)
+}
+
+// LoadAftermarketDevices allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (manufacturerL) LoadAftermarketDevices(ctx context.Context, e boil.ContextExecutor, singular bool, maybeManufacturer interface{}, mods queries.Applicator) error {
+	var slice []*Manufacturer
+	var object *Manufacturer
+
+	if singular {
+		var ok bool
+		object, ok = maybeManufacturer.(*Manufacturer)
+		if !ok {
+			object = new(Manufacturer)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeManufacturer)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeManufacturer))
+			}
+		}
+	} else {
+		s, ok := maybeManufacturer.(*[]*Manufacturer)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeManufacturer)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeManufacturer))
+			}
+		}
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &manufacturerR{}
+		}
+		args = append(args, object.ID)
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &manufacturerR{}
+			}
+
+			for _, a := range args {
+				if queries.Equal(a, obj.ID) {
+					continue Outer
+				}
+			}
+
+			args = append(args, obj.ID)
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`identity_api.aftermarket_devices`),
+		qm.WhereIn(`identity_api.aftermarket_devices.manufacturer_id in ?`, args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load aftermarket_devices")
+	}
+
+	var resultSlice []*AftermarketDevice
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice aftermarket_devices")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on aftermarket_devices")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for aftermarket_devices")
+	}
+
+	if len(aftermarketDeviceAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.AftermarketDevices = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &aftermarketDeviceR{}
+			}
+			foreign.R.Manufacturer = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if queries.Equal(local.ID, foreign.ManufacturerID) {
+				local.R.AftermarketDevices = append(local.R.AftermarketDevices, foreign)
+				if foreign.R == nil {
+					foreign.R = &aftermarketDeviceR{}
+				}
+				foreign.R.Manufacturer = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadVehicles allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (manufacturerL) LoadVehicles(ctx context.Context, e boil.ContextExecutor, singular bool, maybeManufacturer interface{}, mods queries.Applicator) error {
+	var slice []*Manufacturer
+	var object *Manufacturer
+
+	if singular {
+		var ok bool
+		object, ok = maybeManufacturer.(*Manufacturer)
+		if !ok {
+			object = new(Manufacturer)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeManufacturer)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeManufacturer))
+			}
+		}
+	} else {
+		s, ok := maybeManufacturer.(*[]*Manufacturer)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeManufacturer)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeManufacturer))
+			}
+		}
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &manufacturerR{}
+		}
+		args = append(args, object.ID)
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &manufacturerR{}
+			}
+
+			for _, a := range args {
+				if queries.Equal(a, obj.ID) {
+					continue Outer
+				}
+			}
+
+			args = append(args, obj.ID)
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`identity_api.vehicles`),
+		qm.WhereIn(`identity_api.vehicles.manufacturer_id in ?`, args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load vehicles")
+	}
+
+	var resultSlice []*Vehicle
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice vehicles")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on vehicles")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for vehicles")
+	}
+
+	if len(vehicleAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.Vehicles = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &vehicleR{}
+			}
+			foreign.R.Manufacturer = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if queries.Equal(local.ID, foreign.ManufacturerID) {
+				local.R.Vehicles = append(local.R.Vehicles, foreign)
+				if foreign.R == nil {
+					foreign.R = &vehicleR{}
+				}
+				foreign.R.Manufacturer = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// AddAftermarketDevices adds the given related objects to the existing relationships
+// of the manufacturer, optionally inserting them as new records.
+// Appends related to o.R.AftermarketDevices.
+// Sets related.R.Manufacturer appropriately.
+func (o *Manufacturer) AddAftermarketDevices(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*AftermarketDevice) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			queries.Assign(&rel.ManufacturerID, o.ID)
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"identity_api\".\"aftermarket_devices\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"manufacturer_id"}),
+				strmangle.WhereClause("\"", "\"", 2, aftermarketDevicePrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			queries.Assign(&rel.ManufacturerID, o.ID)
+		}
+	}
+
+	if o.R == nil {
+		o.R = &manufacturerR{
+			AftermarketDevices: related,
+		}
+	} else {
+		o.R.AftermarketDevices = append(o.R.AftermarketDevices, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &aftermarketDeviceR{
+				Manufacturer: o,
+			}
+		} else {
+			rel.R.Manufacturer = o
+		}
+	}
+	return nil
+}
+
+// SetAftermarketDevices removes all previously related items of the
+// manufacturer replacing them completely with the passed
+// in related items, optionally inserting them as new records.
+// Sets o.R.Manufacturer's AftermarketDevices accordingly.
+// Replaces o.R.AftermarketDevices with related.
+// Sets related.R.Manufacturer's AftermarketDevices accordingly.
+func (o *Manufacturer) SetAftermarketDevices(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*AftermarketDevice) error {
+	query := "update \"identity_api\".\"aftermarket_devices\" set \"manufacturer_id\" = null where \"manufacturer_id\" = $1"
+	values := []interface{}{o.ID}
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, query)
+		fmt.Fprintln(writer, values)
+	}
+	_, err := exec.ExecContext(ctx, query, values...)
+	if err != nil {
+		return errors.Wrap(err, "failed to remove relationships before set")
+	}
+
+	if o.R != nil {
+		for _, rel := range o.R.AftermarketDevices {
+			queries.SetScanner(&rel.ManufacturerID, nil)
+			if rel.R == nil {
+				continue
+			}
+
+			rel.R.Manufacturer = nil
+		}
+		o.R.AftermarketDevices = nil
+	}
+
+	return o.AddAftermarketDevices(ctx, exec, insert, related...)
+}
+
+// RemoveAftermarketDevices relationships from objects passed in.
+// Removes related items from R.AftermarketDevices (uses pointer comparison, removal does not keep order)
+// Sets related.R.Manufacturer.
+func (o *Manufacturer) RemoveAftermarketDevices(ctx context.Context, exec boil.ContextExecutor, related ...*AftermarketDevice) error {
+	if len(related) == 0 {
+		return nil
+	}
+
+	var err error
+	for _, rel := range related {
+		queries.SetScanner(&rel.ManufacturerID, nil)
+		if rel.R != nil {
+			rel.R.Manufacturer = nil
+		}
+		if _, err = rel.Update(ctx, exec, boil.Whitelist("manufacturer_id")); err != nil {
+			return err
+		}
+	}
+	if o.R == nil {
+		return nil
+	}
+
+	for _, rel := range related {
+		for i, ri := range o.R.AftermarketDevices {
+			if rel != ri {
+				continue
+			}
+
+			ln := len(o.R.AftermarketDevices)
+			if ln > 1 && i < ln-1 {
+				o.R.AftermarketDevices[i] = o.R.AftermarketDevices[ln-1]
+			}
+			o.R.AftermarketDevices = o.R.AftermarketDevices[:ln-1]
+			break
+		}
+	}
+
+	return nil
+}
+
+// AddVehicles adds the given related objects to the existing relationships
+// of the manufacturer, optionally inserting them as new records.
+// Appends related to o.R.Vehicles.
+// Sets related.R.Manufacturer appropriately.
+func (o *Manufacturer) AddVehicles(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Vehicle) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			queries.Assign(&rel.ManufacturerID, o.ID)
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"identity_api\".\"vehicles\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"manufacturer_id"}),
+				strmangle.WhereClause("\"", "\"", 2, vehiclePrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			queries.Assign(&rel.ManufacturerID, o.ID)
+		}
+	}
+
+	if o.R == nil {
+		o.R = &manufacturerR{
+			Vehicles: related,
+		}
+	} else {
+		o.R.Vehicles = append(o.R.Vehicles, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &vehicleR{
+				Manufacturer: o,
+			}
+		} else {
+			rel.R.Manufacturer = o
+		}
+	}
+	return nil
+}
+
+// SetVehicles removes all previously related items of the
+// manufacturer replacing them completely with the passed
+// in related items, optionally inserting them as new records.
+// Sets o.R.Manufacturer's Vehicles accordingly.
+// Replaces o.R.Vehicles with related.
+// Sets related.R.Manufacturer's Vehicles accordingly.
+func (o *Manufacturer) SetVehicles(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Vehicle) error {
+	query := "update \"identity_api\".\"vehicles\" set \"manufacturer_id\" = null where \"manufacturer_id\" = $1"
+	values := []interface{}{o.ID}
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, query)
+		fmt.Fprintln(writer, values)
+	}
+	_, err := exec.ExecContext(ctx, query, values...)
+	if err != nil {
+		return errors.Wrap(err, "failed to remove relationships before set")
+	}
+
+	if o.R != nil {
+		for _, rel := range o.R.Vehicles {
+			queries.SetScanner(&rel.ManufacturerID, nil)
+			if rel.R == nil {
+				continue
+			}
+
+			rel.R.Manufacturer = nil
+		}
+		o.R.Vehicles = nil
+	}
+
+	return o.AddVehicles(ctx, exec, insert, related...)
+}
+
+// RemoveVehicles relationships from objects passed in.
+// Removes related items from R.Vehicles (uses pointer comparison, removal does not keep order)
+// Sets related.R.Manufacturer.
+func (o *Manufacturer) RemoveVehicles(ctx context.Context, exec boil.ContextExecutor, related ...*Vehicle) error {
+	if len(related) == 0 {
+		return nil
+	}
+
+	var err error
+	for _, rel := range related {
+		queries.SetScanner(&rel.ManufacturerID, nil)
+		if rel.R != nil {
+			rel.R.Manufacturer = nil
+		}
+		if _, err = rel.Update(ctx, exec, boil.Whitelist("manufacturer_id")); err != nil {
+			return err
+		}
+	}
+	if o.R == nil {
+		return nil
+	}
+
+	for _, rel := range related {
+		for i, ri := range o.R.Vehicles {
+			if rel != ri {
+				continue
+			}
+
+			ln := len(o.R.Vehicles)
+			if ln > 1 && i < ln-1 {
+				o.R.Vehicles[i] = o.R.Vehicles[ln-1]
+			}
+			o.R.Vehicles = o.R.Vehicles[:ln-1]
+			break
+		}
+	}
+
+	return nil
 }
 
 // Manufacturers retrieves all the records using an executor.

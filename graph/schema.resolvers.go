@@ -14,6 +14,11 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/repositories"
 )
 
+// Manufacturer is the resolver for the manufacturer field.
+func (r *aftermarketDeviceResolver) Manufacturer(ctx context.Context, obj *model.AftermarketDevice) (*model.Manufacturer, error) {
+	return loader.GetManufacturerID(ctx, obj.Manufacturer.TokenID)
+}
+
 // Vehicle is the resolver for the vehicle field.
 func (r *aftermarketDeviceResolver) Vehicle(ctx context.Context, obj *model.AftermarketDevice) (*model.Vehicle, error) {
 	if obj.VehicleID == nil {
@@ -74,6 +79,11 @@ func (r *queryResolver) AftermarketDevices(ctx context.Context, first *int, afte
 // Dcn is the resolver for the dcn field.
 func (r *queryResolver) Dcn(ctx context.Context, by model.DCNBy) (*model.Dcn, error) {
 	return r.Repo.GetDCN(ctx, by)
+}
+
+// Manufacturer is the resolver for the manufacturer field.
+func (r *vehicleResolver) Manufacturer(ctx context.Context, obj *model.Vehicle) (*model.Manufacturer, error) {
+	return loader.GetManufacturerID(ctx, obj.Manufacturer.TokenID)
 }
 
 // AftermarketDevice is the resolver for the aftermarketDevice field.
