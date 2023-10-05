@@ -83,7 +83,7 @@ func (r *queryResolver) Dcn(ctx context.Context, by model.DCNBy) (*model.Dcn, er
 
 // Manufacturer is the resolver for the manufacturer field.
 func (r *vehicleResolver) Manufacturer(ctx context.Context, obj *model.Vehicle) (*model.Manufacturer, error) {
-	return loader.GetManufacturerID(ctx, obj.Manufacturer.TokenID)
+	return loader.GetManufacturerID(ctx, *obj.ManufacturerID)
 }
 
 // AftermarketDevice is the resolver for the aftermarketDevice field.
