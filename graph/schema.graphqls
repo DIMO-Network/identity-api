@@ -192,6 +192,7 @@ type VehicleEdge {
 type VehicleConnection {
   totalCount: Int!
   edges: [VehicleEdge!]!
+  nodes: [Vehicle!]!
   pageInfo: PageInfo!
 }
 
@@ -244,6 +245,7 @@ type AftermarketDevice implements Node {
 type AftermarketDeviceConnection {
   totalCount: Int!
   edges: [AftermarketDeviceEdge!]!
+  nodes: [AftermarketDevice!]!
   pageInfo: PageInfo!
 }
 

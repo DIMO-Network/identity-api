@@ -110,14 +110,18 @@ func (r *Repository) GetAftermarketDevices(ctx context.Context, first *int, afte
 		slices.Reverse(all)
 	}
 
-	var adEdges []*gmodel.AftermarketDeviceEdge
-	for _, d := range all {
-		adEdges = append(adEdges,
-			&gmodel.AftermarketDeviceEdge{
-				Node:   AftermarketDeviceToAPI(d),
-				Cursor: helpers.IDToCursor(d.ID),
-			},
-		)
+	edges := make([]*gmodel.AftermarketDeviceEdge, len(all))
+	nodes := make([]*gmodel.AftermarketDevice, len(all))
+
+	for i, da := range all {
+		ga := AftermarketDeviceToAPI(da)
+
+		edges[i] = &gmodel.AftermarketDeviceEdge{
+			Node:   ga,
+			Cursor: helpers.IDToCursor(da.ID),
+		}
+
+		nodes[i] = ga
 	}
 
 	var endCur, startCur *string
@@ -132,7 +136,8 @@ func (r *Repository) GetAftermarketDevices(ctx context.Context, first *int, afte
 
 	res := &gmodel.AftermarketDeviceConnection{
 		TotalCount: int(adCount),
-		Edges:      adEdges,
+		Edges:      edges,
+		Nodes:      nodes,
 		PageInfo: &gmodel.PageInfo{
 			StartCursor:     startCur,
 			EndCursor:       endCur,

@@ -91,15 +91,22 @@ func (v *Repository) createVehiclesResponse(totalCount int64, vehicles models.Ve
 	}
 
 	edges := make([]*gmodel.VehicleEdge, len(vehicles))
-	for i, v := range vehicles {
+	nodes := make([]*gmodel.Vehicle, len(vehicles))
+
+	for i, dv := range vehicles {
+		gv := VehicleToAPI(dv)
+
 		edges[i] = &gmodel.VehicleEdge{
-			Node:   VehicleToAPI(v),
-			Cursor: helpers.IDToCursor(v.ID),
+			Node:   gv,
+			Cursor: helpers.IDToCursor(dv.ID),
 		}
+
+		nodes[i] = gv
 	}
 
 	res := &gmodel.VehicleConnection{
 		Edges: edges,
+		Nodes: nodes,
 		PageInfo: &gmodel.PageInfo{
 			EndCursor:       endCur,
 			HasNextPage:     hasNext,

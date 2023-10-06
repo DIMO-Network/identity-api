@@ -51,6 +51,7 @@ type AftermarketDeviceBy struct {
 type AftermarketDeviceConnection struct {
 	TotalCount int                      `json:"totalCount"`
 	Edges      []*AftermarketDeviceEdge `json:"edges"`
+	Nodes      []*AftermarketDevice     `json:"nodes"`
 	PageInfo   *PageInfo                `json:"pageInfo"`
 }
 
@@ -175,6 +176,7 @@ func (this Vehicle) GetID() string { return this.ID }
 type VehicleConnection struct {
 	TotalCount int            `json:"totalCount"`
 	Edges      []*VehicleEdge `json:"edges"`
+	Nodes      []*Vehicle     `json:"nodes"`
 	PageInfo   *PageInfo      `json:"pageInfo"`
 }
 
