@@ -280,6 +280,7 @@ type PrivilegeEdge {
 type PrivilegesConnection {
   totalCount: Int!
   edges: [PrivilegeEdge!]!
+  nodes: [Privilege!]!
   pageInfo: PageInfo!
 }
 

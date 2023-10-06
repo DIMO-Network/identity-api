@@ -136,6 +136,7 @@ type PrivilegeEdge struct {
 type PrivilegesConnection struct {
 	TotalCount int              `json:"totalCount"`
 	Edges      []*PrivilegeEdge `json:"edges"`
+	Nodes      []*Privilege     `json:"nodes"`
 	PageInfo   *PageInfo        `json:"pageInfo"`
 }
 

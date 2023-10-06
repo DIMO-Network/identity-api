@@ -121,6 +121,7 @@ type ComplexityRoot struct {
 
 	PrivilegesConnection struct {
 		Edges      func(childComplexity int) int
+		Nodes      func(childComplexity int) int
 		PageInfo   func(childComplexity int) int
 		TotalCount func(childComplexity int) int
 	}
@@ -501,6 +502,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.PrivilegesConnection.Edges(childComplexity), true
+
+	case "PrivilegesConnection.nodes":
+		if e.complexity.PrivilegesConnection.Nodes == nil {
+			break
+		}
+
+		return e.complexity.PrivilegesConnection.Nodes(childComplexity), true
 
 	case "PrivilegesConnection.pageInfo":
 		if e.complexity.PrivilegesConnection.PageInfo == nil {
@@ -3088,6 +3096,60 @@ func (ec *executionContext) fieldContext_PrivilegesConnection_edges(ctx context.
 	return fc, nil
 }
 
+func (ec *executionContext) _PrivilegesConnection_nodes(ctx context.Context, field graphql.CollectedField, obj *model.PrivilegesConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PrivilegesConnection_nodes(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Nodes, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Privilege)
+	fc.Result = res
+	return ec.marshalNPrivilege2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐPrivilegeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PrivilegesConnection_nodes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PrivilegesConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Privilege_id(ctx, field)
+			case "user":
+				return ec.fieldContext_Privilege_user(ctx, field)
+			case "setAt":
+				return ec.fieldContext_Privilege_setAt(ctx, field)
+			case "expiresAt":
+				return ec.fieldContext_Privilege_expiresAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Privilege", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _PrivilegesConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.PrivilegesConnection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_PrivilegesConnection_pageInfo(ctx, field)
 	if err != nil {
@@ -4187,6 +4249,8 @@ func (ec *executionContext) fieldContext_Vehicle_privileges(ctx context.Context,
 				return ec.fieldContext_PrivilegesConnection_totalCount(ctx, field)
 			case "edges":
 				return ec.fieldContext_PrivilegesConnection_edges(ctx, field)
+			case "nodes":
+				return ec.fieldContext_PrivilegesConnection_nodes(ctx, field)
 			case "pageInfo":
 				return ec.fieldContext_PrivilegesConnection_pageInfo(ctx, field)
 			}
@@ -7305,6 +7369,11 @@ func (ec *executionContext) _PrivilegesConnection(ctx context.Context, sel ast.S
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "nodes":
+			out.Values[i] = ec._PrivilegesConnection_nodes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "pageInfo":
 			out.Values[i] = ec._PrivilegesConnection_pageInfo(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -8468,6 +8537,50 @@ func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋ
 		return graphql.Null
 	}
 	return ec._PageInfo(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNPrivilege2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐPrivilegeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Privilege) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNPrivilege2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐPrivilege(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalNPrivilege2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐPrivilege(ctx context.Context, sel ast.SelectionSet, v *model.Privilege) graphql.Marshaler {

@@ -19,7 +19,7 @@ type PrivilegeCursor struct {
 	User        []byte
 }
 
-func (p *Repository) privilegeToAPIResponse(pr *models.Privilege) *gmodel.Privilege {
+func privilegeToAPIResponse(pr *models.Privilege) *gmodel.Privilege {
 	return &gmodel.Privilege{
 		ID:        pr.PrivilegeID,
 		User:      common.Address(pr.UserAddress),
@@ -40,27 +40,32 @@ func (p *Repository) createPrivilegeResponse(privs models.PrivilegeSlice, totalC
 		return nil, err
 	}
 
-	var pEdges []*gmodel.PrivilegeEdge
-	for _, pr := range privs {
+	edges := make([]*gmodel.PrivilegeEdge, len(privs))
+	nodes := make([]*gmodel.Privilege, len(privs))
+
+	for i, dp := range privs {
+		gp := privilegeToAPIResponse(dp)
+
 		crsr, err := pHelper.EncodeCursor(PrivilegeCursor{
-			SetAt:       pr.SetAt,
-			PrivilegeID: pr.PrivilegeID,
-			User:        pr.UserAddress,
+			SetAt:       dp.SetAt,
+			PrivilegeID: dp.PrivilegeID,
+			User:        dp.UserAddress,
 		})
 		if err != nil {
 			return nil, err
 		}
-		edge := &gmodel.PrivilegeEdge{
-			Node:   p.privilegeToAPIResponse(pr),
+		edges[i] = &gmodel.PrivilegeEdge{
+			Node:   gp,
 			Cursor: crsr,
 		}
 
-		pEdges = append(pEdges, edge)
+		nodes[i] = gp
 	}
 
 	res := &gmodel.PrivilegesConnection{
 		TotalCount: int(totalCount),
-		Edges:      pEdges,
+		Edges:      edges,
+		Nodes:      nodes,
 		PageInfo: &gmodel.PageInfo{
 			EndCursor:   &endCursr,
 			HasNextPage: hasNext,
