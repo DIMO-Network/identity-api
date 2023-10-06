@@ -7,7 +7,6 @@ package graph
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
@@ -30,7 +29,10 @@ func (r *aftermarketDeviceResolver) Vehicle(ctx context.Context, obj *model.Afte
 
 // Vehicle is the resolver for the vehicle field.
 func (r *dCNResolver) Vehicle(ctx context.Context, obj *model.Dcn) (*model.Vehicle, error) {
-	panic(fmt.Errorf("not implemented: Vehicle - vehicle"))
+	if obj.VehicleID == nil {
+		return nil, nil
+	}
+	return loader.GetVehicleByID(ctx, *obj.VehicleID)
 }
 
 // Node is the resolver for the node field.
