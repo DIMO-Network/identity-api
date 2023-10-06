@@ -53,6 +53,14 @@ func (r *queryResolver) Node(ctx context.Context, id string) (model.Node, error)
 		return r.Repo.GetAftermarketDevice(ctx, model.AftermarketDeviceBy{ID: &ti})
 	}
 
+	if strings.HasPrefix(id, "M_") {
+		ti, err := repositories.ManufacturerIDToToken(id)
+		if err != nil {
+			return nil, err
+		}
+		return r.Repo.GetManufacturer(ctx, ti)
+	}
+
 	return nil, errors.New("Unrecognized global id.")
 }
 
