@@ -31,7 +31,7 @@ input DCNBy @oneOf {
 }
 
 input AftermarketDeviceBy @oneOf {
-  id: BigInt
+  tokenId: BigInt
   address: Address
   serial: String
 }
@@ -287,7 +287,7 @@ type PrivilegesConnection {
 # SyntheticDevice Types
 
 type SyntheticDevice {
-  id: BigInt!
+  tokenId: BigInt!
   integrationId: BigInt!
   address: Address!
   mintedAt: Time!

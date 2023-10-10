@@ -26,7 +26,7 @@ func Test_SyntheticDeviceToAPI(t *testing.T) {
 	res := SyntheticDeviceToAPI(sd)
 
 	assert.Exactly(t, &model.SyntheticDevice{
-		ID:            1,
+		TokenID:       1,
 		IntegrationID: 2,
 		Address:       *wallet,
 		MintedAt:      currTime,

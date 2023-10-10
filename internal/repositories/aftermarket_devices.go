@@ -150,7 +150,7 @@ func (r *Repository) GetAftermarketDevices(ctx context.Context, first *int, afte
 }
 
 func (r *Repository) GetAftermarketDevice(ctx context.Context, by gmodel.AftermarketDeviceBy) (*gmodel.AftermarketDevice, error) {
-	if countTrue(by.Address != nil, by.ID != nil, by.Serial != nil) != 1 {
+	if countTrue(by.Address != nil, by.TokenID != nil, by.Serial != nil) != 1 {
 		return nil, errors.New("Pass in exactly one of `address`, `id`, or `serial`.")
 	}
 
@@ -159,8 +159,8 @@ func (r *Repository) GetAftermarketDevice(ctx context.Context, by gmodel.Afterma
 	switch {
 	case by.Address != nil:
 		qm = models.AftermarketDeviceWhere.Address.EQ(by.Address.Bytes())
-	case by.ID != nil:
-		qm = models.AftermarketDeviceWhere.ID.EQ(*by.ID)
+	case by.TokenID != nil:
+		qm = models.AftermarketDeviceWhere.ID.EQ(*by.TokenID)
 	case by.Serial != nil:
 		qm = models.AftermarketDeviceWhere.Serial.EQ(null.StringFrom(*by.Serial))
 	}
