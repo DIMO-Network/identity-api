@@ -43,7 +43,7 @@ func (AftermarketDevice) IsNode()            {}
 func (this AftermarketDevice) GetID() string { return this.ID }
 
 type AftermarketDeviceBy struct {
-	ID      *int            `json:"id,omitempty"`
+	TokenID *int            `json:"tokenId,omitempty"`
 	Address *common.Address `json:"address,omitempty"`
 	Serial  *string         `json:"serial,omitempty"`
 }
@@ -141,7 +141,7 @@ type PrivilegesConnection struct {
 }
 
 type SyntheticDevice struct {
-	ID            int            `json:"id"`
+	TokenID       int            `json:"tokenId"`
 	IntegrationID int            `json:"integrationId"`
 	Address       common.Address `json:"address"`
 	MintedAt      time.Time      `json:"mintedAt"`

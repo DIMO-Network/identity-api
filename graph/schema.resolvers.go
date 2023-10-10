@@ -50,7 +50,7 @@ func (r *queryResolver) Node(ctx context.Context, id string) (model.Node, error)
 		if err != nil {
 			return nil, err
 		}
-		return r.Repo.GetAftermarketDevice(ctx, model.AftermarketDeviceBy{ID: &ti})
+		return r.Repo.GetAftermarketDevice(ctx, model.AftermarketDeviceBy{TokenID: &ti})
 	}
 
 	if strings.HasPrefix(id, "M_") {

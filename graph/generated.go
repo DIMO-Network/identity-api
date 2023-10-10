@@ -137,9 +137,9 @@ type ComplexityRoot struct {
 
 	SyntheticDevice struct {
 		Address       func(childComplexity int) int
-		ID            func(childComplexity int) int
 		IntegrationID func(childComplexity int) int
 		MintedAt      func(childComplexity int) int
+		TokenID       func(childComplexity int) int
 	}
 
 	Vehicle struct {
@@ -603,13 +603,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.SyntheticDevice.Address(childComplexity), true
 
-	case "SyntheticDevice.id":
-		if e.complexity.SyntheticDevice.ID == nil {
-			break
-		}
-
-		return e.complexity.SyntheticDevice.ID(childComplexity), true
-
 	case "SyntheticDevice.integrationId":
 		if e.complexity.SyntheticDevice.IntegrationID == nil {
 			break
@@ -623,6 +616,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.SyntheticDevice.MintedAt(childComplexity), true
+
+	case "SyntheticDevice.tokenId":
+		if e.complexity.SyntheticDevice.TokenID == nil {
+			break
+		}
+
+		return e.complexity.SyntheticDevice.TokenID(childComplexity), true
 
 	case "Vehicle.aftermarketDevice":
 		if e.complexity.Vehicle.AftermarketDevice == nil {
@@ -3738,8 +3738,8 @@ func (ec *executionContext) fieldContext_Query___schema(ctx context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _SyntheticDevice_id(ctx context.Context, field graphql.CollectedField, obj *model.SyntheticDevice) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SyntheticDevice_id(ctx, field)
+func (ec *executionContext) _SyntheticDevice_tokenId(ctx context.Context, field graphql.CollectedField, obj *model.SyntheticDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SyntheticDevice_tokenId(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -3752,7 +3752,7 @@ func (ec *executionContext) _SyntheticDevice_id(ctx context.Context, field graph
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ID, nil
+		return obj.TokenID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3769,7 +3769,7 @@ func (ec *executionContext) _SyntheticDevice_id(ctx context.Context, field graph
 	return ec.marshalNBigInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SyntheticDevice_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SyntheticDevice_tokenId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SyntheticDevice",
 		Field:      field,
@@ -4307,8 +4307,8 @@ func (ec *executionContext) fieldContext_Vehicle_syntheticDevice(ctx context.Con
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_SyntheticDevice_id(ctx, field)
+			case "tokenId":
+				return ec.fieldContext_SyntheticDevice_tokenId(ctx, field)
 			case "integrationId":
 				return ec.fieldContext_SyntheticDevice_integrationId(ctx, field)
 			case "address":
@@ -6532,17 +6532,17 @@ func (ec *executionContext) unmarshalInputAftermarketDeviceBy(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "address", "serial"}
+	fieldsInOrder := [...]string{"tokenId", "address", "serial"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "id":
+		case "tokenId":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokenId"))
 			directive0 := func(ctx context.Context) (interface{}, error) { return ec.unmarshalOBigInt2ᚖint(ctx, v) }
 			directive1 := func(ctx context.Context) (interface{}, error) {
 				if ec.directives.OneOf == nil {
@@ -6556,9 +6556,9 @@ func (ec *executionContext) unmarshalInputAftermarketDeviceBy(ctx context.Contex
 				return it, graphql.ErrorOnPath(ctx, err)
 			}
 			if data, ok := tmp.(*int); ok {
-				it.ID = data
+				it.TokenID = data
 			} else if tmp == nil {
-				it.ID = nil
+				it.TokenID = nil
 			} else {
 				err := fmt.Errorf(`unexpected type %T from directive, should be *int`, tmp)
 				return it, graphql.ErrorOnPath(ctx, err)
@@ -7592,8 +7592,8 @@ func (ec *executionContext) _SyntheticDevice(ctx context.Context, sel ast.Select
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("SyntheticDevice")
-		case "id":
-			out.Values[i] = ec._SyntheticDevice_id(ctx, field, obj)
+		case "tokenId":
+			out.Values[i] = ec._SyntheticDevice_tokenId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

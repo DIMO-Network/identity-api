@@ -119,11 +119,11 @@ func TestResolver(t *testing.T) {
 	t.Run("accessibleVehicles and syntheticDevices", func(t *testing.T) {
 		var resp interface{}
 		c.MustPost(`{
-			vehicles(first: 5, filterBy: {privileged: "46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"}) {edges {node {tokenId owner syntheticDevice {id}}}}}`, &resp)
+			vehicles(first: 5, filterBy: {privileged: "46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"}) {edges {node {tokenId owner syntheticDevice {tokenId}}}}}`, &resp)
 		b, _ := json.Marshal(resp)
 		fmt.Println(string(b))
 		assert.JSONEq(
-			`{"vehicles":{"edges":[{"node":{"tokenId":"11","owner":"0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4","syntheticDevice":{"id":"1"}}}]}}`,
+			`{"vehicles":{"edges":[{"node":{"tokenId":"11","owner":"0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4","syntheticDevice":{"tokenId":"1"}}}]}}`,
 			string(b))
 	})
 }
