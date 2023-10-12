@@ -175,6 +175,7 @@ type Vehicle implements Node {
   """
   definition: Definition
   dcn: DCN
+  name: String
 }
 
 type Definition {
@@ -240,6 +241,8 @@ type AftermarketDevice implements Node {
   The beneficiary for this device, who receives any associated rewards. Defaults to the owner.
   """
   beneficiary: Address!
+
+  name: String
 }
 
 type AftermarketDeviceConnection {

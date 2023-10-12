@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"strings"
 	"testing"
 
+	gmn "github.com/DIMO-Network/go-mnemonic"
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/services"
@@ -119,6 +121,16 @@ func Test_GetOwnedAftermarketDevices_Pagination_PreviousPage(t *testing.T) {
 			},
 			Cursor: "Mg==",
 		},
+	}
+
+	for _, af := range expected {
+		mn, err := gmn.EntropyToMnemonicThreeWords(af.Node.Address.Bytes())
+		if err != nil {
+			assert.NoError(t, err)
+		}
+		name := strings.Join(mn, " ")
+
+		af.Node.Name = &name
 	}
 	assert.Exactly(t, expected, res.Edges)
 }
