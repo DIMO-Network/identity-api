@@ -152,7 +152,7 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Success() {
 
 	for _, veh := range expected {
 		bid := helpers.IntToBytes(veh.Node.TokenID)
-		veh.Node.Name, err = helpers.CreateMneumonic(bid)
+		veh.Node.Name, err = helpers.CreateMnemonic(bid)
 
 		s.NoError(err)
 	}
@@ -217,7 +217,7 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination() {
 
 	for _, veh := range expected {
 		bid := helpers.IntToBytes(veh.Node.TokenID)
-		veh.Node.Name, err = helpers.CreateMneumonic(bid)
+		veh.Node.Name, err = helpers.CreateMnemonic(bid)
 
 		s.NoError(err)
 	}
@@ -283,7 +283,7 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination_NextPage()
 
 	for _, veh := range expected {
 		bid := helpers.IntToBytes(veh.Node.TokenID)
-		veh.Node.Name, err = helpers.CreateMneumonic(bid)
+		veh.Node.Name, err = helpers.CreateMnemonic(bid)
 
 		s.NoError(err)
 	}

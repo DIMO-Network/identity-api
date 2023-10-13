@@ -159,7 +159,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Success() {
 
 	for _, veh := range expected {
 		bid := helpers.IntToBytes(veh.Node.TokenID)
-		veh.Node.Name, err = helpers.CreateMneumonic(bid)
+		veh.Node.Name, err = helpers.CreateMnemonic(bid)
 
 		o.NoError(err)
 	}
@@ -231,7 +231,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination(
 
 	for _, veh := range expected {
 		bid := helpers.IntToBytes(veh.Node.TokenID)
-		veh.Node.Name, err = helpers.CreateMneumonic(bid)
+		veh.Node.Name, err = helpers.CreateMnemonic(bid)
 
 		o.NoError(err)
 	}
@@ -304,7 +304,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 
 	for _, veh := range expected {
 		bid := helpers.IntToBytes(veh.Node.TokenID)
-		veh.Node.Name, err = helpers.CreateMneumonic(bid)
+		veh.Node.Name, err = helpers.CreateMnemonic(bid)
 
 		o.NoError(err)
 	}
@@ -410,7 +410,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_OwnedByUser
 
 	for _, veh := range expected {
 		bid := helpers.IntToBytes(veh.Node.TokenID)
-		veh.Node.Name, err = helpers.CreateMneumonic(bid)
+		veh.Node.Name, err = helpers.CreateMnemonic(bid)
 
 		o.NoError(err)
 	}
@@ -523,7 +523,7 @@ func (o *AccessibleVehiclesRepoTestSuite) TestVehiclesMultiplePrivsOnOne() {
 
 	for _, veh := range expected {
 		bid := helpers.IntToBytes(veh.Node.TokenID)
-		veh.Node.Name, err = helpers.CreateMneumonic(bid)
+		veh.Node.Name, err = helpers.CreateMnemonic(bid)
 
 		o.NoError(err)
 	}
@@ -633,7 +633,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 
 	for _, veh := range expected {
 		bid := helpers.IntToBytes(veh.Node.TokenID)
-		veh.Node.Name, err = helpers.CreateMneumonic(bid)
+		veh.Node.Name, err = helpers.CreateMnemonic(bid)
 
 		o.NoError(err)
 	}
@@ -730,7 +730,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 
 	for _, veh := range expected {
 		bid := helpers.IntToBytes(veh.Node.TokenID)
-		veh.Node.Name, err = helpers.CreateMneumonic(bid)
+		veh.Node.Name, err = helpers.CreateMnemonic(bid)
 
 		o.NoError(err)
 	}
@@ -838,7 +838,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 	}
 	for _, veh := range expected {
 		bid := helpers.IntToBytes(veh.Node.TokenID)
-		veh.Node.Name, err = helpers.CreateMneumonic(bid)
+		veh.Node.Name, err = helpers.CreateMnemonic(bid)
 
 		o.NoError(err)
 	}
@@ -948,7 +948,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 
 	for _, veh := range expected {
 		bid := helpers.IntToBytes(veh.Node.TokenID)
-		veh.Node.Name, err = helpers.CreateMneumonic(bid)
+		veh.Node.Name, err = helpers.CreateMnemonic(bid)
 
 		o.NoError(err)
 	}

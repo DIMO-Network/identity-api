@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
@@ -46,10 +45,7 @@ func VehicleToAPI(v *models.Vehicle) *gmodel.Vehicle {
 	_ = e.Encode(vehiclePrimaryKey{TokenID: v.ID})
 
 	bid := helpers.IntToBytes(v.ID)
-	name, err := helpers.CreateMneumonic(bid)
-	if err != nil {
-		log.Println(fmt.Errorf("error occurred creating aftermarket device name %s", err.Error()))
-	}
+	name, _ := helpers.CreateMnemonic(bid)
 
 	return &gmodel.Vehicle{
 		ID:       "V_" + base64.StdEncoding.EncodeToString(b.Bytes()),

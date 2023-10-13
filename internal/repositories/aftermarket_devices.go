@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"log"
 	"strings"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
@@ -185,10 +184,7 @@ func AftermarketDeviceToAPI(d *models.AftermarketDevice) *gmodel.AftermarketDevi
 
 	_ = e.Encode(aftermarketDevicePrimaryKey{TokenID: d.ID})
 
-	name, err := helpers.CreateMneumonic(d.Address)
-	if err != nil {
-		log.Println(fmt.Errorf("error occurred creating aftermarket device name %s", err.Error()))
-	}
+	name, _ := helpers.CreateMnemonic(d.Address)
 
 	return &gmodel.AftermarketDevice{
 		ID:             "AD_" + base64.StdEncoding.EncodeToString(b.Bytes()),

@@ -35,7 +35,7 @@ type AftermarketDevice struct {
 	Vehicle *Vehicle `json:"vehicle,omitempty"`
 	// The beneficiary for this device, who receives any associated rewards. Defaults to the owner.
 	Beneficiary    common.Address `json:"beneficiary"`
-	Name           *string        `json:"name,omitempty"`
+	Name           string         `json:"name"`
 	ManufacturerID *int           `json:"-"`
 	VehicleID      *int           `json:"-"`
 }
@@ -169,7 +169,7 @@ type Vehicle struct {
 	// other things.
 	Definition     *Definition `json:"definition,omitempty"`
 	Dcn            *Dcn        `json:"dcn,omitempty"`
-	Name           *string     `json:"name,omitempty"`
+	Name           string      `json:"name"`
 	ManufacturerID *int        `json:"-"`
 }
 

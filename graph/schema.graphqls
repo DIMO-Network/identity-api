@@ -175,7 +175,7 @@ type Vehicle implements Node {
   """
   definition: Definition
   dcn: DCN
-  name: String
+  name: String!
 }
 
 type Definition {
@@ -242,7 +242,7 @@ type AftermarketDevice implements Node {
   """
   beneficiary: Address!
 
-  name: String
+  name: String!
 }
 
 type AftermarketDeviceConnection {

@@ -130,7 +130,7 @@ func Test_GetOwnedAftermarketDevices_Pagination_PreviousPage(t *testing.T) {
 		}
 		name := strings.Join(mn, " ")
 
-		af.Node.Name = &name
+		af.Node.Name = name
 	}
 	assert.Exactly(t, expected, res.Edges)
 }

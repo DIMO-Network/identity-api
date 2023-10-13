@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	gmn "github.com/DIMO-Network/go-mnemonic"
+	"github.com/DIMO-Network/go-mnemonic"
 )
 
 func CursorToID(cur string) (int, error) {
@@ -37,19 +37,18 @@ func GenerateDCNNode() []byte {
 }
 
 func CreateMnemonic(addr []byte) (string, error) {
-	mn, err := gmn.EntropyToMnemonicThreeWords(addr)
+	mn, err := mnemonic.EntropyToMnemonicThreeWords(addr)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	name := strings.Join(mn, " ")
 
-	return &name, nil
+	return name, nil
 }
 
 func IntToBytes(intVal int) []byte {
-	b := make([]byte, 16)
-	binary.LittleEndian.PutUint16(b, uint16(intVal))
-	//binary.LittleEndian.PutUint16(b[2:], uint16(intVal))
+	b := make([]byte, 32)
+	binary.LittleEndian.PutUint32(b, uint32(intVal))
 
 	return b
 }
