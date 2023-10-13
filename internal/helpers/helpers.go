@@ -36,7 +36,7 @@ func GenerateDCNNode() []byte {
 	return b
 }
 
-func CreateMneumonic(addr []byte) (*string, error) {
+func CreateMnemonic(addr []byte) (string, error) {
 	mn, err := gmn.EntropyToMnemonicThreeWords(addr)
 	if err != nil {
 		return nil, err
