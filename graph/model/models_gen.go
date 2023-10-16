@@ -31,6 +31,9 @@ type AftermarketDevice struct {
 	Imei *string `json:"imei,omitempty"`
 	// The block timestamp at which this device was minted.
 	MintedAt time.Time `json:"mintedAt"`
+	// The block timestamp at which this device was claimed, if it has been claimed. Devices must be
+	// claimed before pairing.
+	ClaimedAt *time.Time `json:"claimedAt,omitempty"`
 	// The vehicle, if any, with which the device is paired.
 	Vehicle *Vehicle `json:"vehicle,omitempty"`
 	// The beneficiary for this device, who receives any associated rewards. Defaults to the owner.

@@ -196,6 +196,7 @@ func AftermarketDeviceToAPI(d *models.AftermarketDevice) *gmodel.AftermarketDevi
 		Beneficiary:    common.BytesToAddress(d.Beneficiary),
 		VehicleID:      d.VehicleID.Ptr(),
 		MintedAt:       d.MintedAt,
+		ClaimedAt:      d.ClaimedAt.Ptr(),
 		ManufacturerID: d.ManufacturerID.Ptr(),
 		Name:           name,
 	}

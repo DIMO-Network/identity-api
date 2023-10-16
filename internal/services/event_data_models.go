@@ -62,6 +62,11 @@ type AftermarketDevicePairData struct {
 	Owner                 common.Address
 }
 
+type AftermarketDeviceClaimedData struct {
+	AftermarketDeviceNode *big.Int
+	Owner                 common.Address
+}
+
 type TransferData struct {
 	From    common.Address
 	To      common.Address

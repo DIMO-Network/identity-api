@@ -34,6 +34,7 @@ const (
 	ManufacturerNodeMinted        EventName = "ManufacturerNodeMinted"
 	AftermarketDeviceAttributeSet EventName = "AftermarketDeviceAttributeSet"
 	PrivilegeSet                  EventName = "PrivilegeSet"
+	AftermarketDeviceClaimed      EventName = "AftermarketDeviceClaimed"
 	AftermarketDevicePaired       EventName = "AftermarketDevicePaired"
 	AftermarketDeviceUnpaired     EventName = "AftermarketDeviceUnpaired"
 	BeneficiarySetEvent           EventName = "BeneficiarySet"
@@ -104,6 +105,8 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 			return c.handleAftermarketDeviceMintedEvent(ctx, &data)
 		case AftermarketDeviceAttributeSet:
 			return c.handleAftermarketDeviceAttributeSetEvent(ctx, &data)
+		case AftermarketDeviceClaimed:
+			return c.handleAftermarketDeviceClaimedEvent(ctx, &data)
 		case AftermarketDevicePaired:
 			return c.handleAftermarketDevicePairedEvent(ctx, &data)
 		case AftermarketDeviceUnpaired:
@@ -367,6 +370,21 @@ func (c *ContractsEventsConsumer) handlePrivilegeSetEvent(ctx context.Context, e
 		Msg("Event processed successfuly")
 
 	return nil
+}
+
+func (c *ContractsEventsConsumer) handleAftermarketDeviceClaimedEvent(ctx context.Context, e *ContractEventData) error {
+	var args AftermarketDeviceClaimedData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	ad := models.AftermarketDevice{
+		ID:        int(args.AftermarketDeviceNode.Int64()),
+		ClaimedAt: null.TimeFrom(e.Block.Time),
+	}
+
+	_, err := ad.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.AftermarketDeviceColumns.ClaimedAt))
+	return err
 }
 
 func (c *ContractsEventsConsumer) handleAftermarketDevicePairedEvent(ctx context.Context, e *ContractEventData) error {
