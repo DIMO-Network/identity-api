@@ -150,6 +150,13 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Success() {
 		},
 	}
 
+	for _, veh := range expected {
+		bid := helpers.IntToBytes(veh.Node.TokenID)
+		veh.Node.Name, err = helpers.CreateMnemonic(bid)
+
+		s.NoError(err)
+	}
+
 	s.Exactly(expected, res.Edges)
 }
 
@@ -206,6 +213,13 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination() {
 			},
 			Cursor: "Mg==",
 		},
+	}
+
+	for _, veh := range expected {
+		bid := helpers.IntToBytes(veh.Node.TokenID)
+		veh.Node.Name, err = helpers.CreateMnemonic(bid)
+
+		s.NoError(err)
 	}
 
 	s.Exactly(expected, res.Edges)
@@ -265,6 +279,13 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination_NextPage()
 			},
 			Cursor: "MQ==",
 		},
+	}
+
+	for _, veh := range expected {
+		bid := helpers.IntToBytes(veh.Node.TokenID)
+		veh.Node.Name, err = helpers.CreateMnemonic(bid)
+
+		s.NoError(err)
 	}
 
 	s.Exactly(expected, res.Edges)

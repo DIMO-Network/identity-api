@@ -184,6 +184,8 @@ func AftermarketDeviceToAPI(d *models.AftermarketDevice) *gmodel.AftermarketDevi
 
 	_ = e.Encode(aftermarketDevicePrimaryKey{TokenID: d.ID})
 
+	name, _ := helpers.CreateMnemonic(d.Address)
+
 	return &gmodel.AftermarketDevice{
 		ID:             "AD_" + base64.StdEncoding.EncodeToString(b.Bytes()),
 		TokenID:        d.ID,
@@ -196,6 +198,7 @@ func AftermarketDeviceToAPI(d *models.AftermarketDevice) *gmodel.AftermarketDevi
 		MintedAt:       d.MintedAt,
 		ClaimedAt:      d.ClaimedAt.Ptr(),
 		ManufacturerID: d.ManufacturerID.Ptr(),
+		Name:           name,
 	}
 }
 

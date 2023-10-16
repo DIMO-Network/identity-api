@@ -8,6 +8,7 @@ import (
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/config"
+	"github.com/DIMO-Network/identity-api/internal/helpers"
 	test "github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
@@ -156,6 +157,13 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Success() {
 		},
 	}
 
+	for _, veh := range expected {
+		bid := helpers.IntToBytes(veh.Node.TokenID)
+		veh.Node.Name, err = helpers.CreateMnemonic(bid)
+
+		o.NoError(err)
+	}
+
 	o.Exactly(expected, res.Edges)
 }
 
@@ -219,6 +227,13 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination(
 			},
 			Cursor: "Mg==",
 		},
+	}
+
+	for _, veh := range expected {
+		bid := helpers.IntToBytes(veh.Node.TokenID)
+		veh.Node.Name, err = helpers.CreateMnemonic(bid)
+
+		o.NoError(err)
 	}
 
 	o.Exactly(expected, res.Edges)
@@ -285,6 +300,13 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 			},
 			Cursor: "MQ==",
 		},
+	}
+
+	for _, veh := range expected {
+		bid := helpers.IntToBytes(veh.Node.TokenID)
+		veh.Node.Name, err = helpers.CreateMnemonic(bid)
+
+		o.NoError(err)
 	}
 
 	o.Exactly(expected, res.Edges)
@@ -384,6 +406,13 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_OwnedByUser
 			},
 			Cursor: "MQ==",
 		},
+	}
+
+	for _, veh := range expected {
+		bid := helpers.IntToBytes(veh.Node.TokenID)
+		veh.Node.Name, err = helpers.CreateMnemonic(bid)
+
+		o.NoError(err)
 	}
 
 	o.Exactly(expected, res.Edges)
@@ -492,6 +521,13 @@ func (o *AccessibleVehiclesRepoTestSuite) TestVehiclesMultiplePrivsOnOne() {
 		},
 	}
 
+	for _, veh := range expected {
+		bid := helpers.IntToBytes(veh.Node.TokenID)
+		veh.Node.Name, err = helpers.CreateMnemonic(bid)
+
+		o.NoError(err)
+	}
+
 	o.Exactly(expected, res.Edges)
 }
 
@@ -594,6 +630,13 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 			Cursor: "Mg==",
 		},
 	}
+
+	for _, veh := range expected {
+		bid := helpers.IntToBytes(veh.Node.TokenID)
+		veh.Node.Name, err = helpers.CreateMnemonic(bid)
+
+		o.NoError(err)
+	}
 	o.Exactly(expected, res.Edges)
 }
 
@@ -683,6 +726,13 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 			},
 			Cursor: "Mg==",
 		},
+	}
+
+	for _, veh := range expected {
+		bid := helpers.IntToBytes(veh.Node.TokenID)
+		veh.Node.Name, err = helpers.CreateMnemonic(bid)
+
+		o.NoError(err)
 	}
 	o.Exactly(expected, res.Edges)
 }
@@ -786,6 +836,13 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 			Cursor: "Mg==",
 		},
 	}
+	for _, veh := range expected {
+		bid := helpers.IntToBytes(veh.Node.TokenID)
+		veh.Node.Name, err = helpers.CreateMnemonic(bid)
+
+		o.NoError(err)
+	}
+
 	o.Exactly(expected, res.Edges)
 }
 
@@ -887,6 +944,13 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 			},
 			Cursor: "Mw==",
 		},
+	}
+
+	for _, veh := range expected {
+		bid := helpers.IntToBytes(veh.Node.TokenID)
+		veh.Node.Name, err = helpers.CreateMnemonic(bid)
+
+		o.NoError(err)
 	}
 	o.Exactly(expected, res.Edges)
 }

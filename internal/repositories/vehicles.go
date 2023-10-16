@@ -44,6 +44,9 @@ func VehicleToAPI(v *models.Vehicle) *gmodel.Vehicle {
 
 	_ = e.Encode(vehiclePrimaryKey{TokenID: v.ID})
 
+	bid := helpers.IntToBytes(v.ID)
+	name, _ := helpers.CreateMnemonic(bid)
+
 	return &gmodel.Vehicle{
 		ID:       "V_" + base64.StdEncoding.EncodeToString(b.Bytes()),
 		TokenID:  v.ID,
@@ -56,6 +59,7 @@ func VehicleToAPI(v *models.Vehicle) *gmodel.Vehicle {
 			Year:  v.Year.Ptr(),
 		},
 		ManufacturerID: v.ManufacturerID.Ptr(),
+		Name:           name,
 	}
 }
 
