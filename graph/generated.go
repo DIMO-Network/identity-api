@@ -54,6 +54,7 @@ type ComplexityRoot struct {
 	AftermarketDevice struct {
 		Address      func(childComplexity int) int
 		Beneficiary  func(childComplexity int) int
+		ClaimedAt    func(childComplexity int) int
 		ID           func(childComplexity int) int
 		Imei         func(childComplexity int) int
 		Manufacturer func(childComplexity int) int
@@ -222,6 +223,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.AftermarketDevice.Beneficiary(childComplexity), true
+
+	case "AftermarketDevice.claimedAt":
+		if e.complexity.AftermarketDevice.ClaimedAt == nil {
+			break
+		}
+
+		return e.complexity.AftermarketDevice.ClaimedAt(childComplexity), true
 
 	case "AftermarketDevice.id":
 		if e.complexity.AftermarketDevice.ID == nil {
@@ -1466,6 +1474,47 @@ func (ec *executionContext) fieldContext_AftermarketDevice_mintedAt(ctx context.
 	return fc, nil
 }
 
+func (ec *executionContext) _AftermarketDevice_claimedAt(ctx context.Context, field graphql.CollectedField, obj *model.AftermarketDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AftermarketDevice_claimedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ClaimedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	fc.Result = res
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AftermarketDevice_claimedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AftermarketDevice",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _AftermarketDevice_vehicle(ctx context.Context, field graphql.CollectedField, obj *model.AftermarketDevice) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_AftermarketDevice_vehicle(ctx, field)
 	if err != nil {
@@ -1722,6 +1771,8 @@ func (ec *executionContext) fieldContext_AftermarketDeviceConnection_nodes(ctx c
 				return ec.fieldContext_AftermarketDevice_imei(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_AftermarketDevice_mintedAt(ctx, field)
+			case "claimedAt":
+				return ec.fieldContext_AftermarketDevice_claimedAt(ctx, field)
 			case "vehicle":
 				return ec.fieldContext_AftermarketDevice_vehicle(ctx, field)
 			case "beneficiary":
@@ -1886,6 +1937,8 @@ func (ec *executionContext) fieldContext_AftermarketDeviceEdge_node(ctx context.
 				return ec.fieldContext_AftermarketDevice_imei(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_AftermarketDevice_mintedAt(ctx, field)
+			case "claimedAt":
+				return ec.fieldContext_AftermarketDevice_claimedAt(ctx, field)
 			case "vehicle":
 				return ec.fieldContext_AftermarketDevice_vehicle(ctx, field)
 			case "beneficiary":
@@ -3453,6 +3506,8 @@ func (ec *executionContext) fieldContext_Query_aftermarketDevice(ctx context.Con
 				return ec.fieldContext_AftermarketDevice_imei(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_AftermarketDevice_mintedAt(ctx, field)
+			case "claimedAt":
+				return ec.fieldContext_AftermarketDevice_claimedAt(ctx, field)
 			case "vehicle":
 				return ec.fieldContext_AftermarketDevice_vehicle(ctx, field)
 			case "beneficiary":
@@ -4195,6 +4250,8 @@ func (ec *executionContext) fieldContext_Vehicle_aftermarketDevice(ctx context.C
 				return ec.fieldContext_AftermarketDevice_imei(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_AftermarketDevice_mintedAt(ctx, field)
+			case "claimedAt":
+				return ec.fieldContext_AftermarketDevice_claimedAt(ctx, field)
 			case "vehicle":
 				return ec.fieldContext_AftermarketDevice_vehicle(ctx, field)
 			case "beneficiary":
@@ -6856,6 +6913,8 @@ func (ec *executionContext) _AftermarketDevice(ctx context.Context, sel ast.Sele
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "claimedAt":
+			out.Values[i] = ec._AftermarketDevice_claimedAt(ctx, field, obj)
 		case "vehicle":
 			field := field
 

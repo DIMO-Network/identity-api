@@ -33,6 +33,7 @@ type AftermarketDevice struct {
 	VehicleID      null.Int    `boil:"vehicle_id" json:"vehicle_id,omitempty" toml:"vehicle_id" yaml:"vehicle_id,omitempty"`
 	Beneficiary    []byte      `boil:"beneficiary" json:"beneficiary" toml:"beneficiary" yaml:"beneficiary"`
 	ManufacturerID null.Int    `boil:"manufacturer_id" json:"manufacturer_id,omitempty" toml:"manufacturer_id" yaml:"manufacturer_id,omitempty"`
+	ClaimedAt      null.Time   `boil:"claimed_at" json:"claimed_at,omitempty" toml:"claimed_at" yaml:"claimed_at,omitempty"`
 
 	R *aftermarketDeviceR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L aftermarketDeviceL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -48,6 +49,7 @@ var AftermarketDeviceColumns = struct {
 	VehicleID      string
 	Beneficiary    string
 	ManufacturerID string
+	ClaimedAt      string
 }{
 	ID:             "id",
 	Address:        "address",
@@ -58,6 +60,7 @@ var AftermarketDeviceColumns = struct {
 	VehicleID:      "vehicle_id",
 	Beneficiary:    "beneficiary",
 	ManufacturerID: "manufacturer_id",
+	ClaimedAt:      "claimed_at",
 }
 
 var AftermarketDeviceTableColumns = struct {
@@ -70,6 +73,7 @@ var AftermarketDeviceTableColumns = struct {
 	VehicleID      string
 	Beneficiary    string
 	ManufacturerID string
+	ClaimedAt      string
 }{
 	ID:             "aftermarket_devices.id",
 	Address:        "aftermarket_devices.address",
@@ -80,6 +84,7 @@ var AftermarketDeviceTableColumns = struct {
 	VehicleID:      "aftermarket_devices.vehicle_id",
 	Beneficiary:    "aftermarket_devices.beneficiary",
 	ManufacturerID: "aftermarket_devices.manufacturer_id",
+	ClaimedAt:      "aftermarket_devices.claimed_at",
 }
 
 // Generated where
@@ -225,6 +230,30 @@ func (w whereHelpernull_Int) NIN(slice []int) qm.QueryMod {
 func (w whereHelpernull_Int) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
 func (w whereHelpernull_Int) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
+type whereHelpernull_Time struct{ field string }
+
+func (w whereHelpernull_Time) EQ(x null.Time) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
+}
+func (w whereHelpernull_Time) NEQ(x null.Time) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
+}
+func (w whereHelpernull_Time) LT(x null.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpernull_Time) LTE(x null.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpernull_Time) GT(x null.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpernull_Time) GTE(x null.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+
+func (w whereHelpernull_Time) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_Time) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
+
 var AftermarketDeviceWhere = struct {
 	ID             whereHelperint
 	Address        whereHelper__byte
@@ -235,6 +264,7 @@ var AftermarketDeviceWhere = struct {
 	VehicleID      whereHelpernull_Int
 	Beneficiary    whereHelper__byte
 	ManufacturerID whereHelpernull_Int
+	ClaimedAt      whereHelpernull_Time
 }{
 	ID:             whereHelperint{field: "\"identity_api\".\"aftermarket_devices\".\"id\""},
 	Address:        whereHelper__byte{field: "\"identity_api\".\"aftermarket_devices\".\"address\""},
@@ -245,6 +275,7 @@ var AftermarketDeviceWhere = struct {
 	VehicleID:      whereHelpernull_Int{field: "\"identity_api\".\"aftermarket_devices\".\"vehicle_id\""},
 	Beneficiary:    whereHelper__byte{field: "\"identity_api\".\"aftermarket_devices\".\"beneficiary\""},
 	ManufacturerID: whereHelpernull_Int{field: "\"identity_api\".\"aftermarket_devices\".\"manufacturer_id\""},
+	ClaimedAt:      whereHelpernull_Time{field: "\"identity_api\".\"aftermarket_devices\".\"claimed_at\""},
 }
 
 // AftermarketDeviceRels is where relationship names are stored.
@@ -285,9 +316,9 @@ func (r *aftermarketDeviceR) GetVehicle() *Vehicle {
 type aftermarketDeviceL struct{}
 
 var (
-	aftermarketDeviceAllColumns            = []string{"id", "address", "owner", "serial", "imei", "minted_at", "vehicle_id", "beneficiary", "manufacturer_id"}
+	aftermarketDeviceAllColumns            = []string{"id", "address", "owner", "serial", "imei", "minted_at", "vehicle_id", "beneficiary", "manufacturer_id", "claimed_at"}
 	aftermarketDeviceColumnsWithoutDefault = []string{"id", "address", "owner", "minted_at", "beneficiary"}
-	aftermarketDeviceColumnsWithDefault    = []string{"serial", "imei", "vehicle_id", "manufacturer_id"}
+	aftermarketDeviceColumnsWithDefault    = []string{"serial", "imei", "vehicle_id", "manufacturer_id", "claimed_at"}
 	aftermarketDevicePrimaryKeyColumns     = []string{"id"}
 	aftermarketDeviceGeneratedColumns      = []string{}
 )
