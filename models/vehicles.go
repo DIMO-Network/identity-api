@@ -105,12 +105,14 @@ var VehicleRels = struct {
 	AftermarketDevice string
 	DCNS              string
 	TokenPrivileges   string
+	Rewards           string
 	SyntheticDevices  string
 }{
 	Manufacturer:      "Manufacturer",
 	AftermarketDevice: "AftermarketDevice",
 	DCNS:              "DCNS",
 	TokenPrivileges:   "TokenPrivileges",
+	Rewards:           "Rewards",
 	SyntheticDevices:  "SyntheticDevices",
 }
 
@@ -120,6 +122,7 @@ type vehicleR struct {
 	AftermarketDevice *AftermarketDevice   `boil:"AftermarketDevice" json:"AftermarketDevice" toml:"AftermarketDevice" yaml:"AftermarketDevice"`
 	DCNS              DCNSlice             `boil:"DCNS" json:"DCNS" toml:"DCNS" yaml:"DCNS"`
 	TokenPrivileges   PrivilegeSlice       `boil:"TokenPrivileges" json:"TokenPrivileges" toml:"TokenPrivileges" yaml:"TokenPrivileges"`
+	Rewards           RewardSlice          `boil:"Rewards" json:"Rewards" toml:"Rewards" yaml:"Rewards"`
 	SyntheticDevices  SyntheticDeviceSlice `boil:"SyntheticDevices" json:"SyntheticDevices" toml:"SyntheticDevices" yaml:"SyntheticDevices"`
 }
 
@@ -154,6 +157,13 @@ func (r *vehicleR) GetTokenPrivileges() PrivilegeSlice {
 		return nil
 	}
 	return r.TokenPrivileges
+}
+
+func (r *vehicleR) GetRewards() RewardSlice {
+	if r == nil {
+		return nil
+	}
+	return r.Rewards
 }
 
 func (r *vehicleR) GetSyntheticDevices() SyntheticDeviceSlice {
@@ -500,6 +510,20 @@ func (o *Vehicle) TokenPrivileges(mods ...qm.QueryMod) privilegeQuery {
 	)
 
 	return Privileges(queryMods...)
+}
+
+// Rewards retrieves all the reward's Rewards with an executor.
+func (o *Vehicle) Rewards(mods ...qm.QueryMod) rewardQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"identity_api\".\"rewards\".\"vehicle_id\"=?", o.ID),
+	)
+
+	return Rewards(queryMods...)
 }
 
 // SyntheticDevices retrieves all the synthetic_device's SyntheticDevices with an executor.
@@ -985,6 +1009,120 @@ func (vehicleL) LoadTokenPrivileges(ctx context.Context, e boil.ContextExecutor,
 	return nil
 }
 
+// LoadRewards allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (vehicleL) LoadRewards(ctx context.Context, e boil.ContextExecutor, singular bool, maybeVehicle interface{}, mods queries.Applicator) error {
+	var slice []*Vehicle
+	var object *Vehicle
+
+	if singular {
+		var ok bool
+		object, ok = maybeVehicle.(*Vehicle)
+		if !ok {
+			object = new(Vehicle)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeVehicle)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeVehicle))
+			}
+		}
+	} else {
+		s, ok := maybeVehicle.(*[]*Vehicle)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeVehicle)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeVehicle))
+			}
+		}
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &vehicleR{}
+		}
+		args = append(args, object.ID)
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &vehicleR{}
+			}
+
+			for _, a := range args {
+				if a == obj.ID {
+					continue Outer
+				}
+			}
+
+			args = append(args, obj.ID)
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`identity_api.rewards`),
+		qm.WhereIn(`identity_api.rewards.vehicle_id in ?`, args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load rewards")
+	}
+
+	var resultSlice []*Reward
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice rewards")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on rewards")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for rewards")
+	}
+
+	if len(rewardAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.Rewards = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &rewardR{}
+			}
+			foreign.R.Vehicle = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.VehicleID {
+				local.R.Rewards = append(local.R.Rewards, foreign)
+				if foreign.R == nil {
+					foreign.R = &rewardR{}
+				}
+				foreign.R.Vehicle = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
 // LoadSyntheticDevices allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for a 1-M or N-M relationship.
 func (vehicleL) LoadSyntheticDevices(ctx context.Context, e boil.ContextExecutor, singular bool, maybeVehicle interface{}, mods queries.Applicator) error {
@@ -1428,6 +1566,59 @@ func (o *Vehicle) AddTokenPrivileges(ctx context.Context, exec boil.ContextExecu
 			}
 		} else {
 			rel.R.Token = o
+		}
+	}
+	return nil
+}
+
+// AddRewards adds the given related objects to the existing relationships
+// of the vehicle, optionally inserting them as new records.
+// Appends related to o.R.Rewards.
+// Sets related.R.Vehicle appropriately.
+func (o *Vehicle) AddRewards(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Reward) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.VehicleID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"identity_api\".\"rewards\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"vehicle_id"}),
+				strmangle.WhereClause("\"", "\"", 2, rewardPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.IssuanceWeek, rel.VehicleID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.VehicleID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &vehicleR{
+			Rewards: related,
+		}
+	} else {
+		o.R.Rewards = append(o.R.Rewards, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &rewardR{
+				Vehicle: o,
+			}
+		} else {
+			rel.R.Vehicle = o
 		}
 	}
 	return nil

@@ -29,22 +29,24 @@ type EventName string
 var zeroAddress common.Address
 
 const (
-	Transfer                      EventName = "Transfer"
-	VehicleAttributeSet           EventName = "VehicleAttributeSet"
-	ManufacturerNodeMinted        EventName = "ManufacturerNodeMinted"
-	AftermarketDeviceAttributeSet EventName = "AftermarketDeviceAttributeSet"
-	PrivilegeSet                  EventName = "PrivilegeSet"
-	AftermarketDevicePaired       EventName = "AftermarketDevicePaired"
-	AftermarketDeviceUnpaired     EventName = "AftermarketDeviceUnpaired"
-	BeneficiarySetEvent           EventName = "BeneficiarySet"
-	VehicleNodeMinted             EventName = "VehicleNodeMinted"
-	AftermarketDeviceNodeMinted   EventName = "AftermarketDeviceNodeMinted"
-	SyntheticDeviceNodeMinted     EventName = "SyntheticDeviceNodeMinted"
-	SyntheticDeviceNodeBurned     EventName = "SyntheticDeviceNodeBurned"
-	NewNode                       EventName = "NewNode"
-	NewExpiration                 EventName = "NewExpiration"
-	NameChanged                   EventName = "NameChanged"
-	VehicleIdChanged              EventName = "VehicleIdChanged"
+	Transfer                             EventName = "Transfer"
+	VehicleAttributeSet                  EventName = "VehicleAttributeSet"
+	ManufacturerNodeMinted               EventName = "ManufacturerNodeMinted"
+	AftermarketDeviceAttributeSet        EventName = "AftermarketDeviceAttributeSet"
+	PrivilegeSet                         EventName = "PrivilegeSet"
+	AftermarketDevicePaired              EventName = "AftermarketDevicePaired"
+	AftermarketDeviceUnpaired            EventName = "AftermarketDeviceUnpaired"
+	BeneficiarySetEvent                  EventName = "BeneficiarySet"
+	VehicleNodeMinted                    EventName = "VehicleNodeMinted"
+	AftermarketDeviceNodeMinted          EventName = "AftermarketDeviceNodeMinted"
+	SyntheticDeviceNodeMinted            EventName = "SyntheticDeviceNodeMinted"
+	SyntheticDeviceNodeBurned            EventName = "SyntheticDeviceNodeBurned"
+	NewNode                              EventName = "NewNode"
+	NewExpiration                        EventName = "NewExpiration"
+	NameChanged                          EventName = "NameChanged"
+	VehicleIdChanged                     EventName = "VehicleIdChanged"
+	TokensTransferredForDevice           EventName = "TokensTransferredForDevice"
+	TokensTransferredForConnectionStreak EventName = "TokensTransferredForConnectionStreak"
 )
 
 func (r EventName) String() string {
@@ -122,6 +124,10 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 			return c.handleVehicleTransferEvent(ctx, &data)
 		case PrivilegeSet:
 			return c.handlePrivilegeSetEvent(ctx, &data)
+		case TokensTransferredForDevice:
+			return c.handleTokensTransferredForDevice(ctx, &data)
+		case TokensTransferredForConnectionStreak:
+			return c.handleTokensTransferredForConnectionStreak(ctx, &data)
 		}
 	case aftermarketDeviceAddr:
 		switch eventName {
@@ -483,5 +489,63 @@ func (c *ContractsEventsConsumer) handleSyntheticDeviceNodeBurnedEvent(ctx conte
 	}
 
 	_, err := sd.Delete(ctx, c.dbs.DBS().Writer)
+	return err
+}
+
+func (c *ContractsEventsConsumer) handleTokensTransferredForDevice(ctx context.Context, e *ContractEventData) error {
+	var args TokensTransferredForDeviceData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	reward := models.Reward{
+		IssuanceWeek:      1,
+		VehicleID:         int(args.VehicleID.Int64()),
+		ReceivedByAddress: null.BytesFrom(args.User.Bytes()),
+		EarnedAt:          e.Block.Time,
+	}
+
+	cols := models.RewardColumns
+
+	if common.HexToAddress(c.settings.AftermarketDeviceAddr) == args.DeviceNftProxy {
+		reward.AftermarketTokenID = null.IntFrom(int(args.DeviceNode.Int64()))
+		reward.AftermarketEarnings = null.IntFrom(int(args.Amount.Int64()))
+		return reward.Upsert(ctx, c.dbs.DBS().Writer, true,
+			[]string{cols.IssuanceWeek, cols.VehicleID},
+			boil.Whitelist(cols.AftermarketEarnings, cols.AftermarketTokenID),
+			boil.Infer())
+	} else if common.HexToAddress(c.settings.SyntheticDeviceAddr) == args.DeviceNftProxy {
+		reward.SyntheticTokenID = null.IntFrom(int(args.DeviceNode.Int64()))
+		reward.SyntheticEarnings = null.IntFrom(int(args.Amount.Int64()))
+		return reward.Upsert(ctx, c.dbs.DBS().Writer, true,
+			[]string{cols.IssuanceWeek, cols.VehicleID},
+			boil.Whitelist(cols.SyntheticEarnings, cols.SyntheticTokenID),
+			boil.Infer())
+	}
+
+	return nil
+}
+
+func (c *ContractsEventsConsumer) handleTokensTransferredForConnectionStreak(ctx context.Context, e *ContractEventData) error {
+	var args TokensTransferredForConnectionStreakData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	reward, err := models.Rewards(
+		models.RewardWhere.VehicleID.EQ(int(args.VehicleID.Int64())),
+		models.RewardWhere.IssuanceWeek.EQ(1),
+	).One(ctx, c.dbs.DBS().Reader)
+	if err != nil {
+		return err
+	}
+
+	reward.StreakEarning = null.IntFrom(int(args.Amount.Int64()))
+	reward.ConnectionStreak = null.IntFrom(int(args.ConnectionStreak.Int64()))
+
+	cols := models.RewardColumns
+
+	_, err = reward.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(cols.StreakEarning, cols.ConnectionStreak))
+
 	return err
 }

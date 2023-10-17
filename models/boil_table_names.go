@@ -8,6 +8,7 @@ var TableNames = struct {
 	DCNS               string
 	Manufacturers      string
 	Privileges         string
+	Rewards            string
 	SyntheticDevices   string
 	Vehicles           string
 }{
@@ -15,6 +16,7 @@ var TableNames = struct {
 	DCNS:               "dcns",
 	Manufacturers:      "manufacturers",
 	Privileges:         "privileges",
+	Rewards:            "rewards",
 	SyntheticDevices:   "synthetic_devices",
 	Vehicles:           "vehicles",
 }

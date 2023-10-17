@@ -249,17 +249,20 @@ var AftermarketDeviceWhere = struct {
 
 // AftermarketDeviceRels is where relationship names are stored.
 var AftermarketDeviceRels = struct {
-	Manufacturer string
-	Vehicle      string
+	Manufacturer            string
+	Vehicle                 string
+	AftermarketTokenRewards string
 }{
-	Manufacturer: "Manufacturer",
-	Vehicle:      "Vehicle",
+	Manufacturer:            "Manufacturer",
+	Vehicle:                 "Vehicle",
+	AftermarketTokenRewards: "AftermarketTokenRewards",
 }
 
 // aftermarketDeviceR is where relationships are stored.
 type aftermarketDeviceR struct {
-	Manufacturer *Manufacturer `boil:"Manufacturer" json:"Manufacturer" toml:"Manufacturer" yaml:"Manufacturer"`
-	Vehicle      *Vehicle      `boil:"Vehicle" json:"Vehicle" toml:"Vehicle" yaml:"Vehicle"`
+	Manufacturer            *Manufacturer `boil:"Manufacturer" json:"Manufacturer" toml:"Manufacturer" yaml:"Manufacturer"`
+	Vehicle                 *Vehicle      `boil:"Vehicle" json:"Vehicle" toml:"Vehicle" yaml:"Vehicle"`
+	AftermarketTokenRewards RewardSlice   `boil:"AftermarketTokenRewards" json:"AftermarketTokenRewards" toml:"AftermarketTokenRewards" yaml:"AftermarketTokenRewards"`
 }
 
 // NewStruct creates a new relationship struct
@@ -279,6 +282,13 @@ func (r *aftermarketDeviceR) GetVehicle() *Vehicle {
 		return nil
 	}
 	return r.Vehicle
+}
+
+func (r *aftermarketDeviceR) GetAftermarketTokenRewards() RewardSlice {
+	if r == nil {
+		return nil
+	}
+	return r.AftermarketTokenRewards
 }
 
 // aftermarketDeviceL is where Load methods for each relationship are stored.
@@ -592,6 +602,20 @@ func (o *AftermarketDevice) Vehicle(mods ...qm.QueryMod) vehicleQuery {
 	return Vehicles(queryMods...)
 }
 
+// AftermarketTokenRewards retrieves all the reward's Rewards with an executor via aftermarket_token_id column.
+func (o *AftermarketDevice) AftermarketTokenRewards(mods ...qm.QueryMod) rewardQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"identity_api\".\"rewards\".\"aftermarket_token_id\"=?", o.ID),
+	)
+
+	return Rewards(queryMods...)
+}
+
 // LoadManufacturer allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
 func (aftermarketDeviceL) LoadManufacturer(ctx context.Context, e boil.ContextExecutor, singular bool, maybeAftermarketDevice interface{}, mods queries.Applicator) error {
@@ -840,6 +864,120 @@ func (aftermarketDeviceL) LoadVehicle(ctx context.Context, e boil.ContextExecuto
 	return nil
 }
 
+// LoadAftermarketTokenRewards allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (aftermarketDeviceL) LoadAftermarketTokenRewards(ctx context.Context, e boil.ContextExecutor, singular bool, maybeAftermarketDevice interface{}, mods queries.Applicator) error {
+	var slice []*AftermarketDevice
+	var object *AftermarketDevice
+
+	if singular {
+		var ok bool
+		object, ok = maybeAftermarketDevice.(*AftermarketDevice)
+		if !ok {
+			object = new(AftermarketDevice)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeAftermarketDevice)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeAftermarketDevice))
+			}
+		}
+	} else {
+		s, ok := maybeAftermarketDevice.(*[]*AftermarketDevice)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeAftermarketDevice)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeAftermarketDevice))
+			}
+		}
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &aftermarketDeviceR{}
+		}
+		args = append(args, object.ID)
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &aftermarketDeviceR{}
+			}
+
+			for _, a := range args {
+				if queries.Equal(a, obj.ID) {
+					continue Outer
+				}
+			}
+
+			args = append(args, obj.ID)
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`identity_api.rewards`),
+		qm.WhereIn(`identity_api.rewards.aftermarket_token_id in ?`, args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load rewards")
+	}
+
+	var resultSlice []*Reward
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice rewards")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on rewards")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for rewards")
+	}
+
+	if len(rewardAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.AftermarketTokenRewards = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &rewardR{}
+			}
+			foreign.R.AftermarketToken = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if queries.Equal(local.ID, foreign.AftermarketTokenID) {
+				local.R.AftermarketTokenRewards = append(local.R.AftermarketTokenRewards, foreign)
+				if foreign.R == nil {
+					foreign.R = &rewardR{}
+				}
+				foreign.R.AftermarketToken = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
 // SetManufacturer of the aftermarketDevice to the related item.
 // Sets o.R.Manufacturer to related.
 // Adds o to related.R.AftermarketDevices.
@@ -986,6 +1124,133 @@ func (o *AftermarketDevice) RemoveVehicle(ctx context.Context, exec boil.Context
 	}
 
 	related.R.AftermarketDevice = nil
+	return nil
+}
+
+// AddAftermarketTokenRewards adds the given related objects to the existing relationships
+// of the aftermarket_device, optionally inserting them as new records.
+// Appends related to o.R.AftermarketTokenRewards.
+// Sets related.R.AftermarketToken appropriately.
+func (o *AftermarketDevice) AddAftermarketTokenRewards(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Reward) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			queries.Assign(&rel.AftermarketTokenID, o.ID)
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"identity_api\".\"rewards\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"aftermarket_token_id"}),
+				strmangle.WhereClause("\"", "\"", 2, rewardPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.IssuanceWeek, rel.VehicleID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			queries.Assign(&rel.AftermarketTokenID, o.ID)
+		}
+	}
+
+	if o.R == nil {
+		o.R = &aftermarketDeviceR{
+			AftermarketTokenRewards: related,
+		}
+	} else {
+		o.R.AftermarketTokenRewards = append(o.R.AftermarketTokenRewards, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &rewardR{
+				AftermarketToken: o,
+			}
+		} else {
+			rel.R.AftermarketToken = o
+		}
+	}
+	return nil
+}
+
+// SetAftermarketTokenRewards removes all previously related items of the
+// aftermarket_device replacing them completely with the passed
+// in related items, optionally inserting them as new records.
+// Sets o.R.AftermarketToken's AftermarketTokenRewards accordingly.
+// Replaces o.R.AftermarketTokenRewards with related.
+// Sets related.R.AftermarketToken's AftermarketTokenRewards accordingly.
+func (o *AftermarketDevice) SetAftermarketTokenRewards(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Reward) error {
+	query := "update \"identity_api\".\"rewards\" set \"aftermarket_token_id\" = null where \"aftermarket_token_id\" = $1"
+	values := []interface{}{o.ID}
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, query)
+		fmt.Fprintln(writer, values)
+	}
+	_, err := exec.ExecContext(ctx, query, values...)
+	if err != nil {
+		return errors.Wrap(err, "failed to remove relationships before set")
+	}
+
+	if o.R != nil {
+		for _, rel := range o.R.AftermarketTokenRewards {
+			queries.SetScanner(&rel.AftermarketTokenID, nil)
+			if rel.R == nil {
+				continue
+			}
+
+			rel.R.AftermarketToken = nil
+		}
+		o.R.AftermarketTokenRewards = nil
+	}
+
+	return o.AddAftermarketTokenRewards(ctx, exec, insert, related...)
+}
+
+// RemoveAftermarketTokenRewards relationships from objects passed in.
+// Removes related items from R.AftermarketTokenRewards (uses pointer comparison, removal does not keep order)
+// Sets related.R.AftermarketToken.
+func (o *AftermarketDevice) RemoveAftermarketTokenRewards(ctx context.Context, exec boil.ContextExecutor, related ...*Reward) error {
+	if len(related) == 0 {
+		return nil
+	}
+
+	var err error
+	for _, rel := range related {
+		queries.SetScanner(&rel.AftermarketTokenID, nil)
+		if rel.R != nil {
+			rel.R.AftermarketToken = nil
+		}
+		if _, err = rel.Update(ctx, exec, boil.Whitelist("aftermarket_token_id")); err != nil {
+			return err
+		}
+	}
+	if o.R == nil {
+		return nil
+	}
+
+	for _, rel := range related {
+		for i, ri := range o.R.AftermarketTokenRewards {
+			if rel != ri {
+				continue
+			}
+
+			ln := len(o.R.AftermarketTokenRewards)
+			if ln > 1 && i < ln-1 {
+				o.R.AftermarketTokenRewards[i] = o.R.AftermarketTokenRewards[ln-1]
+			}
+			o.R.AftermarketTokenRewards = o.R.AftermarketTokenRewards[:ln-1]
+			break
+		}
+	}
+
 	return nil
 }
 

@@ -15,4 +15,5 @@ type Settings struct {
 	AftermarketDeviceAddr string      `yaml:"AFTERMARKET_DEVICE_CONTRACT_ADDRESS"`
 	DCNRegistryAddr       string      `yaml:"DCN_REGISTRY_ADDR"`
 	DCNResolverAddr       string      `yaml:"DCN_RESOLVER_ADDR"`
+	SyntheticDeviceAddr   string      `yaml:"SYNTHETIC_DEVICE_CONTRACT_ADDRESS"`
 }

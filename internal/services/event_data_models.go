@@ -122,3 +122,18 @@ type DCNVehicleIdChangedData struct {
 	Node      []byte
 	VehicleID *big.Int `json:"vehicleId_"`
 }
+
+type TokensTransferredForDeviceData struct {
+	User           common.Address
+	Amount         *big.Int       `json:"_amount"`
+	VehicleID      *big.Int       `json:"vehicleNodeId"`
+	DeviceNftProxy common.Address `json:"deviceNftProxy"`
+	DeviceNode     *big.Int
+}
+
+type TokensTransferredForConnectionStreakData struct {
+	User             common.Address
+	Amount           *big.Int `json:"_amount"`
+	VehicleID        *big.Int `json:"vehicleNodeId"`
+	ConnectionStreak *big.Int
+}
