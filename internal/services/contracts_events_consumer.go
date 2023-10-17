@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/DIMO-Network/identity-api/internal/config"
@@ -34,6 +35,7 @@ const (
 	ManufacturerNodeMinted               EventName = "ManufacturerNodeMinted"
 	AftermarketDeviceAttributeSet        EventName = "AftermarketDeviceAttributeSet"
 	PrivilegeSet                         EventName = "PrivilegeSet"
+	AftermarketDeviceClaimed             EventName = "AftermarketDeviceClaimed"
 	AftermarketDevicePaired              EventName = "AftermarketDevicePaired"
 	AftermarketDeviceUnpaired            EventName = "AftermarketDeviceUnpaired"
 	BeneficiarySetEvent                  EventName = "BeneficiarySet"
@@ -106,6 +108,8 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 			return c.handleAftermarketDeviceMintedEvent(ctx, &data)
 		case AftermarketDeviceAttributeSet:
 			return c.handleAftermarketDeviceAttributeSetEvent(ctx, &data)
+		case AftermarketDeviceClaimed:
+			return c.handleAftermarketDeviceClaimedEvent(ctx, &data)
 		case AftermarketDevicePaired:
 			return c.handleAftermarketDevicePairedEvent(ctx, &data)
 		case AftermarketDeviceUnpaired:
@@ -237,7 +241,24 @@ func (c *ContractsEventsConsumer) handleVehicleAttributeSetEvent(ctx context.Con
 
 	switch args.Attribute {
 	case "Make", "Model", "Year":
-		c.log.Debug().Str("Attribute", args.Attribute).Msg("ignoring MMY attributes")
+		switch args.Attribute {
+		case "Make":
+			veh.Make = null.StringFrom(args.Info)
+			_, err := veh.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.VehicleColumns.Make))
+			return err
+		case "Model":
+			veh.Model = null.StringFrom(args.Info)
+			_, err := veh.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.VehicleColumns.Model))
+			return err
+		case "Year":
+			year, err := strconv.Atoi(args.Info)
+			if err != nil {
+				return fmt.Errorf("couldn't parse year string %q: %w", args.Info, err)
+			}
+			veh.Year = null.IntFrom(year)
+			_, err = veh.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.VehicleColumns.Year))
+			return err
+		}
 		return nil
 	case "DefinitionURI":
 		res, err := c.httpClient.Get(args.Info)
@@ -373,6 +394,21 @@ func (c *ContractsEventsConsumer) handlePrivilegeSetEvent(ctx context.Context, e
 		Msg("Event processed successfuly")
 
 	return nil
+}
+
+func (c *ContractsEventsConsumer) handleAftermarketDeviceClaimedEvent(ctx context.Context, e *ContractEventData) error {
+	var args AftermarketDeviceClaimedData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	ad := models.AftermarketDevice{
+		ID:        int(args.AftermarketDeviceNode.Int64()),
+		ClaimedAt: null.TimeFrom(e.Block.Time),
+	}
+
+	_, err := ad.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.AftermarketDeviceColumns.ClaimedAt))
+	return err
 }
 
 func (c *ContractsEventsConsumer) handleAftermarketDevicePairedEvent(ctx context.Context, e *ContractEventData) error {
