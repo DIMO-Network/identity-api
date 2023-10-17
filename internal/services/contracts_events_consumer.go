@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/DIMO-Network/identity-api/internal/config"
@@ -234,7 +235,24 @@ func (c *ContractsEventsConsumer) handleVehicleAttributeSetEvent(ctx context.Con
 
 	switch args.Attribute {
 	case "Make", "Model", "Year":
-		c.log.Debug().Str("Attribute", args.Attribute).Msg("ignoring MMY attributes")
+		switch args.Attribute {
+		case "Make":
+			veh.Make = null.StringFrom(args.Info)
+			_, err := veh.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.VehicleColumns.Make))
+			return err
+		case "Model":
+			veh.Model = null.StringFrom(args.Info)
+			_, err := veh.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.VehicleColumns.Model))
+			return err
+		case "Year":
+			year, err := strconv.Atoi(args.Info)
+			if err != nil {
+				return fmt.Errorf("couldn't parse year string %q: %w", args.Info, err)
+			}
+			veh.Year = null.IntFrom(year)
+			_, err = veh.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.VehicleColumns.Year))
+			return err
+		}
 		return nil
 	case "DefinitionURI":
 		res, err := c.httpClient.Get(args.Info)
