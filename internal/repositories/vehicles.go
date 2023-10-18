@@ -1,9 +1,12 @@
 package repositories
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
@@ -11,6 +14,7 @@ import (
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/vmihailenco/msgpack/v5"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"golang.org/x/exp/slices"
 )
@@ -29,9 +33,23 @@ func New(pdb db.Store) *Repository {
 	}
 }
 
+type vehiclePrimaryKey struct {
+	TokenID int
+}
+
 func VehicleToAPI(v *models.Vehicle) *gmodel.Vehicle {
+	var b bytes.Buffer
+	e := msgpack.NewEncoder(&b)
+	e.UseArrayEncodedStructs(true)
+
+	_ = e.Encode(vehiclePrimaryKey{TokenID: v.ID})
+
+	bid := helpers.IntToBytes(v.ID)
+	name, _ := helpers.CreateMnemonic(bid)
+
 	return &gmodel.Vehicle{
-		ID:       v.ID,
+		ID:       "V_" + base64.StdEncoding.EncodeToString(b.Bytes()),
+		TokenID:  v.ID,
 		Owner:    common.BytesToAddress(v.OwnerAddress),
 		MintedAt: v.MintedAt,
 		Definition: &gmodel.Definition{
@@ -40,7 +58,30 @@ func VehicleToAPI(v *models.Vehicle) *gmodel.Vehicle {
 			Model: v.Model.Ptr(),
 			Year:  v.Year.Ptr(),
 		},
+		ManufacturerID: v.ManufacturerID.Ptr(),
+		Name:           name,
 	}
+}
+
+func VehicleIDToToken(id string) (int, error) {
+	if !strings.HasPrefix(id, "V_") {
+		return 0, errors.New("id lacks the V_ prefix")
+	}
+
+	id = strings.TrimPrefix(id, "V_")
+
+	b, err := base64.StdEncoding.DecodeString(id)
+	if err != nil {
+		return 0, err
+	}
+
+	var pk vehiclePrimaryKey
+	d := msgpack.NewDecoder(bytes.NewBuffer(b))
+	if err := d.Decode(&pk); err != nil {
+		return 0, fmt.Errorf("error decoding vehicle id: %w", err)
+	}
+
+	return pk.TokenID, nil
 }
 
 func (v *Repository) createVehiclesResponse(totalCount int64, vehicles models.VehicleSlice, hasNext bool, hasPrevious bool) *gmodel.VehicleConnection {
@@ -54,15 +95,22 @@ func (v *Repository) createVehiclesResponse(totalCount int64, vehicles models.Ve
 	}
 
 	edges := make([]*gmodel.VehicleEdge, len(vehicles))
-	for i, v := range vehicles {
+	nodes := make([]*gmodel.Vehicle, len(vehicles))
+
+	for i, dv := range vehicles {
+		gv := VehicleToAPI(dv)
+
 		edges[i] = &gmodel.VehicleEdge{
-			Node:   VehicleToAPI(v),
-			Cursor: helpers.IDToCursor(v.ID),
+			Node:   gv,
+			Cursor: helpers.IDToCursor(dv.ID),
 		}
+
+		nodes[i] = gv
 	}
 
 	res := &gmodel.VehicleConnection{
 		Edges: edges,
+		Nodes: nodes,
 		PageInfo: &gmodel.PageInfo{
 			EndCursor:       endCur,
 			HasNextPage:     hasNext,

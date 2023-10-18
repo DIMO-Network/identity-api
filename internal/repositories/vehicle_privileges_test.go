@@ -119,6 +119,14 @@ func (s *VehiclesPrivilegesRepoTestSuite) Test_GetVehiclePrivileges_Success() {
 				Cursor: cursor,
 			},
 		},
+		Nodes: []*model.Privilege{
+			{
+				ID:        1,
+				User:      *wallet,
+				SetAt:     currTime,
+				ExpiresAt: expiresAt,
+			},
+		},
 		PageInfo: &model.PageInfo{
 			EndCursor:   &cursor,
 			HasNextPage: false,
@@ -208,6 +216,14 @@ func (s *VehiclesPrivilegesRepoTestSuite) Test_Privileges_NoExpiredPrivilege_Pag
 					ExpiresAt: expiresAt,
 				},
 				Cursor: cursor,
+			},
+		},
+		Nodes: []*model.Privilege{
+			{
+				ID:        1,
+				User:      *wallet2,
+				SetAt:     currTime,
+				ExpiresAt: expiresAt,
 			},
 		},
 		PageInfo: &model.PageInfo{
@@ -301,6 +317,14 @@ func (s *VehiclesPrivilegesRepoTestSuite) Test_Privileges_Pagination_Success() {
 				Cursor: cursor,
 			},
 		},
+		Nodes: []*model.Privilege{
+			{
+				ID:        1,
+				User:      *wallet2,
+				SetAt:     currTime,
+				ExpiresAt: expiresAt,
+			},
+		},
 		PageInfo: &model.PageInfo{
 			EndCursor:   &cursor,
 			HasNextPage: true,
@@ -332,6 +356,14 @@ func (s *VehiclesPrivilegesRepoTestSuite) Test_Privileges_Pagination_Success() {
 					ExpiresAt: expiresAt,
 				},
 				Cursor: cursor,
+			},
+		},
+		Nodes: []*model.Privilege{
+			{
+				ID:        2,
+				User:      *wallet2,
+				SetAt:     currTime,
+				ExpiresAt: expiresAt,
 			},
 		},
 		PageInfo: &model.PageInfo{

@@ -3,7 +3,11 @@ package helpers
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/binary"
 	"strconv"
+	"strings"
+
+	"github.com/DIMO-Network/go-mnemonic"
 )
 
 func CursorToID(cur string) (int, error) {
@@ -28,6 +32,23 @@ func GenerateDCNNode() []byte {
 	if _, err := rand.Read(b); err != nil {
 		panic(err)
 	}
+
+	return b
+}
+
+func CreateMnemonic(addr []byte) (string, error) {
+	mn, err := mnemonic.EntropyToMnemonicThreeWords(addr)
+	if err != nil {
+		return "", err
+	}
+	name := strings.Join(mn, " ")
+
+	return name, nil
+}
+
+func IntToBytes(intVal int) []byte {
+	b := make([]byte, 32)
+	binary.LittleEndian.PutUint32(b, uint32(intVal))
 
 	return b
 }

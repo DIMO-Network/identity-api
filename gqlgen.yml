@@ -103,11 +103,17 @@ models:
     fields:
       vehicle:
         resolver: true
+      manufacturer:
+        resolver: true
     extraFields:
       VehicleID:
         type: "*int"
+      ManufacturerID:
+        type: "*int"
   Vehicle:
     fields:
+      manufacturer:
+        resolver: true
       aftermarketDevice:
         resolver: true
       privileges:
@@ -116,3 +122,6 @@ models:
         resolver: true
       dcn:
         resolver: true
+    extraFields:
+      ManufacturerID:
+        type: "*int"

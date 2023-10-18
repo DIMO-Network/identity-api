@@ -1,14 +1,18 @@
 package repositories
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
+	"strings"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/vmihailenco/msgpack/v5"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"golang.org/x/exp/slices"
@@ -106,14 +110,18 @@ func (r *Repository) GetAftermarketDevices(ctx context.Context, first *int, afte
 		slices.Reverse(all)
 	}
 
-	var adEdges []*gmodel.AftermarketDeviceEdge
-	for _, d := range all {
-		adEdges = append(adEdges,
-			&gmodel.AftermarketDeviceEdge{
-				Node:   AftermarketDeviceToAPI(d),
-				Cursor: helpers.IDToCursor(d.ID),
-			},
-		)
+	edges := make([]*gmodel.AftermarketDeviceEdge, len(all))
+	nodes := make([]*gmodel.AftermarketDevice, len(all))
+
+	for i, da := range all {
+		ga := AftermarketDeviceToAPI(da)
+
+		edges[i] = &gmodel.AftermarketDeviceEdge{
+			Node:   ga,
+			Cursor: helpers.IDToCursor(da.ID),
+		}
+
+		nodes[i] = ga
 	}
 
 	var endCur, startCur *string
@@ -128,7 +136,8 @@ func (r *Repository) GetAftermarketDevices(ctx context.Context, first *int, afte
 
 	res := &gmodel.AftermarketDeviceConnection{
 		TotalCount: int(adCount),
-		Edges:      adEdges,
+		Edges:      edges,
+		Nodes:      nodes,
 		PageInfo: &gmodel.PageInfo{
 			StartCursor:     startCur,
 			EndCursor:       endCur,
@@ -141,7 +150,7 @@ func (r *Repository) GetAftermarketDevices(ctx context.Context, first *int, afte
 }
 
 func (r *Repository) GetAftermarketDevice(ctx context.Context, by gmodel.AftermarketDeviceBy) (*gmodel.AftermarketDevice, error) {
-	if countTrue(by.Address != nil, by.ID != nil, by.Serial != nil) != 1 {
+	if countTrue(by.Address != nil, by.TokenID != nil, by.Serial != nil) != 1 {
 		return nil, errors.New("Pass in exactly one of `address`, `id`, or `serial`.")
 	}
 
@@ -150,8 +159,8 @@ func (r *Repository) GetAftermarketDevice(ctx context.Context, by gmodel.Afterma
 	switch {
 	case by.Address != nil:
 		qm = models.AftermarketDeviceWhere.Address.EQ(by.Address.Bytes())
-	case by.ID != nil:
-		qm = models.AftermarketDeviceWhere.ID.EQ(*by.ID)
+	case by.TokenID != nil:
+		qm = models.AftermarketDeviceWhere.ID.EQ(*by.TokenID)
 	case by.Serial != nil:
 		qm = models.AftermarketDeviceWhere.Serial.EQ(null.StringFrom(*by.Serial))
 	}
@@ -164,17 +173,54 @@ func (r *Repository) GetAftermarketDevice(ctx context.Context, by gmodel.Afterma
 	return AftermarketDeviceToAPI(ad), nil
 }
 
+type aftermarketDevicePrimaryKey struct {
+	TokenID int
+}
+
 func AftermarketDeviceToAPI(d *models.AftermarketDevice) *gmodel.AftermarketDevice {
+	var b bytes.Buffer
+	e := msgpack.NewEncoder(&b)
+	e.UseArrayEncodedStructs(true)
+
+	_ = e.Encode(aftermarketDevicePrimaryKey{TokenID: d.ID})
+
+	name, _ := helpers.CreateMnemonic(d.Address)
+
 	return &gmodel.AftermarketDevice{
-		ID:          d.ID,
-		Address:     common.BytesToAddress(d.Address),
-		Owner:       common.BytesToAddress(d.Owner),
-		Serial:      d.Serial.Ptr(),
-		Imei:        d.Imei.Ptr(),
-		Beneficiary: common.BytesToAddress(d.Beneficiary),
-		VehicleID:   d.VehicleID.Ptr(),
-		MintedAt:    d.MintedAt,
+		ID:             "AD_" + base64.StdEncoding.EncodeToString(b.Bytes()),
+		TokenID:        d.ID,
+		Address:        common.BytesToAddress(d.Address),
+		Owner:          common.BytesToAddress(d.Owner),
+		Serial:         d.Serial.Ptr(),
+		Imei:           d.Imei.Ptr(),
+		Beneficiary:    common.BytesToAddress(d.Beneficiary),
+		VehicleID:      d.VehicleID.Ptr(),
+		MintedAt:       d.MintedAt,
+		ClaimedAt:      d.ClaimedAt.Ptr(),
+		ManufacturerID: d.ManufacturerID.Ptr(),
+		Name:           name,
 	}
+}
+
+func AftermarketDeviceIDToToken(id string) (int, error) {
+	if !strings.HasPrefix(id, "AD_") {
+		return 0, errors.New("id lacks the AD_ prefix")
+	}
+
+	id = strings.TrimPrefix(id, "AD_")
+
+	b, err := base64.StdEncoding.DecodeString(id)
+	if err != nil {
+		return 0, err
+	}
+
+	var pk aftermarketDevicePrimaryKey
+	d := msgpack.NewDecoder(bytes.NewBuffer(b))
+	if err := d.Decode(&pk); err != nil {
+		return 0, fmt.Errorf("error decoding vehicle id: %w", err)
+	}
+
+	return pk.TokenID, nil
 }
 
 func countTrue(ps ...bool) int {

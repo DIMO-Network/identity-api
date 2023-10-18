@@ -38,6 +38,18 @@ type AftermarketDeviceNodeMintedData struct {
 	Owner                    common.Address
 }
 
+type VehicleNodeMintedData struct {
+	ManufacturerID *big.Int
+	TokenID        *big.Int
+	Owner          common.Address
+}
+
+type ManufacturerNodeMintedData struct {
+	Name    string
+	TokenID *big.Int
+	Owner   common.Address
+}
+
 type AftermarketDeviceAttributeSetData struct {
 	TokenID   *big.Int
 	Attribute string
@@ -47,6 +59,11 @@ type AftermarketDeviceAttributeSetData struct {
 type AftermarketDevicePairData struct {
 	AftermarketDeviceNode *big.Int
 	VehicleNode           *big.Int
+	Owner                 common.Address
+}
+
+type AftermarketDeviceClaimedData struct {
+	AftermarketDeviceNode *big.Int
 	Owner                 common.Address
 }
 

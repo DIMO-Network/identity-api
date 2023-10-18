@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/DIMO-Network/identity-api/internal/config"
@@ -31,11 +32,14 @@ var zeroAddress common.Address
 const (
 	Transfer                      EventName = "Transfer"
 	VehicleAttributeSet           EventName = "VehicleAttributeSet"
+	ManufacturerNodeMinted        EventName = "ManufacturerNodeMinted"
 	AftermarketDeviceAttributeSet EventName = "AftermarketDeviceAttributeSet"
 	PrivilegeSet                  EventName = "PrivilegeSet"
+	AftermarketDeviceClaimed      EventName = "AftermarketDeviceClaimed"
 	AftermarketDevicePaired       EventName = "AftermarketDevicePaired"
 	AftermarketDeviceUnpaired     EventName = "AftermarketDeviceUnpaired"
 	BeneficiarySetEvent           EventName = "BeneficiarySet"
+	VehicleNodeMinted             EventName = "VehicleNodeMinted"
 	AftermarketDeviceNodeMinted   EventName = "AftermarketDeviceNodeMinted"
 	SyntheticDeviceNodeMinted     EventName = "SyntheticDeviceNodeMinted"
 	SyntheticDeviceNodeBurned     EventName = "SyntheticDeviceNodeBurned"
@@ -90,18 +94,27 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 	switch data.Contract {
 	case registryAddr:
 		switch eventName {
+		case ManufacturerNodeMinted:
+			return c.handleManufacturerNodeMintedEvent(ctx, &data)
+
+		case VehicleNodeMinted:
+			return c.handleVehicleNodeMintedEvent(ctx, &data)
 		case VehicleAttributeSet:
 			return c.handleVehicleAttributeSetEvent(ctx, &data)
+
 		case AftermarketDeviceNodeMinted:
 			return c.handleAftermarketDeviceMintedEvent(ctx, &data)
 		case AftermarketDeviceAttributeSet:
 			return c.handleAftermarketDeviceAttributeSetEvent(ctx, &data)
+		case AftermarketDeviceClaimed:
+			return c.handleAftermarketDeviceClaimedEvent(ctx, &data)
 		case AftermarketDevicePaired:
 			return c.handleAftermarketDevicePairedEvent(ctx, &data)
 		case AftermarketDeviceUnpaired:
 			return c.handleAftermarketDeviceUnpairedEvent(ctx, &data)
 		case BeneficiarySetEvent:
 			return c.handleBeneficiarySetEvent(ctx, &data)
+
 		case SyntheticDeviceNodeMinted:
 			return c.handleSyntheticDeviceNodeMintedEvent(ctx, &data)
 		case SyntheticDeviceNodeBurned:
@@ -141,6 +154,47 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 	return nil
 }
 
+func (c *ContractsEventsConsumer) handleManufacturerNodeMintedEvent(ctx context.Context, e *ContractEventData) error {
+	var args ManufacturerNodeMintedData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	mfr := models.Manufacturer{
+		ID:       int(args.TokenID.Int64()),
+		Name:     args.Name,
+		Owner:    args.Owner.Bytes(),
+		MintedAt: e.Block.Time,
+	}
+
+	return mfr.Upsert(ctx, c.dbs.DBS().Writer, false, []string{models.ManufacturerColumns.ID}, boil.None(), boil.Infer())
+}
+
+func (c *ContractsEventsConsumer) handleVehicleNodeMintedEvent(ctx context.Context, e *ContractEventData) error {
+	var args VehicleNodeMintedData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	v := models.Vehicle{
+		ID:             int(args.TokenID.Int64()),
+		OwnerAddress:   args.Owner.Bytes(),
+		MintedAt:       e.Block.Time,
+		ManufacturerID: null.IntFrom(int(args.ManufacturerID.Int64())),
+	}
+
+	cols := models.VehicleColumns
+
+	return v.Upsert(
+		ctx,
+		c.dbs.DBS().Writer,
+		false,
+		[]string{cols.ID},
+		boil.None(),
+		boil.Whitelist(cols.ID, cols.OwnerAddress, cols.MintedAt),
+	)
+}
+
 func (c *ContractsEventsConsumer) handleAftermarketDeviceMintedEvent(ctx context.Context, e *ContractEventData) error {
 	var args AftermarketDeviceNodeMintedData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
@@ -148,11 +202,12 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceMintedEvent(ctx context
 	}
 
 	ad := models.AftermarketDevice{
-		ID:          int(args.TokenID.Int64()),
-		Address:     args.AftermarketDeviceAddress.Bytes(),
-		Owner:       args.Owner.Bytes(),
-		MintedAt:    e.Block.Time,
-		Beneficiary: args.Owner.Bytes(),
+		ID:             int(args.TokenID.Int64()),
+		Address:        args.AftermarketDeviceAddress.Bytes(),
+		Owner:          args.Owner.Bytes(),
+		MintedAt:       e.Block.Time,
+		Beneficiary:    args.Owner.Bytes(),
+		ManufacturerID: null.IntFrom(int(args.ManufacturerID.Int64())),
 	}
 
 	cols := models.AftermarketDeviceColumns
@@ -180,9 +235,26 @@ func (c *ContractsEventsConsumer) handleVehicleAttributeSetEvent(ctx context.Con
 
 	switch args.Attribute {
 	case "Make", "Model", "Year":
-		c.log.Debug().Str("Attribute", args.Attribute).Msg("ignoring MMY attributes")
+		switch args.Attribute {
+		case "Make":
+			veh.Make = null.StringFrom(args.Info)
+			_, err := veh.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.VehicleColumns.Make))
+			return err
+		case "Model":
+			veh.Model = null.StringFrom(args.Info)
+			_, err := veh.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.VehicleColumns.Model))
+			return err
+		case "Year":
+			year, err := strconv.Atoi(args.Info)
+			if err != nil {
+				return fmt.Errorf("couldn't parse year string %q: %w", args.Info, err)
+			}
+			veh.Year = null.IntFrom(year)
+			_, err = veh.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.VehicleColumns.Year))
+			return err
+		}
 		return nil
-	case "Definition URI":
+	case "DefinitionURI":
 		res, err := c.httpClient.Get(args.Info)
 		if err != nil {
 			return err
@@ -316,6 +388,21 @@ func (c *ContractsEventsConsumer) handlePrivilegeSetEvent(ctx context.Context, e
 		Msg("Event processed successfuly")
 
 	return nil
+}
+
+func (c *ContractsEventsConsumer) handleAftermarketDeviceClaimedEvent(ctx context.Context, e *ContractEventData) error {
+	var args AftermarketDeviceClaimedData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	ad := models.AftermarketDevice{
+		ID:        int(args.AftermarketDeviceNode.Int64()),
+		ClaimedAt: null.TimeFrom(e.Block.Time),
+	}
+
+	_, err := ad.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.AftermarketDeviceColumns.ClaimedAt))
+	return err
 }
 
 func (c *ContractsEventsConsumer) handleAftermarketDevicePairedEvent(ctx context.Context, e *ContractEventData) error {
