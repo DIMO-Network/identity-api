@@ -26,7 +26,7 @@ import (
 type Reward struct {
 	IssuanceWeek        int        `boil:"issuance_week" json:"issuance_week" toml:"issuance_week" yaml:"issuance_week"`
 	ConnectionStreak    null.Int   `boil:"connection_streak" json:"connection_streak,omitempty" toml:"connection_streak" yaml:"connection_streak,omitempty"`
-	StreakEarning       null.Int   `boil:"streak_earning" json:"streak_earning,omitempty" toml:"streak_earning" yaml:"streak_earning,omitempty"`
+	StreakEarnings      null.Int   `boil:"streak_earnings" json:"streak_earnings,omitempty" toml:"streak_earnings" yaml:"streak_earnings,omitempty"`
 	VehicleID           int        `boil:"vehicle_id" json:"vehicle_id" toml:"vehicle_id" yaml:"vehicle_id"`
 	AftermarketTokenID  null.Int   `boil:"aftermarket_token_id" json:"aftermarket_token_id,omitempty" toml:"aftermarket_token_id" yaml:"aftermarket_token_id,omitempty"`
 	AftermarketEarnings null.Int   `boil:"aftermarket_earnings" json:"aftermarket_earnings,omitempty" toml:"aftermarket_earnings" yaml:"aftermarket_earnings,omitempty"`
@@ -42,7 +42,7 @@ type Reward struct {
 var RewardColumns = struct {
 	IssuanceWeek        string
 	ConnectionStreak    string
-	StreakEarning       string
+	StreakEarnings      string
 	VehicleID           string
 	AftermarketTokenID  string
 	AftermarketEarnings string
@@ -53,7 +53,7 @@ var RewardColumns = struct {
 }{
 	IssuanceWeek:        "issuance_week",
 	ConnectionStreak:    "connection_streak",
-	StreakEarning:       "streak_earning",
+	StreakEarnings:      "streak_earnings",
 	VehicleID:           "vehicle_id",
 	AftermarketTokenID:  "aftermarket_token_id",
 	AftermarketEarnings: "aftermarket_earnings",
@@ -66,7 +66,7 @@ var RewardColumns = struct {
 var RewardTableColumns = struct {
 	IssuanceWeek        string
 	ConnectionStreak    string
-	StreakEarning       string
+	StreakEarnings      string
 	VehicleID           string
 	AftermarketTokenID  string
 	AftermarketEarnings string
@@ -77,7 +77,7 @@ var RewardTableColumns = struct {
 }{
 	IssuanceWeek:        "rewards.issuance_week",
 	ConnectionStreak:    "rewards.connection_streak",
-	StreakEarning:       "rewards.streak_earning",
+	StreakEarnings:      "rewards.streak_earnings",
 	VehicleID:           "rewards.vehicle_id",
 	AftermarketTokenID:  "rewards.aftermarket_token_id",
 	AftermarketEarnings: "rewards.aftermarket_earnings",
@@ -116,7 +116,7 @@ func (w whereHelpernull_Bytes) IsNotNull() qm.QueryMod { return qmhelper.WhereIs
 var RewardWhere = struct {
 	IssuanceWeek        whereHelperint
 	ConnectionStreak    whereHelpernull_Int
-	StreakEarning       whereHelpernull_Int
+	StreakEarnings      whereHelpernull_Int
 	VehicleID           whereHelperint
 	AftermarketTokenID  whereHelpernull_Int
 	AftermarketEarnings whereHelpernull_Int
@@ -127,7 +127,7 @@ var RewardWhere = struct {
 }{
 	IssuanceWeek:        whereHelperint{field: "\"identity_api\".\"rewards\".\"issuance_week\""},
 	ConnectionStreak:    whereHelpernull_Int{field: "\"identity_api\".\"rewards\".\"connection_streak\""},
-	StreakEarning:       whereHelpernull_Int{field: "\"identity_api\".\"rewards\".\"streak_earning\""},
+	StreakEarnings:      whereHelpernull_Int{field: "\"identity_api\".\"rewards\".\"streak_earnings\""},
 	VehicleID:           whereHelperint{field: "\"identity_api\".\"rewards\".\"vehicle_id\""},
 	AftermarketTokenID:  whereHelpernull_Int{field: "\"identity_api\".\"rewards\".\"aftermarket_token_id\""},
 	AftermarketEarnings: whereHelpernull_Int{field: "\"identity_api\".\"rewards\".\"aftermarket_earnings\""},
@@ -185,9 +185,9 @@ func (r *rewardR) GetVehicle() *Vehicle {
 type rewardL struct{}
 
 var (
-	rewardAllColumns            = []string{"issuance_week", "connection_streak", "streak_earning", "vehicle_id", "aftermarket_token_id", "aftermarket_earnings", "synthetic_token_id", "synthetic_earnings", "received_by_address", "earned_at"}
+	rewardAllColumns            = []string{"issuance_week", "connection_streak", "streak_earnings", "vehicle_id", "aftermarket_token_id", "aftermarket_earnings", "synthetic_token_id", "synthetic_earnings", "received_by_address", "earned_at"}
 	rewardColumnsWithoutDefault = []string{"issuance_week", "vehicle_id", "earned_at"}
-	rewardColumnsWithDefault    = []string{"connection_streak", "streak_earning", "aftermarket_token_id", "aftermarket_earnings", "synthetic_token_id", "synthetic_earnings", "received_by_address"}
+	rewardColumnsWithDefault    = []string{"connection_streak", "streak_earnings", "aftermarket_token_id", "aftermarket_earnings", "synthetic_token_id", "synthetic_earnings", "received_by_address"}
 	rewardPrimaryKeyColumns     = []string{"issuance_week", "vehicle_id"}
 	rewardGeneratedColumns      = []string{}
 )

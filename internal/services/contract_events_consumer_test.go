@@ -1066,9 +1066,10 @@ func Test_Handle_TokensTransferred_ForDevice_AftermarketDevice_Event(t *testing.
 	var tokensTransferredForDeviceData = TokensTransferredForDeviceData{
 		User:           *user,
 		Amount:         amt,
-		VehicleID:      vID,
+		VehicleNodeID:  vID,
 		DeviceNode:     deviceNode,
 		DeviceNftProxy: aftAddr,
+		Week:           big.NewInt(1),
 	}
 
 	config := mocks.NewTestConfig()
@@ -1116,7 +1117,7 @@ func Test_Handle_TokensTransferred_ForDevice_AftermarketDevice_Event(t *testing.
 			ConnectionStreak:    null.Int{},
 			SyntheticTokenID:    null.Int{},
 			SyntheticEarnings:   null.Int{},
-			StreakEarning:       null.Int{},
+			StreakEarnings:      null.Int{},
 		})
 	}
 }
@@ -1149,9 +1150,10 @@ func Test_Handle_TokensTransferred_ForDevice_SyntheticDevice_Event(t *testing.T)
 	var tokensTransferredForDeviceData = TokensTransferredForDeviceData{
 		User:           *user,
 		Amount:         amt,
-		VehicleID:      vID,
+		VehicleNodeID:  vID,
 		DeviceNode:     deviceNode,
 		DeviceNftProxy: synthAddr,
+		Week:           big.NewInt(1),
 	}
 
 	config := mocks.NewTestConfig()
@@ -1201,7 +1203,7 @@ func Test_Handle_TokensTransferred_ForDevice_SyntheticDevice_Event(t *testing.T)
 			AftermarketTokenID:  null.Int{},
 			AftermarketEarnings: null.Int{},
 			ConnectionStreak:    null.Int{},
-			StreakEarning:       null.Int{},
+			StreakEarnings:      null.Int{},
 			SyntheticTokenID:    null.IntFrom(synthID),
 			SyntheticEarnings:   null.IntFrom(int(amt.Int64())),
 		})
@@ -1269,8 +1271,9 @@ func Test_Handle_TokensTransferred_ForDevice_UpdateSynthetic_WhenAftermarketExis
 		},
 	}
 	var tokensTransferredForDeviceData = TokensTransferredForDeviceData{
-		User:      *user,
-		VehicleID: vID,
+		User:          *user,
+		VehicleNodeID: vID,
+		Week:          big.NewInt(1),
 	}
 	for idx, event := range payload {
 		tokensTransferredForDeviceData.Amount = event.amount
@@ -1309,7 +1312,7 @@ func Test_Handle_TokensTransferred_ForDevice_UpdateSynthetic_WhenAftermarketExis
 			SyntheticTokenID:    null.IntFrom(synthID),
 			SyntheticEarnings:   null.IntFrom(int(payload[1].amount.Int64())),
 			ConnectionStreak:    null.Int{},
-			StreakEarning:       null.Int{},
+			StreakEarnings:      null.Int{},
 		})
 	}
 }
@@ -1375,8 +1378,9 @@ func Test_Handle_TokensTransferred_ForDevice_UpdateAftermarket_WhenSyntheticExis
 		},
 	}
 	var tokensTransferredForDeviceData = TokensTransferredForDeviceData{
-		User:      *user,
-		VehicleID: vID,
+		User:          *user,
+		VehicleNodeID: vID,
+		Week:          big.NewInt(1),
 	}
 	for idx, event := range payload {
 		tokensTransferredForDeviceData.Amount = event.amount
@@ -1415,7 +1419,7 @@ func Test_Handle_TokensTransferred_ForDevice_UpdateAftermarket_WhenSyntheticExis
 			SyntheticTokenID:    null.IntFrom(synthID),
 			SyntheticEarnings:   null.IntFrom(int(payload[0].amount.Int64())),
 			ConnectionStreak:    null.Int{},
-			StreakEarning:       null.Int{},
+			StreakEarnings:      null.Int{},
 		})
 	}
 }
@@ -1463,7 +1467,7 @@ func Test_Handle_TokensTransferredForConnectionStreak_Event(t *testing.T) {
 
 	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
 
-	payload := []struct {
+	payloads := []struct {
 		node             *big.Int
 		proxyAddr        *common.Address
 		amount           *big.Int
@@ -1489,14 +1493,16 @@ func Test_Handle_TokensTransferredForConnectionStreak_Event(t *testing.T) {
 		},
 	}
 	var tokensTransferredForDeviceData = TokensTransferredForDeviceData{
-		User:      *user,
-		VehicleID: vID,
+		User:          *user,
+		VehicleNodeID: vID,
+		Week:          big.NewInt(1),
 	}
 	var tokensTransferredForConnectionStreakData = TokensTransferredForConnectionStreakData{
-		User:      *user,
-		VehicleID: vID,
+		User:          *user,
+		VehicleNodeID: vID,
+		Week:          big.NewInt(1),
 	}
-	for idx, event := range payload {
+	for idx, event := range payloads {
 		contractEventData.EventName = event.eventName
 
 		var expectedBytes []byte
@@ -1539,11 +1545,11 @@ func Test_Handle_TokensTransferredForConnectionStreak_Event(t *testing.T) {
 			ReceivedByAddress:   null.BytesFrom(user.Bytes()),
 			EarnedAt:            mintedTime,
 			AftermarketTokenID:  null.IntFrom(afterMktID),
-			AftermarketEarnings: null.IntFrom(int(payload[1].amount.Int64())),
+			AftermarketEarnings: null.IntFrom(int(payloads[1].amount.Int64())),
 			SyntheticTokenID:    null.IntFrom(synthID),
-			SyntheticEarnings:   null.IntFrom(int(payload[0].amount.Int64())),
-			ConnectionStreak:    null.IntFrom(int(payload[2].connectionStreak.Int64())),
-			StreakEarning:       null.IntFrom(int(payload[2].amount.Int64())),
+			SyntheticEarnings:   null.IntFrom(int(payloads[0].amount.Int64())),
+			ConnectionStreak:    null.IntFrom(int(payloads[2].connectionStreak.Int64())),
+			StreakEarnings:      null.IntFrom(int(payloads[2].amount.Int64())),
 		}, reward[0])
 	}
 }

@@ -535,8 +535,8 @@ func (c *ContractsEventsConsumer) handleTokensTransferredForDevice(ctx context.C
 	}
 
 	reward := models.Reward{
-		IssuanceWeek:      1,
-		VehicleID:         int(args.VehicleID.Int64()),
+		IssuanceWeek:      int(args.Week.Int64()),
+		VehicleID:         int(args.VehicleNodeID.Int64()),
 		ReceivedByAddress: null.BytesFrom(args.User.Bytes()),
 		EarnedAt:          e.Block.Time,
 	}
@@ -568,20 +568,16 @@ func (c *ContractsEventsConsumer) handleTokensTransferredForConnectionStreak(ctx
 		return err
 	}
 
-	reward, err := models.Rewards(
-		models.RewardWhere.VehicleID.EQ(int(args.VehicleID.Int64())),
-		models.RewardWhere.IssuanceWeek.EQ(1),
-	).One(ctx, c.dbs.DBS().Reader)
-	if err != nil {
-		return err
+	reward := models.Reward{
+		IssuanceWeek:     int(args.Week.Int64()),
+		VehicleID:        int(args.VehicleNodeID.Int64()),
+		ConnectionStreak: null.IntFrom(int(args.ConnectionStreak.Int64())),
+		StreakEarnings:   null.IntFrom(int(args.Amount.Int64())),
 	}
-
-	reward.StreakEarning = null.IntFrom(int(args.Amount.Int64()))
-	reward.ConnectionStreak = null.IntFrom(int(args.ConnectionStreak.Int64()))
 
 	cols := models.RewardColumns
 
-	_, err = reward.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(cols.StreakEarning, cols.ConnectionStreak))
+	_, err := reward.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(cols.StreakEarnings, cols.ConnectionStreak))
 
 	return err
 }

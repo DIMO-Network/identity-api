@@ -3,7 +3,7 @@
 CREATE TABLE rewards (
     issuance_week int NOT NULL,
     connection_streak int,
-    streak_earning int,
+    streak_earnings int,
     vehicle_id int NOT NULL CONSTRAINT rewards_vehicle_token_id REFERENCES vehicles (id),
     aftermarket_token_id int CONSTRAINT rewards_aftermarket_token_id REFERENCES aftermarket_devices (id),
     aftermarket_earnings int,
