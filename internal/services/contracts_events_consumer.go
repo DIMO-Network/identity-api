@@ -298,19 +298,18 @@ func (c *ContractsEventsConsumer) handleVehicleTransferEvent(ctx context.Context
 		MintedAt:     e.Block.Time,
 	}
 
+	// Handle this with VehicleNodeMinted.
+	if args.From == zeroAddress {
+		return nil
+	}
+
 	if args.To == zeroAddress {
 		_, err := vehicle.Delete(ctx, c.dbs.DBS().Writer)
 		return err
 	}
 
-	// Insert is the mint case.
-	if err := vehicle.Upsert(
-		ctx,
-		c.dbs.DBS().Writer,
-		true,
-		[]string{models.VehicleColumns.ID},
-		boil.Whitelist(models.VehicleColumns.OwnerAddress),
-		boil.Whitelist(models.VehicleColumns.ID, models.VehicleColumns.OwnerAddress, models.VehicleColumns.MintedAt)); err != nil {
+	_, err := vehicle.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.VehicleColumns.OwnerAddress))
+	if err != nil {
 		return err
 	}
 
