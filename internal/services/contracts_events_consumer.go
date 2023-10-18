@@ -304,6 +304,7 @@ func (c *ContractsEventsConsumer) handleVehicleTransferEvent(ctx context.Context
 	}
 
 	if args.To == zeroAddress {
+		// Will cascade to the privileges.
 		_, err := vehicle.Delete(ctx, c.dbs.DBS().Writer)
 		return err
 	}
