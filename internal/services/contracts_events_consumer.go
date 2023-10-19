@@ -191,7 +191,7 @@ func (c *ContractsEventsConsumer) handleVehicleNodeMintedEvent(ctx context.Conte
 		false,
 		[]string{cols.ID},
 		boil.None(),
-		boil.Whitelist(cols.ID, cols.OwnerAddress, cols.MintedAt),
+		boil.Whitelist(cols.ID, cols.OwnerAddress, cols.MintedAt, cols.ManufacturerID),
 	)
 }
 
