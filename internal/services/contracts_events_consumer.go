@@ -228,9 +228,8 @@ func (c *ContractsEventsConsumer) handleVehicleAttributeSetEvent(ctx context.Con
 		return err
 	}
 
-	veh, err := models.FindVehicle(ctx, c.dbs.DBS().Reader, int(args.TokenID.Int64()))
-	if err != nil {
-		return err
+	veh := models.Vehicle{
+		ID: int(args.TokenID.Int64()),
 	}
 
 	switch args.Attribute {
