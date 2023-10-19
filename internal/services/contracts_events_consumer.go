@@ -180,7 +180,7 @@ func (c *ContractsEventsConsumer) handleVehicleNodeMintedEvent(ctx context.Conte
 		ID:             int(args.TokenID.Int64()),
 		OwnerAddress:   args.Owner.Bytes(),
 		MintedAt:       e.Block.Time,
-		ManufacturerID: null.IntFrom(int(args.ManufacturerID.Int64())),
+		ManufacturerID: null.IntFrom(int(args.ManufacturerNode.Int64())),
 	}
 
 	cols := models.VehicleColumns
