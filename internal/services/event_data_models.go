@@ -39,9 +39,9 @@ type AftermarketDeviceNodeMintedData struct {
 }
 
 type VehicleNodeMintedData struct {
-	ManufacturerID *big.Int
-	TokenID        *big.Int
-	Owner          common.Address
+	ManufacturerNode *big.Int
+	TokenID          *big.Int
+	Owner            common.Address
 }
 
 type ManufacturerNodeMintedData struct {
