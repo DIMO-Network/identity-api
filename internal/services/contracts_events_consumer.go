@@ -14,8 +14,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/goccy/go-json"
 	"github.com/rs/zerolog"
+	"github.com/ericlagergren/decimal"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/volatiletech/sqlboiler/v4/types"
 )
 
 type ContractsEventsConsumer struct {
@@ -83,6 +85,7 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 	aftermarketDeviceAddr := common.HexToAddress(c.settings.AftermarketDeviceAddr)
 	DCNRegistryAddr := common.HexToAddress(c.settings.DCNRegistryAddr)
 	DCNResolverAddr := common.HexToAddress(c.settings.DCNResolverAddr)
+	RewardsContractAddr := common.HexToAddress(c.settings.RewardsContractAddr)
 
 	var data ContractEventData
 	if err := json.Unmarshal(event.Data, &data); err != nil {
@@ -128,10 +131,6 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 			return c.handleVehicleTransferEvent(ctx, &data)
 		case PrivilegeSet:
 			return c.handlePrivilegeSetEvent(ctx, &data)
-		case TokensTransferredForDevice:
-			return c.handleTokensTransferredForDevice(ctx, &data)
-		case TokensTransferredForConnectionStreak:
-			return c.handleTokensTransferredForConnectionStreak(ctx, &data)
 		}
 	case aftermarketDeviceAddr:
 		switch eventName {
@@ -152,6 +151,13 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 			return c.handleNameChanged(ctx, &data)
 		case VehicleIdChanged:
 			return c.handleVehicleIdChanged(ctx, &data)
+		}
+	case RewardsContractAddr:
+		switch eventName {
+		case TokensTransferredForDevice:
+			return c.handleTokensTransferredForDevice(ctx, &data)
+		case TokensTransferredForConnectionStreak:
+			return c.handleTokensTransferredForConnectionStreak(ctx, &data)
 		}
 	}
 
@@ -545,14 +551,16 @@ func (c *ContractsEventsConsumer) handleTokensTransferredForDevice(ctx context.C
 
 	if common.HexToAddress(c.settings.AftermarketDeviceAddr) == args.DeviceNftProxy {
 		reward.AftermarketTokenID = null.IntFrom(int(args.DeviceNode.Int64()))
-		reward.AftermarketEarnings = null.IntFrom(int(args.Amount.Int64()))
+		reward.AftermarketEarnings = types.NewNullDecimal(decimal.New(args.Amount.Int64(), 0))
+
 		return reward.Upsert(ctx, c.dbs.DBS().Writer, true,
 			[]string{cols.IssuanceWeek, cols.VehicleID},
 			boil.Whitelist(cols.AftermarketEarnings, cols.AftermarketTokenID),
 			boil.Infer())
 	} else if common.HexToAddress(c.settings.SyntheticDeviceAddr) == args.DeviceNftProxy {
 		reward.SyntheticTokenID = null.IntFrom(int(args.DeviceNode.Int64()))
-		reward.SyntheticEarnings = null.IntFrom(int(args.Amount.Int64()))
+		reward.SyntheticEarnings = types.NewNullDecimal(decimal.New(args.Amount.Int64(), 0))
+
 		return reward.Upsert(ctx, c.dbs.DBS().Writer, true,
 			[]string{cols.IssuanceWeek, cols.VehicleID},
 			boil.Whitelist(cols.SyntheticEarnings, cols.SyntheticTokenID),
@@ -572,7 +580,7 @@ func (c *ContractsEventsConsumer) handleTokensTransferredForConnectionStreak(ctx
 		IssuanceWeek:     int(args.Week.Int64()),
 		VehicleID:        int(args.VehicleNodeID.Int64()),
 		ConnectionStreak: null.IntFrom(int(args.ConnectionStreak.Int64())),
-		StreakEarnings:   null.IntFrom(int(args.Amount.Int64())),
+		StreakEarnings:   types.NewNullDecimal(decimal.New(args.Amount.Int64(), 0)),
 	}
 
 	cols := models.RewardColumns

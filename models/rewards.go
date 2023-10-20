@@ -19,21 +19,22 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"github.com/volatiletech/sqlboiler/v4/queries/qmhelper"
+	"github.com/volatiletech/sqlboiler/v4/types"
 	"github.com/volatiletech/strmangle"
 )
 
 // Reward is an object representing the database table.
 type Reward struct {
-	IssuanceWeek        int        `boil:"issuance_week" json:"issuance_week" toml:"issuance_week" yaml:"issuance_week"`
-	ConnectionStreak    null.Int   `boil:"connection_streak" json:"connection_streak,omitempty" toml:"connection_streak" yaml:"connection_streak,omitempty"`
-	StreakEarnings      null.Int   `boil:"streak_earnings" json:"streak_earnings,omitempty" toml:"streak_earnings" yaml:"streak_earnings,omitempty"`
-	VehicleID           int        `boil:"vehicle_id" json:"vehicle_id" toml:"vehicle_id" yaml:"vehicle_id"`
-	AftermarketTokenID  null.Int   `boil:"aftermarket_token_id" json:"aftermarket_token_id,omitempty" toml:"aftermarket_token_id" yaml:"aftermarket_token_id,omitempty"`
-	AftermarketEarnings null.Int   `boil:"aftermarket_earnings" json:"aftermarket_earnings,omitempty" toml:"aftermarket_earnings" yaml:"aftermarket_earnings,omitempty"`
-	SyntheticTokenID    null.Int   `boil:"synthetic_token_id" json:"synthetic_token_id,omitempty" toml:"synthetic_token_id" yaml:"synthetic_token_id,omitempty"`
-	SyntheticEarnings   null.Int   `boil:"synthetic_earnings" json:"synthetic_earnings,omitempty" toml:"synthetic_earnings" yaml:"synthetic_earnings,omitempty"`
-	ReceivedByAddress   null.Bytes `boil:"received_by_address" json:"received_by_address,omitempty" toml:"received_by_address" yaml:"received_by_address,omitempty"`
-	EarnedAt            time.Time  `boil:"earned_at" json:"earned_at" toml:"earned_at" yaml:"earned_at"`
+	IssuanceWeek        int               `boil:"issuance_week" json:"issuance_week" toml:"issuance_week" yaml:"issuance_week"`
+	VehicleID           int               `boil:"vehicle_id" json:"vehicle_id" toml:"vehicle_id" yaml:"vehicle_id"`
+	ConnectionStreak    null.Int          `boil:"connection_streak" json:"connection_streak,omitempty" toml:"connection_streak" yaml:"connection_streak,omitempty"`
+	StreakEarnings      types.NullDecimal `boil:"streak_earnings" json:"streak_earnings,omitempty" toml:"streak_earnings" yaml:"streak_earnings,omitempty"`
+	AftermarketTokenID  null.Int          `boil:"aftermarket_token_id" json:"aftermarket_token_id,omitempty" toml:"aftermarket_token_id" yaml:"aftermarket_token_id,omitempty"`
+	AftermarketEarnings types.NullDecimal `boil:"aftermarket_earnings" json:"aftermarket_earnings,omitempty" toml:"aftermarket_earnings" yaml:"aftermarket_earnings,omitempty"`
+	SyntheticTokenID    null.Int          `boil:"synthetic_token_id" json:"synthetic_token_id,omitempty" toml:"synthetic_token_id" yaml:"synthetic_token_id,omitempty"`
+	SyntheticEarnings   types.NullDecimal `boil:"synthetic_earnings" json:"synthetic_earnings,omitempty" toml:"synthetic_earnings" yaml:"synthetic_earnings,omitempty"`
+	ReceivedByAddress   null.Bytes        `boil:"received_by_address" json:"received_by_address,omitempty" toml:"received_by_address" yaml:"received_by_address,omitempty"`
+	EarnedAt            time.Time         `boil:"earned_at" json:"earned_at" toml:"earned_at" yaml:"earned_at"`
 
 	R *rewardR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L rewardL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -41,9 +42,9 @@ type Reward struct {
 
 var RewardColumns = struct {
 	IssuanceWeek        string
+	VehicleID           string
 	ConnectionStreak    string
 	StreakEarnings      string
-	VehicleID           string
 	AftermarketTokenID  string
 	AftermarketEarnings string
 	SyntheticTokenID    string
@@ -52,9 +53,9 @@ var RewardColumns = struct {
 	EarnedAt            string
 }{
 	IssuanceWeek:        "issuance_week",
+	VehicleID:           "vehicle_id",
 	ConnectionStreak:    "connection_streak",
 	StreakEarnings:      "streak_earnings",
-	VehicleID:           "vehicle_id",
 	AftermarketTokenID:  "aftermarket_token_id",
 	AftermarketEarnings: "aftermarket_earnings",
 	SyntheticTokenID:    "synthetic_token_id",
@@ -65,9 +66,9 @@ var RewardColumns = struct {
 
 var RewardTableColumns = struct {
 	IssuanceWeek        string
+	VehicleID           string
 	ConnectionStreak    string
 	StreakEarnings      string
-	VehicleID           string
 	AftermarketTokenID  string
 	AftermarketEarnings string
 	SyntheticTokenID    string
@@ -76,9 +77,9 @@ var RewardTableColumns = struct {
 	EarnedAt            string
 }{
 	IssuanceWeek:        "rewards.issuance_week",
+	VehicleID:           "rewards.vehicle_id",
 	ConnectionStreak:    "rewards.connection_streak",
 	StreakEarnings:      "rewards.streak_earnings",
-	VehicleID:           "rewards.vehicle_id",
 	AftermarketTokenID:  "rewards.aftermarket_token_id",
 	AftermarketEarnings: "rewards.aftermarket_earnings",
 	SyntheticTokenID:    "rewards.synthetic_token_id",
@@ -88,6 +89,32 @@ var RewardTableColumns = struct {
 }
 
 // Generated where
+
+type whereHelpertypes_NullDecimal struct{ field string }
+
+func (w whereHelpertypes_NullDecimal) EQ(x types.NullDecimal) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
+}
+func (w whereHelpertypes_NullDecimal) NEQ(x types.NullDecimal) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
+}
+func (w whereHelpertypes_NullDecimal) LT(x types.NullDecimal) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpertypes_NullDecimal) LTE(x types.NullDecimal) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpertypes_NullDecimal) GT(x types.NullDecimal) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpertypes_NullDecimal) GTE(x types.NullDecimal) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+
+func (w whereHelpertypes_NullDecimal) IsNull() qm.QueryMod { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpertypes_NullDecimal) IsNotNull() qm.QueryMod {
+	return qmhelper.WhereIsNotNull(w.field)
+}
 
 type whereHelpernull_Bytes struct{ field string }
 
@@ -115,24 +142,24 @@ func (w whereHelpernull_Bytes) IsNotNull() qm.QueryMod { return qmhelper.WhereIs
 
 var RewardWhere = struct {
 	IssuanceWeek        whereHelperint
-	ConnectionStreak    whereHelpernull_Int
-	StreakEarnings      whereHelpernull_Int
 	VehicleID           whereHelperint
+	ConnectionStreak    whereHelpernull_Int
+	StreakEarnings      whereHelpertypes_NullDecimal
 	AftermarketTokenID  whereHelpernull_Int
-	AftermarketEarnings whereHelpernull_Int
+	AftermarketEarnings whereHelpertypes_NullDecimal
 	SyntheticTokenID    whereHelpernull_Int
-	SyntheticEarnings   whereHelpernull_Int
+	SyntheticEarnings   whereHelpertypes_NullDecimal
 	ReceivedByAddress   whereHelpernull_Bytes
 	EarnedAt            whereHelpertime_Time
 }{
 	IssuanceWeek:        whereHelperint{field: "\"identity_api\".\"rewards\".\"issuance_week\""},
-	ConnectionStreak:    whereHelpernull_Int{field: "\"identity_api\".\"rewards\".\"connection_streak\""},
-	StreakEarnings:      whereHelpernull_Int{field: "\"identity_api\".\"rewards\".\"streak_earnings\""},
 	VehicleID:           whereHelperint{field: "\"identity_api\".\"rewards\".\"vehicle_id\""},
+	ConnectionStreak:    whereHelpernull_Int{field: "\"identity_api\".\"rewards\".\"connection_streak\""},
+	StreakEarnings:      whereHelpertypes_NullDecimal{field: "\"identity_api\".\"rewards\".\"streak_earnings\""},
 	AftermarketTokenID:  whereHelpernull_Int{field: "\"identity_api\".\"rewards\".\"aftermarket_token_id\""},
-	AftermarketEarnings: whereHelpernull_Int{field: "\"identity_api\".\"rewards\".\"aftermarket_earnings\""},
+	AftermarketEarnings: whereHelpertypes_NullDecimal{field: "\"identity_api\".\"rewards\".\"aftermarket_earnings\""},
 	SyntheticTokenID:    whereHelpernull_Int{field: "\"identity_api\".\"rewards\".\"synthetic_token_id\""},
-	SyntheticEarnings:   whereHelpernull_Int{field: "\"identity_api\".\"rewards\".\"synthetic_earnings\""},
+	SyntheticEarnings:   whereHelpertypes_NullDecimal{field: "\"identity_api\".\"rewards\".\"synthetic_earnings\""},
 	ReceivedByAddress:   whereHelpernull_Bytes{field: "\"identity_api\".\"rewards\".\"received_by_address\""},
 	EarnedAt:            whereHelpertime_Time{field: "\"identity_api\".\"rewards\".\"earned_at\""},
 }
@@ -185,7 +212,7 @@ func (r *rewardR) GetVehicle() *Vehicle {
 type rewardL struct{}
 
 var (
-	rewardAllColumns            = []string{"issuance_week", "connection_streak", "streak_earnings", "vehicle_id", "aftermarket_token_id", "aftermarket_earnings", "synthetic_token_id", "synthetic_earnings", "received_by_address", "earned_at"}
+	rewardAllColumns            = []string{"issuance_week", "vehicle_id", "connection_streak", "streak_earnings", "aftermarket_token_id", "aftermarket_earnings", "synthetic_token_id", "synthetic_earnings", "received_by_address", "earned_at"}
 	rewardColumnsWithoutDefault = []string{"issuance_week", "vehicle_id", "earned_at"}
 	rewardColumnsWithDefault    = []string{"connection_streak", "streak_earnings", "aftermarket_token_id", "aftermarket_earnings", "synthetic_token_id", "synthetic_earnings", "received_by_address"}
 	rewardPrimaryKeyColumns     = []string{"issuance_week", "vehicle_id"}

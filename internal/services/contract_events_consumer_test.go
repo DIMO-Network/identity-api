@@ -15,6 +15,7 @@ import (
 	"github.com/DIMO-Network/shared"
 	"github.com/Shopify/sarama"
 	"github.com/Shopify/sarama/mocks"
+	"github.com/ericlagergren/decimal"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/goccy/go-json"
 	"github.com/jarcoal/httpmock"
@@ -23,11 +24,13 @@ import (
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"github.com/volatiletech/sqlboiler/v4/types"
 )
 
 const migrationsDirRelPath = "../../migrations"
 const aftermarketDeviceAddr = "0xcf9af64522162da85164a714c23a7705e6e466b3"
 const syntheticDeviceAddr = "0x85226A67FF1b3Ec6cb033162f7df5038a6C3bAB2"
+const rewardContractAddr = "0x375885164266d48C48abbbb439Be98864Ae62bBE"
 
 var mintedAt = time.Now()
 
@@ -1058,9 +1061,9 @@ func Test_Handle_TokensTransferred_ForDevice_AftermarketDevice_Event(t *testing.
 	aftAddr := common.HexToAddress(aftermarketDeviceAddr)
 
 	settings := config.Settings{
-		VehicleNFTAddr:        contractEventData.Contract.String(),
 		DIMORegistryChainID:   contractEventData.ChainID,
 		AftermarketDeviceAddr: aftAddr.Hex(),
+		RewardsContractAddr:   contractEventData.Contract.String(),
 	}
 
 	var tokensTransferredForDeviceData = TokensTransferredForDeviceData{
@@ -1113,11 +1116,11 @@ func Test_Handle_TokensTransferred_ForDevice_AftermarketDevice_Event(t *testing.
 			ReceivedByAddress:   null.BytesFrom(user.Bytes()),
 			EarnedAt:            mintedTime,
 			AftermarketTokenID:  null.IntFrom(afterMktID),
-			AftermarketEarnings: null.IntFrom(int(amt.Int64())),
+			AftermarketEarnings: types.NewNullDecimal(decimal.New(amt.Int64(), 0)),
 			ConnectionStreak:    null.Int{},
 			SyntheticTokenID:    null.Int{},
-			SyntheticEarnings:   null.Int{},
-			StreakEarnings:      null.Int{},
+			SyntheticEarnings:   types.NullDecimal{},
+			StreakEarnings:      types.NullDecimal{},
 		})
 	}
 }
@@ -1142,7 +1145,7 @@ func Test_Handle_TokensTransferred_ForDevice_SyntheticDevice_Event(t *testing.T)
 	synthAddr := common.HexToAddress(syntheticDeviceAddr)
 
 	settings := config.Settings{
-		VehicleNFTAddr:      contractEventData.Contract.String(),
+		RewardsContractAddr: contractEventData.Contract.String(),
 		DIMORegistryChainID: contractEventData.ChainID,
 		SyntheticDeviceAddr: synthAddr.Hex(),
 	}
@@ -1201,11 +1204,11 @@ func Test_Handle_TokensTransferred_ForDevice_SyntheticDevice_Event(t *testing.T)
 			ReceivedByAddress:   null.BytesFrom(user.Bytes()),
 			EarnedAt:            mintedTime,
 			AftermarketTokenID:  null.Int{},
-			AftermarketEarnings: null.Int{},
+			AftermarketEarnings: types.NullDecimal{},
 			ConnectionStreak:    null.Int{},
-			StreakEarnings:      null.Int{},
+			StreakEarnings:      types.NullDecimal{},
 			SyntheticTokenID:    null.IntFrom(synthID),
-			SyntheticEarnings:   null.IntFrom(int(amt.Int64())),
+			SyntheticEarnings:   types.NewNullDecimal(decimal.New(amt.Int64(), 0)),
 		})
 	}
 }
@@ -1229,7 +1232,7 @@ func Test_Handle_TokensTransferred_ForDevice_UpdateSynthetic_WhenAftermarketExis
 	synthAddr := common.HexToAddress(syntheticDeviceAddr)
 
 	settings := config.Settings{
-		VehicleNFTAddr:        contractEventData.Contract.String(),
+		RewardsContractAddr:   contractEventData.Contract.String(),
 		DIMORegistryChainID:   contractEventData.ChainID,
 		AftermarketDeviceAddr: aftAddr.Hex(),
 		SyntheticDeviceAddr:   synthAddr.Hex(),
@@ -1254,7 +1257,7 @@ func Test_Handle_TokensTransferred_ForDevice_UpdateSynthetic_WhenAftermarketExis
 
 	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
 
-	payload := []struct {
+	payloads := []struct {
 		node      *big.Int
 		proxyAddr common.Address
 		amount    *big.Int
@@ -1275,7 +1278,7 @@ func Test_Handle_TokensTransferred_ForDevice_UpdateSynthetic_WhenAftermarketExis
 		VehicleNodeID: vID,
 		Week:          big.NewInt(1),
 	}
-	for idx, event := range payload {
+	for idx, event := range payloads {
 		tokensTransferredForDeviceData.Amount = event.amount
 		tokensTransferredForDeviceData.DeviceNode = event.node
 		tokensTransferredForDeviceData.DeviceNftProxy = event.proxyAddr
@@ -1308,11 +1311,11 @@ func Test_Handle_TokensTransferred_ForDevice_UpdateSynthetic_WhenAftermarketExis
 			ReceivedByAddress:   null.BytesFrom(user.Bytes()),
 			EarnedAt:            mintedTime,
 			AftermarketTokenID:  null.IntFrom(afterMktID),
-			AftermarketEarnings: null.IntFrom(int(payload[0].amount.Int64())),
+			AftermarketEarnings: types.NewNullDecimal(decimal.New(payloads[0].amount.Int64(), 0)),
 			SyntheticTokenID:    null.IntFrom(synthID),
-			SyntheticEarnings:   null.IntFrom(int(payload[1].amount.Int64())),
+			SyntheticEarnings:   types.NewNullDecimal(decimal.New(payloads[1].amount.Int64(), 0)),
 			ConnectionStreak:    null.Int{},
-			StreakEarnings:      null.Int{},
+			StreakEarnings:      types.NullDecimal{},
 		})
 	}
 }
@@ -1336,7 +1339,7 @@ func Test_Handle_TokensTransferred_ForDevice_UpdateAftermarket_WhenSyntheticExis
 	synthAddr := common.HexToAddress(syntheticDeviceAddr)
 
 	settings := config.Settings{
-		VehicleNFTAddr:        contractEventData.Contract.String(),
+		RewardsContractAddr:   contractEventData.Contract.String(),
 		DIMORegistryChainID:   contractEventData.ChainID,
 		AftermarketDeviceAddr: aftAddr.Hex(),
 		SyntheticDeviceAddr:   synthAddr.Hex(),
@@ -1361,7 +1364,7 @@ func Test_Handle_TokensTransferred_ForDevice_UpdateAftermarket_WhenSyntheticExis
 
 	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
 
-	payload := []struct {
+	payloads := []struct {
 		node      *big.Int
 		proxyAddr common.Address
 		amount    *big.Int
@@ -1382,7 +1385,7 @@ func Test_Handle_TokensTransferred_ForDevice_UpdateAftermarket_WhenSyntheticExis
 		VehicleNodeID: vID,
 		Week:          big.NewInt(1),
 	}
-	for idx, event := range payload {
+	for idx, event := range payloads {
 		tokensTransferredForDeviceData.Amount = event.amount
 		tokensTransferredForDeviceData.DeviceNode = event.node
 		tokensTransferredForDeviceData.DeviceNftProxy = event.proxyAddr
@@ -1415,11 +1418,11 @@ func Test_Handle_TokensTransferred_ForDevice_UpdateAftermarket_WhenSyntheticExis
 			ReceivedByAddress:   null.BytesFrom(user.Bytes()),
 			EarnedAt:            mintedTime,
 			AftermarketTokenID:  null.IntFrom(afterMktID),
-			AftermarketEarnings: null.IntFrom(int(payload[1].amount.Int64())),
+			AftermarketEarnings: types.NewNullDecimal(decimal.New(payloads[1].amount.Int64(), 0)),
 			SyntheticTokenID:    null.IntFrom(synthID),
-			SyntheticEarnings:   null.IntFrom(int(payload[0].amount.Int64())),
+			SyntheticEarnings:   types.NewNullDecimal(decimal.New(payloads[0].amount.Int64(), 0)),
 			ConnectionStreak:    null.Int{},
-			StreakEarnings:      null.Int{},
+			StreakEarnings:      types.NullDecimal{},
 		})
 	}
 }
@@ -1442,7 +1445,7 @@ func Test_Handle_TokensTransferredForConnectionStreak_Event(t *testing.T) {
 	synthAddr := common.HexToAddress(syntheticDeviceAddr)
 
 	settings := config.Settings{
-		VehicleNFTAddr:        contractEventData.Contract.String(),
+		RewardsContractAddr:   contractEventData.Contract.String(),
 		DIMORegistryChainID:   contractEventData.ChainID,
 		AftermarketDeviceAddr: aftAddr.Hex(),
 		SyntheticDeviceAddr:   synthAddr.Hex(),
@@ -1545,11 +1548,11 @@ func Test_Handle_TokensTransferredForConnectionStreak_Event(t *testing.T) {
 			ReceivedByAddress:   null.BytesFrom(user.Bytes()),
 			EarnedAt:            mintedTime,
 			AftermarketTokenID:  null.IntFrom(afterMktID),
-			AftermarketEarnings: null.IntFrom(int(payloads[1].amount.Int64())),
+			AftermarketEarnings: types.NewNullDecimal(decimal.New(payloads[1].amount.Int64(), 0)),
 			SyntheticTokenID:    null.IntFrom(synthID),
-			SyntheticEarnings:   null.IntFrom(int(payloads[0].amount.Int64())),
+			SyntheticEarnings:   types.NewNullDecimal(decimal.New(payloads[0].amount.Int64(), 0)),
 			ConnectionStreak:    null.IntFrom(int(payloads[2].connectionStreak.Int64())),
-			StreakEarnings:      null.IntFrom(int(payloads[2].amount.Int64())),
+			StreakEarnings:      types.NewNullDecimal(decimal.New(payloads[2].amount.Int64(), 0)),
 		}, reward[0])
 	}
 }
