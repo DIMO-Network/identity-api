@@ -551,7 +551,7 @@ func (c *ContractsEventsConsumer) handleTokensTransferredForDevice(ctx context.C
 
 	if common.HexToAddress(c.settings.AftermarketDeviceAddr) == args.DeviceNftProxy {
 		reward.AftermarketTokenID = null.IntFrom(int(args.DeviceNode.Int64()))
-		reward.AftermarketEarnings = types.NewNullDecimal(decimal.New(args.Amount.Int64(), 0))
+		reward.AftermarketEarnings = types.NewNullDecimal(new(decimal.Big).SetBigMantScale(args.Amount, 0))
 
 		return reward.Upsert(ctx, c.dbs.DBS().Writer, true,
 			[]string{cols.IssuanceWeek, cols.VehicleID},
@@ -559,7 +559,7 @@ func (c *ContractsEventsConsumer) handleTokensTransferredForDevice(ctx context.C
 			boil.Infer())
 	} else if common.HexToAddress(c.settings.SyntheticDeviceAddr) == args.DeviceNftProxy {
 		reward.SyntheticTokenID = null.IntFrom(int(args.DeviceNode.Int64()))
-		reward.SyntheticEarnings = types.NewNullDecimal(decimal.New(args.Amount.Int64(), 0))
+		reward.SyntheticEarnings = types.NewNullDecimal(new(decimal.Big).SetBigMantScale(args.Amount, 0))
 
 		return reward.Upsert(ctx, c.dbs.DBS().Writer, true,
 			[]string{cols.IssuanceWeek, cols.VehicleID},
@@ -580,7 +580,7 @@ func (c *ContractsEventsConsumer) handleTokensTransferredForConnectionStreak(ctx
 		IssuanceWeek:     int(args.Week.Int64()),
 		VehicleID:        int(args.VehicleNodeID.Int64()),
 		ConnectionStreak: null.IntFrom(int(args.ConnectionStreak.Int64())),
-		StreakEarnings:   types.NewNullDecimal(decimal.New(args.Amount.Int64(), 0)),
+		StreakEarnings:   types.NewNullDecimal(new(decimal.Big).SetBigMantScale(args.Amount, 0)),
 	}
 
 	cols := models.RewardColumns
