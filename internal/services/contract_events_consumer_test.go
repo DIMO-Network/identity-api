@@ -1048,6 +1048,7 @@ func Test_Handle_TokensTransferred_ForDevice_AftermarketDevice_Event(t *testing.
 	contractEventData.EventName = "TokensTransferredForDevice"
 	mintedTime := mintedAt.UTC().Truncate(time.Second)
 	contractEventData.Block.Time = mintedTime
+	contractEventData.Contract = common.HexToAddress(rewardContractAddr)
 
 	_, user, err := helpers.GenerateWallet()
 	assert.NoError(t, err)
@@ -1131,6 +1132,7 @@ func Test_Handle_TokensTransferred_ForDevice_SyntheticDevice_Event(t *testing.T)
 	contractEventData.EventName = "TokensTransferredForDevice"
 	mintedTime := mintedAt.UTC().Truncate(time.Second)
 	contractEventData.Block.Time = mintedTime
+	contractEventData.Contract = common.HexToAddress(rewardContractAddr)
 
 	_, user, err := helpers.GenerateWallet()
 	assert.NoError(t, err)
@@ -1219,6 +1221,7 @@ func Test_Handle_TokensTransferred_ForDevice_UpdateSynthetic_WhenAftermarketExis
 	contractEventData.EventName = "TokensTransferredForDevice"
 	mintedTime := mintedAt.UTC().Truncate(time.Second)
 	contractEventData.Block.Time = mintedTime
+	contractEventData.Contract = common.HexToAddress(rewardContractAddr)
 
 	_, user, err := helpers.GenerateWallet()
 	assert.NoError(t, err)
@@ -1326,6 +1329,7 @@ func Test_Handle_TokensTransferred_ForDevice_UpdateAftermarket_WhenSyntheticExis
 	contractEventData.EventName = "TokensTransferredForDevice"
 	mintedTime := mintedAt.UTC().Truncate(time.Second)
 	contractEventData.Block.Time = mintedTime
+	contractEventData.Contract = common.HexToAddress(rewardContractAddr)
 
 	_, user, err := helpers.GenerateWallet()
 	assert.NoError(t, err)
@@ -1432,6 +1436,7 @@ func Test_Handle_TokensTransferredForConnectionStreak_Event(t *testing.T) {
 	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
 	mintedTime := mintedAt.UTC().Truncate(time.Second)
 	contractEventData.Block.Time = mintedTime
+	contractEventData.Contract = common.HexToAddress(rewardContractAddr)
 
 	_, user, err := helpers.GenerateWallet()
 	assert.NoError(t, err)
