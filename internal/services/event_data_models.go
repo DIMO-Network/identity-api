@@ -120,7 +120,7 @@ type NewDCNExpirationData struct {
 
 type DCNNameChangedData struct {
 	Node []byte
-	Name string `json:"_name"`
+	Name string `json:"name_"`
 }
 
 type DCNVehicleIdChangedData struct {
