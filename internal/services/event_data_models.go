@@ -39,9 +39,9 @@ type AftermarketDeviceNodeMintedData struct {
 }
 
 type VehicleNodeMintedData struct {
-	ManufacturerID *big.Int
-	TokenID        *big.Int
-	Owner          common.Address
+	ManufacturerNode *big.Int
+	TokenID          *big.Int
+	Owner            common.Address
 }
 
 type ManufacturerNodeMintedData struct {
@@ -120,7 +120,7 @@ type NewDCNExpirationData struct {
 
 type DCNNameChangedData struct {
 	Node []byte
-	Name string `json:"_name"`
+	Name string `json:"name_"`
 }
 
 type DCNVehicleIdChangedData struct {

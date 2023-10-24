@@ -151,7 +151,7 @@ func TestDCNQuery(t *testing.T) {
 	   			"eventName": "NameChanged",
 	   			"arguments": {
 	   				"node": "ZmUlXZ4s/E7W0wZChcTSDIZK+B3A0myUxTgPZ/ndV+0=",
-	   				"_name": "%s"
+	   				"name_": "%s"
 	   			}
 	   		}
 

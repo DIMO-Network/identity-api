@@ -192,7 +192,7 @@ func (c *ContractsEventsConsumer) handleVehicleNodeMintedEvent(ctx context.Conte
 		ID:             int(args.TokenID.Int64()),
 		OwnerAddress:   args.Owner.Bytes(),
 		MintedAt:       e.Block.Time,
-		ManufacturerID: null.IntFrom(int(args.ManufacturerID.Int64())),
+		ManufacturerID: null.IntFrom(int(args.ManufacturerNode.Int64())),
 	}
 
 	cols := models.VehicleColumns
@@ -203,7 +203,7 @@ func (c *ContractsEventsConsumer) handleVehicleNodeMintedEvent(ctx context.Conte
 		false,
 		[]string{cols.ID},
 		boil.None(),
-		boil.Whitelist(cols.ID, cols.OwnerAddress, cols.MintedAt),
+		boil.Whitelist(cols.ID, cols.OwnerAddress, cols.MintedAt, cols.ManufacturerID),
 	)
 }
 
@@ -240,9 +240,8 @@ func (c *ContractsEventsConsumer) handleVehicleAttributeSetEvent(ctx context.Con
 		return err
 	}
 
-	veh, err := models.FindVehicle(ctx, c.dbs.DBS().Reader, int(args.TokenID.Int64()))
-	if err != nil {
-		return err
+	veh := models.Vehicle{
+		ID: int(args.TokenID.Int64()),
 	}
 
 	switch args.Attribute {
@@ -310,19 +309,19 @@ func (c *ContractsEventsConsumer) handleVehicleTransferEvent(ctx context.Context
 		MintedAt:     e.Block.Time,
 	}
 
+	// Handle this with VehicleNodeMinted.
+	if args.From == zeroAddress {
+		return nil
+	}
+
 	if args.To == zeroAddress {
+		// Will cascade to the privileges.
 		_, err := vehicle.Delete(ctx, c.dbs.DBS().Writer)
 		return err
 	}
 
-	// Insert is the mint case.
-	if err := vehicle.Upsert(
-		ctx,
-		c.dbs.DBS().Writer,
-		true,
-		[]string{models.VehicleColumns.ID},
-		boil.Whitelist(models.VehicleColumns.OwnerAddress),
-		boil.Whitelist(models.VehicleColumns.ID, models.VehicleColumns.OwnerAddress, models.VehicleColumns.MintedAt)); err != nil {
+	_, err := vehicle.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.VehicleColumns.OwnerAddress))
+	if err != nil {
 		return err
 	}
 

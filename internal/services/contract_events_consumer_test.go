@@ -745,6 +745,8 @@ func Test_HandleVehicle_Transferred_Event(t *testing.T) {
 		TokenID: big.NewInt(int64(tkID)),
 	}
 
+	currTime := time.Now().UTC().Truncate(time.Second)
+
 	settings := config.Settings{
 		VehicleNFTAddr:      contractEventData.Contract.String(),
 		DIMORegistryChainID: contractEventData.ChainID,
@@ -756,6 +758,19 @@ func Test_HandleVehicle_Transferred_Event(t *testing.T) {
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
 	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
 	expectedBytes := eventBytes(vehicleTransferredData, contractEventData, t)
+
+	vehicle := models.Vehicle{
+		ID:           tkID,
+		OwnerAddress: vehicleTransferredData.From[:],
+		Make:         null.StringFrom("Toyota"),
+		Model:        null.StringFrom("Camry"),
+		Year:         null.IntFrom(2020),
+		MintedAt:     currTime,
+	}
+
+	if err := vehicle.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
+		assert.NoError(t, err)
+	}
 
 	consumer.ExpectConsumePartition(settings.ContractsEventTopic, 0, 0).YieldMessage(&sarama.ConsumerMessage{Value: expectedBytes})
 
