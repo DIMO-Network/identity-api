@@ -1,5 +1,8 @@
 -- +goose Up
 -- +goose StatementBegin
+
+-- numeric(30,0) <=> For streak_earnings, aftermarket_earnings, synthetic_earnings
+--      1 ether = 10^18 wei. Total supply is 1Billion which is 10^27 (28 digits before decimal place). This fits into numeric(30, 0)
 CREATE TABLE rewards (
     issuance_week int NOT NULL,
     vehicle_id int CONSTRAINT rewards_vehicle_token_id REFERENCES vehicles (id),
