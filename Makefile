@@ -18,6 +18,8 @@ DATE      := $(shell date +"%Y-%m-%dT%H:%M:%SZ")
 LD_FLAGS   =
 GO_FLAGS   =
 DOCS_FLAGS =
+NAME?="new"
+
 
 APPS = identity-api
 all: $(APPS)
@@ -70,3 +72,14 @@ clean:
 	rm -rf $(PATHINSTBIN)
 	rm -rf $(DEST_DIR)/dist
 	rm -rf $(PATHINSTDOCKER)
+
+run: ## Run the app.
+	go run ./cmd/identity-api
+migrate: ## Run database migrations.
+	go run ./cmd/identity-api migrate
+sql: ## Create a new SQL migration file. Use the NAME variable to set the name: "make sql NAME=dcn_table".
+	goose -dir migrations create $(NAME) sql
+boil: ## Generate SQLBoiler models.
+	sqlboiler psql --no-tests --wipe
+gql: ## Generate gqlgen code.
+	go run github.com/99designs/gqlgen generate

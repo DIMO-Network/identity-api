@@ -8,6 +8,7 @@ require (
 	github.com/DIMO-Network/shared v0.10.4
 	github.com/Shopify/sarama v1.38.1
 	github.com/docker/go-connections v0.4.0
+	github.com/ericlagergren/decimal v0.0.0-20190420051523-6335edbaa640
 	github.com/ethereum/go-ethereum v1.13.4
 	github.com/friendsofgo/errors v0.9.2
 	github.com/goccy/go-json v0.10.2

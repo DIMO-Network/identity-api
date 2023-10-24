@@ -11,11 +11,13 @@ import (
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared"
 	"github.com/DIMO-Network/shared/db"
+	"github.com/ericlagergren/decimal"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/goccy/go-json"
 	"github.com/rs/zerolog"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/volatiletech/sqlboiler/v4/types"
 )
 
 type ContractsEventsConsumer struct {
@@ -30,23 +32,25 @@ type EventName string
 var zeroAddress common.Address
 
 const (
-	Transfer                      EventName = "Transfer"
-	VehicleAttributeSet           EventName = "VehicleAttributeSet"
-	ManufacturerNodeMinted        EventName = "ManufacturerNodeMinted"
-	AftermarketDeviceAttributeSet EventName = "AftermarketDeviceAttributeSet"
-	PrivilegeSet                  EventName = "PrivilegeSet"
-	AftermarketDeviceClaimed      EventName = "AftermarketDeviceClaimed"
-	AftermarketDevicePaired       EventName = "AftermarketDevicePaired"
-	AftermarketDeviceUnpaired     EventName = "AftermarketDeviceUnpaired"
-	BeneficiarySetEvent           EventName = "BeneficiarySet"
-	VehicleNodeMinted             EventName = "VehicleNodeMinted"
-	AftermarketDeviceNodeMinted   EventName = "AftermarketDeviceNodeMinted"
-	SyntheticDeviceNodeMinted     EventName = "SyntheticDeviceNodeMinted"
-	SyntheticDeviceNodeBurned     EventName = "SyntheticDeviceNodeBurned"
-	NewNode                       EventName = "NewNode"
-	NewExpiration                 EventName = "NewExpiration"
-	NameChanged                   EventName = "NameChanged"
-	VehicleIdChanged              EventName = "VehicleIdChanged"
+	Transfer                             EventName = "Transfer"
+	VehicleAttributeSet                  EventName = "VehicleAttributeSet"
+	ManufacturerNodeMinted               EventName = "ManufacturerNodeMinted"
+	AftermarketDeviceAttributeSet        EventName = "AftermarketDeviceAttributeSet"
+	PrivilegeSet                         EventName = "PrivilegeSet"
+	AftermarketDeviceClaimed             EventName = "AftermarketDeviceClaimed"
+	AftermarketDevicePaired              EventName = "AftermarketDevicePaired"
+	AftermarketDeviceUnpaired            EventName = "AftermarketDeviceUnpaired"
+	BeneficiarySetEvent                  EventName = "BeneficiarySet"
+	VehicleNodeMinted                    EventName = "VehicleNodeMinted"
+	AftermarketDeviceNodeMinted          EventName = "AftermarketDeviceNodeMinted"
+	SyntheticDeviceNodeMinted            EventName = "SyntheticDeviceNodeMinted"
+	SyntheticDeviceNodeBurned            EventName = "SyntheticDeviceNodeBurned"
+	NewNode                              EventName = "NewNode"
+	NewExpiration                        EventName = "NewExpiration"
+	NameChanged                          EventName = "NameChanged"
+	VehicleIdChanged                     EventName = "VehicleIdChanged"
+	TokensTransferredForDevice           EventName = "TokensTransferredForDevice"
+	TokensTransferredForConnectionStreak EventName = "TokensTransferredForConnectionStreak"
 )
 
 func (r EventName) String() string {
@@ -81,6 +85,7 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 	aftermarketDeviceAddr := common.HexToAddress(c.settings.AftermarketDeviceAddr)
 	DCNRegistryAddr := common.HexToAddress(c.settings.DCNRegistryAddr)
 	DCNResolverAddr := common.HexToAddress(c.settings.DCNResolverAddr)
+	RewardsContractAddr := common.HexToAddress(c.settings.RewardsContractAddr)
 
 	var data ContractEventData
 	if err := json.Unmarshal(event.Data, &data); err != nil {
@@ -146,6 +151,13 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 			return c.handleNameChanged(ctx, &data)
 		case VehicleIdChanged:
 			return c.handleVehicleIdChanged(ctx, &data)
+		}
+	case RewardsContractAddr:
+		switch eventName {
+		case TokensTransferredForDevice:
+			return c.handleTokensTransferredForDevice(ctx, &data)
+		case TokensTransferredForConnectionStreak:
+			return c.handleTokensTransferredForConnectionStreak(ctx, &data)
 		}
 	}
 
@@ -518,5 +530,61 @@ func (c *ContractsEventsConsumer) handleSyntheticDeviceNodeBurnedEvent(ctx conte
 	}
 
 	_, err := sd.Delete(ctx, c.dbs.DBS().Writer)
+	return err
+}
+
+func (c *ContractsEventsConsumer) handleTokensTransferredForDevice(ctx context.Context, e *ContractEventData) error {
+	var args TokensTransferredForDeviceData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	reward := models.Reward{
+		IssuanceWeek:      int(args.Week.Int64()),
+		VehicleID:         int(args.VehicleNodeID.Int64()),
+		ReceivedByAddress: null.BytesFrom(args.User.Bytes()),
+		EarnedAt:          e.Block.Time,
+	}
+
+	cols := models.RewardColumns
+
+	if common.HexToAddress(c.settings.AftermarketDeviceAddr) == args.DeviceNftProxy {
+		reward.AftermarketTokenID = null.IntFrom(int(args.DeviceNode.Int64()))
+		reward.AftermarketEarnings = types.NewNullDecimal(new(decimal.Big).SetBigMantScale(args.Amount, 0))
+
+		return reward.Upsert(ctx, c.dbs.DBS().Writer, true,
+			[]string{cols.IssuanceWeek, cols.VehicleID},
+			boil.Whitelist(cols.AftermarketEarnings, cols.AftermarketTokenID),
+			boil.Infer())
+	} else if common.HexToAddress(c.settings.SyntheticDeviceAddr) == args.DeviceNftProxy {
+		reward.SyntheticTokenID = null.IntFrom(int(args.DeviceNode.Int64()))
+		reward.SyntheticEarnings = types.NewNullDecimal(new(decimal.Big).SetBigMantScale(args.Amount, 0))
+
+		return reward.Upsert(ctx, c.dbs.DBS().Writer, true,
+			[]string{cols.IssuanceWeek, cols.VehicleID},
+			boil.Whitelist(cols.SyntheticEarnings, cols.SyntheticTokenID),
+			boil.Infer())
+	}
+
+	return nil
+}
+
+func (c *ContractsEventsConsumer) handleTokensTransferredForConnectionStreak(ctx context.Context, e *ContractEventData) error {
+	var args TokensTransferredForConnectionStreakData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	reward := models.Reward{
+		IssuanceWeek:     int(args.Week.Int64()),
+		VehicleID:        int(args.VehicleNodeID.Int64()),
+		ConnectionStreak: null.IntFrom(int(args.ConnectionStreak.Int64())),
+		StreakEarnings:   types.NewNullDecimal(new(decimal.Big).SetBigMantScale(args.Amount, 0)),
+	}
+
+	cols := models.RewardColumns
+
+	_, err := reward.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(cols.StreakEarnings, cols.ConnectionStreak))
+
 	return err
 }

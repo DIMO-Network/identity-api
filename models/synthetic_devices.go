@@ -79,14 +79,17 @@ var SyntheticDeviceWhere = struct {
 
 // SyntheticDeviceRels is where relationship names are stored.
 var SyntheticDeviceRels = struct {
-	Vehicle string
+	Vehicle               string
+	SyntheticTokenRewards string
 }{
-	Vehicle: "Vehicle",
+	Vehicle:               "Vehicle",
+	SyntheticTokenRewards: "SyntheticTokenRewards",
 }
 
 // syntheticDeviceR is where relationships are stored.
 type syntheticDeviceR struct {
-	Vehicle *Vehicle `boil:"Vehicle" json:"Vehicle" toml:"Vehicle" yaml:"Vehicle"`
+	Vehicle               *Vehicle    `boil:"Vehicle" json:"Vehicle" toml:"Vehicle" yaml:"Vehicle"`
+	SyntheticTokenRewards RewardSlice `boil:"SyntheticTokenRewards" json:"SyntheticTokenRewards" toml:"SyntheticTokenRewards" yaml:"SyntheticTokenRewards"`
 }
 
 // NewStruct creates a new relationship struct
@@ -99,6 +102,13 @@ func (r *syntheticDeviceR) GetVehicle() *Vehicle {
 		return nil
 	}
 	return r.Vehicle
+}
+
+func (r *syntheticDeviceR) GetSyntheticTokenRewards() RewardSlice {
+	if r == nil {
+		return nil
+	}
+	return r.SyntheticTokenRewards
 }
 
 // syntheticDeviceL is where Load methods for each relationship are stored.
@@ -401,6 +411,20 @@ func (o *SyntheticDevice) Vehicle(mods ...qm.QueryMod) vehicleQuery {
 	return Vehicles(queryMods...)
 }
 
+// SyntheticTokenRewards retrieves all the reward's Rewards with an executor via synthetic_token_id column.
+func (o *SyntheticDevice) SyntheticTokenRewards(mods ...qm.QueryMod) rewardQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"identity_api\".\"rewards\".\"synthetic_token_id\"=?", o.ID),
+	)
+
+	return Rewards(queryMods...)
+}
+
 // LoadVehicle allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
 func (syntheticDeviceL) LoadVehicle(ctx context.Context, e boil.ContextExecutor, singular bool, maybeSyntheticDevice interface{}, mods queries.Applicator) error {
@@ -521,6 +545,120 @@ func (syntheticDeviceL) LoadVehicle(ctx context.Context, e boil.ContextExecutor,
 	return nil
 }
 
+// LoadSyntheticTokenRewards allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (syntheticDeviceL) LoadSyntheticTokenRewards(ctx context.Context, e boil.ContextExecutor, singular bool, maybeSyntheticDevice interface{}, mods queries.Applicator) error {
+	var slice []*SyntheticDevice
+	var object *SyntheticDevice
+
+	if singular {
+		var ok bool
+		object, ok = maybeSyntheticDevice.(*SyntheticDevice)
+		if !ok {
+			object = new(SyntheticDevice)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeSyntheticDevice)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeSyntheticDevice))
+			}
+		}
+	} else {
+		s, ok := maybeSyntheticDevice.(*[]*SyntheticDevice)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeSyntheticDevice)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeSyntheticDevice))
+			}
+		}
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &syntheticDeviceR{}
+		}
+		args = append(args, object.ID)
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &syntheticDeviceR{}
+			}
+
+			for _, a := range args {
+				if queries.Equal(a, obj.ID) {
+					continue Outer
+				}
+			}
+
+			args = append(args, obj.ID)
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`identity_api.rewards`),
+		qm.WhereIn(`identity_api.rewards.synthetic_token_id in ?`, args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load rewards")
+	}
+
+	var resultSlice []*Reward
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice rewards")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on rewards")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for rewards")
+	}
+
+	if len(rewardAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.SyntheticTokenRewards = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &rewardR{}
+			}
+			foreign.R.SyntheticToken = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if queries.Equal(local.ID, foreign.SyntheticTokenID) {
+				local.R.SyntheticTokenRewards = append(local.R.SyntheticTokenRewards, foreign)
+				if foreign.R == nil {
+					foreign.R = &rewardR{}
+				}
+				foreign.R.SyntheticToken = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
 // SetVehicle of the syntheticDevice to the related item.
 // Sets o.R.Vehicle to related.
 // Adds o to related.R.SyntheticDevices.
@@ -563,6 +701,133 @@ func (o *SyntheticDevice) SetVehicle(ctx context.Context, exec boil.ContextExecu
 		}
 	} else {
 		related.R.SyntheticDevices = append(related.R.SyntheticDevices, o)
+	}
+
+	return nil
+}
+
+// AddSyntheticTokenRewards adds the given related objects to the existing relationships
+// of the synthetic_device, optionally inserting them as new records.
+// Appends related to o.R.SyntheticTokenRewards.
+// Sets related.R.SyntheticToken appropriately.
+func (o *SyntheticDevice) AddSyntheticTokenRewards(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Reward) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			queries.Assign(&rel.SyntheticTokenID, o.ID)
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"identity_api\".\"rewards\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"synthetic_token_id"}),
+				strmangle.WhereClause("\"", "\"", 2, rewardPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.IssuanceWeek, rel.VehicleID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			queries.Assign(&rel.SyntheticTokenID, o.ID)
+		}
+	}
+
+	if o.R == nil {
+		o.R = &syntheticDeviceR{
+			SyntheticTokenRewards: related,
+		}
+	} else {
+		o.R.SyntheticTokenRewards = append(o.R.SyntheticTokenRewards, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &rewardR{
+				SyntheticToken: o,
+			}
+		} else {
+			rel.R.SyntheticToken = o
+		}
+	}
+	return nil
+}
+
+// SetSyntheticTokenRewards removes all previously related items of the
+// synthetic_device replacing them completely with the passed
+// in related items, optionally inserting them as new records.
+// Sets o.R.SyntheticToken's SyntheticTokenRewards accordingly.
+// Replaces o.R.SyntheticTokenRewards with related.
+// Sets related.R.SyntheticToken's SyntheticTokenRewards accordingly.
+func (o *SyntheticDevice) SetSyntheticTokenRewards(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Reward) error {
+	query := "update \"identity_api\".\"rewards\" set \"synthetic_token_id\" = null where \"synthetic_token_id\" = $1"
+	values := []interface{}{o.ID}
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, query)
+		fmt.Fprintln(writer, values)
+	}
+	_, err := exec.ExecContext(ctx, query, values...)
+	if err != nil {
+		return errors.Wrap(err, "failed to remove relationships before set")
+	}
+
+	if o.R != nil {
+		for _, rel := range o.R.SyntheticTokenRewards {
+			queries.SetScanner(&rel.SyntheticTokenID, nil)
+			if rel.R == nil {
+				continue
+			}
+
+			rel.R.SyntheticToken = nil
+		}
+		o.R.SyntheticTokenRewards = nil
+	}
+
+	return o.AddSyntheticTokenRewards(ctx, exec, insert, related...)
+}
+
+// RemoveSyntheticTokenRewards relationships from objects passed in.
+// Removes related items from R.SyntheticTokenRewards (uses pointer comparison, removal does not keep order)
+// Sets related.R.SyntheticToken.
+func (o *SyntheticDevice) RemoveSyntheticTokenRewards(ctx context.Context, exec boil.ContextExecutor, related ...*Reward) error {
+	if len(related) == 0 {
+		return nil
+	}
+
+	var err error
+	for _, rel := range related {
+		queries.SetScanner(&rel.SyntheticTokenID, nil)
+		if rel.R != nil {
+			rel.R.SyntheticToken = nil
+		}
+		if _, err = rel.Update(ctx, exec, boil.Whitelist("synthetic_token_id")); err != nil {
+			return err
+		}
+	}
+	if o.R == nil {
+		return nil
+	}
+
+	for _, rel := range related {
+		for i, ri := range o.R.SyntheticTokenRewards {
+			if rel != ri {
+				continue
+			}
+
+			ln := len(o.R.SyntheticTokenRewards)
+			if ln > 1 && i < ln-1 {
+				o.R.SyntheticTokenRewards[i] = o.R.SyntheticTokenRewards[ln-1]
+			}
+			o.R.SyntheticTokenRewards = o.R.SyntheticTokenRewards[:ln-1]
+			break
+		}
 	}
 
 	return nil

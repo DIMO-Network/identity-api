@@ -15,6 +15,7 @@ import (
 	"github.com/DIMO-Network/shared"
 	"github.com/Shopify/sarama"
 	"github.com/Shopify/sarama/mocks"
+	"github.com/ericlagergren/decimal"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/goccy/go-json"
 	"github.com/jarcoal/httpmock"
@@ -23,10 +24,13 @@ import (
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"github.com/volatiletech/sqlboiler/v4/types"
 )
 
 const migrationsDirRelPath = "../../migrations"
 const aftermarketDeviceAddr = "0xcf9af64522162da85164a714c23a7705e6e466b3"
+const syntheticDeviceAddr = "0x85226A67FF1b3Ec6cb033162f7df5038a6C3bAB2"
+const rewardContractAddr = "0x375885164266d48C48abbbb439Be98864Ae62bBE"
 
 var mintedAt = time.Now()
 
@@ -1023,4 +1027,552 @@ func Test_HandleVehicle_Transferred_To_Zero_Event_NoDelete_AfterMarketDevice(t *
 	assert.Len(t, veh, 1)
 	assert.Equal(t, tkID, veh[0].ID)
 	assert.Equal(t, vehicle.OwnerAddress, veh[0].OwnerAddress)
+}
+
+func getCommonEntities(ctx context.Context, vehicleID, aftermarketDeviceID, syntheticDeviceID int, owner, beneficiary common.Address) (models.Vehicle, models.AftermarketDevice, models.SyntheticDevice) {
+	veh := models.Vehicle{
+		ID:           vehicleID,
+		OwnerAddress: owner.Bytes(),
+		Make:         null.StringFrom("Tesla"),
+		Model:        null.StringFrom("Model-3"),
+		Year:         null.IntFrom(2023),
+		MintedAt:     time.Now(),
+	}
+
+	aftDevice := models.AftermarketDevice{
+		ID:          aftermarketDeviceID,
+		Address:     common.FromHex("0xaba3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Beneficiary: beneficiary.Bytes(),
+		Owner:       owner.Bytes(),
+	}
+
+	syntDevice := models.SyntheticDevice{
+		ID:            syntheticDeviceID,
+		IntegrationID: 11,
+		VehicleID:     vehicleID,
+		DeviceAddress: common.FromHex("0xaba3A41bd932244Dd08186e4c19F1a7E48cbcDf5"),
+		MintedAt:      time.Now(),
+	}
+
+	return veh, aftDevice, syntDevice
+}
+
+func Test_Handle_TokensTransferred_ForDevice_AftermarketDevice_Event(t *testing.T) {
+	ctx := context.Background()
+	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
+	contractEventData.EventName = "TokensTransferredForDevice"
+	mintedTime := mintedAt.UTC().Truncate(time.Second)
+	contractEventData.Block.Time = mintedTime
+	contractEventData.Contract = common.HexToAddress(rewardContractAddr)
+
+	_, user, err := helpers.GenerateWallet()
+	assert.NoError(t, err)
+
+	_, beneficiary, err := helpers.GenerateWallet()
+	assert.NoError(t, err)
+
+	amt := big.NewInt(100)
+	vID := big.NewInt(1)
+	deviceNode := big.NewInt(2)
+	aftAddr := common.HexToAddress(aftermarketDeviceAddr)
+
+	settings := config.Settings{
+		DIMORegistryChainID:   contractEventData.ChainID,
+		AftermarketDeviceAddr: aftAddr.Hex(),
+		RewardsContractAddr:   contractEventData.Contract.String(),
+	}
+
+	var tokensTransferredForDeviceData = TokensTransferredForDeviceData{
+		User:           *user,
+		Amount:         amt,
+		VehicleNodeID:  vID,
+		DeviceNode:     deviceNode,
+		DeviceNftProxy: aftAddr,
+		Week:           big.NewInt(1),
+	}
+
+	config := mocks.NewTestConfig()
+	consumer := mocks.NewConsumer(t, config)
+
+	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
+	afterMktID := 2
+	vehicle, afterMarketDevice, _ := getCommonEntities(ctx, int(vID.Int64()), afterMktID, 0, *user, *beneficiary)
+
+	err = vehicle.Insert(ctx, pdb.DBS().Writer.DB, boil.Infer())
+	assert.NoError(t, err)
+
+	err = afterMarketDevice.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err)
+
+	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
+	expectedBytes := eventBytes(tokensTransferredForDeviceData, contractEventData, t)
+
+	consumer.ExpectConsumePartition(settings.ContractsEventTopic, 0, 0).YieldMessage(&sarama.ConsumerMessage{Value: expectedBytes})
+
+	outputTest, err := consumer.ConsumePartition(settings.ContractsEventTopic, 0, 0)
+	assert.NoError(t, err)
+
+	m := <-outputTest.Messages()
+	var e shared.CloudEvent[json.RawMessage]
+	err = json.Unmarshal(m.Value, &e)
+	assert.NoError(t, err)
+
+	err = contractEventConsumer.Process(ctx, &e)
+	assert.NoError(t, err)
+
+	reward, err := models.Rewards().All(ctx, pdb.DBS().Reader)
+	assert.NoError(t, err)
+
+	assert.Len(t, reward, 1)
+
+	if len(reward) > 0 {
+		assert.Equal(t, reward[0], &models.Reward{
+			IssuanceWeek:        1,
+			VehicleID:           int(vID.Int64()),
+			ReceivedByAddress:   null.BytesFrom(user.Bytes()),
+			EarnedAt:            mintedTime,
+			AftermarketTokenID:  null.IntFrom(afterMktID),
+			AftermarketEarnings: types.NewNullDecimal(decimal.New(amt.Int64(), 0)),
+			ConnectionStreak:    null.Int{},
+			SyntheticTokenID:    null.Int{},
+			SyntheticEarnings:   types.NullDecimal{},
+			StreakEarnings:      types.NullDecimal{},
+		})
+	}
+}
+
+func Test_Handle_TokensTransferred_ForDevice_SyntheticDevice_Event(t *testing.T) {
+	ctx := context.Background()
+	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
+	contractEventData.EventName = "TokensTransferredForDevice"
+	mintedTime := mintedAt.UTC().Truncate(time.Second)
+	contractEventData.Block.Time = mintedTime
+	contractEventData.Contract = common.HexToAddress(rewardContractAddr)
+
+	_, user, err := helpers.GenerateWallet()
+	assert.NoError(t, err)
+
+	_, beneficiary, err := helpers.GenerateWallet()
+	assert.NoError(t, err)
+
+	amt := big.NewInt(100)
+	vID := big.NewInt(1)
+	synthID := 3
+	deviceNode := big.NewInt(int64(synthID))
+	synthAddr := common.HexToAddress(syntheticDeviceAddr)
+
+	settings := config.Settings{
+		RewardsContractAddr: contractEventData.Contract.String(),
+		DIMORegistryChainID: contractEventData.ChainID,
+		SyntheticDeviceAddr: synthAddr.Hex(),
+	}
+
+	var tokensTransferredForDeviceData = TokensTransferredForDeviceData{
+		User:           *user,
+		Amount:         amt,
+		VehicleNodeID:  vID,
+		DeviceNode:     deviceNode,
+		DeviceNftProxy: synthAddr,
+		Week:           big.NewInt(1),
+	}
+
+	config := mocks.NewTestConfig()
+	consumer := mocks.NewConsumer(t, config)
+
+	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
+	afterMktID := 2
+
+	vehicle, afterMarketDevice, syntheticDevice := getCommonEntities(ctx, int(vID.Int64()), afterMktID, synthID, *user, *beneficiary)
+
+	err = vehicle.Insert(ctx, pdb.DBS().Writer.DB, boil.Infer())
+	assert.NoError(t, err)
+
+	err = afterMarketDevice.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err)
+
+	err = syntheticDevice.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err)
+
+	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
+	expectedBytes := eventBytes(tokensTransferredForDeviceData, contractEventData, t)
+
+	consumer.ExpectConsumePartition(settings.ContractsEventTopic, 0, 0).YieldMessage(&sarama.ConsumerMessage{Value: expectedBytes})
+
+	outputTest, err := consumer.ConsumePartition(settings.ContractsEventTopic, 0, 0)
+	assert.NoError(t, err)
+
+	m := <-outputTest.Messages()
+	var e shared.CloudEvent[json.RawMessage]
+	err = json.Unmarshal(m.Value, &e)
+	assert.NoError(t, err)
+
+	err = contractEventConsumer.Process(ctx, &e)
+	assert.NoError(t, err)
+
+	reward, err := models.Rewards().All(ctx, pdb.DBS().Reader)
+	assert.NoError(t, err)
+
+	assert.Len(t, reward, 1)
+
+	if len(reward) > 0 {
+		assert.Equal(t, reward[0], &models.Reward{
+			IssuanceWeek:        1,
+			VehicleID:           int(vID.Int64()),
+			ReceivedByAddress:   null.BytesFrom(user.Bytes()),
+			EarnedAt:            mintedTime,
+			AftermarketTokenID:  null.Int{},
+			AftermarketEarnings: types.NullDecimal{},
+			ConnectionStreak:    null.Int{},
+			StreakEarnings:      types.NullDecimal{},
+			SyntheticTokenID:    null.IntFrom(synthID),
+			SyntheticEarnings:   types.NewNullDecimal(decimal.New(amt.Int64(), 0)),
+		})
+	}
+}
+
+func Test_Handle_TokensTransferred_ForDevice_UpdateSynthetic_WhenAftermarketExists(t *testing.T) {
+	ctx := context.Background()
+	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
+	contractEventData.EventName = "TokensTransferredForDevice"
+	mintedTime := mintedAt.UTC().Truncate(time.Second)
+	contractEventData.Block.Time = mintedTime
+	contractEventData.Contract = common.HexToAddress(rewardContractAddr)
+
+	_, user, err := helpers.GenerateWallet()
+	assert.NoError(t, err)
+
+	_, beneficiary, err := helpers.GenerateWallet()
+	assert.NoError(t, err)
+
+	vID := big.NewInt(1)
+
+	aftAddr := common.HexToAddress(aftermarketDeviceAddr)
+	synthAddr := common.HexToAddress(syntheticDeviceAddr)
+
+	settings := config.Settings{
+		RewardsContractAddr:   contractEventData.Contract.String(),
+		DIMORegistryChainID:   contractEventData.ChainID,
+		AftermarketDeviceAddr: aftAddr.Hex(),
+		SyntheticDeviceAddr:   synthAddr.Hex(),
+	}
+
+	config := mocks.NewTestConfig()
+	consumer := mocks.NewConsumer(t, config)
+
+	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
+	afterMktID := 2
+	synthID := 3
+	vehicle, afterMarketDevice, syntheticDevice := getCommonEntities(ctx, int(vID.Int64()), afterMktID, synthID, *user, *beneficiary)
+
+	err = vehicle.Insert(ctx, pdb.DBS().Writer.DB, boil.Infer())
+	assert.NoError(t, err)
+
+	err = afterMarketDevice.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err)
+
+	err = syntheticDevice.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err)
+
+	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
+
+	payloads := []struct {
+		node      *big.Int
+		proxyAddr common.Address
+		amount    *big.Int
+	}{
+		{
+			node:      big.NewInt(int64(afterMktID)),
+			proxyAddr: aftAddr,
+			amount:    big.NewInt(100),
+		},
+		{
+			node:      big.NewInt(int64(synthID)),
+			proxyAddr: synthAddr,
+			amount:    big.NewInt(200),
+		},
+	}
+	var tokensTransferredForDeviceData = TokensTransferredForDeviceData{
+		User:          *user,
+		VehicleNodeID: vID,
+		Week:          big.NewInt(1),
+	}
+	for idx, event := range payloads {
+		tokensTransferredForDeviceData.Amount = event.amount
+		tokensTransferredForDeviceData.DeviceNode = event.node
+		tokensTransferredForDeviceData.DeviceNftProxy = event.proxyAddr
+
+		expectedBytes := eventBytes(tokensTransferredForDeviceData, contractEventData, t)
+
+		consumer.ExpectConsumePartition(settings.ContractsEventTopic, int32(idx), int64(idx)).YieldMessage(&sarama.ConsumerMessage{Value: expectedBytes})
+
+		outputTest, err := consumer.ConsumePartition(settings.ContractsEventTopic, int32(idx), int64(idx))
+		assert.NoError(t, err)
+
+		m := <-outputTest.Messages()
+		var e shared.CloudEvent[json.RawMessage]
+		err = json.Unmarshal(m.Value, &e)
+		assert.NoError(t, err)
+
+		err = contractEventConsumer.Process(ctx, &e)
+		assert.NoError(t, err)
+	}
+
+	reward, err := models.Rewards().All(ctx, pdb.DBS().Reader)
+	assert.NoError(t, err)
+
+	assert.Len(t, reward, 1)
+
+	if len(reward) > 0 {
+		assert.Equal(t, reward[0], &models.Reward{
+			IssuanceWeek:        1,
+			VehicleID:           int(vID.Int64()),
+			ReceivedByAddress:   null.BytesFrom(user.Bytes()),
+			EarnedAt:            mintedTime,
+			AftermarketTokenID:  null.IntFrom(afterMktID),
+			AftermarketEarnings: types.NewNullDecimal(decimal.New(payloads[0].amount.Int64(), 0)),
+			SyntheticTokenID:    null.IntFrom(synthID),
+			SyntheticEarnings:   types.NewNullDecimal(decimal.New(payloads[1].amount.Int64(), 0)),
+			ConnectionStreak:    null.Int{},
+			StreakEarnings:      types.NullDecimal{},
+		})
+	}
+}
+
+func Test_Handle_TokensTransferred_ForDevice_UpdateAftermarket_WhenSyntheticExists(t *testing.T) {
+	ctx := context.Background()
+	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
+	contractEventData.EventName = "TokensTransferredForDevice"
+	mintedTime := mintedAt.UTC().Truncate(time.Second)
+	contractEventData.Block.Time = mintedTime
+	contractEventData.Contract = common.HexToAddress(rewardContractAddr)
+
+	_, user, err := helpers.GenerateWallet()
+	assert.NoError(t, err)
+
+	_, beneficiary, err := helpers.GenerateWallet()
+	assert.NoError(t, err)
+
+	vID := big.NewInt(1)
+
+	aftAddr := common.HexToAddress(aftermarketDeviceAddr)
+	synthAddr := common.HexToAddress(syntheticDeviceAddr)
+
+	settings := config.Settings{
+		RewardsContractAddr:   contractEventData.Contract.String(),
+		DIMORegistryChainID:   contractEventData.ChainID,
+		AftermarketDeviceAddr: aftAddr.Hex(),
+		SyntheticDeviceAddr:   synthAddr.Hex(),
+	}
+
+	config := mocks.NewTestConfig()
+	consumer := mocks.NewConsumer(t, config)
+
+	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
+	afterMktID := 2
+	synthID := 3
+	vehicle, afterMarketDevice, syntheticDevice := getCommonEntities(ctx, int(vID.Int64()), afterMktID, synthID, *user, *beneficiary)
+
+	err = vehicle.Insert(ctx, pdb.DBS().Writer.DB, boil.Infer())
+	assert.NoError(t, err)
+
+	err = afterMarketDevice.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err)
+
+	err = syntheticDevice.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err)
+
+	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
+
+	payloads := []struct {
+		node      *big.Int
+		proxyAddr common.Address
+		amount    *big.Int
+	}{
+		{
+			node:      big.NewInt(int64(synthID)),
+			proxyAddr: synthAddr,
+			amount:    big.NewInt(200),
+		},
+		{
+			node:      big.NewInt(int64(afterMktID)),
+			proxyAddr: aftAddr,
+			amount:    big.NewInt(100),
+		},
+	}
+	var tokensTransferredForDeviceData = TokensTransferredForDeviceData{
+		User:          *user,
+		VehicleNodeID: vID,
+		Week:          big.NewInt(1),
+	}
+	for idx, event := range payloads {
+		tokensTransferredForDeviceData.Amount = event.amount
+		tokensTransferredForDeviceData.DeviceNode = event.node
+		tokensTransferredForDeviceData.DeviceNftProxy = event.proxyAddr
+
+		expectedBytes := eventBytes(tokensTransferredForDeviceData, contractEventData, t)
+
+		consumer.ExpectConsumePartition(settings.ContractsEventTopic, int32(idx), int64(idx)).YieldMessage(&sarama.ConsumerMessage{Value: expectedBytes})
+
+		outputTest, err := consumer.ConsumePartition(settings.ContractsEventTopic, int32(idx), int64(idx))
+		assert.NoError(t, err)
+
+		m := <-outputTest.Messages()
+		var e shared.CloudEvent[json.RawMessage]
+		err = json.Unmarshal(m.Value, &e)
+		assert.NoError(t, err)
+
+		err = contractEventConsumer.Process(ctx, &e)
+		assert.NoError(t, err)
+	}
+
+	reward, err := models.Rewards().All(ctx, pdb.DBS().Reader)
+	assert.NoError(t, err)
+
+	assert.Len(t, reward, 1)
+
+	if len(reward) > 0 {
+		assert.Equal(t, reward[0], &models.Reward{
+			IssuanceWeek:        1,
+			VehicleID:           int(vID.Int64()),
+			ReceivedByAddress:   null.BytesFrom(user.Bytes()),
+			EarnedAt:            mintedTime,
+			AftermarketTokenID:  null.IntFrom(afterMktID),
+			AftermarketEarnings: types.NewNullDecimal(decimal.New(payloads[1].amount.Int64(), 0)),
+			SyntheticTokenID:    null.IntFrom(synthID),
+			SyntheticEarnings:   types.NewNullDecimal(decimal.New(payloads[0].amount.Int64(), 0)),
+			ConnectionStreak:    null.Int{},
+			StreakEarnings:      types.NullDecimal{},
+		})
+	}
+}
+
+func Test_Handle_TokensTransferredForConnectionStreak_Event(t *testing.T) {
+	ctx := context.Background()
+	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
+	mintedTime := mintedAt.UTC().Truncate(time.Second)
+	contractEventData.Block.Time = mintedTime
+	contractEventData.Contract = common.HexToAddress(rewardContractAddr)
+
+	_, user, err := helpers.GenerateWallet()
+	assert.NoError(t, err)
+
+	_, beneficiary, err := helpers.GenerateWallet()
+	assert.NoError(t, err)
+
+	vID := big.NewInt(1)
+
+	aftAddr := common.HexToAddress(aftermarketDeviceAddr)
+	synthAddr := common.HexToAddress(syntheticDeviceAddr)
+
+	settings := config.Settings{
+		RewardsContractAddr:   contractEventData.Contract.String(),
+		DIMORegistryChainID:   contractEventData.ChainID,
+		AftermarketDeviceAddr: aftAddr.Hex(),
+		SyntheticDeviceAddr:   synthAddr.Hex(),
+	}
+
+	config := mocks.NewTestConfig()
+	consumer := mocks.NewConsumer(t, config)
+
+	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
+	afterMktID := 2
+	synthID := 3
+	vehicle, afterMarketDevice, syntheticDevice := getCommonEntities(ctx, int(vID.Int64()), afterMktID, synthID, *user, *beneficiary)
+
+	err = vehicle.Insert(ctx, pdb.DBS().Writer.DB, boil.Infer())
+	assert.NoError(t, err)
+
+	err = afterMarketDevice.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err)
+
+	err = syntheticDevice.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err)
+
+	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
+
+	payloads := []struct {
+		node             *big.Int
+		proxyAddr        *common.Address
+		amount           *big.Int
+		connectionStreak *big.Int
+		eventName        string
+	}{
+		{
+			node:      big.NewInt(int64(synthID)),
+			proxyAddr: &synthAddr,
+			amount:    big.NewInt(200),
+			eventName: "TokensTransferredForDevice",
+		},
+		{
+			node:      big.NewInt(int64(afterMktID)),
+			proxyAddr: &aftAddr,
+			amount:    big.NewInt(100),
+			eventName: "TokensTransferredForDevice",
+		},
+		{
+			amount:           big.NewInt(50),
+			connectionStreak: big.NewInt(11),
+			eventName:        "TokensTransferredForConnectionStreak",
+		},
+	}
+	var tokensTransferredForDeviceData = TokensTransferredForDeviceData{
+		User:          *user,
+		VehicleNodeID: vID,
+		Week:          big.NewInt(1),
+	}
+	var tokensTransferredForConnectionStreakData = TokensTransferredForConnectionStreakData{
+		User:          *user,
+		VehicleNodeID: vID,
+		Week:          big.NewInt(1),
+	}
+	for idx, event := range payloads {
+		contractEventData.EventName = event.eventName
+
+		var expectedBytes []byte
+		if event.proxyAddr != nil {
+			tokensTransferredForDeviceData.Amount = event.amount
+			tokensTransferredForDeviceData.DeviceNode = event.node
+			tokensTransferredForDeviceData.DeviceNftProxy = *event.proxyAddr
+			expectedBytes = eventBytes(tokensTransferredForDeviceData, contractEventData, t)
+		}
+
+		if event.connectionStreak != nil {
+			tokensTransferredForConnectionStreakData.Amount = event.amount
+			tokensTransferredForConnectionStreakData.ConnectionStreak = event.connectionStreak
+			expectedBytes = eventBytes(tokensTransferredForConnectionStreakData, contractEventData, t)
+		}
+
+		consumer.ExpectConsumePartition(settings.ContractsEventTopic, int32(idx), int64(idx)).YieldMessage(&sarama.ConsumerMessage{Value: expectedBytes})
+
+		outputTest, err := consumer.ConsumePartition(settings.ContractsEventTopic, int32(idx), int64(idx))
+		assert.NoError(t, err)
+
+		m := <-outputTest.Messages()
+		var e shared.CloudEvent[json.RawMessage]
+		err = json.Unmarshal(m.Value, &e)
+		assert.NoError(t, err)
+
+		err = contractEventConsumer.Process(ctx, &e)
+		assert.NoError(t, err)
+	}
+
+	reward, err := models.Rewards().All(ctx, pdb.DBS().Reader)
+	assert.NoError(t, err)
+
+	assert.Len(t, reward, 1)
+
+	if len(reward) > 0 {
+		assert.Equal(t, &models.Reward{
+			IssuanceWeek:        1,
+			VehicleID:           int(vID.Int64()),
+			ReceivedByAddress:   null.BytesFrom(user.Bytes()),
+			EarnedAt:            mintedTime,
+			AftermarketTokenID:  null.IntFrom(afterMktID),
+			AftermarketEarnings: types.NewNullDecimal(decimal.New(payloads[1].amount.Int64(), 0)),
+			SyntheticTokenID:    null.IntFrom(synthID),
+			SyntheticEarnings:   types.NewNullDecimal(decimal.New(payloads[0].amount.Int64(), 0)),
+			ConnectionStreak:    null.IntFrom(int(payloads[2].connectionStreak.Int64())),
+			StreakEarnings:      types.NewNullDecimal(decimal.New(payloads[2].amount.Int64(), 0)),
+		}, reward[0])
+	}
 }
