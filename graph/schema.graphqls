@@ -31,10 +31,6 @@ input DCNBy @oneOf {
 }
 
 input PrivilegeFilterBy {
-  first: Int
-  after: String
-  last: Int
-  before: String
   user: Address
 }
 
@@ -167,7 +163,13 @@ type Vehicle implements Node {
   """
   A Relay-style connection listing any active privilege grants on this vehicle.
   """
-  privileges(filterBy: PrivilegeFilterBy!): PrivilegesConnection!
+  privileges(
+    first: Int
+    after: String
+    last: Int
+    before: String
+    filterBy: PrivilegeFilterBy!
+  ): PrivilegesConnection!
   """
   The paired synthetic device, if any.
   """

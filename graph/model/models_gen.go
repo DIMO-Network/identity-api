@@ -138,11 +138,7 @@ type PrivilegeEdge struct {
 }
 
 type PrivilegeFilterBy struct {
-	First  *int            `json:"first,omitempty"`
-	After  *string         `json:"after,omitempty"`
-	Last   *int            `json:"last,omitempty"`
-	Before *string         `json:"before,omitempty"`
-	User   *common.Address `json:"user,omitempty"`
+	User *common.Address `json:"user,omitempty"`
 }
 
 type PrivilegesConnection struct {
