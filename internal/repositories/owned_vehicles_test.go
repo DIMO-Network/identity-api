@@ -36,6 +36,7 @@ func (s *OwnedVehiclesRepoTestSuite) SetupSuite() {
 	s.settings = config.Settings{
 		DIMORegistryAddr:    "0x4de1bcf2b7e851e31216fc07989caa902a604784",
 		DIMORegistryChainID: 80001,
+		BaseImageURL:        "https://mockUrl.com/",
 	}
 	s.repo = New(s.pdb, s.settings)
 }
@@ -130,6 +131,7 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Success() {
 				},
 				MintedAt:   vehicles[1].MintedAt,
 				Privileges: nil,
+				Image:      "https://mockUrl.com/v1/vehicle/2",
 			},
 			Cursor: "Mg==",
 		},
@@ -145,6 +147,7 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Success() {
 				},
 				MintedAt:   vehicles[0].MintedAt,
 				Privileges: nil,
+				Image:      "https://mockUrl.com/v1/vehicle/1",
 			},
 			Cursor: "MQ==",
 		},
@@ -210,6 +213,7 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination() {
 				},
 				MintedAt:   vehicles[1].MintedAt,
 				Privileges: nil,
+				Image:      "https://mockUrl.com/v1/vehicle/2",
 			},
 			Cursor: "Mg==",
 		},
@@ -276,6 +280,7 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination_NextPage()
 				},
 				MintedAt:   vehicles[0].MintedAt,
 				Privileges: nil,
+				Image:      "https://mockUrl.com/v1/vehicle/1",
 			},
 			Cursor: "MQ==",
 		},
