@@ -88,8 +88,7 @@ models:
   Address:
     model: github.com/DIMO-Network/identity-api/graph/types.Address
   BigInt:
-    model:
-      - github.com/DIMO-Network/identity-api/graph/types.Int
+    model: github.com/DIMO-Network/identity-api/graph/types.BigInt
   Bytes:
     model: github.com/DIMO-Network/identity-api/graph/types.Bytes
   DCN:
