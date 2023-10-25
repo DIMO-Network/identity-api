@@ -37,10 +37,12 @@ type AftermarketDevice struct {
 	// The vehicle, if any, with which the device is paired.
 	Vehicle *Vehicle `json:"vehicle,omitempty"`
 	// The beneficiary for this device, who receives any associated rewards. Defaults to the owner.
-	Beneficiary    common.Address `json:"beneficiary"`
-	Name           string         `json:"name"`
-	ManufacturerID *int           `json:"-"`
-	VehicleID      *int           `json:"-"`
+	Beneficiary common.Address `json:"beneficiary"`
+	Name        string         `json:"name"`
+	// The Image Url of the device
+	Image          string `json:"image"`
+	ManufacturerID *int   `json:"-"`
+	VehicleID      *int   `json:"-"`
 }
 
 func (AftermarketDevice) IsNode()            {}
@@ -170,10 +172,12 @@ type Vehicle struct {
 	SyntheticDevice *SyntheticDevice `json:"syntheticDevice,omitempty"`
 	// The device definition for this vehicle; which includes make, model, and year among
 	// other things.
-	Definition     *Definition `json:"definition,omitempty"`
-	Dcn            *Dcn        `json:"dcn,omitempty"`
-	Name           string      `json:"name"`
-	ManufacturerID *int        `json:"-"`
+	Definition *Definition `json:"definition,omitempty"`
+	Dcn        *Dcn        `json:"dcn,omitempty"`
+	Name       string      `json:"name"`
+	// The Image Url of he vehicle
+	Image          string `json:"image"`
+	ManufacturerID *int   `json:"-"`
 }
 
 func (Vehicle) IsNode()            {}

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
+	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
@@ -24,12 +25,14 @@ const (
 )
 
 type Repository struct {
-	pdb db.Store
+	pdb      db.Store
+	settings config.Settings
 }
 
-func New(pdb db.Store) *Repository {
+func New(pdb db.Store, settings config.Settings) *Repository {
 	return &Repository{
-		pdb: pdb,
+		pdb:      pdb,
+		settings: settings,
 	}
 }
 
@@ -37,7 +40,7 @@ type vehiclePrimaryKey struct {
 	TokenID int
 }
 
-func VehicleToAPI(v *models.Vehicle) *gmodel.Vehicle {
+func VehicleToAPI(v *models.Vehicle, imageUrl string) *gmodel.Vehicle {
 	var b bytes.Buffer
 	e := msgpack.NewEncoder(&b)
 	e.UseArrayEncodedStructs(true)
@@ -60,6 +63,7 @@ func VehicleToAPI(v *models.Vehicle) *gmodel.Vehicle {
 		},
 		ManufacturerID: v.ManufacturerID.Ptr(),
 		Name:           name,
+		Image:          imageUrl,
 	}
 }
 
@@ -98,7 +102,8 @@ func (v *Repository) createVehiclesResponse(totalCount int64, vehicles models.Ve
 	nodes := make([]*gmodel.Vehicle, len(vehicles))
 
 	for i, dv := range vehicles {
-		gv := VehicleToAPI(dv)
+		imageUrl := helpers.GetVehicleImageUrl(v.settings.BaseImageURL, dv.ID)
+		gv := VehicleToAPI(dv, imageUrl)
 
 		edges[i] = &gmodel.VehicleEdge{
 			Node:   gv,
@@ -258,6 +263,6 @@ func (r *Repository) GetVehicle(ctx context.Context, id int) (*gmodel.Vehicle, e
 	if err != nil {
 		return nil, err
 	}
-
-	return VehicleToAPI(v), nil
+	imageUrl := helpers.GetVehicleImageUrl(r.settings.BaseImageURL, v.ID)
+	return VehicleToAPI(v, imageUrl), nil
 }

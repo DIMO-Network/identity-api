@@ -8,6 +8,7 @@ import (
 
 	"github.com/99designs/gqlgen/client"
 	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/loader"
 	"github.com/DIMO-Network/identity-api/internal/repositories"
@@ -76,9 +77,11 @@ func TestResolver(t *testing.T) {
 	err = syntheticDevice.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	assert.NoError(err)
 
-	repo := repositories.New(pdb)
+	settings := config.Settings{}
+
+	repo := repositories.New(pdb, settings)
 	resolver := NewResolver(repo)
-	c := client.New(loader.Middleware(pdb, handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: resolver}))))
+	c := client.New(loader.Middleware(pdb, handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: resolver})), settings))
 
 	t.Run("ownedAftermarketDevices, return only one response", func(t *testing.T) {
 		var resp interface{}
