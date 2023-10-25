@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/big"
 	"strconv"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -61,3 +62,23 @@ func MarshalInt(x int) graphql.Marshaler {
 
 // Is this going to work?
 var UnmarshalInt = graphql.UnmarshalInt
+
+func MarshalBigInt(x *big.Int) graphql.Marshaler {
+	return graphql.WriterFunc(func(w io.Writer) {
+		_, _ = io.WriteString(w, strconv.Quote(x.String()))
+	})
+}
+
+func UnmarshalBigInt(v interface{}) (*big.Int, error) {
+	s, ok := v.(string)
+	if !ok {
+		return nil, fmt.Errorf("type %T not a string", v)
+	}
+
+	out, ok := new(big.Int).SetString(s, 10)
+	if !ok {
+		return nil, errors.New("couldn't parse big integer")
+	}
+
+	return out, nil
+}

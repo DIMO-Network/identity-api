@@ -181,6 +181,12 @@ type Vehicle implements Node {
   definition: Definition
   dcn: DCN
   name: String!
+
+  rewards: NodeRewards!
+}
+
+type NodeRewards {
+  total: BigInt!
 }
 
 type Definition {

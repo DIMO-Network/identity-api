@@ -174,10 +174,11 @@ type Vehicle struct {
 	SyntheticDevice *SyntheticDevice `json:"syntheticDevice,omitempty"`
 	// The device definition for this vehicle; which includes make, model, and year among
 	// other things.
-	Definition     *Definition `json:"definition,omitempty"`
-	Dcn            *Dcn        `json:"dcn,omitempty"`
-	Name           string      `json:"name"`
-	ManufacturerID *int        `json:"-"`
+	Definition     *Definition  `json:"definition,omitempty"`
+	Dcn            *Dcn         `json:"dcn,omitempty"`
+	Name           string       `json:"name"`
+	Rewards        *NodeRewards `json:"rewards"`
+	ManufacturerID *int         `json:"-"`
 }
 
 func (Vehicle) IsNode()            {}

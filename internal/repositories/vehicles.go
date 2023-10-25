@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"math/big"
 	"strings"
 	"time"
 
@@ -60,6 +61,9 @@ func VehicleToAPI(v *models.Vehicle) *gmodel.Vehicle {
 		},
 		ManufacturerID: v.ManufacturerID.Ptr(),
 		Name:           name,
+		Rewards: &gmodel.NodeRewards{
+			Total: new(big.Int).Mul(big.NewInt(1337), new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil)),
+		},
 	}
 }
 
