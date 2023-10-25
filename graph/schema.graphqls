@@ -176,6 +176,8 @@ type Vehicle implements Node {
   definition: Definition
   dcn: DCN
   name: String!
+
+  earnings: VehicleEarnings
 }
 
 type Definition {
@@ -330,4 +332,25 @@ type DCN {
   Vehicle, if any, to which the domain is attached.
   """
   vehicle: Vehicle
+}
+
+type EarningNode {
+  week: Int!
+  beneficiary: Address!
+  connectionStreak: Int!
+  streakTokens: BigInt!
+  aftermarketDevice: Int!
+  aftermarketDeviceTokens: BigInt!
+  syntheticDevice: Int!
+  syntheticDeviceTokens: BigInt!
+  sentAt: Time!
+}
+
+type EarningTransfers {
+  node: EarningNode!
+}
+
+type VehicleEarnings {
+  earnedTokens: BigInt!
+  earningsTransfers: [EarningTransfers!]!
 }

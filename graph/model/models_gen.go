@@ -3,6 +3,7 @@
 package model
 
 import (
+	"math/big"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -99,6 +100,22 @@ type Definition struct {
 	Year  *int    `json:"year,omitempty"`
 }
 
+type EarningNode struct {
+	Week                    int            `json:"week"`
+	Beneficiary             common.Address `json:"beneficiary"`
+	ConnectionStreak        int            `json:"connectionStreak"`
+	StreakTokens            *big.Int       `json:"streakTokens"`
+	AftermarketDevice       int            `json:"aftermarketDevice"`
+	AftermarketDeviceTokens *big.Int       `json:"aftermarketDeviceTokens"`
+	SyntheticDevice         int            `json:"syntheticDevice"`
+	SyntheticDeviceTokens   *big.Int       `json:"syntheticDeviceTokens"`
+	SentAt                  time.Time      `json:"sentAt"`
+}
+
+type EarningTransfers struct {
+	Node *EarningNode `json:"node"`
+}
+
 type Manufacturer struct {
 	// An opaque global identifier for this manufacturer.
 	ID string `json:"id"`
@@ -170,10 +187,11 @@ type Vehicle struct {
 	SyntheticDevice *SyntheticDevice `json:"syntheticDevice,omitempty"`
 	// The device definition for this vehicle; which includes make, model, and year among
 	// other things.
-	Definition     *Definition `json:"definition,omitempty"`
-	Dcn            *Dcn        `json:"dcn,omitempty"`
-	Name           string      `json:"name"`
-	ManufacturerID *int        `json:"-"`
+	Definition     *Definition      `json:"definition,omitempty"`
+	Dcn            *Dcn             `json:"dcn,omitempty"`
+	Name           string           `json:"name"`
+	Earnings       *VehicleEarnings `json:"earnings,omitempty"`
+	ManufacturerID *int             `json:"-"`
 }
 
 func (Vehicle) IsNode()            {}
@@ -184,6 +202,11 @@ type VehicleConnection struct {
 	Edges      []*VehicleEdge `json:"edges"`
 	Nodes      []*Vehicle     `json:"nodes"`
 	PageInfo   *PageInfo      `json:"pageInfo"`
+}
+
+type VehicleEarnings struct {
+	EarnedTokens      *big.Int            `json:"earnedTokens"`
+	EarningsTransfers []*EarningTransfers `json:"earningsTransfers"`
 }
 
 type VehicleEdge struct {

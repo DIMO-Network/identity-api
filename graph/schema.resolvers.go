@@ -114,6 +114,11 @@ func (r *vehicleResolver) Dcn(ctx context.Context, obj *model.Vehicle) (*model.D
 	return loader.GetDCNByVehicleID(ctx, obj.TokenID)
 }
 
+// Earnings is the resolver for the earnings field.
+func (r *vehicleResolver) Earnings(ctx context.Context, obj *model.Vehicle) (*model.VehicleEarnings, error) {
+	return r.Repo.GetEarningsByVehicleID(ctx, obj.TokenID)
+}
+
 // AftermarketDevice returns AftermarketDeviceResolver implementation.
 func (r *Resolver) AftermarketDevice() AftermarketDeviceResolver {
 	return &aftermarketDeviceResolver{r}

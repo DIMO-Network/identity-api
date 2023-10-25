@@ -121,6 +121,8 @@ models:
         resolver: true
       dcn:
         resolver: true
+      earnings:
+        resolver: true
     extraFields:
       ManufacturerID:
         type: "*int"
