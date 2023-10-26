@@ -35,7 +35,7 @@ input PrivilegeFilterBy {
 }
 
 input AftermarketDeviceBy @oneOf {
-  tokenId: BigInt
+  tokenId: Int
   address: Address
   serial: String
 }
@@ -61,7 +61,7 @@ type Query {
   """
   View a particular vehicle.
   """
-  vehicle(tokenId: BigInt!): Vehicle!
+  vehicle(tokenId: Int!): Vehicle!
 
   """
   List minted vehicles.
@@ -118,7 +118,7 @@ type Manufacturer implements Node {
   """
   The ERC-721 token id for the manufacturer.
   """
-  tokenId: BigInt!
+  tokenId: Int!
   """
   The name of the manufacturer.
   """
@@ -143,7 +143,7 @@ type Vehicle implements Node {
   """
   The ERC-721 token id for the vehicle.
   """
-  tokenId: BigInt!
+  tokenId: Int!
   """
   The manufacturer of this vehicle.
   """
@@ -181,6 +181,8 @@ type Vehicle implements Node {
   definition: Definition
   dcn: DCN
   name: String!
+
+  bigMoney: BigInt
 }
 
 type Definition {
@@ -212,7 +214,7 @@ type AftermarketDevice implements Node {
   """
   The ERC-721 token id for the device.
   """
-  tokenId: BigInt!
+  tokenId: Int!
   """
   The manufacturer of this aftermarket device.
   """
@@ -300,8 +302,8 @@ type PrivilegesConnection {
 # SyntheticDevice Types
 
 type SyntheticDevice {
-  tokenId: BigInt!
-  integrationId: BigInt!
+  tokenId: Int!
+  integrationId: Int!
   address: Address!
   mintedAt: Time!
 }

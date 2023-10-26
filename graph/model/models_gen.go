@@ -3,6 +3,7 @@
 package model
 
 import (
+	"math/big"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -177,6 +178,7 @@ type Vehicle struct {
 	Definition     *Definition `json:"definition,omitempty"`
 	Dcn            *Dcn        `json:"dcn,omitempty"`
 	Name           string      `json:"name"`
+	BigMoney       *big.Int    `json:"bigMoney,omitempty"`
 	ManufacturerID *int        `json:"-"`
 }
 
