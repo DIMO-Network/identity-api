@@ -115,7 +115,7 @@ func (r *vehicleResolver) Dcn(ctx context.Context, obj *model.Vehicle) (*model.D
 }
 
 // Earnings is the resolver for the earnings field.
-func (r *vehicleResolver) Earnings(ctx context.Context, obj *model.Vehicle) (*model.VehicleEarnings, error) {
+func (r *vehicleResolver) Earnings(ctx context.Context, obj *model.Vehicle) (*model.VehicleEarningsConnection, error) {
 	return r.Repo.GetEarningsByVehicleID(ctx, obj.TokenID)
 }
 

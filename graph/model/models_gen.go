@@ -112,7 +112,7 @@ type EarningNode struct {
 	SentAt                  time.Time      `json:"sentAt"`
 }
 
-type EarningTransfers struct {
+type EarningsEdge struct {
 	Node *EarningNode `json:"node"`
 }
 
@@ -187,11 +187,11 @@ type Vehicle struct {
 	SyntheticDevice *SyntheticDevice `json:"syntheticDevice,omitempty"`
 	// The device definition for this vehicle; which includes make, model, and year among
 	// other things.
-	Definition     *Definition      `json:"definition,omitempty"`
-	Dcn            *Dcn             `json:"dcn,omitempty"`
-	Name           string           `json:"name"`
-	Earnings       *VehicleEarnings `json:"earnings,omitempty"`
-	ManufacturerID *int             `json:"-"`
+	Definition     *Definition                `json:"definition,omitempty"`
+	Dcn            *Dcn                       `json:"dcn,omitempty"`
+	Name           string                     `json:"name"`
+	Earnings       *VehicleEarningsConnection `json:"earnings,omitempty"`
+	ManufacturerID *int                       `json:"-"`
 }
 
 func (Vehicle) IsNode()            {}
@@ -204,9 +204,9 @@ type VehicleConnection struct {
 	PageInfo   *PageInfo      `json:"pageInfo"`
 }
 
-type VehicleEarnings struct {
-	EarnedTokens      *big.Int            `json:"earnedTokens"`
-	EarningsTransfers []*EarningTransfers `json:"earningsTransfers"`
+type VehicleEarningsConnection struct {
+	EarnedTokens      *big.Int        `json:"earnedTokens"`
+	EarningsTransfers []*EarningsEdge `json:"earningsTransfers"`
 }
 
 type VehicleEdge struct {

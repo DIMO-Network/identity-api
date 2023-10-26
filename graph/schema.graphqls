@@ -177,7 +177,7 @@ type Vehicle implements Node {
   dcn: DCN
   name: String!
 
-  earnings: VehicleEarnings
+  earnings: VehicleEarningsConnection
 }
 
 type Definition {
@@ -346,11 +346,11 @@ type EarningNode {
   sentAt: Time!
 }
 
-type EarningTransfers {
+type EarningsEdge {
   node: EarningNode!
 }
 
-type VehicleEarnings {
+type VehicleEarningsConnection {
   earnedTokens: BigInt!
-  earningsTransfers: [EarningTransfers!]!
+  earningsTransfers: [EarningsEdge!]!
 }

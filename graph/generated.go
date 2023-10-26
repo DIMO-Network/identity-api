@@ -109,7 +109,7 @@ type ComplexityRoot struct {
 		Week                    func(childComplexity int) int
 	}
 
-	EarningTransfers struct {
+	EarningsEdge struct {
 		Node func(childComplexity int) int
 	}
 
@@ -185,7 +185,7 @@ type ComplexityRoot struct {
 		TotalCount func(childComplexity int) int
 	}
 
-	VehicleEarnings struct {
+	VehicleEarningsConnection struct {
 		EarnedTokens      func(childComplexity int) int
 		EarningsTransfers func(childComplexity int) int
 	}
@@ -221,7 +221,7 @@ type VehicleResolver interface {
 
 	Dcn(ctx context.Context, obj *model.Vehicle) (*model.Dcn, error)
 
-	Earnings(ctx context.Context, obj *model.Vehicle) (*model.VehicleEarnings, error)
+	Earnings(ctx context.Context, obj *model.Vehicle) (*model.VehicleEarningsConnection, error)
 }
 
 type executableSchema struct {
@@ -502,12 +502,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.EarningNode.Week(childComplexity), true
 
-	case "EarningTransfers.node":
-		if e.complexity.EarningTransfers.Node == nil {
+	case "EarningsEdge.node":
+		if e.complexity.EarningsEdge.Node == nil {
 			break
 		}
 
-		return e.complexity.EarningTransfers.Node(childComplexity), true
+		return e.complexity.EarningsEdge.Node(childComplexity), true
 
 	case "Manufacturer.id":
 		if e.complexity.Manufacturer.ID == nil {
@@ -859,19 +859,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.VehicleConnection.TotalCount(childComplexity), true
 
-	case "VehicleEarnings.earnedTokens":
-		if e.complexity.VehicleEarnings.EarnedTokens == nil {
+	case "VehicleEarningsConnection.earnedTokens":
+		if e.complexity.VehicleEarningsConnection.EarnedTokens == nil {
 			break
 		}
 
-		return e.complexity.VehicleEarnings.EarnedTokens(childComplexity), true
+		return e.complexity.VehicleEarningsConnection.EarnedTokens(childComplexity), true
 
-	case "VehicleEarnings.earningsTransfers":
-		if e.complexity.VehicleEarnings.EarningsTransfers == nil {
+	case "VehicleEarningsConnection.earningsTransfers":
+		if e.complexity.VehicleEarningsConnection.EarningsTransfers == nil {
 			break
 		}
 
-		return e.complexity.VehicleEarnings.EarningsTransfers(childComplexity), true
+		return e.complexity.VehicleEarningsConnection.EarningsTransfers(childComplexity), true
 
 	case "VehicleEdge.cursor":
 		if e.complexity.VehicleEdge.Cursor == nil {
@@ -2981,8 +2981,8 @@ func (ec *executionContext) fieldContext_EarningNode_sentAt(ctx context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _EarningTransfers_node(ctx context.Context, field graphql.CollectedField, obj *model.EarningTransfers) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_EarningTransfers_node(ctx, field)
+func (ec *executionContext) _EarningsEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.EarningsEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_EarningsEdge_node(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -3012,9 +3012,9 @@ func (ec *executionContext) _EarningTransfers_node(ctx context.Context, field gr
 	return ec.marshalNEarningNode2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐEarningNode(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_EarningTransfers_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_EarningsEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "EarningTransfers",
+		Object:     "EarningsEdge",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -5214,9 +5214,9 @@ func (ec *executionContext) _Vehicle_earnings(ctx context.Context, field graphql
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.VehicleEarnings)
+	res := resTmp.(*model.VehicleEarningsConnection)
 	fc.Result = res
-	return ec.marshalOVehicleEarnings2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐVehicleEarnings(ctx, field.Selections, res)
+	return ec.marshalOVehicleEarningsConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐVehicleEarningsConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Vehicle_earnings(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5228,11 +5228,11 @@ func (ec *executionContext) fieldContext_Vehicle_earnings(ctx context.Context, f
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "earnedTokens":
-				return ec.fieldContext_VehicleEarnings_earnedTokens(ctx, field)
+				return ec.fieldContext_VehicleEarningsConnection_earnedTokens(ctx, field)
 			case "earningsTransfers":
-				return ec.fieldContext_VehicleEarnings_earningsTransfers(ctx, field)
+				return ec.fieldContext_VehicleEarningsConnection_earningsTransfers(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type VehicleEarnings", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type VehicleEarningsConnection", field.Name)
 		},
 	}
 	return fc, nil
@@ -5456,8 +5456,8 @@ func (ec *executionContext) fieldContext_VehicleConnection_pageInfo(ctx context.
 	return fc, nil
 }
 
-func (ec *executionContext) _VehicleEarnings_earnedTokens(ctx context.Context, field graphql.CollectedField, obj *model.VehicleEarnings) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VehicleEarnings_earnedTokens(ctx, field)
+func (ec *executionContext) _VehicleEarningsConnection_earnedTokens(ctx context.Context, field graphql.CollectedField, obj *model.VehicleEarningsConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VehicleEarningsConnection_earnedTokens(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -5487,9 +5487,9 @@ func (ec *executionContext) _VehicleEarnings_earnedTokens(ctx context.Context, f
 	return ec.marshalNBigInt2ᚖmathᚋbigᚐInt(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_VehicleEarnings_earnedTokens(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_VehicleEarningsConnection_earnedTokens(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "VehicleEarnings",
+		Object:     "VehicleEarningsConnection",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -5500,8 +5500,8 @@ func (ec *executionContext) fieldContext_VehicleEarnings_earnedTokens(ctx contex
 	return fc, nil
 }
 
-func (ec *executionContext) _VehicleEarnings_earningsTransfers(ctx context.Context, field graphql.CollectedField, obj *model.VehicleEarnings) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VehicleEarnings_earningsTransfers(ctx, field)
+func (ec *executionContext) _VehicleEarningsConnection_earningsTransfers(ctx context.Context, field graphql.CollectedField, obj *model.VehicleEarningsConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VehicleEarningsConnection_earningsTransfers(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -5526,23 +5526,23 @@ func (ec *executionContext) _VehicleEarnings_earningsTransfers(ctx context.Conte
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.EarningTransfers)
+	res := resTmp.([]*model.EarningsEdge)
 	fc.Result = res
-	return ec.marshalNEarningTransfers2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐEarningTransfersᚄ(ctx, field.Selections, res)
+	return ec.marshalNEarningsEdge2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐEarningsEdgeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_VehicleEarnings_earningsTransfers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_VehicleEarningsConnection_earningsTransfers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "VehicleEarnings",
+		Object:     "VehicleEarningsConnection",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "node":
-				return ec.fieldContext_EarningTransfers_node(ctx, field)
+				return ec.fieldContext_EarningsEdge_node(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type EarningTransfers", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type EarningsEdge", field.Name)
 		},
 	}
 	return fc, nil
@@ -8139,19 +8139,19 @@ func (ec *executionContext) _EarningNode(ctx context.Context, sel ast.SelectionS
 	return out
 }
 
-var earningTransfersImplementors = []string{"EarningTransfers"}
+var earningsEdgeImplementors = []string{"EarningsEdge"}
 
-func (ec *executionContext) _EarningTransfers(ctx context.Context, sel ast.SelectionSet, obj *model.EarningTransfers) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, earningTransfersImplementors)
+func (ec *executionContext) _EarningsEdge(ctx context.Context, sel ast.SelectionSet, obj *model.EarningsEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, earningsEdgeImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("EarningTransfers")
+			out.Values[i] = graphql.MarshalString("EarningsEdge")
 		case "node":
-			out.Values[i] = ec._EarningTransfers_node(ctx, field, obj)
+			out.Values[i] = ec._EarningsEdge_node(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -8986,24 +8986,24 @@ func (ec *executionContext) _VehicleConnection(ctx context.Context, sel ast.Sele
 	return out
 }
 
-var vehicleEarningsImplementors = []string{"VehicleEarnings"}
+var vehicleEarningsConnectionImplementors = []string{"VehicleEarningsConnection"}
 
-func (ec *executionContext) _VehicleEarnings(ctx context.Context, sel ast.SelectionSet, obj *model.VehicleEarnings) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, vehicleEarningsImplementors)
+func (ec *executionContext) _VehicleEarningsConnection(ctx context.Context, sel ast.SelectionSet, obj *model.VehicleEarningsConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, vehicleEarningsConnectionImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("VehicleEarnings")
+			out.Values[i] = graphql.MarshalString("VehicleEarningsConnection")
 		case "earnedTokens":
-			out.Values[i] = ec._VehicleEarnings_earnedTokens(ctx, field, obj)
+			out.Values[i] = ec._VehicleEarningsConnection_earnedTokens(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		case "earningsTransfers":
-			out.Values[i] = ec._VehicleEarnings_earningsTransfers(ctx, field, obj)
+			out.Values[i] = ec._VehicleEarningsConnection_earningsTransfers(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -9632,7 +9632,7 @@ func (ec *executionContext) marshalNEarningNode2ᚖgithubᚗcomᚋDIMOᚑNetwork
 	return ec._EarningNode(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNEarningTransfers2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐEarningTransfersᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.EarningTransfers) graphql.Marshaler {
+func (ec *executionContext) marshalNEarningsEdge2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐEarningsEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.EarningsEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -9656,7 +9656,7 @@ func (ec *executionContext) marshalNEarningTransfers2ᚕᚖgithubᚗcomᚋDIMO�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNEarningTransfers2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐEarningTransfers(ctx, sel, v[i])
+			ret[i] = ec.marshalNEarningsEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐEarningsEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -9676,14 +9676,14 @@ func (ec *executionContext) marshalNEarningTransfers2ᚕᚖgithubᚗcomᚋDIMO�
 	return ret
 }
 
-func (ec *executionContext) marshalNEarningTransfers2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐEarningTransfers(ctx context.Context, sel ast.SelectionSet, v *model.EarningTransfers) graphql.Marshaler {
+func (ec *executionContext) marshalNEarningsEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐEarningsEdge(ctx context.Context, sel ast.SelectionSet, v *model.EarningsEdge) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._EarningTransfers(ctx, sel, v)
+	return ec._EarningsEdge(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
@@ -10420,11 +10420,11 @@ func (ec *executionContext) marshalOVehicle2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋi
 	return ec._Vehicle(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOVehicleEarnings2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐVehicleEarnings(ctx context.Context, sel ast.SelectionSet, v *model.VehicleEarnings) graphql.Marshaler {
+func (ec *executionContext) marshalOVehicleEarningsConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐVehicleEarningsConnection(ctx context.Context, sel ast.SelectionSet, v *model.VehicleEarningsConnection) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._VehicleEarnings(ctx, sel, v)
+	return ec._VehicleEarningsConnection(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOVehiclesFilter2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐVehiclesFilter(ctx context.Context, v interface{}) (*model.VehiclesFilter, error) {

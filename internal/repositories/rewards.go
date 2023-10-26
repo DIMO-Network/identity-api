@@ -28,7 +28,7 @@ func toUint64(dec types.NullDecimal) uint64 {
 	return ui
 }
 
-func (r *Repository) GetEarningsByVehicleID(ctx context.Context, tokenID int) (*gmodel.VehicleEarnings, error) {
+func (r *Repository) GetEarningsByVehicleID(ctx context.Context, tokenID int) (*gmodel.VehicleEarningsConnection, error) {
 	rewards, err := models.Rewards(
 		models.RewardWhere.VehicleID.EQ(tokenID),
 	).All(ctx, r.pdb.DBS().Reader)
@@ -37,7 +37,7 @@ func (r *Repository) GetEarningsByVehicleID(ctx context.Context, tokenID int) (*
 		return nil, err
 	}
 
-	earnings := []*gmodel.EarningTransfers{}
+	earnings := []*gmodel.EarningsEdge{}
 	totalTokensEarned := big.NewInt(0)
 
 	for _, reward := range rewards {
@@ -49,7 +49,7 @@ func (r *Repository) GetEarningsByVehicleID(ctx context.Context, tokenID int) (*
 		totalTokensEarned = totalTokensEarned.Add(totalTokensEarned, adEarn)
 		totalTokensEarned = totalTokensEarned.Add(totalTokensEarned, syEarn)
 
-		earning := &gmodel.EarningTransfers{
+		earning := &gmodel.EarningsEdge{
 			Node: &gmodel.EarningNode{
 				Week:                    reward.IssuanceWeek,
 				Beneficiary:             common.BytesToAddress(reward.ReceivedByAddress.Bytes),
@@ -66,7 +66,7 @@ func (r *Repository) GetEarningsByVehicleID(ctx context.Context, tokenID int) (*
 		earnings = append(earnings, earning)
 	}
 
-	return &gmodel.VehicleEarnings{
+	return &gmodel.VehicleEarningsConnection{
 		EarnedTokens:      totalTokensEarned,
 		EarningsTransfers: earnings,
 	}, err
