@@ -101,15 +101,26 @@ type Definition struct {
 }
 
 type EarningNode struct {
-	Week                    int            `json:"week"`
-	Beneficiary             common.Address `json:"beneficiary"`
-	ConnectionStreak        int            `json:"connectionStreak"`
-	StreakTokens            *big.Int       `json:"streakTokens"`
-	AftermarketDevice       int            `json:"aftermarketDevice"`
-	AftermarketDeviceTokens *big.Int       `json:"aftermarketDeviceTokens"`
-	SyntheticDevice         int            `json:"syntheticDevice"`
-	SyntheticDeviceTokens   *big.Int       `json:"syntheticDeviceTokens"`
-	SentAt                  time.Time      `json:"sentAt"`
+	// Week reward was issued
+	Week int `json:"week"`
+	// Address of Beneficiary that received reward
+	Beneficiary common.Address `json:"beneficiary"`
+	// Consecutive period of which vehicle was connected
+	ConnectionStreak int `json:"connectionStreak"`
+	// Tokens earned for connection period
+	StreakTokens *big.Int `json:"streakTokens"`
+	// AftermarketDevice connected to vehicle
+	AftermarketDevice *AftermarketDevice `json:"aftermarketDevice,omitempty"`
+	// Tokens earned by aftermarketDevice
+	AftermarketDeviceTokens *big.Int `json:"aftermarketDeviceTokens"`
+	// SyntheticDevice connected to vehicle
+	SyntheticDevice *SyntheticDevice `json:"syntheticDevice,omitempty"`
+	// Tokens earned by SyntheticDevice
+	SyntheticDeviceTokens *big.Int `json:"syntheticDeviceTokens"`
+	// When the token was earned
+	SentAt              time.Time `json:"sentAt"`
+	AftermarketDeviceID *int      `json:"-"`
+	SyntheticDeviceID   *int      `json:"-"`
 }
 
 type EarningsEdge struct {

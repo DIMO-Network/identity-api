@@ -69,11 +69,16 @@ func MarshalBigInt(x *big.Int) graphql.Marshaler {
 	})
 }
 
-func UnmarshalBigInt(v interface{}) (*big.Int, error) {
-	s, ok := v.(*big.Int)
+func UnmarshalBigInt(v any) (*big.Int, error) {
+	s, ok := v.(string)
 	if !ok {
 		return nil, fmt.Errorf("type %T not a string", v)
 	}
 
-	return s, nil
+	x, ok := new(big.Int).SetString(s, 10)
+	if !ok {
+		return nil, errors.New("not a valid decimal integer")
+	}
+
+	return x, nil
 }

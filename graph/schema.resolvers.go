@@ -35,6 +35,24 @@ func (r *dCNResolver) Vehicle(ctx context.Context, obj *model.Dcn) (*model.Vehic
 	return loader.GetVehicleByID(ctx, *obj.VehicleID)
 }
 
+// AftermarketDevice is the resolver for the aftermarketDevice field.
+func (r *earningNodeResolver) AftermarketDevice(ctx context.Context, obj *model.EarningNode) (*model.AftermarketDevice, error) {
+	if obj.AftermarketDeviceID == nil {
+		return nil, nil
+	}
+
+	return loader.GetAftermarketDeviceByID(ctx, *obj.AftermarketDeviceID)
+}
+
+// SyntheticDevice is the resolver for the syntheticDevice field.
+func (r *earningNodeResolver) SyntheticDevice(ctx context.Context, obj *model.EarningNode) (*model.SyntheticDevice, error) {
+	if obj.SyntheticDeviceID == nil {
+		return nil, nil
+	}
+
+	return loader.GetSyntheticDeviceByID(ctx, *obj.SyntheticDeviceID)
+}
+
 // Node is the resolver for the node field.
 func (r *queryResolver) Node(ctx context.Context, id string) (model.Node, error) {
 	if strings.HasPrefix(id, "V_") {
@@ -127,6 +145,9 @@ func (r *Resolver) AftermarketDevice() AftermarketDeviceResolver {
 // DCN returns DCNResolver implementation.
 func (r *Resolver) DCN() DCNResolver { return &dCNResolver{r} }
 
+// EarningNode returns EarningNodeResolver implementation.
+func (r *Resolver) EarningNode() EarningNodeResolver { return &earningNodeResolver{r} }
+
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
@@ -135,5 +156,6 @@ func (r *Resolver) Vehicle() VehicleResolver { return &vehicleResolver{r} }
 
 type aftermarketDeviceResolver struct{ *Resolver }
 type dCNResolver struct{ *Resolver }
+type earningNodeResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type vehicleResolver struct{ *Resolver }

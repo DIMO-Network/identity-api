@@ -23,6 +23,15 @@ func GetSyntheticDeviceByVehicleID(ctx context.Context, vehicleID int) (*gmodel.
 	return thunk()
 }
 
+func GetSyntheticDeviceByID(ctx context.Context, vehicleID int) (*gmodel.SyntheticDevice, error) {
+	// read loader from context
+	loaders := ctx.Value(dataLoadersKey).(*Loaders)
+	// invoke and get thunk
+	thunk := loaders.SyntheticDeviceByID.Load(ctx, vehicleID)
+	// read value from thunk
+	return thunk()
+}
+
 // BatchGetSyntheticDeviceByVehicleID implements the dataloader for finding synthetic devices linked to vehicles and returns
 // them in the order requested
 func (sd *SyntheticDeviceLoader) BatchGetSyntheticDeviceByVehicleID(ctx context.Context, vehicleIDs []int) []*dataloader.Result[*gmodel.SyntheticDevice] {
@@ -43,6 +52,39 @@ func (sd *SyntheticDeviceLoader) BatchGetSyntheticDeviceByVehicleID(ctx context.
 	}
 
 	for idx, vid := range vehicleIDs {
+		if sdv, ok := sdByVehicleID[vid]; ok {
+			results[idx] = &dataloader.Result[*gmodel.SyntheticDevice]{
+				Data: repositories.SyntheticDeviceToAPI(sdv),
+			}
+		} else {
+			results[idx] = &dataloader.Result[*gmodel.SyntheticDevice]{}
+		}
+
+	}
+
+	return results
+}
+
+// BatchGetSyntheticDeviceByVehicleID implements the dataloader for finding synthetic devices by their ids and returns
+// them in the order requested
+func (sd *SyntheticDeviceLoader) BatchGetSyntheticDeviceByID(ctx context.Context, ids []int) []*dataloader.Result[*gmodel.SyntheticDevice] {
+	results := make([]*dataloader.Result[*gmodel.SyntheticDevice], len(ids))
+
+	devices, err := models.SyntheticDevices(models.SyntheticDeviceWhere.ID.IN(ids)).All(ctx, sd.db.DBS().Reader)
+	if err != nil {
+		for i := range ids {
+			results[i] = &dataloader.Result[*gmodel.SyntheticDevice]{Data: nil, Error: err}
+		}
+		return results
+	}
+
+	sdByVehicleID := map[int]*models.SyntheticDevice{}
+
+	for _, d := range devices {
+		sdByVehicleID[d.VehicleID] = d
+	}
+
+	for idx, vid := range ids {
 		if sdv, ok := sdByVehicleID[vid]; ok {
 			results[idx] = &dataloader.Result[*gmodel.SyntheticDevice]{
 				Data: repositories.SyntheticDeviceToAPI(sdv),

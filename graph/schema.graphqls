@@ -335,14 +335,41 @@ type DCN {
 }
 
 type EarningNode {
+  """
+  Week reward was issued
+  """
   week: Int!
+  """
+  Address of Beneficiary that received reward
+  """
   beneficiary: Address!
+  """
+  Consecutive period of which vehicle was connected
+  """
   connectionStreak: Int!
+  """
+  Tokens earned for connection period
+  """
   streakTokens: BigInt!
-  aftermarketDevice: Int!
+  """
+  AftermarketDevice connected to vehicle
+  """
+  aftermarketDevice: AftermarketDevice
+  """
+  Tokens earned by aftermarketDevice
+  """
   aftermarketDeviceTokens: BigInt!
-  syntheticDevice: Int!
+  """
+  SyntheticDevice connected to vehicle
+  """
+  syntheticDevice: SyntheticDevice
+  """
+  Tokens earned by SyntheticDevice
+  """
   syntheticDeviceTokens: BigInt!
+  """
+  When the token was earned
+  """
   sentAt: Time!
 }
 
