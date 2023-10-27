@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	"fmt"
-	"log"
 	"math/big"
 	"os"
 	"testing"
@@ -145,7 +144,7 @@ func (o *DCNConsumerTestSuite) Test_NewDCNExpiration_Consume_Success() {
 
 	dcn, err := models.DCNS().All(o.ctx, o.pdb.DBS().Reader.DB)
 	o.NoError(err)
-	log.Println(dcn[0].Expiration.Time, "--", currTime, "sss")
+
 	o.Len(dcn, 1)
 	o.Equal(eventData.Node, dcn[0].Node)
 	o.Equal(owner.Bytes(), dcn[0].OwnerAddress)
