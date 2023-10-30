@@ -182,7 +182,7 @@ type Vehicle implements Node {
 
 type VehicleEarnings {
   totalTokens: BigInt!
-  history: EarningsConnection!
+  history(first: Int): EarningsConnection!
 }
 
 type Definition {

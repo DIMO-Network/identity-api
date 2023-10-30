@@ -139,7 +139,7 @@ func (r *vehicleResolver) Earnings(ctx context.Context, obj *model.Vehicle) (*mo
 }
 
 // History is the resolver for the history field.
-func (r *vehicleEarningsResolver) History(ctx context.Context, obj *model.VehicleEarnings) (*model.EarningsConnection, error) {
+func (r *vehicleEarningsResolver) History(ctx context.Context, obj *model.VehicleEarnings, first *int) (*model.EarningsConnection, error) {
 	return r.Repo.GetEarningsByVehicleID(ctx, obj.VehicleID)
 }
 

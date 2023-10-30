@@ -193,7 +193,7 @@ type ComplexityRoot struct {
 	}
 
 	VehicleEarnings struct {
-		History     func(childComplexity int) int
+		History     func(childComplexity int, first *int) int
 		TotalTokens func(childComplexity int) int
 	}
 
@@ -236,7 +236,7 @@ type VehicleResolver interface {
 	Earnings(ctx context.Context, obj *model.Vehicle) (*model.VehicleEarnings, error)
 }
 type VehicleEarningsResolver interface {
-	History(ctx context.Context, obj *model.VehicleEarnings) (*model.EarningsConnection, error)
+	History(ctx context.Context, obj *model.VehicleEarnings, first *int) (*model.EarningsConnection, error)
 }
 
 type executableSchema struct {
@@ -893,7 +893,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.VehicleEarnings.History(childComplexity), true
+		args, err := ec.field_VehicleEarnings_history_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.VehicleEarnings.History(childComplexity, args["first"].(*int)), true
 
 	case "VehicleEarnings.totalTokens":
 		if e.complexity.VehicleEarnings.TotalTokens == nil {
@@ -1203,6 +1208,21 @@ func (ec *executionContext) field_Query_vehicles_args(ctx context.Context, rawAr
 		}
 	}
 	args["filterBy"] = arg4
+	return args, nil
+}
+
+func (ec *executionContext) field_VehicleEarnings_history_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *int
+	if tmp, ok := rawArgs["first"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["first"] = arg0
 	return args, nil
 }
 
@@ -5667,7 +5687,7 @@ func (ec *executionContext) _VehicleEarnings_history(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.VehicleEarnings().History(rctx, obj)
+		return ec.resolvers.VehicleEarnings().History(rctx, obj, fc.Args["first"].(*int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5697,6 +5717,17 @@ func (ec *executionContext) fieldContext_VehicleEarnings_history(ctx context.Con
 			}
 			return nil, fmt.Errorf("no field named %q was found under type EarningsConnection", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_VehicleEarnings_history_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
