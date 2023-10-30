@@ -177,7 +177,12 @@ type Vehicle implements Node {
   dcn: DCN
   name: String!
 
-  earnings: VehicleEarningsConnection
+  earnings: VehicleEarnings
+}
+
+type VehicleEarnings {
+  totalTokens: BigInt!
+  history: EarningsConnection!
 }
 
 type Definition {
@@ -375,9 +380,9 @@ type EarningNode {
 
 type EarningsEdge {
   node: EarningNode!
+  cursor: String!
 }
 
-type VehicleEarningsConnection {
-  earnedTokens: BigInt!
-  earningsTransfers: [EarningsEdge!]!
+type EarningsConnection {
+  edges: [EarningsEdge!]!
 }

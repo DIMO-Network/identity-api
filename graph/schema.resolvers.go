@@ -7,6 +7,7 @@ package graph
 import (
 	"context"
 	"errors"
+	"math/big"
 	"strings"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
@@ -133,8 +134,13 @@ func (r *vehicleResolver) Dcn(ctx context.Context, obj *model.Vehicle) (*model.D
 }
 
 // Earnings is the resolver for the earnings field.
-func (r *vehicleResolver) Earnings(ctx context.Context, obj *model.Vehicle) (*model.VehicleEarningsConnection, error) {
-	return r.Repo.GetEarningsByVehicleID(ctx, obj.TokenID)
+func (r *vehicleResolver) Earnings(ctx context.Context, obj *model.Vehicle) (*model.VehicleEarnings, error) {
+	return &model.VehicleEarnings{TotalTokens: big.NewInt(0), VehicleID: obj.TokenID}, nil
+}
+
+// History is the resolver for the history field.
+func (r *vehicleEarningsResolver) History(ctx context.Context, obj *model.VehicleEarnings) (*model.EarningsConnection, error) {
+	return r.Repo.GetEarningsByVehicleID(ctx, obj.VehicleID)
 }
 
 // AftermarketDevice returns AftermarketDeviceResolver implementation.
@@ -154,8 +160,12 @@ func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 // Vehicle returns VehicleResolver implementation.
 func (r *Resolver) Vehicle() VehicleResolver { return &vehicleResolver{r} }
 
+// VehicleEarnings returns VehicleEarningsResolver implementation.
+func (r *Resolver) VehicleEarnings() VehicleEarningsResolver { return &vehicleEarningsResolver{r} }
+
 type aftermarketDeviceResolver struct{ *Resolver }
 type dCNResolver struct{ *Resolver }
 type earningNodeResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type vehicleResolver struct{ *Resolver }
+type vehicleEarningsResolver struct{ *Resolver }

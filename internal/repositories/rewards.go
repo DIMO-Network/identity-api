@@ -10,7 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func (r *Repository) GetEarningsByVehicleID(ctx context.Context, tokenID int) (*gmodel.VehicleEarningsConnection, error) {
+func (r *Repository) GetEarningsByVehicleID(ctx context.Context, tokenID int) (*gmodel.EarningsConnection, error) {
 	rewards, err := models.Rewards(
 		models.RewardWhere.VehicleID.EQ(tokenID),
 	).All(ctx, r.pdb.DBS().Reader)
@@ -48,8 +48,7 @@ func (r *Repository) GetEarningsByVehicleID(ctx context.Context, tokenID int) (*
 		earnings = append(earnings, earning)
 	}
 
-	return &gmodel.VehicleEarningsConnection{
-		EarnedTokens:      totalTokensEarned,
-		EarningsTransfers: earnings,
+	return &gmodel.EarningsConnection{
+		Edges: earnings,
 	}, err
 }

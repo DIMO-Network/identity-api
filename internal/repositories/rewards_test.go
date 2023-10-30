@@ -151,20 +151,22 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByVehicleID_Success() {
 	rwrd, err := r.repo.GetEarningsByVehicleID(r.ctx, 11)
 	r.NoError(err)
 
-	r.Equal(&model.VehicleEarningsConnection{
-		EarnedTokens: totalEarned,
-		EarningsTransfers: []*model.EarningsEdge{
-			{
-				Node: &model.EarningNode{
-					Week:                    payloads[0].RW.IssuanceWeek,
-					Beneficiary:             *ben,
-					ConnectionStreak:        payloads[0].RW.ConnectionStreak.Int,
-					StreakTokens:            strkEarn,
-					AftermarketDeviceID:     &payloads[0].RW.AftermarketTokenID.Int,
-					AftermarketDeviceTokens: adEarn,
-					SyntheticDeviceID:       &payloads[0].RW.SyntheticTokenID.Int,
-					SyntheticDeviceTokens:   synthEarn,
-					SentAt:                  currTime,
+	r.Equal(&model.VehicleEarnings{
+		TotalTokens: totalEarned,
+		History: &model.EarningsConnection{
+			Edges: []*model.EarningsEdge{
+				{
+					Node: &model.EarningNode{
+						Week:                    payloads[0].RW.IssuanceWeek,
+						Beneficiary:             *ben,
+						ConnectionStreak:        payloads[0].RW.ConnectionStreak.Int,
+						StreakTokens:            strkEarn,
+						AftermarketDeviceID:     &payloads[0].RW.AftermarketTokenID.Int,
+						AftermarketDeviceTokens: adEarn,
+						SyntheticDeviceID:       &payloads[0].RW.SyntheticTokenID.Int,
+						SyntheticDeviceTokens:   synthEarn,
+						SentAt:                  currTime,
+					},
 				},
 			},
 		},
