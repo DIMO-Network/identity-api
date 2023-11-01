@@ -36,7 +36,7 @@ func (r *dCNResolver) Vehicle(ctx context.Context, obj *model.Dcn) (*model.Vehic
 }
 
 // AftermarketDevice is the resolver for the aftermarketDevice field.
-func (r *earningNodeResolver) AftermarketDevice(ctx context.Context, obj *model.EarningNode) (*model.AftermarketDevice, error) {
+func (r *earningResolver) AftermarketDevice(ctx context.Context, obj *model.Earning) (*model.AftermarketDevice, error) {
 	if obj.AftermarketDeviceID == nil {
 		return nil, nil
 	}
@@ -45,12 +45,17 @@ func (r *earningNodeResolver) AftermarketDevice(ctx context.Context, obj *model.
 }
 
 // SyntheticDevice is the resolver for the syntheticDevice field.
-func (r *earningNodeResolver) SyntheticDevice(ctx context.Context, obj *model.EarningNode) (*model.SyntheticDevice, error) {
+func (r *earningResolver) SyntheticDevice(ctx context.Context, obj *model.Earning) (*model.SyntheticDevice, error) {
 	if obj.SyntheticDeviceID == nil {
 		return nil, nil
 	}
 
 	return loader.GetSyntheticDeviceByID(ctx, *obj.SyntheticDeviceID)
+}
+
+// Vehicle is the resolver for the vehicle field.
+func (r *earningResolver) Vehicle(ctx context.Context, obj *model.Earning) (*model.Vehicle, error) {
+	return loader.GetVehicleByID(ctx, obj.VehicleID)
 }
 
 // Node is the resolver for the node field.
@@ -133,8 +138,13 @@ func (r *vehicleResolver) Dcn(ctx context.Context, obj *model.Vehicle) (*model.D
 }
 
 // Earnings is the resolver for the earnings field.
-func (r *vehicleResolver) Earnings(ctx context.Context, obj *model.Vehicle) (*model.VehicleEarningsConnection, error) {
+func (r *vehicleResolver) Earnings(ctx context.Context, obj *model.Vehicle) (*model.VehicleEarnings, error) {
 	return r.Repo.GetEarningsByVehicleID(ctx, obj.TokenID)
+}
+
+// History is the resolver for the history field.
+func (r *vehicleEarningsResolver) History(ctx context.Context, obj *model.VehicleEarnings, first *int, after *string, last *int, before *string) (*model.EarningsConnection, error) {
+	return r.Repo.PaginateVehicleEarningsByID(ctx, obj, first, after, last, before)
 }
 
 // AftermarketDevice returns AftermarketDeviceResolver implementation.
@@ -145,8 +155,8 @@ func (r *Resolver) AftermarketDevice() AftermarketDeviceResolver {
 // DCN returns DCNResolver implementation.
 func (r *Resolver) DCN() DCNResolver { return &dCNResolver{r} }
 
-// EarningNode returns EarningNodeResolver implementation.
-func (r *Resolver) EarningNode() EarningNodeResolver { return &earningNodeResolver{r} }
+// Earning returns EarningResolver implementation.
+func (r *Resolver) Earning() EarningResolver { return &earningResolver{r} }
 
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
@@ -154,8 +164,12 @@ func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 // Vehicle returns VehicleResolver implementation.
 func (r *Resolver) Vehicle() VehicleResolver { return &vehicleResolver{r} }
 
+// VehicleEarnings returns VehicleEarningsResolver implementation.
+func (r *Resolver) VehicleEarnings() VehicleEarningsResolver { return &vehicleEarningsResolver{r} }
+
 type aftermarketDeviceResolver struct{ *Resolver }
 type dCNResolver struct{ *Resolver }
-type earningNodeResolver struct{ *Resolver }
+type earningResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type vehicleResolver struct{ *Resolver }
+type vehicleEarningsResolver struct{ *Resolver }
