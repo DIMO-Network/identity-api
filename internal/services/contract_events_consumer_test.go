@@ -268,6 +268,17 @@ func TestHandleAftermarketDeviceTransferredEventNewTokenID(t *testing.T) {
 	contractEventData.EventName = "AftermarketDeviceNodeMinted"
 	contractEventData.Contract = common.HexToAddress(aftermarketDeviceAddr)
 
+	_, wallet, err := helpers.GenerateWallet()
+	assert.NoError(t, err)
+
+	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
+	manufacturer := models.Manufacturer{
+		ID:    7,
+		Owner: wallet.Bytes(),
+	}
+	err = manufacturer.Insert(ctx, pdb.DBS().Writer.DB, boil.Infer())
+	assert.NoError(t, err)
+
 	var aftermarketDeviceTransferredData = AftermarketDeviceNodeMintedData{
 		ManufacturerID:           big.NewInt(7),
 		AftermarketDeviceAddress: common.HexToAddress("0xaba3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
@@ -283,7 +294,6 @@ func TestHandleAftermarketDeviceTransferredEventNewTokenID(t *testing.T) {
 	config := mocks.NewTestConfig()
 	consumer := mocks.NewConsumer(t, config)
 
-	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
 	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
 	expectedBytes := eventBytes(aftermarketDeviceTransferredData, contractEventData, t)
 
