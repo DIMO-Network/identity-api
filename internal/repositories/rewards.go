@@ -23,14 +23,15 @@ func RewardToAPI(reward models.Reward) gmodel.Earning {
 	stEarn := dbtypes.NullDecimalToInt(reward.StreakEarnings)
 	adEarn := dbtypes.NullDecimalToInt(reward.AftermarketEarnings)
 	syEarn := dbtypes.NullDecimalToInt(reward.SyntheticEarnings)
+
 	return gmodel.Earning{
 		Week:                    reward.IssuanceWeek,
 		Beneficiary:             common.BytesToAddress(reward.ReceivedByAddress.Bytes),
-		ConnectionStreak:        reward.ConnectionStreak.Int,
+		ConnectionStreak:        reward.ConnectionStreak.Ptr(),
 		StreakTokens:            stEarn,
-		AftermarketDeviceID:     &reward.AftermarketTokenID.Int,
+		AftermarketDeviceID:     reward.AftermarketTokenID.Ptr(),
 		AftermarketDeviceTokens: adEarn,
-		SyntheticDeviceID:       &reward.SyntheticTokenID.Int,
+		SyntheticDeviceID:       reward.SyntheticTokenID.Ptr(),
 		SyntheticDeviceTokens:   syEarn,
 		SentAt:                  reward.EarnedAt,
 		VehicleID:               reward.VehicleID,

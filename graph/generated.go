@@ -2843,14 +2843,11 @@ func (ec *executionContext) _Earning_connectionStreak(ctx context.Context, field
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(*int)
 	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Earning_connectionStreak(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8715,9 +8712,6 @@ func (ec *executionContext) _Earning(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "connectionStreak":
 			out.Values[i] = ec._Earning_connectionStreak(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
 		case "streakTokens":
 			out.Values[i] = ec._Earning_streakTokens(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

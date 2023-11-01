@@ -191,7 +191,7 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByVehicleID_Success() {
 
 	aftID := 1
 	syntID := 1
-
+	connStrk := []int{21, 20}
 	r.Equal(&gmodel.PageInfo{
 		EndCursor:       &endCrsr,
 		HasNextPage:     false,
@@ -206,7 +206,7 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByVehicleID_Success() {
 			Node: &gmodel.Earning{
 				Week:                    2,
 				Beneficiary:             common.BytesToAddress(ben.Bytes()),
-				ConnectionStreak:        21,
+				ConnectionStreak:        &connStrk[0],
 				StreakTokens:            dbtypes.NullDecimalToInt(strkEarn),
 				AftermarketDeviceID:     &aftID,
 				AftermarketDeviceTokens: dbtypes.NullDecimalToInt(aftEarn),
@@ -221,7 +221,7 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByVehicleID_Success() {
 			Node: &gmodel.Earning{
 				Week:                    1,
 				Beneficiary:             common.BytesToAddress(ben.Bytes()),
-				ConnectionStreak:        20,
+				ConnectionStreak:        &connStrk[1],
 				StreakTokens:            dbtypes.NullDecimalToInt(strkEarn),
 				AftermarketDeviceID:     &aftID,
 				AftermarketDeviceTokens: dbtypes.NullDecimalToInt(aftEarn),
@@ -370,7 +370,7 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_FwdPagination_Fi
 	r.NoError(err)
 	aftID := 1
 	syntID := 1
-
+	connStrk := 21
 	r.Equal(&model.PageInfo{
 		EndCursor:       &crsr,
 		HasNextPage:     true,
@@ -383,7 +383,7 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_FwdPagination_Fi
 			Node: &model.Earning{
 				Week:                    2,
 				Beneficiary:             common.BytesToAddress(beneficiary.Bytes()),
-				ConnectionStreak:        21,
+				ConnectionStreak:        &connStrk,
 				StreakTokens:            dbtypes.NullDecimalToInt(strkEarn),
 				AftermarketDeviceID:     &aftID,
 				AftermarketDeviceTokens: dbtypes.NullDecimalToInt(aftEarn),
@@ -484,6 +484,7 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_FwdPagination_Fi
 
 	aftID := 1
 	syntID := 1
+	connStrk := [2]int{21, 20}
 
 	r.Equal(&model.PageInfo{
 		EndCursor:       &endCrsr,
@@ -497,7 +498,7 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_FwdPagination_Fi
 			Node: &model.Earning{
 				Week:                    2,
 				Beneficiary:             common.BytesToAddress(beneficiary.Bytes()),
-				ConnectionStreak:        21,
+				ConnectionStreak:        &connStrk[0],
 				StreakTokens:            dbtypes.NullDecimalToInt(strkEarn),
 				AftermarketDeviceID:     &aftID,
 				AftermarketDeviceTokens: dbtypes.NullDecimalToInt(aftEarn),
@@ -512,7 +513,7 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_FwdPagination_Fi
 			Node: &model.Earning{
 				Week:                    1,
 				Beneficiary:             common.BytesToAddress(beneficiary.Bytes()),
-				ConnectionStreak:        20,
+				ConnectionStreak:        &connStrk[1],
 				StreakTokens:            dbtypes.NullDecimalToInt(strkEarn),
 				AftermarketDeviceID:     &aftID,
 				AftermarketDeviceTokens: dbtypes.NullDecimalToInt(aftEarn),
@@ -678,6 +679,8 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_BackPagination_L
 	aftID := 1
 	syntID := 1
 
+	connStrk := 20
+
 	r.Equal(&model.PageInfo{
 		EndCursor:       &crsr,
 		HasNextPage:     false,
@@ -690,7 +693,7 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_BackPagination_L
 			Node: &model.Earning{
 				Week:                    1,
 				Beneficiary:             common.BytesToAddress(beneficiary.Bytes()),
-				ConnectionStreak:        20,
+				ConnectionStreak:        &connStrk,
 				StreakTokens:            dbtypes.NullDecimalToInt(strkEarn),
 				AftermarketDeviceID:     &aftID,
 				AftermarketDeviceTokens: dbtypes.NullDecimalToInt(aftEarn),
@@ -792,6 +795,8 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_BackPagination_L
 	aftID := 1
 	syntID := 1
 
+	connStrk := [2]int{21, 22}
+
 	r.Equal(&model.PageInfo{
 		EndCursor:       &endCrsr,
 		HasNextPage:     true,
@@ -804,7 +809,7 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_BackPagination_L
 			Node: &model.Earning{
 				Week:                    2,
 				Beneficiary:             common.BytesToAddress(beneficiary.Bytes()),
-				ConnectionStreak:        21,
+				ConnectionStreak:        &connStrk[0],
 				StreakTokens:            dbtypes.NullDecimalToInt(strkEarn),
 				AftermarketDeviceID:     &aftID,
 				AftermarketDeviceTokens: dbtypes.NullDecimalToInt(aftEarn),
@@ -819,7 +824,7 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_BackPagination_L
 			Node: &model.Earning{
 				Week:                    3,
 				Beneficiary:             common.BytesToAddress(beneficiary.Bytes()),
-				ConnectionStreak:        22,
+				ConnectionStreak:        &connStrk[1],
 				StreakTokens:            dbtypes.NullDecimalToInt(strkEarn),
 				AftermarketDeviceID:     &aftID,
 				AftermarketDeviceTokens: dbtypes.NullDecimalToInt(aftEarn),

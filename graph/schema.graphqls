@@ -363,7 +363,7 @@ type Earning {
   """
   Consecutive period of which vehicle was connected
   """
-  connectionStreak: Int!
+  connectionStreak: Int
   """
   Tokens earned for connection period
   """

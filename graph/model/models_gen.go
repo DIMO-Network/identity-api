@@ -106,7 +106,7 @@ type Earning struct {
 	// Address of Beneficiary that received reward
 	Beneficiary common.Address `json:"beneficiary"`
 	// Consecutive period of which vehicle was connected
-	ConnectionStreak int `json:"connectionStreak"`
+	ConnectionStreak *int `json:"connectionStreak,omitempty"`
 	// Tokens earned for connection period
 	StreakTokens *big.Int `json:"streakTokens"`
 	// AftermarketDevice connected to vehicle
