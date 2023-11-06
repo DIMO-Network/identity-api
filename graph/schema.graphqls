@@ -30,6 +30,10 @@ input DCNBy @oneOf {
   name: String
 }
 
+input PrivilegeFilterBy {
+  user: Address
+}
+
 input AftermarketDeviceBy @oneOf {
   tokenId: Int
   address: Address
@@ -164,6 +168,7 @@ type Vehicle implements Node {
     after: String
     last: Int
     before: String
+    filterBy: PrivilegeFilterBy!
   ): PrivilegesConnection!
   """
   The paired synthetic device, if any.

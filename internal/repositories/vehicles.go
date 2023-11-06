@@ -219,7 +219,7 @@ func (v *Repository) GetVehicles(ctx context.Context, first *int, after *string,
 	}
 
 	orderBy := "DESC"
-	if before != nil {
+	if last != nil {
 		orderBy = "ASC"
 	}
 

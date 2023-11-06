@@ -75,7 +75,7 @@ func (p *Repository) createPrivilegeResponse(privs models.PrivilegeSlice, totalC
 	return res, nil
 }
 
-func (p *Repository) GetPrivilegesForVehicle(ctx context.Context, tokenID int, first *int, after *string, last *int, before *string) (*gmodel.PrivilegesConnection, error) {
+func (p *Repository) GetPrivilegesForVehicle(ctx context.Context, tokenID int, first *int, after *string, last *int, before *string, filterBy gmodel.PrivilegeFilterBy) (*gmodel.PrivilegesConnection, error) {
 	pHelp := helpers.PaginationHelper[PrivilegeCursor]{}
 
 	limit := defaultPageSize
@@ -89,6 +89,10 @@ func (p *Repository) GetPrivilegesForVehicle(ctx context.Context, tokenID int, f
 	queryMods := []qm.QueryMod{
 		models.PrivilegeWhere.TokenID.EQ(tokenID),
 		models.PrivilegeWhere.ExpiresAt.GTE(time.Now()),
+	}
+
+	if filterBy.User != nil {
+		queryMods = append(queryMods, models.PrivilegeWhere.UserAddress.EQ(filterBy.User.Bytes()))
 	}
 
 	totalCount, err := models.Privileges(queryMods...).Count(ctx, p.pdb.DBS().Reader)

@@ -181,6 +181,10 @@ type PrivilegeEdge struct {
 	Cursor string     `json:"cursor"`
 }
 
+type PrivilegeFilterBy struct {
+	User *common.Address `json:"user,omitempty"`
+}
+
 type PrivilegesConnection struct {
 	TotalCount int              `json:"totalCount"`
 	Edges      []*PrivilegeEdge `json:"edges"`
