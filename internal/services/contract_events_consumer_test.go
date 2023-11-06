@@ -54,6 +54,8 @@ var contractEventData = ContractEventData{
 
 // prepareEvent turns ContractEventData (the block time, number, etc) and the event arguments (from, to, tokenId, etc)
 // into a shared.CloudEvent[json.RawMessage] like the processor expects.
+//
+// Note that this relies on the global variable cloudEvent to fill in the top level object.
 func prepareEvent(t *testing.T, contractEventData ContractEventData, args any) shared.CloudEvent[json.RawMessage] {
 	// Copy, just in case.
 	ce := cloudEvent
