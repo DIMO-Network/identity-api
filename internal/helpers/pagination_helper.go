@@ -38,32 +38,32 @@ func (p PaginationHelper[T]) DecodeCursor(cursor string) (*T, error) {
 	return &res, nil
 }
 
-func (p PaginationHelper[T]) ValidateFirstLast(first, last *int, maxPageSize int) (*int, error) {
+func ValidateFirstLast(first, last *int, maxPageSize int) (int, error) {
 	var limit int
 
 	if first != nil {
 		if last != nil {
-			return nil, errors.New("pass `first` or `last`, but not both")
+			return 0, errors.New("pass `first` or `last`, but not both")
 		}
 		if *first < 0 {
-			return nil, errors.New("the value for `first` cannot be negative")
+			return 0, errors.New("the value for `first` cannot be negative")
 		}
 		if *first > maxPageSize {
-			return nil, fmt.Errorf("the value %d for `first` exceeds the limit %d", *last, maxPageSize)
+			return 0, fmt.Errorf("the value %d for `first` exceeds the limit %d", *last, maxPageSize)
 		}
 		limit = *first
 	} else {
 		if last == nil {
-			return nil, errors.New("provide `first` or `last`")
+			return 0, errors.New("provide `first` or `last`")
 		}
 		if *last < 0 {
-			return nil, errors.New("the value for `last` cannot be negative")
+			return 0, errors.New("the value for `last` cannot be negative")
 		}
 		if *last > maxPageSize {
-			return nil, fmt.Errorf("the value %d for `last` exceeds the limit %d", *last, maxPageSize)
+			return 0, fmt.Errorf("the value %d for `last` exceeds the limit %d", *last, maxPageSize)
 		}
 		limit = *last
 	}
 
-	return &limit, nil
+	return limit, nil
 }

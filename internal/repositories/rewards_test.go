@@ -112,8 +112,6 @@ func (r *RewardsRepoTestSuite) createDependentRecords() {
 }
 
 func (r *RewardsRepoTestSuite) Test_GetEarningsByVehicleID_Success() {
-	pHelp := helpers.PaginationHelper[RewardsCursor]{}
-
 	_, ben, err := test.GenerateWallet()
 	r.NoError(err)
 
@@ -171,68 +169,30 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByVehicleID_Success() {
 	rwrd, err := r.repo.GetEarningsByVehicleID(r.ctx, 11)
 	r.NoError(err)
 
-	endCrsr, err := pHelp.EncodeCursor(RewardsCursor{
-		Week:      1,
-		VehicleID: 11,
-	})
-	r.NoError(err)
-
-	startCrsr, err := pHelp.EncodeCursor(RewardsCursor{
-		Week:      2,
-		VehicleID: 11,
-	})
-	r.NoError(err)
-
-	firstCrsr, err := pHelp.EncodeCursor(RewardsCursor{
-		Week:      2,
-		VehicleID: 11,
-	})
-	r.NoError(err)
-
-	aftID := 1
-	syntID := 1
-	connStrk := []int{21, 20}
-	r.Equal(&gmodel.PageInfo{
-		EndCursor:       &endCrsr,
-		HasNextPage:     false,
-		HasPreviousPage: false,
-		StartCursor:     &startCrsr,
-	}, rwrd.History.PageInfo)
-	r.Equal(2, rwrd.History.TotalCount)
-	r.Equal(11, rwrd.VehicleID)
-	r.Equal(totalEarned, rwrd.TotalTokens)
-	r.Equal([]*gmodel.EarningsEdge{
-		{
-			Node: &gmodel.Earning{
-				Week:                    2,
-				Beneficiary:             common.BytesToAddress(ben.Bytes()),
-				ConnectionStreak:        &connStrk[0],
-				StreakTokens:            dbtypes.NullDecimalToInt(strkEarn),
-				AftermarketDeviceID:     &aftID,
-				AftermarketDeviceTokens: dbtypes.NullDecimalToInt(aftEarn),
-				SyntheticDeviceID:       &syntID,
-				SyntheticDeviceTokens:   dbtypes.NullDecimalToInt(syntEarn),
-				SentAt:                  currTime,
-				VehicleID:               11,
-			},
-			Cursor: firstCrsr,
+	r.Equal(&gmodel.VehicleEarnings{
+		TotalTokens: rwrd.TotalTokens,
+		History: &gmodel.EarningsConnection{
+			TotalCount: rwrd.History.TotalCount,
+			Edges:      nil,
+			Nodes:      nil,
 		},
-		{
-			Node: &gmodel.Earning{
-				Week:                    1,
-				Beneficiary:             common.BytesToAddress(ben.Bytes()),
-				ConnectionStreak:        &connStrk[1],
-				StreakTokens:            dbtypes.NullDecimalToInt(strkEarn),
-				AftermarketDeviceID:     &aftID,
-				AftermarketDeviceTokens: dbtypes.NullDecimalToInt(aftEarn),
-				SyntheticDeviceID:       &syntID,
-				SyntheticDeviceTokens:   dbtypes.NullDecimalToInt(syntEarn),
-				SentAt:                  currTime,
-				VehicleID:               11,
-			},
-			Cursor: endCrsr,
+		VehicleID: rwrd.VehicleID,
+	}, rwrd)
+}
+
+func (r *RewardsRepoTestSuite) Test_GetEarningsByVehicleID_NoRows() {
+	rwrd, err := r.repo.GetEarningsByVehicleID(r.ctx, 11)
+	r.NoError(err)
+
+	r.Equal(&gmodel.VehicleEarnings{
+		TotalTokens: nil,
+		History: &gmodel.EarningsConnection{
+			TotalCount: 0,
+			Edges:      nil,
+			Nodes:      nil,
 		},
-	}, rwrd.History.Edges)
+		VehicleID: 11,
+	}, rwrd)
 }
 
 func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_Disallow_FirstAndLast() {
@@ -300,8 +260,6 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_Disallow_FirstAn
 }
 
 func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_FwdPagination_First() {
-	pHelp := helpers.PaginationHelper[RewardsCursor]{}
-
 	_, beneficiary, err := test.GenerateWallet()
 	r.NoError(err)
 
@@ -363,14 +321,11 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_FwdPagination_Fi
 	paginatedEarnings, err := r.repo.PaginateVehicleEarningsByID(r.ctx, rwrd, &first, nil, nil, nil)
 	r.NoError(err)
 
-	crsr, err := pHelp.EncodeCursor(RewardsCursor{
-		Week:      2,
-		VehicleID: 11,
-	})
-	r.NoError(err)
+	crsr := helpers.IDToCursor(2)
 	aftID := 1
 	syntID := 1
 	connStrk := 21
+
 	r.Equal(&model.PageInfo{
 		EndCursor:       &crsr,
 		HasNextPage:     true,
@@ -398,8 +353,6 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_FwdPagination_Fi
 }
 
 func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_FwdPagination_First_After() {
-	pHelp := helpers.PaginationHelper[RewardsCursor]{}
-
 	_, beneficiary, err := test.GenerateWallet()
 	r.NoError(err)
 
@@ -467,20 +420,12 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_FwdPagination_Fi
 	r.NoError(err)
 
 	first := 2
-	after := "kgML"
+	after := "Mw=="
 	paginatedEarnings, err := r.repo.PaginateVehicleEarningsByID(r.ctx, rwrd, &first, &after, nil, nil)
 	r.NoError(err)
 
-	startCrsr, err := pHelp.EncodeCursor(RewardsCursor{
-		Week:      2,
-		VehicleID: 11,
-	})
-	r.NoError(err)
-	endCrsr, err := pHelp.EncodeCursor(RewardsCursor{
-		Week:      1,
-		VehicleID: 11,
-	})
-	r.NoError(err)
+	startCrsr := helpers.IDToCursor(2)
+	endCrsr := helpers.IDToCursor(1)
 
 	aftID := 1
 	syntID := 1
@@ -488,7 +433,7 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_FwdPagination_Fi
 
 	r.Equal(&model.PageInfo{
 		EndCursor:       &endCrsr,
-		HasNextPage:     true,
+		HasNextPage:     false,
 		HasPreviousPage: true,
 		StartCursor:     &startCrsr,
 	}, paginatedEarnings.PageInfo)
@@ -595,21 +540,22 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_FwdPagination_Em
 	r.NoError(err)
 
 	first := 2
-	after := "kgEL"
+	after := "MQ=="
 	paginatedEarnings, err := r.repo.PaginateVehicleEarningsByID(r.ctx, rwrd, &first, &after, nil, nil)
 	r.NoError(err)
 
 	r.Equal(&gmodel.EarningsConnection{
 		TotalCount: 3,
-		Edges:      nil,
-		Nodes:      nil,
-		PageInfo:   &gmodel.PageInfo{},
+		Edges:      []*gmodel.EarningsEdge{},
+		Nodes:      []*gmodel.Earning{},
+		PageInfo: &gmodel.PageInfo{
+			HasPreviousPage: true,
+			HasNextPage:     false,
+		},
 	}, paginatedEarnings)
 }
 
 func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_BackPagination_Last() {
-	pHelp := helpers.PaginationHelper[RewardsCursor]{}
-
 	_, beneficiary, err := test.GenerateWallet()
 	r.NoError(err)
 
@@ -671,10 +617,7 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_BackPagination_L
 	paginatedEarnings, err := r.repo.PaginateVehicleEarningsByID(r.ctx, rwrd, nil, nil, &last, nil)
 	r.NoError(err)
 
-	crsr, err := pHelp.EncodeCursor(RewardsCursor{
-		Week:      1,
-		VehicleID: 11,
-	})
+	crsr := helpers.IDToCursor(1)
 	r.NoError(err)
 	aftID := 1
 	syntID := 1
@@ -708,8 +651,6 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_BackPagination_L
 }
 
 func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_BackPagination_Last_Before() {
-	pHelp := helpers.PaginationHelper[RewardsCursor]{}
-
 	_, beneficiary, err := test.GenerateWallet()
 	r.NoError(err)
 
@@ -777,20 +718,12 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_BackPagination_L
 	r.NoError(err)
 
 	last := 2
-	before := "kgEL"
+	before := "MQ=="
 	paginatedEarnings, err := r.repo.PaginateVehicleEarningsByID(r.ctx, rwrd, nil, nil, &last, &before)
 	r.NoError(err)
 
-	startCrsr, err := pHelp.EncodeCursor(RewardsCursor{
-		Week:      2,
-		VehicleID: 11,
-	})
-	r.NoError(err)
-	endCrsr, err := pHelp.EncodeCursor(RewardsCursor{
-		Week:      3,
-		VehicleID: 11,
-	})
-	r.NoError(err)
+	startCrsr := helpers.IDToCursor(2)
+	endCrsr := helpers.IDToCursor(3)
 
 	aftID := 1
 	syntID := 1
@@ -800,7 +733,7 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_BackPagination_L
 	r.Equal(&model.PageInfo{
 		EndCursor:       &endCrsr,
 		HasNextPage:     true,
-		HasPreviousPage: true,
+		HasPreviousPage: false,
 		StartCursor:     &startCrsr,
 	}, paginatedEarnings.PageInfo)
 	r.Equal(3, paginatedEarnings.TotalCount)
@@ -906,14 +839,39 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_BackPagination_E
 	r.NoError(err)
 
 	last := 2
-	before := "kgML"
+	before := "Mw=="
 	paginatedEarnings, err := r.repo.PaginateVehicleEarningsByID(r.ctx, rwrd, nil, nil, &last, &before)
 	r.NoError(err)
 
 	r.Equal(&gmodel.EarningsConnection{
 		TotalCount: 3,
-		Edges:      nil,
-		Nodes:      nil,
-		PageInfo:   &gmodel.PageInfo{},
+		Edges:      []*gmodel.EarningsEdge{},
+		Nodes:      []*gmodel.Earning{},
+		PageInfo: &gmodel.PageInfo{
+			HasNextPage:     true,
+			HasPreviousPage: false,
+		},
+	}, paginatedEarnings)
+}
+
+func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_NoRows() {
+	// totalEarned := big.NewInt(0)
+
+	rwrd, err := r.repo.GetEarningsByVehicleID(r.ctx, 11)
+	r.NoError(err)
+
+	last := 2
+	before := "Mw=="
+	paginatedEarnings, err := r.repo.PaginateVehicleEarningsByID(r.ctx, rwrd, nil, nil, &last, &before)
+	r.NoError(err)
+
+	r.Equal(&gmodel.EarningsConnection{
+		TotalCount: 0,
+		Edges:      []*gmodel.EarningsEdge{},
+		Nodes:      []*gmodel.Earning{},
+		PageInfo: &gmodel.PageInfo{
+			HasNextPage:     true,
+			HasPreviousPage: false,
+		},
 	}, paginatedEarnings)
 }

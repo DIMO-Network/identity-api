@@ -208,7 +208,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate() {
 			  "totalCount": 1,
 			  "edges": [
 				{
-				  "cursor": "kgIB",
+				  "cursor": "Mg==",
 				  "node": {
 					"week": 2,
 					"beneficiary": "%s",
@@ -240,10 +240,10 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate() {
 				}
 			  ],
 			  "pageInfo": {
-				"endCursor": "kgIB",
+				"endCursor": "Mg==",
 				"hasNextPage": false,
 				"hasPreviousPage": false,
-				"startCursor": "kgIB"
+				"startCursor": "Mg=="
 			  }
 			}
 		  }
@@ -320,7 +320,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate_Firs
 		  id
 		  earnings {
 			totalTokens
-			history(first: 3, after: "kgQB") {
+			history(first: 3, after: "NA==") {
 			  totalCount
 			  edges {
 				cursor
@@ -384,7 +384,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate_Firs
 				"totalCount": 3,
 				"edges": [
 				{
-					"cursor": "kgMB",
+					"cursor": "Mw==",
 					"node": {
 					"week": 3,
 					"beneficiary": "%s",
@@ -408,7 +408,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate_Firs
 					}
 				},
 				{
-					"cursor": "kgIB",
+					"cursor": "Mg==",
 					"node": {
 					"week": 2,
 					"beneficiary": "%s",
@@ -445,10 +445,10 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate_Firs
 				}
 				],
 				"pageInfo": {
-				"endCursor": "kgIB",
-				"hasNextPage": true,
+				"endCursor": "Mg==",
+				"hasNextPage": false,
 				"hasPreviousPage": true,
-				"startCursor": "kgMB"
+				"startCursor": "Mw=="
 				}
 			}
 			}
@@ -589,7 +589,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 				"totalCount": 3,
 				"edges": [
 					{
-						"cursor": "kgIB",
+						"cursor": "Mg==",
 						"node": {
 						"week": 2,
 						"beneficiary": "%s",
@@ -613,7 +613,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 						}
 					},
 					{
-						"cursor": "kgMB",
+						"cursor": "Mw==",
 						"node": {
 						"week": 3,
 						"beneficiary": "%s",
@@ -650,10 +650,10 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 					}
 				],
 				"pageInfo": {
-				"endCursor": "kgMB",
+				"endCursor": "Mw==",
 				"hasNextPage": false,
 				"hasPreviousPage": true,
-				"startCursor": "kgIB"
+				"startCursor": "Mg=="
 				}
 			}
 			}
@@ -730,7 +730,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 		  id
 		  earnings {
 			totalTokens
-			history(last: 2, before: "kgIB") {
+			history(last: 2, before: "Mg==") {
 			  totalCount
 			  edges {
 				cursor
@@ -794,7 +794,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 				"totalCount": 3,
 				"edges": [
 					{
-						"cursor": "kgMB",
+						"cursor": "Mw==",
 						"node": {
 						"week": 3,
 						"beneficiary": "%s",
@@ -818,7 +818,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 						}
 					},
 					{
-						"cursor": "kgQB",
+						"cursor": "NA==",
 						"node": {
 						"week": 4,
 						"beneficiary": "%s",
@@ -855,10 +855,10 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 					}
 				],
 				"pageInfo": {
-				"endCursor": "kgQB",
+				"endCursor": "NA==",
 				"hasNextPage": true,
-				"hasPreviousPage": true,
-				"startCursor": "kgMB"
+				"hasPreviousPage": false,
+				"startCursor": "Mw=="
 				}
 			}
 			}
