@@ -13,14 +13,13 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared"
-	"github.com/Shopify/sarama"
-	"github.com/Shopify/sarama/mocks"
 	"github.com/ericlagergren/decimal"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/goccy/go-json"
 	"github.com/jarcoal/httpmock"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -69,6 +68,23 @@ func eventBytes(args interface{}, contractEventData ContractEventData, t *testin
 	return expectedBytes
 }
 
+func prepareEvent(t *testing.T, contractEventData ContractEventData, args any) shared.CloudEvent[json.RawMessage] {
+	// Copy, just in case.
+	ce := cloudEvent
+	ced := contractEventData
+
+	argBytes, err := json.Marshal(args)
+	require.NoError(t, err)
+
+	ced.Arguments = argBytes
+	cedBytes, err := json.Marshal(ced)
+	require.NoError(t, err)
+
+	ce.Data = cedBytes
+
+	return ce
+}
+
 func TestHandleAftermarketDeviceAttributeSetEvent(t *testing.T) {
 	ctx := context.Background()
 	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
@@ -85,12 +101,9 @@ func TestHandleAftermarketDeviceAttributeSetEvent(t *testing.T) {
 		DIMORegistryChainID: contractEventData.ChainID,
 	}
 
-	config := mocks.NewTestConfig()
-	consumer := mocks.NewConsumer(t, config)
-
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
 	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
-	expectedBytes := eventBytes(aftermarketDeviceAttributesSerial, contractEventData, t)
+	e := prepareEvent(t, contractEventData, aftermarketDeviceAttributesSerial)
 
 	d := models.AftermarketDevice{
 		ID:          int(aftermarketDeviceAttributesSerial.TokenID.Int64()),
@@ -100,16 +113,6 @@ func TestHandleAftermarketDeviceAttributeSetEvent(t *testing.T) {
 		Imei:        null.StringFrom("garbage-imei-value"),
 	}
 	err := d.Insert(ctx, pdb.DBS().Writer.DB, boil.Infer())
-	assert.NoError(t, err)
-
-	consumer.ExpectConsumePartition(settings.ContractsEventTopic, 0, 0).YieldMessage(&sarama.ConsumerMessage{Value: expectedBytes})
-
-	outputTest, err := consumer.ConsumePartition(settings.ContractsEventTopic, 0, 0)
-	assert.NoError(t, err)
-
-	m := <-outputTest.Messages()
-	var e shared.CloudEvent[json.RawMessage]
-	err = json.Unmarshal(m.Value, &e)
 	assert.NoError(t, err)
 
 	err = contractEventConsumer.Process(ctx, &e)
@@ -142,12 +145,9 @@ func TestHandleAftermarketDevicePairedEvent(t *testing.T) {
 		DIMORegistryChainID: contractEventData.ChainID,
 	}
 
-	config := mocks.NewTestConfig()
-	consumer := mocks.NewConsumer(t, config)
-
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
 	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
-	expectedBytes := eventBytes(aftermarketDevicePairData, contractEventData, t)
+	e := prepareEvent(t, contractEventData, aftermarketDevicePairData)
 
 	v := models.Vehicle{
 		ID:           11,
@@ -167,16 +167,6 @@ func TestHandleAftermarketDevicePairedEvent(t *testing.T) {
 		Beneficiary: common.FromHex("0x12b3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 	}
 	err = d.Insert(ctx, pdb.DBS().Writer, boil.Infer())
-	assert.NoError(t, err)
-
-	consumer.ExpectConsumePartition(settings.ContractsEventTopic, 0, 0).YieldMessage(&sarama.ConsumerMessage{Value: expectedBytes})
-
-	outputTest, err := consumer.ConsumePartition(settings.ContractsEventTopic, 0, 0)
-	assert.NoError(t, err)
-
-	m := <-outputTest.Messages()
-	var e shared.CloudEvent[json.RawMessage]
-	err = json.Unmarshal(m.Value, &e)
 	assert.NoError(t, err)
 
 	err = contractEventConsumer.Process(ctx, &e)
@@ -208,12 +198,9 @@ func TestHandleAftermarketDeviceUnPairedEvent(t *testing.T) {
 		DIMORegistryChainID: contractEventData.ChainID,
 	}
 
-	config := mocks.NewTestConfig()
-	consumer := mocks.NewConsumer(t, config)
-
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
 	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
-	expectedBytes := eventBytes(aftermarketDevicePairData, contractEventData, t)
+	e := prepareEvent(t, contractEventData, aftermarketDevicePairData)
 
 	v := models.Vehicle{
 		ID:           11,
@@ -233,16 +220,6 @@ func TestHandleAftermarketDeviceUnPairedEvent(t *testing.T) {
 		Beneficiary: common.FromHex("0x12b3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 	}
 	err = d.Insert(ctx, pdb.DBS().Writer, boil.Infer())
-	assert.NoError(t, err)
-
-	consumer.ExpectConsumePartition(settings.ContractsEventTopic, 0, 0).YieldMessage(&sarama.ConsumerMessage{Value: expectedBytes})
-
-	outputTest, err := consumer.ConsumePartition(settings.ContractsEventTopic, 0, 0)
-	assert.NoError(t, err)
-
-	m := <-outputTest.Messages()
-	var e shared.CloudEvent[json.RawMessage]
-	err = json.Unmarshal(m.Value, &e)
 	assert.NoError(t, err)
 
 	err = contractEventConsumer.Process(ctx, &e)
@@ -291,21 +268,8 @@ func TestHandleAftermarketDeviceTransferredEventNewTokenID(t *testing.T) {
 		DIMORegistryChainID: contractEventData.ChainID,
 	}
 
-	config := mocks.NewTestConfig()
-	consumer := mocks.NewConsumer(t, config)
-
 	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
-	expectedBytes := eventBytes(aftermarketDeviceTransferredData, contractEventData, t)
-
-	consumer.ExpectConsumePartition(settings.ContractsEventTopic, 0, 0).YieldMessage(&sarama.ConsumerMessage{Value: expectedBytes})
-
-	outputTest, err := consumer.ConsumePartition(settings.ContractsEventTopic, 0, 0)
-	assert.NoError(t, err)
-
-	m := <-outputTest.Messages()
-	var e shared.CloudEvent[json.RawMessage]
-	err = json.Unmarshal(m.Value, &e)
-	assert.NoError(t, err)
+	e := prepareEvent(t, contractEventData, aftermarketDeviceTransferredData)
 
 	err = contractEventConsumer.Process(ctx, &e)
 	assert.NoError(t, err)
@@ -339,12 +303,9 @@ func TestHandleAftermarketDeviceTransferredEventExistingTokenID(t *testing.T) {
 		DIMORegistryChainID:   contractEventData.ChainID,
 	}
 
-	config := mocks.NewTestConfig()
-	consumer := mocks.NewConsumer(t, config)
-
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
 	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
-	expectedBytes := eventBytes(aftermarketDeviceTransferredData, contractEventData, t)
+	e := prepareEvent(t, contractEventData, aftermarketDeviceTransferredData)
 
 	v := models.Vehicle{
 		ID:           1,
@@ -361,16 +322,6 @@ func TestHandleAftermarketDeviceTransferredEventExistingTokenID(t *testing.T) {
 		VehicleID:   null.IntFrom(v.ID),
 	}
 	err = d.Insert(ctx, pdb.DBS().Writer, boil.Infer())
-	assert.NoError(t, err)
-
-	consumer.ExpectConsumePartition(settings.ContractsEventTopic, 0, 0).YieldMessage(&sarama.ConsumerMessage{Value: expectedBytes})
-
-	outputTest, err := consumer.ConsumePartition(settings.ContractsEventTopic, 0, 0)
-	assert.NoError(t, err)
-
-	m := <-outputTest.Messages()
-	var e shared.CloudEvent[json.RawMessage]
-	err = json.Unmarshal(m.Value, &e)
 	assert.NoError(t, err)
 
 	err = contractEventConsumer.Process(ctx, &e)
@@ -405,12 +356,9 @@ func TestHandleBeneficiarySetEvent(t *testing.T) {
 		AftermarketDeviceAddr: aftermarketDeviceAddr,
 	}
 
-	config := mocks.NewTestConfig()
-	consumer := mocks.NewConsumer(t, config)
-
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
 	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
-	expectedBytes := eventBytes(beneficiarySetData, contractEventData, t)
+	e := prepareEvent(t, contractEventData, beneficiarySetData)
 
 	d := models.AftermarketDevice{
 		ID:          100,
@@ -420,16 +368,6 @@ func TestHandleBeneficiarySetEvent(t *testing.T) {
 	}
 
 	err := d.Insert(ctx, pdb.DBS().Writer, boil.Infer())
-	assert.NoError(t, err)
-
-	consumer.ExpectConsumePartition(settings.ContractsEventTopic, 0, 0).YieldMessage(&sarama.ConsumerMessage{Value: expectedBytes})
-
-	outputTest, err := consumer.ConsumePartition(settings.ContractsEventTopic, 0, 0)
-	assert.NoError(t, err)
-
-	m := <-outputTest.Messages()
-	var e shared.CloudEvent[json.RawMessage]
-	err = json.Unmarshal(m.Value, &e)
 	assert.NoError(t, err)
 
 	err = contractEventConsumer.Process(ctx, &e)
@@ -462,12 +400,9 @@ func TestHandleClearBeneficiaryEvent(t *testing.T) {
 		AftermarketDeviceAddr: aftermarketDeviceAddr,
 	}
 
-	config := mocks.NewTestConfig()
-	consumer := mocks.NewConsumer(t, config)
-
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
 	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
-	expectedBytes := eventBytes(beneficiarySetData, contractEventData, t)
+	e := prepareEvent(t, contractEventData, beneficiarySetData)
 
 	d := models.AftermarketDevice{
 		ID:          100,
@@ -476,16 +411,6 @@ func TestHandleClearBeneficiaryEvent(t *testing.T) {
 		Address:     common.FromHex("0xaba3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 	}
 	err := d.Insert(ctx, pdb.DBS().Writer, boil.Infer())
-	assert.NoError(t, err)
-
-	consumer.ExpectConsumePartition(settings.ContractsEventTopic, 0, 0).YieldMessage(&sarama.ConsumerMessage{Value: expectedBytes})
-
-	outputTest, err := consumer.ConsumePartition(settings.ContractsEventTopic, 0, 0)
-	assert.NoError(t, err)
-
-	m := <-outputTest.Messages()
-	var e shared.CloudEvent[json.RawMessage]
-	err = json.Unmarshal(m.Value, &e)
 	assert.NoError(t, err)
 
 	err = contractEventConsumer.Process(ctx, &e)
@@ -526,12 +451,9 @@ func TestHandle_SyntheticDeviceNodeMintedEvent_Success(t *testing.T) {
 		DIMORegistryChainID: contractEventData.ChainID,
 	}
 
-	config := mocks.NewTestConfig()
-	consumer := mocks.NewConsumer(t, config)
-
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
 	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
-	expectedBytes := eventBytes(eventData, contractEventData, t)
+	e := prepareEvent(t, contractEventData, eventData)
 
 	currTime := time.Now().UTC().Truncate(time.Second)
 	vehicles := []models.Vehicle{
@@ -550,16 +472,6 @@ func TestHandle_SyntheticDeviceNodeMintedEvent_Success(t *testing.T) {
 			assert.NoError(t, err)
 		}
 	}
-
-	consumer.ExpectConsumePartition(settings.ContractsEventTopic, 0, 0).YieldMessage(&sarama.ConsumerMessage{Value: expectedBytes})
-
-	outputTest, err := consumer.ConsumePartition(settings.ContractsEventTopic, 0, 0)
-	assert.NoError(t, err)
-
-	m := <-outputTest.Messages()
-	var e shared.CloudEvent[json.RawMessage]
-	err = json.Unmarshal(m.Value, &e)
-	assert.NoError(t, err)
 
 	err = contractEventConsumer.Process(ctx, &e)
 	assert.NoError(t, err)
@@ -629,19 +541,8 @@ func TestHandle_SyntheticDeviceNodeBurnedEvent_Success(t *testing.T) {
 		DIMORegistryChainID: contractEventData.ChainID,
 	}
 
-	config := mocks.NewTestConfig()
-	consumer := mocks.NewConsumer(t, config)
 	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
-	expectedBytes := eventBytes(eventData, contractEventData, t)
-
-	consumer.ExpectConsumePartition(settings.ContractsEventTopic, 0, 0).YieldMessage(&sarama.ConsumerMessage{Value: expectedBytes})
-	outputTest, err := consumer.ConsumePartition(settings.ContractsEventTopic, 0, 0)
-	assert.NoError(t, err)
-
-	m := <-outputTest.Messages()
-	var e shared.CloudEvent[json.RawMessage]
-	err = json.Unmarshal(m.Value, &e)
-	assert.NoError(t, err)
+	e := prepareEvent(t, contractEventData, eventData)
 
 	err = contractEventConsumer.Process(ctx, &e)
 	assert.NoError(t, err)
@@ -715,19 +616,8 @@ func TestHandle_DefinitionUriAttribute_Event_Success(t *testing.T) {
 		DIMORegistryChainID: contractEventData.ChainID,
 	}
 
-	config := mocks.NewTestConfig()
-	consumer := mocks.NewConsumer(t, config)
 	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
-	expectedBytes := eventBytes(eventData, contractEventData, t)
-
-	consumer.ExpectConsumePartition(settings.ContractsEventTopic, 0, 0).YieldMessage(&sarama.ConsumerMessage{Value: expectedBytes})
-	outputTest, err := consumer.ConsumePartition(settings.ContractsEventTopic, 0, 0)
-	assert.NoError(t, err)
-
-	m := <-outputTest.Messages()
-	var e shared.CloudEvent[json.RawMessage]
-	err = json.Unmarshal(m.Value, &e)
-	assert.NoError(t, err)
+	e := prepareEvent(t, contractEventData, eventData)
 
 	err = contractEventConsumer.Process(ctx, &e)
 	assert.NoError(t, err)
@@ -762,12 +652,9 @@ func Test_HandleVehicle_Transferred_Event(t *testing.T) {
 		DIMORegistryChainID: contractEventData.ChainID,
 	}
 
-	config := mocks.NewTestConfig()
-	consumer := mocks.NewConsumer(t, config)
-
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
 	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
-	expectedBytes := eventBytes(vehicleTransferredData, contractEventData, t)
+	e := prepareEvent(t, contractEventData, vehicleTransferredData)
 
 	vehicle := models.Vehicle{
 		ID:           tkID,
@@ -782,17 +669,7 @@ func Test_HandleVehicle_Transferred_Event(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
-	consumer.ExpectConsumePartition(settings.ContractsEventTopic, 0, 0).YieldMessage(&sarama.ConsumerMessage{Value: expectedBytes})
-
-	outputTest, err := consumer.ConsumePartition(settings.ContractsEventTopic, 0, 0)
-	assert.NoError(t, err)
-
-	m := <-outputTest.Messages()
-	var e shared.CloudEvent[json.RawMessage]
-	err = json.Unmarshal(m.Value, &e)
-	assert.NoError(t, err)
-
-	err = contractEventConsumer.Process(ctx, &e)
+	err := contractEventConsumer.Process(ctx, &e)
 	assert.NoError(t, err)
 
 	veh, err := models.Vehicles(
@@ -827,12 +704,9 @@ func Test_HandleVehicle_Transferred_To_Zero_Event_ShouldDelete(t *testing.T) {
 		DIMORegistryChainID: contractEventData.ChainID,
 	}
 
-	config := mocks.NewTestConfig()
-	consumer := mocks.NewConsumer(t, config)
-
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
 	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
-	expectedBytes := eventBytes(vehicleTransferredData, contractEventData, t)
+	e := prepareEvent(t, contractEventData, vehicleTransferredData)
 
 	currTime := time.Now().UTC().Truncate(time.Second)
 	vehicle := models.Vehicle{
@@ -857,16 +731,6 @@ func Test_HandleVehicle_Transferred_To_Zero_Event_ShouldDelete(t *testing.T) {
 	}
 
 	err = privilege.Insert(ctx, pdb.DBS().Writer, boil.Infer())
-	assert.NoError(t, err)
-
-	consumer.ExpectConsumePartition(settings.ContractsEventTopic, 0, 0).YieldMessage(&sarama.ConsumerMessage{Value: expectedBytes})
-
-	outputTest, err := consumer.ConsumePartition(settings.ContractsEventTopic, 0, 0)
-	assert.NoError(t, err)
-
-	m := <-outputTest.Messages()
-	var e shared.CloudEvent[json.RawMessage]
-	err = json.Unmarshal(m.Value, &e)
 	assert.NoError(t, err)
 
 	err = contractEventConsumer.Process(ctx, &e)
@@ -909,12 +773,9 @@ func Test_HandleVehicle_Transferred_To_Zero_Event_NoDelete_SyntheticDevice(t *te
 		DIMORegistryChainID: contractEventData.ChainID,
 	}
 
-	config := mocks.NewTestConfig()
-	consumer := mocks.NewConsumer(t, config)
-
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
 	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
-	expectedBytes := eventBytes(vehicleTransferredData, contractEventData, t)
+	e := prepareEvent(t, contractEventData, vehicleTransferredData)
 
 	currTime := time.Now().UTC().Truncate(time.Second)
 	vehicle := models.Vehicle{
@@ -939,16 +800,6 @@ func Test_HandleVehicle_Transferred_To_Zero_Event_NoDelete_SyntheticDevice(t *te
 	}
 
 	err = sd.Insert(ctx, pdb.DBS().Writer.DB, boil.Infer())
-	assert.NoError(t, err)
-
-	consumer.ExpectConsumePartition(settings.ContractsEventTopic, 0, 0).YieldMessage(&sarama.ConsumerMessage{Value: expectedBytes})
-
-	outputTest, err := consumer.ConsumePartition(settings.ContractsEventTopic, 0, 0)
-	assert.NoError(t, err)
-
-	m := <-outputTest.Messages()
-	var e shared.CloudEvent[json.RawMessage]
-	err = json.Unmarshal(m.Value, &e)
 	assert.NoError(t, err)
 
 	err = contractEventConsumer.Process(ctx, &e)
@@ -985,12 +836,9 @@ func Test_HandleVehicle_Transferred_To_Zero_Event_NoDelete_AfterMarketDevice(t *
 		DIMORegistryChainID: contractEventData.ChainID,
 	}
 
-	config := mocks.NewTestConfig()
-	consumer := mocks.NewConsumer(t, config)
-
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
 	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
-	expectedBytes := eventBytes(vehicleTransferredData, contractEventData, t)
+	e := prepareEvent(t, contractEventData, vehicleTransferredData)
 
 	currTime := time.Now().UTC().Truncate(time.Second)
 	vehicle := models.Vehicle{
@@ -1014,16 +862,6 @@ func Test_HandleVehicle_Transferred_To_Zero_Event_NoDelete_AfterMarketDevice(t *
 		Address:     common.FromHex("0xaba3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 	}
 	err = d.Insert(ctx, pdb.DBS().Writer, boil.Infer())
-	assert.NoError(t, err)
-
-	consumer.ExpectConsumePartition(settings.ContractsEventTopic, 0, 0).YieldMessage(&sarama.ConsumerMessage{Value: expectedBytes})
-
-	outputTest, err := consumer.ConsumePartition(settings.ContractsEventTopic, 0, 0)
-	assert.NoError(t, err)
-
-	m := <-outputTest.Messages()
-	var e shared.CloudEvent[json.RawMessage]
-	err = json.Unmarshal(m.Value, &e)
 	assert.NoError(t, err)
 
 	err = contractEventConsumer.Process(ctx, &e)
@@ -1101,9 +939,6 @@ func Test_Handle_TokensTransferred_ForDevice_AftermarketDevice_Event(t *testing.
 		Week:           big.NewInt(1),
 	}
 
-	config := mocks.NewTestConfig()
-	consumer := mocks.NewConsumer(t, config)
-
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
 	afterMktID := 2
 	vehicle, afterMarketDevice, _ := getCommonEntities(ctx, int(vID.Int64()), afterMktID, 0, *user, *beneficiary)
@@ -1115,17 +950,7 @@ func Test_Handle_TokensTransferred_ForDevice_AftermarketDevice_Event(t *testing.
 	assert.NoError(t, err)
 
 	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
-	expectedBytes := eventBytes(tokensTransferredForDeviceData, contractEventData, t)
-
-	consumer.ExpectConsumePartition(settings.ContractsEventTopic, 0, 0).YieldMessage(&sarama.ConsumerMessage{Value: expectedBytes})
-
-	outputTest, err := consumer.ConsumePartition(settings.ContractsEventTopic, 0, 0)
-	assert.NoError(t, err)
-
-	m := <-outputTest.Messages()
-	var e shared.CloudEvent[json.RawMessage]
-	err = json.Unmarshal(m.Value, &e)
-	assert.NoError(t, err)
+	e := prepareEvent(t, contractEventData, tokensTransferredForDeviceData)
 
 	err = contractEventConsumer.Process(ctx, &e)
 	assert.NoError(t, err)
@@ -1186,9 +1011,6 @@ func Test_Handle_TokensTransferred_ForDevice_SyntheticDevice_Event(t *testing.T)
 		Week:           big.NewInt(1),
 	}
 
-	config := mocks.NewTestConfig()
-	consumer := mocks.NewConsumer(t, config)
-
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
 	afterMktID := 2
 
@@ -1204,17 +1026,7 @@ func Test_Handle_TokensTransferred_ForDevice_SyntheticDevice_Event(t *testing.T)
 	assert.NoError(t, err)
 
 	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
-	expectedBytes := eventBytes(tokensTransferredForDeviceData, contractEventData, t)
-
-	consumer.ExpectConsumePartition(settings.ContractsEventTopic, 0, 0).YieldMessage(&sarama.ConsumerMessage{Value: expectedBytes})
-
-	outputTest, err := consumer.ConsumePartition(settings.ContractsEventTopic, 0, 0)
-	assert.NoError(t, err)
-
-	m := <-outputTest.Messages()
-	var e shared.CloudEvent[json.RawMessage]
-	err = json.Unmarshal(m.Value, &e)
-	assert.NoError(t, err)
+	e := prepareEvent(t, contractEventData, tokensTransferredForDeviceData)
 
 	err = contractEventConsumer.Process(ctx, &e)
 	assert.NoError(t, err)
@@ -1266,9 +1078,6 @@ func Test_Handle_TokensTransferred_ForDevice_UpdateSynthetic_WhenAftermarketExis
 		SyntheticDeviceAddr:   synthAddr.Hex(),
 	}
 
-	config := mocks.NewTestConfig()
-	consumer := mocks.NewConsumer(t, config)
-
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
 	afterMktID := 2
 	synthID := 3
@@ -1306,22 +1115,12 @@ func Test_Handle_TokensTransferred_ForDevice_UpdateSynthetic_WhenAftermarketExis
 		VehicleNodeID: vID,
 		Week:          big.NewInt(1),
 	}
-	for idx, event := range payloads {
+	for _, event := range payloads {
 		tokensTransferredForDeviceData.Amount = event.amount
 		tokensTransferredForDeviceData.DeviceNode = event.node
 		tokensTransferredForDeviceData.DeviceNftProxy = event.proxyAddr
 
-		expectedBytes := eventBytes(tokensTransferredForDeviceData, contractEventData, t)
-
-		consumer.ExpectConsumePartition(settings.ContractsEventTopic, int32(idx), int64(idx)).YieldMessage(&sarama.ConsumerMessage{Value: expectedBytes})
-
-		outputTest, err := consumer.ConsumePartition(settings.ContractsEventTopic, int32(idx), int64(idx))
-		assert.NoError(t, err)
-
-		m := <-outputTest.Messages()
-		var e shared.CloudEvent[json.RawMessage]
-		err = json.Unmarshal(m.Value, &e)
-		assert.NoError(t, err)
+		e := prepareEvent(t, contractEventData, tokensTransferredForDeviceData)
 
 		err = contractEventConsumer.Process(ctx, &e)
 		assert.NoError(t, err)
@@ -1374,9 +1173,6 @@ func Test_Handle_TokensTransferred_ForDevice_UpdateAftermarket_WhenSyntheticExis
 		SyntheticDeviceAddr:   synthAddr.Hex(),
 	}
 
-	config := mocks.NewTestConfig()
-	consumer := mocks.NewConsumer(t, config)
-
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
 	afterMktID := 2
 	synthID := 3
@@ -1414,22 +1210,12 @@ func Test_Handle_TokensTransferred_ForDevice_UpdateAftermarket_WhenSyntheticExis
 		VehicleNodeID: vID,
 		Week:          big.NewInt(1),
 	}
-	for idx, event := range payloads {
+	for _, event := range payloads {
 		tokensTransferredForDeviceData.Amount = event.amount
 		tokensTransferredForDeviceData.DeviceNode = event.node
 		tokensTransferredForDeviceData.DeviceNftProxy = event.proxyAddr
 
-		expectedBytes := eventBytes(tokensTransferredForDeviceData, contractEventData, t)
-
-		consumer.ExpectConsumePartition(settings.ContractsEventTopic, int32(idx), int64(idx)).YieldMessage(&sarama.ConsumerMessage{Value: expectedBytes})
-
-		outputTest, err := consumer.ConsumePartition(settings.ContractsEventTopic, int32(idx), int64(idx))
-		assert.NoError(t, err)
-
-		m := <-outputTest.Messages()
-		var e shared.CloudEvent[json.RawMessage]
-		err = json.Unmarshal(m.Value, &e)
-		assert.NoError(t, err)
+		e := prepareEvent(t, contractEventData, tokensTransferredForDeviceData)
 
 		err = contractEventConsumer.Process(ctx, &e)
 		assert.NoError(t, err)
@@ -1480,9 +1266,6 @@ func Test_Handle_TokensTransferredForConnectionStreak_Event(t *testing.T) {
 		AftermarketDeviceAddr: aftAddr.Hex(),
 		SyntheticDeviceAddr:   synthAddr.Hex(),
 	}
-
-	config := mocks.NewTestConfig()
-	consumer := mocks.NewConsumer(t, config)
 
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
 	afterMktID := 2
@@ -1535,32 +1318,22 @@ func Test_Handle_TokensTransferredForConnectionStreak_Event(t *testing.T) {
 		VehicleNodeID: vID,
 		Week:          big.NewInt(1),
 	}
-	for idx, event := range payloads {
+	for _, event := range payloads {
 		contractEventData.EventName = event.eventName
 
-		var expectedBytes []byte
+		var e shared.CloudEvent[json.RawMessage]
 		if event.proxyAddr != nil {
 			tokensTransferredForDeviceData.Amount = event.amount
 			tokensTransferredForDeviceData.DeviceNode = event.node
 			tokensTransferredForDeviceData.DeviceNftProxy = *event.proxyAddr
-			expectedBytes = eventBytes(tokensTransferredForDeviceData, contractEventData, t)
+			e = prepareEvent(t, contractEventData, tokensTransferredForDeviceData)
 		}
 
 		if event.connectionStreak != nil {
 			tokensTransferredForConnectionStreakData.Amount = event.amount
 			tokensTransferredForConnectionStreakData.ConnectionStreak = event.connectionStreak
-			expectedBytes = eventBytes(tokensTransferredForConnectionStreakData, contractEventData, t)
+			e = prepareEvent(t, contractEventData, tokensTransferredForConnectionStreakData)
 		}
-
-		consumer.ExpectConsumePartition(settings.ContractsEventTopic, int32(idx), int64(idx)).YieldMessage(&sarama.ConsumerMessage{Value: expectedBytes})
-
-		outputTest, err := consumer.ConsumePartition(settings.ContractsEventTopic, int32(idx), int64(idx))
-		assert.NoError(t, err)
-
-		m := <-outputTest.Messages()
-		var e shared.CloudEvent[json.RawMessage]
-		err = json.Unmarshal(m.Value, &e)
-		assert.NoError(t, err)
 
 		err = contractEventConsumer.Process(ctx, &e)
 		assert.NoError(t, err)
