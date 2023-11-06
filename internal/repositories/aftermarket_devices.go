@@ -64,7 +64,7 @@ func (r *Repository) GetAftermarketDevices(ctx context.Context, first *int, afte
 	}
 
 	orderBy := " DESC"
-	if before != nil {
+	if last != nil {
 		orderBy = " ASC"
 	}
 
