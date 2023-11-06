@@ -1,7 +1,9 @@
 package repositories
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"fmt"
 	"math/big"
 	"strings"
@@ -14,6 +16,7 @@ import (
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
+	"github.com/vmihailenco/msgpack/v5"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
@@ -133,4 +136,61 @@ func Test_GetOwnedAftermarketDevices_Pagination_PreviousPage(t *testing.T) {
 		af.Node.Name = name
 	}
 	assert.Exactly(t, expected, res.Edges)
+}
+
+func Test_GetAftermarketDevices_FilterByBeneficiary(t *testing.T) {
+	ctx := context.Background()
+	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDir)
+
+	var tknID int
+	var owner, beneficiary common.Address
+	for i := 1; i <= 4; i++ {
+		tknID = i
+		owner = aftermarketDeviceNodeMintedArgs.Owner
+		beneficiary = common.BigToAddress(big.NewInt(int64(i + 1)))
+		ad := models.AftermarketDevice{
+			ID:          tknID,
+			Owner:       owner.Bytes(),
+			Beneficiary: beneficiary.Bytes(),
+			Address:     aftermarketDeviceNodeMintedArgs.AftermarketDeviceAddress.Bytes(),
+		}
+
+		err := ad.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+		assert.NoError(t, err)
+	}
+
+	var b bytes.Buffer
+	e := msgpack.NewEncoder(&b)
+	e.UseArrayEncodedStructs(true)
+	_ = e.Encode(aftermarketDevicePrimaryKey{TokenID: tknID})
+	id := "AD_" + base64.StdEncoding.EncodeToString(b.Bytes())
+	mn, err := gmn.EntropyToMnemonicThreeWords(aftermarketDeviceNodeMintedArgs.AftermarketDeviceAddress.Bytes())
+	if err != nil {
+		assert.NoError(t, err)
+	}
+	name := strings.Join(mn, " ")
+	expectedOwnerFilterResp := []*model.AftermarketDeviceEdge{
+		{
+			Node: &model.AftermarketDevice{
+				ID:          id,
+				TokenID:     tknID,
+				Owner:       aftermarketDeviceNodeMintedArgs.Owner,
+				Beneficiary: beneficiary,
+				Address:     aftermarketDeviceNodeMintedArgs.AftermarketDeviceAddress,
+				Name:        name,
+			},
+			Cursor: helpers.IDToCursor(tknID),
+		},
+	}
+
+	first := 10
+	adController := New(pdb)
+	beneFilterRes, err := adController.GetAftermarketDevices(ctx, &first, nil, nil, nil, &model.AftermarketDevicesFilter{Beneficiary: &beneficiary})
+	assert.NoError(t, err)
+
+	assert.Len(t, beneFilterRes.Edges, 1)
+	assert.Equal(t, beneFilterRes.TotalCount, 1)
+
+	assert.Exactly(t, expectedOwnerFilterResp[len(expectedOwnerFilterResp)-1], beneFilterRes.Edges[0])
+	assert.Exactly(t, expectedOwnerFilterResp, beneFilterRes.Edges)
 }

@@ -53,6 +53,7 @@ input AftermarketDevicesFilter {
   Filter for aftermarket devices owned by this address.
   """
   owner: Address
+  beneficiary: Address
 }
 
 type Query {
