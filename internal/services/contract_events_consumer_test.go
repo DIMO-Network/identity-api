@@ -52,22 +52,8 @@ var contractEventData = ContractEventData{
 	},
 }
 
-func eventBytes(args interface{}, contractEventData ContractEventData, t *testing.T) []byte {
-
-	argBytes, err := json.Marshal(args)
-	assert.NoError(t, err)
-
-	contractEventData.Arguments = argBytes
-	ctEventDataBytes, err := json.Marshal(contractEventData)
-	assert.NoError(t, err)
-
-	cloudEvent.Data = ctEventDataBytes
-	expectedBytes, err := json.Marshal(cloudEvent)
-	assert.NoError(t, err)
-
-	return expectedBytes
-}
-
+// prepareEvent turns ContractEventData (the block time, number, etc) and the event arguments (from, to, tokenId, etc)
+// into a shared.CloudEvent[json.RawMessage] like the processor expects.
 func prepareEvent(t *testing.T, contractEventData ContractEventData, args any) shared.CloudEvent[json.RawMessage] {
 	// Copy, just in case.
 	ce := cloudEvent
