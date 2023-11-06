@@ -144,7 +144,7 @@ func (r *Repository) PaginateVehicleEarningsByID(ctx context.Context, vehicleEar
 		return &gmodel.EarningsConnection{}, nil
 	}
 
-	erningsConnectionCopy := *vehicleEarnings.History
+	earningsConnectionCopy := *vehicleEarnings.History
 	earningIdx := map[string]int{}
 	for idx, val := range erningsConnectionCopy.Edges {
 		earningIdx[val.Cursor] = idx
