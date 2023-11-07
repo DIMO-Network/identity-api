@@ -72,25 +72,13 @@ func (ad *AftermarketDeviceLoader) BatchGetLinkedAftermarketDeviceByID(ctx conte
 	devices, err := models.AftermarketDevices(models.AftermarketDeviceWhere.ID.IN(ids)).All(ctx, ad.db.DBS().Reader)
 	if err != nil {
 		for i := range ids {
-			results[i] = &dataloader.Result[*model.AftermarketDevice]{Data: nil, Error: err}
+			results[i] = &dataloader.Result[*model.AftermarketDevice]{Error: err}
 		}
 		return results
 	}
 
-	amByVehicleID := map[int]*models.AftermarketDevice{}
-
-	for _, d := range devices {
-		amByVehicleID[d.VehicleID.Int] = d
-	}
-
-	for i, vID := range ids {
-		if am, ok := amByVehicleID[vID]; ok {
-			results[i] = &dataloader.Result[*model.AftermarketDevice]{
-				Data: repositories.AftermarketDeviceToAPI(am),
-			}
-		} else {
-			results[i] = &dataloader.Result[*model.AftermarketDevice]{}
-		}
+	for i, adv := range devices {
+		results[i] = &dataloader.Result[*model.AftermarketDevice]{Data: repositories.AftermarketDeviceToAPI(adv)}
 	}
 
 	return results
