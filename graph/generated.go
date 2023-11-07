@@ -1002,7 +1002,7 @@ func (ec *executionContext) field_Query_vehicle_args(ctx context.Context, rawArg
 	var arg0 int
 	if tmp, ok := rawArgs["tokenId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokenId"))
-		arg0, err = ec.unmarshalNBigInt2int(ctx, tmp)
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1223,7 +1223,7 @@ func (ec *executionContext) _AftermarketDevice_tokenId(ctx context.Context, fiel
 	}
 	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNBigInt2int(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AftermarketDevice_tokenId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1233,7 +1233,7 @@ func (ec *executionContext) fieldContext_AftermarketDevice_tokenId(ctx context.C
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type BigInt does not have child fields")
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -2547,7 +2547,7 @@ func (ec *executionContext) _Manufacturer_tokenId(ctx context.Context, field gra
 	}
 	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNBigInt2int(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Manufacturer_tokenId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2557,7 +2557,7 @@ func (ec *executionContext) fieldContext_Manufacturer_tokenId(ctx context.Contex
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type BigInt does not have child fields")
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -3909,7 +3909,7 @@ func (ec *executionContext) _SyntheticDevice_tokenId(ctx context.Context, field 
 	}
 	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNBigInt2int(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SyntheticDevice_tokenId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3919,7 +3919,7 @@ func (ec *executionContext) fieldContext_SyntheticDevice_tokenId(ctx context.Con
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type BigInt does not have child fields")
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -3953,7 +3953,7 @@ func (ec *executionContext) _SyntheticDevice_integrationId(ctx context.Context, 
 	}
 	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNBigInt2int(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SyntheticDevice_integrationId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3963,7 +3963,7 @@ func (ec *executionContext) fieldContext_SyntheticDevice_integrationId(ctx conte
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type BigInt does not have child fields")
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -4129,7 +4129,7 @@ func (ec *executionContext) _Vehicle_tokenId(ctx context.Context, field graphql.
 	}
 	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNBigInt2int(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Vehicle_tokenId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4139,7 +4139,7 @@ func (ec *executionContext) fieldContext_Vehicle_tokenId(ctx context.Context, fi
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type BigInt does not have child fields")
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -6738,7 +6738,7 @@ func (ec *executionContext) unmarshalInputAftermarketDeviceBy(ctx context.Contex
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokenId"))
-			directive0 := func(ctx context.Context) (interface{}, error) { return ec.unmarshalOBigInt2ᚖint(ctx, v) }
+			directive0 := func(ctx context.Context) (interface{}, error) { return ec.unmarshalOInt2ᚖint(ctx, v) }
 			directive1 := func(ctx context.Context) (interface{}, error) {
 				if ec.directives.OneOf == nil {
 					return nil, errors.New("directive oneOf is not implemented")
@@ -8665,21 +8665,6 @@ func (ec *executionContext) marshalNAftermarketDeviceEdge2ᚖgithubᚗcomᚋDIMO
 	return ec._AftermarketDeviceEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNBigInt2int(ctx context.Context, v interface{}) (int, error) {
-	res, err := types.UnmarshalInt(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNBigInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
-	res := types.MarshalInt(v)
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -9340,22 +9325,6 @@ func (ec *executionContext) unmarshalOAftermarketDevicesFilter2ᚖgithubᚗcom�
 	}
 	res, err := ec.unmarshalInputAftermarketDevicesFilter(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalOBigInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := types.UnmarshalInt(v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOBigInt2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	res := types.MarshalInt(*v)
-	return res
 }
 
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
