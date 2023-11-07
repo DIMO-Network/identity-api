@@ -199,4 +199,5 @@ type VehiclesFilter struct {
 	// Filter for vehicles to which the given address has access. This includes vehicles
 	// that this address owns.
 	Privileged *common.Address `json:"privileged,omitempty"`
+	Owner      *common.Address `json:"owner,omitempty"`
 }

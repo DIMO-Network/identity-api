@@ -137,31 +137,31 @@ func (v *Repository) GetVehicles(ctx context.Context, first *int, after *string,
 
 	if first != nil {
 		if last != nil {
-			return nil, errors.New("Pass `first` or `last`, but not both.")
+			return nil, errors.New("pass `first` or `last`, but not both")
 		}
 		if *first < 0 {
-			return nil, errors.New("The value for `first` cannot be negative.")
+			return nil, errors.New("the value for `first` cannot be negative")
 		}
 		if *first > maxPageSize {
-			return nil, fmt.Errorf("The value %d for `first` exceeds the limit %d.", *last, maxPageSize)
+			return nil, fmt.Errorf("the value %d for `first` exceeds the limit %d", *last, maxPageSize)
 		}
 		limit = *first
 	} else {
 		if last == nil {
-			return nil, errors.New("Provide `first` or `last`.")
+			return nil, errors.New("provide `first` or `last`")
 		}
 		if *last < 0 {
-			return nil, errors.New("The value for `last` cannot be negative.")
+			return nil, errors.New("the value for `last` cannot be negative")
 		}
 		if *last > maxPageSize {
-			return nil, fmt.Errorf("The value %d for `last` exceeds the limit %d.", *last, maxPageSize)
+			return nil, fmt.Errorf("the value %d for `last` exceeds the limit %d", *last, maxPageSize)
 		}
 		limit = *last
 	}
 
+	var err error
 	var totalCount int64
 	var queryMods []qm.QueryMod
-
 	if filterBy != nil && filterBy.Privileged != nil {
 		addr := *filterBy.Privileged
 		queryMods = []qm.QueryMod{
@@ -180,7 +180,6 @@ func (v *Repository) GetVehicles(ctx context.Context, first *int, after *string,
 			),
 		}
 
-		var err error
 		totalCount, err = models.Vehicles(
 			// We're performing this because SQLBoiler doesn't understand DISTINCT ON. If we use
 			// the original version of queryMods the entire SELECT clause will be replaced by
@@ -191,15 +190,18 @@ func (v *Repository) GetVehicles(ctx context.Context, first *int, after *string,
 			return nil, err
 		}
 	} else {
-		// TODO(elffjs): Ugly.
-		queryMods = []qm.QueryMod{}
-		var err error
-		totalCount, err = models.Vehicles().Count(ctx, v.pdb.DBS().Reader)
+		if filterBy != nil && filterBy.Owner != nil {
+			queryMods = append(queryMods,
+				models.VehicleWhere.OwnerAddress.EQ(filterBy.Owner.Bytes()),
+			)
+		}
+
+		totalCount, err = models.Vehicles(queryMods...).Count(ctx, v.pdb.DBS().Reader)
 		if err != nil {
 			return nil, err
 		}
-	}
 
+	}
 	if after != nil {
 		afterID, err := helpers.CursorToID(*after)
 		if err != nil {

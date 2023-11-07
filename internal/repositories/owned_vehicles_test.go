@@ -12,6 +12,7 @@ import (
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/volatiletech/null/v8"
@@ -289,4 +290,102 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination_NextPage()
 	}
 
 	s.Exactly(expected, res.Edges)
+}
+
+func Test_GetOwnedVehicles_Filters(t *testing.T) {
+	ctx := context.Background()
+	assert := assert.New(t)
+	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDir)
+
+	repo := New(pdb)
+	_, wallet, err := helpers.GenerateWallet()
+	assert.NoError(err)
+	_, wallet2, err := helpers.GenerateWallet()
+	assert.NoError(err)
+
+	vehicleTbl := []models.Vehicle{
+		{
+			ID:           1,
+			OwnerAddress: wallet.Bytes(),
+			Make:         null.StringFrom("Toyota"),
+			Model:        null.StringFrom("Camry"),
+			Year:         null.IntFrom(2022),
+			MintedAt:     time.Now(),
+		},
+		{
+			ID:           2,
+			OwnerAddress: wallet2.Bytes(),
+			Make:         null.StringFrom("Toyota"),
+			Model:        null.StringFrom("Camry"),
+			Year:         null.IntFrom(2020),
+			MintedAt:     time.Now(),
+		},
+	}
+
+	for _, v := range vehicleTbl {
+		if err := v.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
+			assert.NoError(err)
+		}
+	}
+
+	privTbl := []models.Privilege{
+		{
+			TokenID:     1,
+			PrivilegeID: 1,
+			UserAddress: wallet2.Bytes(),
+			SetAt:       time.Now(),
+			ExpiresAt:   time.Now().Add(5 * time.Hour),
+		},
+	}
+
+	for _, p := range privTbl {
+		if err := p.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
+			assert.NoError(err)
+		}
+	}
+
+	if a, err := models.Privileges().All(ctx, pdb.DBS().Reader); err != nil {
+		assert.NoError(err)
+	} else {
+		for _, b := range a {
+			fmt.Println(b.PrivilegeID, b.UserAddress, b.TokenID)
+		}
+	}
+
+	// Filter by priv expected response
+	privExpectedResp := []gmodel.VehicleEdge{
+		{Node: &gmodel.Vehicle{
+			TokenID: 2,
+			Owner:   common.BytesToAddress(wallet2.Bytes()),
+		}},
+		{Node: &gmodel.Vehicle{
+			TokenID: 1,
+			Owner:   common.BytesToAddress(wallet.Bytes()),
+		}},
+	}
+
+	first := 3
+	res, err := repo.GetVehicles(ctx, &first, nil, nil, nil, &gmodel.VehiclesFilter{Privileged: wallet2})
+	assert.NoError(err)
+
+	assert.Equal(len(privExpectedResp), res.TotalCount)
+	assert.Equal(privExpectedResp[0].Node.TokenID, res.Edges[0].Node.TokenID)
+	assert.Equal(privExpectedResp[0].Node.Owner, res.Edges[0].Node.Owner)
+	assert.Equal(privExpectedResp[len(privExpectedResp)-1].Node.TokenID, res.Edges[res.TotalCount-1].Node.TokenID)
+	assert.Equal(privExpectedResp[len(privExpectedResp)-1].Node.Owner, res.Edges[res.TotalCount-1].Node.Owner)
+
+	// Filter by owner expected response
+	ownerExpectedResp := []gmodel.VehicleEdge{
+		{Node: &gmodel.Vehicle{
+			TokenID: 2,
+			Owner:   common.BytesToAddress(wallet2.Bytes()),
+		}},
+	}
+
+	res, err = repo.GetVehicles(ctx, &first, nil, nil, nil, &gmodel.VehiclesFilter{Owner: wallet2})
+	assert.NoError(err)
+
+	assert.Equal(len(ownerExpectedResp), res.TotalCount)
+	assert.Equal(ownerExpectedResp[0].Node.TokenID, res.Edges[0].Node.TokenID)
+	assert.Equal(ownerExpectedResp[0].Node.Owner, res.Edges[0].Node.Owner)
 }

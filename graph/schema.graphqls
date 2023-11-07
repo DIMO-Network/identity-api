@@ -46,6 +46,7 @@ input VehiclesFilter {
   that this address owns.
   """
   privileged: Address
+  owner: Address
 }
 
 input AftermarketDevicesFilter {
