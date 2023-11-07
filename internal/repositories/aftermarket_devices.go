@@ -64,7 +64,7 @@ func (r *Repository) GetAftermarketDevices(ctx context.Context, first *int, afte
 	}
 
 	orderBy := " DESC"
-	if before != nil {
+	if last != nil {
 		orderBy = " ASC"
 	}
 
@@ -106,7 +106,7 @@ func (r *Repository) GetAftermarketDevices(ctx context.Context, first *int, afte
 		all = all[:limit]
 	}
 
-	if before != nil {
+	if last != nil {
 		slices.Reverse(all)
 	}
 
