@@ -45,9 +45,6 @@ func (r *Repository) GetEarningsByVehicleID(ctx context.Context, tokenID int) (*
 	}
 	var stats rewardStats
 
-	limit := new(int)
-	*limit = 100
-
 	err := models.Rewards(
 		qm.Select(
 			fmt.Sprintf(
