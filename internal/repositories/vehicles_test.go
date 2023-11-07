@@ -785,24 +785,24 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 
 	last := 2
 	after := "NA=="
-	startCrsr := "Mw=="
+	startCrsr := "MQ=="
 	endCrsr := "Mg=="
 	res, err := o.repo.GetVehicles(o.ctx, nil, &after, &last, nil, &gmodel.VehiclesFilter{Privileged: wallet})
 	o.NoError(err)
 
 	o.Len(res.Edges, 2)
 	o.Equal(res.TotalCount, 4)
-	o.Equal(res.PageInfo, &gmodel.PageInfo{
+	o.Equal(&gmodel.PageInfo{
 		StartCursor:     &startCrsr,
 		EndCursor:       &endCrsr,
 		HasPreviousPage: true,
 		HasNextPage:     false,
-	})
+	}, res.PageInfo)
 	expected := []*gmodel.VehicleEdge{
 		{
 			Node: &gmodel.Vehicle{
-				ID:                "V_kQM=",
-				TokenID:           3,
+				ID:                "V_kQE=",
+				TokenID:           1,
 				Owner:             common.BytesToAddress(wallet.Bytes()),
 				MintedAt:          vehicles[2].MintedAt,
 				AftermarketDevice: nil,
@@ -810,12 +810,12 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 				SyntheticDevice:   nil,
 				Definition: &gmodel.Definition{
 					URI:   nil,
-					Make:  &vehicles[2].Make.String,
-					Model: &vehicles[2].Model.String,
-					Year:  &vehicles[2].Year.Int,
+					Make:  &vehicles[0].Make.String,
+					Model: &vehicles[0].Model.String,
+					Year:  &vehicles[0].Year.Int,
 				},
 			},
-			Cursor: "Mw==",
+			Cursor: "MQ==",
 		},
 		{
 			Node: &gmodel.Vehicle{
@@ -836,6 +836,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 			Cursor: "Mg==",
 		},
 	}
+
 	for _, veh := range expected {
 		bid := helpers.IntToBytes(veh.Node.TokenID)
 		veh.Node.Name, err = helpers.CreateMnemonic(bid)
@@ -894,38 +895,20 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 
 	first := 2
 	before := "Mg=="
-	startCrsr := "NA=="
-	endCrsr := "Mw=="
+	startCrsr := "Mw=="
+	endCrsr := "NA=="
 	res, err := o.repo.GetVehicles(o.ctx, &first, nil, nil, &before, &gmodel.VehiclesFilter{Privileged: wallet})
 	o.NoError(err)
 
 	o.Len(res.Edges, 2)
 	o.Equal(res.TotalCount, 4)
-	o.Equal(res.PageInfo, &gmodel.PageInfo{
+	o.Equal(&gmodel.PageInfo{
 		StartCursor:     &startCrsr,
 		EndCursor:       &endCrsr,
 		HasPreviousPage: false,
 		HasNextPage:     true,
-	})
+	}, res.PageInfo)
 	expected := []*gmodel.VehicleEdge{
-		{
-			Node: &gmodel.Vehicle{
-				ID:                "V_kQQ=",
-				TokenID:           4,
-				Owner:             common.BytesToAddress(wallet.Bytes()),
-				MintedAt:          vehicles[3].MintedAt,
-				AftermarketDevice: nil,
-				Privileges:        nil,
-				SyntheticDevice:   nil,
-				Definition: &gmodel.Definition{
-					URI:   nil,
-					Make:  &vehicles[3].Make.String,
-					Model: &vehicles[3].Model.String,
-					Year:  &vehicles[3].Year.Int,
-				},
-			},
-			Cursor: "NA==",
-		},
 		{
 			Node: &gmodel.Vehicle{
 				ID:                "V_kQM=",
@@ -943,6 +926,24 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 				},
 			},
 			Cursor: "Mw==",
+		},
+		{
+			Node: &gmodel.Vehicle{
+				ID:                "V_kQQ=",
+				TokenID:           4,
+				Owner:             common.BytesToAddress(wallet.Bytes()),
+				MintedAt:          vehicles[3].MintedAt,
+				AftermarketDevice: nil,
+				Privileges:        nil,
+				SyntheticDevice:   nil,
+				Definition: &gmodel.Definition{
+					URI:   nil,
+					Make:  &vehicles[3].Make.String,
+					Model: &vehicles[3].Model.String,
+					Year:  &vehicles[3].Year.Int,
+				},
+			},
+			Cursor: "NA==",
 		},
 	}
 
