@@ -246,7 +246,7 @@ func (v *Repository) GetVehicles(ctx context.Context, first *int, after *string,
 		all = all[:limit]
 	}
 
-	if before != nil {
+	if last != nil {
 		slices.Reverse(all)
 	}
 
