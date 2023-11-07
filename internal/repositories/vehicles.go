@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"math/big"
 	"strings"
 	"time"
 
@@ -48,8 +47,6 @@ func VehicleToAPI(v *models.Vehicle) *gmodel.Vehicle {
 	bid := helpers.IntToBytes(v.ID)
 	name, _ := helpers.CreateMnemonic(bid)
 
-	x, _ := new(big.Int).SetString("59147051345528509681", 10)
-
 	return &gmodel.Vehicle{
 		ID:       "V_" + base64.StdEncoding.EncodeToString(b.Bytes()),
 		TokenID:  v.ID,
@@ -63,7 +60,6 @@ func VehicleToAPI(v *models.Vehicle) *gmodel.Vehicle {
 		},
 		ManufacturerID: v.ManufacturerID.Ptr(),
 		Name:           name,
-		BigMoney:       x,
 	}
 }
 
