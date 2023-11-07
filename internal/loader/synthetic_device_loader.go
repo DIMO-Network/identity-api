@@ -3,6 +3,7 @@ package loader
 import (
 	"context"
 
+	"github.com/DIMO-Network/identity-api/graph/model"
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/models"
@@ -67,32 +68,19 @@ func (sd *SyntheticDeviceLoader) BatchGetSyntheticDeviceByVehicleID(ctx context.
 
 // BatchGetSyntheticDeviceByVehicleID implements the dataloader for finding synthetic devices by their ids and returns
 // them in the order requested
-func (sd *SyntheticDeviceLoader) BatchGetSyntheticDeviceByID(ctx context.Context, ids []int) []*dataloader.Result[*gmodel.SyntheticDevice] {
-	results := make([]*dataloader.Result[*gmodel.SyntheticDevice], len(ids))
+func (sd *SyntheticDeviceLoader) BatchGetSyntheticDeviceByID(ctx context.Context, syntheticDeviceIDs []int) []*dataloader.Result[*gmodel.SyntheticDevice] {
+	results := make([]*dataloader.Result[*gmodel.SyntheticDevice], len(syntheticDeviceIDs))
 
-	devices, err := models.SyntheticDevices(models.SyntheticDeviceWhere.ID.IN(ids)).All(ctx, sd.db.DBS().Reader)
+	devices, err := models.SyntheticDevices(models.SyntheticDeviceWhere.ID.IN(syntheticDeviceIDs)).All(ctx, sd.db.DBS().Reader)
 	if err != nil {
-		for i := range ids {
-			results[i] = &dataloader.Result[*gmodel.SyntheticDevice]{Data: nil, Error: err}
+		for i := range results {
+			results[i] = &dataloader.Result[*model.SyntheticDevice]{Error: err}
 		}
 		return results
 	}
 
-	sdByVehicleID := map[int]*models.SyntheticDevice{}
-
-	for _, d := range devices {
-		sdByVehicleID[d.VehicleID] = d
-	}
-
-	for idx, vid := range ids {
-		if sdv, ok := sdByVehicleID[vid]; ok {
-			results[idx] = &dataloader.Result[*gmodel.SyntheticDevice]{
-				Data: repositories.SyntheticDeviceToAPI(sdv),
-			}
-		} else {
-			results[idx] = &dataloader.Result[*gmodel.SyntheticDevice]{}
-		}
-
+	for i, sdv := range devices {
+		results[i] = &dataloader.Result[*gmodel.SyntheticDevice]{Data: repositories.SyntheticDeviceToAPI(sdv)}
 	}
 
 	return results
