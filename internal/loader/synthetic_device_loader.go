@@ -71,7 +71,7 @@ func (sd *SyntheticDeviceLoader) BatchGetSyntheticDeviceByVehicleID(ctx context.
 func (sd *SyntheticDeviceLoader) BatchGetSyntheticDeviceByID(ctx context.Context, syntheticDeviceIDs []int) []*dataloader.Result[*gmodel.SyntheticDevice] {
 	results := make([]*dataloader.Result[*gmodel.SyntheticDevice], len(syntheticDeviceIDs))
 
-	devices, err := models.SyntheticDevices(models.SyntheticDeviceWhere.ID.IN(syntheticDeviceIDs)).All(ctx, sd.db.DBS().Reader)
+	sds, err := models.SyntheticDevices(models.SyntheticDeviceWhere.ID.IN(syntheticDeviceIDs)).All(ctx, sd.db.DBS().Reader)
 	if err != nil {
 		for i := range results {
 			results[i] = &dataloader.Result[*model.SyntheticDevice]{Error: err}
@@ -79,8 +79,17 @@ func (sd *SyntheticDeviceLoader) BatchGetSyntheticDeviceByID(ctx context.Context
 		return results
 	}
 
-	for i, sdv := range devices {
-		results[i] = &dataloader.Result[*gmodel.SyntheticDevice]{Data: repositories.SyntheticDeviceToAPI(sdv)}
+	sdByID := make(map[int]*models.SyntheticDevice)
+	for _, sdv := range sds {
+		sdByID[sdv.ID] = sdv
+	}
+
+	for i, sdID := range syntheticDeviceIDs {
+		if sdv, ok := sdByID[sdID]; ok {
+			results[i] = &dataloader.Result[*model.SyntheticDevice]{Data: repositories.SyntheticDeviceToAPI(sdv)}
+		} else {
+			results[i] = &dataloader.Result[*model.SyntheticDevice]{}
+		}
 	}
 
 	return results

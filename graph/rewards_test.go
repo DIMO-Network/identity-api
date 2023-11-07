@@ -383,54 +383,54 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate_Firs
 			"history": {
 				"totalCount": 3,
 				"edges": [
-				{
-					"cursor": "Mw==",
-					"node": {
-					"week": 3,
-					"beneficiary": "%s",
-					"connectionStreak": 13,
-					"streakTokens": "59147051345528509684",
-					"aftermarketDevice": {
-						"id": "AD_kQE=",
-						"tokenId": 1
+					{
+						"cursor": "Mw==",
+						"node": {
+						"week": 3,
+						"beneficiary": "%s",
+						"connectionStreak": 13,
+						"streakTokens": "59147051345528509684",
+						"aftermarketDevice": {
+							"id": "AD_kQE=",
+							"tokenId": 1
+						},
+						"aftermarketDeviceTokens": "59147051345528509681",
+						"syntheticDevice": {
+							"tokenId": 1,
+							"integrationId": 2
+						},
+						"vehicle": {
+							"id": "V_kQE=",
+							"tokenId": 1
+						},
+						"syntheticDeviceTokens": "59147051345528509682",
+						"sentAt": "%s"
+						}
 					},
-					"aftermarketDeviceTokens": "59147051345528509681",
-					"syntheticDevice": {
-						"tokenId": 1,
-						"integrationId": 2
-					},
-					"vehicle": {
-						"id": "V_kQE=",
-						"tokenId": 1
-					},
-					"syntheticDeviceTokens": "59147051345528509682",
-					"sentAt": "%s"
+					{
+						"cursor": "Mg==",
+						"node": {
+						"week": 2,
+						"beneficiary": "%s",
+						"connectionStreak": 12,
+						"streakTokens": "59147051345528509684",
+						"aftermarketDevice": {
+							"id": "AD_kQE=",
+							"tokenId": 1
+						},
+						"aftermarketDeviceTokens": "59147051345528509681",
+						"syntheticDevice": {
+							"tokenId": 1,
+							"integrationId": 2
+						},
+						"vehicle": {
+							"id": "V_kQE=",
+							"tokenId": 1
+						},
+						"syntheticDeviceTokens": "59147051345528509682",
+						"sentAt": "%s"
+						}
 					}
-				},
-				{
-					"cursor": "Mg==",
-					"node": {
-					"week": 2,
-					"beneficiary": "%s",
-					"connectionStreak": 12,
-					"streakTokens": "59147051345528509684",
-					"aftermarketDevice": {
-						"id": "AD_kQE=",
-						"tokenId": 1
-					},
-					"aftermarketDeviceTokens": "59147051345528509681",
-					"syntheticDevice": {
-						"tokenId": 1,
-						"integrationId": 2
-					},
-					"vehicle": {
-						"id": "V_kQE=",
-						"tokenId": 1
-					},
-					"syntheticDeviceTokens": "59147051345528509682",
-					"sentAt": "%s"
-					}
-				}
 				],
 				"nodes": [
 				{
@@ -589,30 +589,6 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 				"totalCount": 3,
 				"edges": [
 					{
-						"cursor": "Mg==",
-						"node": {
-						"week": 2,
-						"beneficiary": "%s",
-						"connectionStreak": 12,
-						"streakTokens": "59147051345528509684",
-						"aftermarketDevice": {
-							"id": "AD_kQE=",
-							"tokenId": 1
-						},
-						"aftermarketDeviceTokens": "59147051345528509681",
-						"syntheticDevice": {
-							"tokenId": 1,
-							"integrationId": 2
-						},
-						"vehicle": {
-							"id": "V_kQE=",
-							"tokenId": 1
-						},
-						"syntheticDeviceTokens": "59147051345528509682",
-						"sentAt": "%s"
-						}
-					},
-					{
 						"cursor": "Mw==",
 						"node": {
 						"week": 3,
@@ -635,25 +611,49 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 						"syntheticDeviceTokens": "59147051345528509682",
 						"sentAt": "%s"
 						}
+					},
+					{
+						"cursor": "Mg==",
+						"node": {
+						"week": 2,
+						"beneficiary": "%s",
+						"connectionStreak": 12,
+						"streakTokens": "59147051345528509684",
+						"aftermarketDevice": {
+							"id": "AD_kQE=",
+							"tokenId": 1
+						},
+						"aftermarketDeviceTokens": "59147051345528509681",
+						"syntheticDevice": {
+							"tokenId": 1,
+							"integrationId": 2
+						},
+						"vehicle": {
+							"id": "V_kQE=",
+							"tokenId": 1
+						},
+						"syntheticDeviceTokens": "59147051345528509682",
+						"sentAt": "%s"
+						}
 					}
 				],
 				"nodes": [
 					{
-						"week": 2,
-						"beneficiary": "%s",
-						"connectionStreak": 12
-					},
-					{
 						"week": 3,
 						"beneficiary": "%s",
 						"connectionStreak": 13
+					},
+					{
+						"week": 2,
+						"beneficiary": "%s",
+						"connectionStreak": 12
 					}
 				],
 				"pageInfo": {
-				"endCursor": "Mw==",
+				"endCursor": "Mg==",
 				"hasNextPage": false,
 				"hasPreviousPage": true,
-				"startCursor": "Mg=="
+				"startCursor": "Mw=="
 				}
 			}
 			}
@@ -794,30 +794,6 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 				"totalCount": 3,
 				"edges": [
 					{
-						"cursor": "Mw==",
-						"node": {
-						"week": 3,
-						"beneficiary": "%s",
-						"connectionStreak": 13,
-						"streakTokens": "59147051345528509684",
-						"aftermarketDevice": {
-							"id": "AD_kQE=",
-							"tokenId": 1
-						},
-						"aftermarketDeviceTokens": "59147051345528509681",
-						"syntheticDevice": {
-							"tokenId": 1,
-							"integrationId": 2
-						},
-						"vehicle": {
-							"id": "V_kQE=",
-							"tokenId": 1
-						},
-						"syntheticDeviceTokens": "59147051345528509682",
-						"sentAt": "%s"
-						}
-					},
-					{
 						"cursor": "NA==",
 						"node": {
 						"week": 4,
@@ -840,25 +816,49 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 						"syntheticDeviceTokens": "59147051345528509682",
 						"sentAt": "%s"
 						}
+					},
+					{
+						"cursor": "Mw==",
+						"node": {
+						"week": 3,
+						"beneficiary": "%s",
+						"connectionStreak": 13,
+						"streakTokens": "59147051345528509684",
+						"aftermarketDevice": {
+							"id": "AD_kQE=",
+							"tokenId": 1
+						},
+						"aftermarketDeviceTokens": "59147051345528509681",
+						"syntheticDevice": {
+							"tokenId": 1,
+							"integrationId": 2
+						},
+						"vehicle": {
+							"id": "V_kQE=",
+							"tokenId": 1
+						},
+						"syntheticDeviceTokens": "59147051345528509682",
+						"sentAt": "%s"
+						}
 					}
 				],
 				"nodes": [
 					{
-						"week": 3,
-						"beneficiary": "%s",
-						"connectionStreak": 13
-					},
-					{
 						"week": 4,
 						"beneficiary": "%s",
 						"connectionStreak": 14
+					},
+					{
+						"week": 3,
+						"beneficiary": "%s",
+						"connectionStreak": 13
 					}
 				],
 				"pageInfo": {
-				"endCursor": "NA==",
+				"endCursor": "Mw==",
 				"hasNextPage": true,
 				"hasPreviousPage": false,
-				"startCursor": "Mw=="
+				"startCursor": "NA=="
 				}
 			}
 			}

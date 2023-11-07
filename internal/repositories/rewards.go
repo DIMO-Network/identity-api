@@ -12,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"github.com/volatiletech/sqlboiler/v4/types"
+	"golang.org/x/exp/slices"
 )
 
 type RewardsCursor struct {
@@ -44,9 +45,6 @@ func (r *Repository) GetEarningsByVehicleID(ctx context.Context, tokenID int) (*
 		TotalCount int               `boil:"total_count"`
 	}
 	var stats rewardStats
-
-	limit := new(int)
-	*limit = 100
 
 	err := models.Rewards(
 		qm.Select(
@@ -135,6 +133,10 @@ func (r *Repository) PaginateVehicleEarningsByID(ctx context.Context, vehicleEar
 	} else if last != nil && len(all) == limit+1 {
 		hasPrevious = true
 		all = all[:limit]
+	}
+
+	if last != nil {
+		slices.Reverse(all)
 	}
 
 	edges := make([]*gmodel.EarningsEdge, len(all))

@@ -722,8 +722,8 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_BackPagination_L
 	paginatedEarnings, err := r.repo.PaginateVehicleEarningsByID(r.ctx, rwrd, nil, nil, &last, &before)
 	r.NoError(err)
 
-	startCrsr := helpers.IDToCursor(2)
-	endCrsr := helpers.IDToCursor(3)
+	startCrsr := helpers.IDToCursor(3)
+	endCrsr := helpers.IDToCursor(2)
 
 	aftID := 1
 	syntID := 1
@@ -740,9 +740,9 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_BackPagination_L
 	r.Equal([]*model.EarningsEdge{
 		{
 			Node: &model.Earning{
-				Week:                    2,
+				Week:                    3,
 				Beneficiary:             common.BytesToAddress(beneficiary.Bytes()),
-				ConnectionStreak:        &connStrk[0],
+				ConnectionStreak:        &connStrk[1],
 				StreakTokens:            dbtypes.NullDecimalToInt(strkEarn),
 				AftermarketDeviceID:     &aftID,
 				AftermarketDeviceTokens: dbtypes.NullDecimalToInt(aftEarn),
@@ -755,9 +755,9 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_BackPagination_L
 		},
 		{
 			Node: &model.Earning{
-				Week:                    3,
+				Week:                    2,
 				Beneficiary:             common.BytesToAddress(beneficiary.Bytes()),
-				ConnectionStreak:        &connStrk[1],
+				ConnectionStreak:        &connStrk[0],
 				StreakTokens:            dbtypes.NullDecimalToInt(strkEarn),
 				AftermarketDeviceID:     &aftID,
 				AftermarketDeviceTokens: dbtypes.NullDecimalToInt(aftEarn),
