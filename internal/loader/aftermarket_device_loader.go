@@ -64,21 +64,30 @@ func (ad *AftermarketDeviceLoader) BatchGetLinkedAftermarketDeviceByVehicleID(ct
 	return results
 }
 
-// BatchGetLinkedAftermarketDeviceByID implements the dataloader for finding aftermarket devices by their ids and returns
+// BatchGetAftermarketDeviceByID implements the dataloader for finding aftermarket devices by their ids and returns
 // them in the order requested
-func (ad *AftermarketDeviceLoader) BatchGetLinkedAftermarketDeviceByID(ctx context.Context, ids []int) []*dataloader.Result[*model.AftermarketDevice] {
-	results := make([]*dataloader.Result[*model.AftermarketDevice], len(ids))
+func (ad *AftermarketDeviceLoader) BatchGetAftermarketDeviceByID(ctx context.Context, aftermarketDeviceIDs []int) []*dataloader.Result[*model.AftermarketDevice] {
+	results := make([]*dataloader.Result[*model.AftermarketDevice], len(aftermarketDeviceIDs))
 
-	devices, err := models.AftermarketDevices(models.AftermarketDeviceWhere.ID.IN(ids)).All(ctx, ad.db.DBS().Reader)
+	ads, err := models.AftermarketDevices(models.AftermarketDeviceWhere.ID.IN(aftermarketDeviceIDs)).All(ctx, ad.db.DBS().Reader)
 	if err != nil {
-		for i := range ids {
+		for i := range aftermarketDeviceIDs {
 			results[i] = &dataloader.Result[*model.AftermarketDevice]{Error: err}
 		}
 		return results
 	}
 
-	for i, adv := range devices {
-		results[i] = &dataloader.Result[*model.AftermarketDevice]{Data: repositories.AftermarketDeviceToAPI(adv)}
+	adByID := make(map[int]*models.AftermarketDevice)
+	for _, ad := range ads {
+		adByID[ad.ID] = ad
+	}
+
+	for i, adID := range aftermarketDeviceIDs {
+		if ad, ok := adByID[adID]; ok {
+			results[i] = &dataloader.Result[*model.AftermarketDevice]{Data: repositories.AftermarketDeviceToAPI(ad)}
+		} else {
+			results[i] = &dataloader.Result[*model.AftermarketDevice]{}
+		}
 	}
 
 	return results

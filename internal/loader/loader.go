@@ -56,7 +56,7 @@ func NewDataLoader(dbs db.Store) *Loaders {
 			dataloader.WithClearCacheOnBatch[int, *model.Manufacturer](),
 		),
 		AftermarketDeviceByID: dataloader.NewBatchedLoader(
-			aftermarketDevice.BatchGetLinkedAftermarketDeviceByID,
+			aftermarketDevice.BatchGetAftermarketDeviceByID,
 			dataloader.WithClearCacheOnBatch[int, *model.AftermarketDevice](),
 		),
 		SyntheticDeviceByID: dataloader.NewBatchedLoader(
