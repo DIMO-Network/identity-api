@@ -54,15 +54,6 @@ func UnmarshalBytes(v interface{}) ([]byte, error) {
 	return hexutil.Decode(s)
 }
 
-func MarshalInt(x int) graphql.Marshaler {
-	return graphql.WriterFunc(func(w io.Writer) {
-		_, _ = io.WriteString(w, strconv.Quote(strconv.Itoa(x)))
-	})
-}
-
-// Is this going to work?
-var UnmarshalInt = graphql.UnmarshalInt
-
 func MarshalBigInt(x *big.Int) graphql.Marshaler {
 	return graphql.WriterFunc(func(w io.Writer) {
 		_, _ = io.WriteString(w, strconv.Quote(x.String()))
