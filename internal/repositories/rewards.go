@@ -27,7 +27,7 @@ func RewardToAPI(reward models.Reward) gmodel.Earning {
 
 	return gmodel.Earning{
 		Week:                    reward.IssuanceWeek,
-		Beneficiary:             common.BytesToAddress(reward.ReceivedByAddress.Bytes),
+		Beneficiary:             common.BytesToAddress(*reward.ReceivedByAddress.Ptr()),
 		ConnectionStreak:        reward.ConnectionStreak.Ptr(),
 		StreakTokens:            stEarn,
 		AftermarketDeviceID:     reward.AftermarketTokenID.Ptr(),
