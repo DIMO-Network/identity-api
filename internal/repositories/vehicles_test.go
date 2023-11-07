@@ -784,9 +784,9 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 	}
 
 	last := 2
-	after := "NA=="
-	startCrsr := "MQ=="
-	endCrsr := "Mg=="
+	after := "NA=="     // 4. Doesn't have much of an effect.
+	startCrsr := "Mg==" // 2.
+	endCrsr := "MQ=="   // 1.
 	res, err := o.repo.GetVehicles(o.ctx, nil, &after, &last, nil, &gmodel.VehiclesFilter{Privileged: wallet})
 	o.NoError(err)
 
@@ -801,31 +801,10 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 	expected := []*gmodel.VehicleEdge{
 		{
 			Node: &gmodel.Vehicle{
-				ID:                "V_kQE=",
-				TokenID:           1,
-				Owner:             common.BytesToAddress(wallet.Bytes()),
-				MintedAt:          vehicles[2].MintedAt,
-				AftermarketDevice: nil,
-				Privileges:        nil,
-				SyntheticDevice:   nil,
-				Definition: &gmodel.Definition{
-					URI:   nil,
-					Make:  &vehicles[0].Make.String,
-					Model: &vehicles[0].Model.String,
-					Year:  &vehicles[0].Year.Int,
-				},
-			},
-			Cursor: "MQ==",
-		},
-		{
-			Node: &gmodel.Vehicle{
-				ID:                "V_kQI=",
-				TokenID:           2,
-				Owner:             common.BytesToAddress(wallet.Bytes()),
-				MintedAt:          vehicles[1].MintedAt,
-				AftermarketDevice: nil,
-				Privileges:        nil,
-				SyntheticDevice:   nil,
+				ID:       "V_kQI=",
+				TokenID:  2,
+				Owner:    common.BytesToAddress(wallet.Bytes()),
+				MintedAt: vehicles[1].MintedAt,
 				Definition: &gmodel.Definition{
 					URI:   nil,
 					Make:  &vehicles[1].Make.String,
@@ -834,6 +813,21 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 				},
 			},
 			Cursor: "Mg==",
+		},
+		{
+			Node: &gmodel.Vehicle{
+				ID:       "V_kQE=",
+				TokenID:  1,
+				Owner:    common.BytesToAddress(wallet.Bytes()),
+				MintedAt: vehicles[0].MintedAt,
+				Definition: &gmodel.Definition{
+					URI:   nil,
+					Make:  &vehicles[0].Make.String,
+					Model: &vehicles[0].Model.String,
+					Year:  &vehicles[0].Year.Int,
+				},
+			},
+			Cursor: "MQ==",
 		},
 	}
 
