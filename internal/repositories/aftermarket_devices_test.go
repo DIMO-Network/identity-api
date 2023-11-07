@@ -1,9 +1,7 @@
 package repositories
 
 import (
-	"bytes"
 	"context"
-	"encoding/base64"
 	"fmt"
 	"math/big"
 	"strings"
@@ -16,7 +14,6 @@ import (
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
-	"github.com/vmihailenco/msgpack/v5"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
@@ -143,14 +140,16 @@ func Test_GetAftermarketDevices_FilterByBeneficiary(t *testing.T) {
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDir)
 
 	var tknID int
-	var owner, beneficiary common.Address
+	// dynamically setting bene for each AD
+	// overwriting beneficiary variable each time
+	// when we query below, we are expecting only item in response
+	var beneficiary common.Address
 	for i := 1; i <= 4; i++ {
 		tknID = i
-		owner = aftermarketDeviceNodeMintedArgs.Owner
-		beneficiary = common.BigToAddress(big.NewInt(int64(i + 1)))
+		beneficiary = common.BigToAddress(big.NewInt(int64(i + 2)))
 		ad := models.AftermarketDevice{
 			ID:          tknID,
-			Owner:       owner.Bytes(),
+			Owner:       aftermarketDeviceNodeMintedArgs.Owner.Bytes(),
 			Beneficiary: beneficiary.Bytes(),
 			Address:     aftermarketDeviceNodeMintedArgs.AftermarketDeviceAddress.Bytes(),
 		}
@@ -159,27 +158,12 @@ func Test_GetAftermarketDevices_FilterByBeneficiary(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
-	var b bytes.Buffer
-	e := msgpack.NewEncoder(&b)
-	e.UseArrayEncodedStructs(true)
-	_ = e.Encode(aftermarketDevicePrimaryKey{TokenID: tknID})
-	id := "AD_" + base64.StdEncoding.EncodeToString(b.Bytes())
-	mn, err := gmn.EntropyToMnemonicThreeWords(aftermarketDeviceNodeMintedArgs.AftermarketDeviceAddress.Bytes())
-	if err != nil {
-		assert.NoError(t, err)
-	}
-	name := strings.Join(mn, " ")
-	expectedOwnerFilterResp := []*model.AftermarketDeviceEdge{
-		{
-			Node: &model.AftermarketDevice{
-				ID:          id,
-				TokenID:     tknID,
-				Owner:       aftermarketDeviceNodeMintedArgs.Owner,
-				Beneficiary: beneficiary,
-				Address:     aftermarketDeviceNodeMintedArgs.AftermarketDeviceAddress,
-				Name:        name,
-			},
-			Cursor: helpers.IDToCursor(tknID),
+	expectedBeneResp := &model.AftermarketDeviceEdge{
+		Node: &model.AftermarketDevice{
+			TokenID:     tknID,
+			Owner:       aftermarketDeviceNodeMintedArgs.Owner,
+			Beneficiary: beneficiary,
+			Address:     aftermarketDeviceNodeMintedArgs.AftermarketDeviceAddress,
 		},
 	}
 
@@ -190,7 +174,14 @@ func Test_GetAftermarketDevices_FilterByBeneficiary(t *testing.T) {
 
 	assert.Len(t, beneFilterRes.Edges, 1)
 	assert.Equal(t, beneFilterRes.TotalCount, 1)
+	assert.Exactly(t, expectedBeneResp.Node.TokenID, beneFilterRes.Edges[0].Node.TokenID)
+	assert.Exactly(t, expectedBeneResp.Node.Owner, beneFilterRes.Edges[0].Node.Owner)
+	assert.Exactly(t, expectedBeneResp.Node.Beneficiary, beneFilterRes.Edges[0].Node.Beneficiary)
+	assert.Exactly(t, expectedBeneResp.Node.Address, beneFilterRes.Edges[0].Node.Address)
 
-	assert.Exactly(t, expectedOwnerFilterResp[len(expectedOwnerFilterResp)-1], beneFilterRes.Edges[0])
-	assert.Exactly(t, expectedOwnerFilterResp, beneFilterRes.Edges)
+	// changing filter to owner will return all ADs
+	ownerFilterResp, err := adController.GetAftermarketDevices(ctx, &first, nil, nil, nil, &model.AftermarketDevicesFilter{Owner: &aftermarketDeviceNodeMintedArgs.Owner})
+	assert.NoError(t, err)
+	assert.Len(t, ownerFilterResp.Edges, 4)
+	assert.Equal(t, ownerFilterResp.TotalCount, 4)
 }
