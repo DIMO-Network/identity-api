@@ -185,7 +185,7 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByVehicleID_NoRows() {
 	r.NoError(err)
 
 	r.Equal(&gmodel.VehicleEarnings{
-		TotalTokens: nil,
+		TotalTokens: &big.Int{},
 		History: &gmodel.EarningsConnection{
 			TotalCount: 0,
 			Edges:      nil,
