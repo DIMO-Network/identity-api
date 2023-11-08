@@ -7,6 +7,7 @@ import (
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 	"github.com/volatiletech/null/v8"
 )
 
@@ -23,7 +24,7 @@ func DCNToAPI(d *models.DCN) *gmodel.Dcn {
 
 func (r *Repository) GetDCN(ctx context.Context, by gmodel.DCNBy) (*gmodel.Dcn, error) {
 	if countTrue(len(by.Node) != 0, by.Name != nil) != 1 {
-		return nil, errors.New("Provide exactly one of `name` or `node`.")
+		return nil, gqlerror.Errorf("Provide exactly one of `name` or `node`.")
 	}
 
 	if len(by.Node) != 0 {
