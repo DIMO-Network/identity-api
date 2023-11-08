@@ -27,9 +27,8 @@ func GetVehicleByID(ctx context.Context, vehicleID int) (*model.Vehicle, error) 
 	return thunk()
 }
 
-// BatchGetLinkedVehicleByAftermarketID implements the dataloader for finding vehicles linked to aftermarket devices and returns
-// them in the order requested
-func (v *VehicleLoader) BatchGetLinkedVehicleByAftermarketID(ctx context.Context, vehicleIDs []int) []*dataloader.Result[*model.Vehicle] {
+// BatchGetVehicleByID implements the dataloader for finding vehicles by their ids.
+func (v *VehicleLoader) BatchGetVehicleByID(ctx context.Context, vehicleIDs []int) []*dataloader.Result[*model.Vehicle] {
 	results := make([]*dataloader.Result[*model.Vehicle], len(vehicleIDs))
 
 	vehicles, err := models.Vehicles(models.VehicleWhere.ID.IN(vehicleIDs)).All(ctx, v.db.DBS().Reader)

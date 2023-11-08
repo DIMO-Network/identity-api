@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/big"
 	"strconv"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -53,11 +54,22 @@ func UnmarshalBytes(v interface{}) ([]byte, error) {
 	return hexutil.Decode(s)
 }
 
-func MarshalInt(x int) graphql.Marshaler {
+func MarshalBigInt(x *big.Int) graphql.Marshaler {
 	return graphql.WriterFunc(func(w io.Writer) {
-		_, _ = io.WriteString(w, strconv.Quote(strconv.Itoa(x)))
+		_, _ = io.WriteString(w, strconv.Quote(x.String()))
 	})
 }
 
-// Is this going to work?
-var UnmarshalInt = graphql.UnmarshalInt
+func UnmarshalBigInt(v any) (*big.Int, error) {
+	s, ok := v.(string)
+	if !ok {
+		return nil, fmt.Errorf("type %T not a string", v)
+	}
+
+	x, ok := new(big.Int).SetString(s, 10)
+	if !ok {
+		return nil, errors.New("not a valid decimal integer")
+	}
+
+	return x, nil
+}

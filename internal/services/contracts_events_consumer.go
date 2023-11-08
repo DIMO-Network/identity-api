@@ -230,7 +230,7 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceMintedEvent(ctx context
 		false,
 		[]string{cols.ID},
 		boil.None(),
-		boil.Whitelist(cols.ID, cols.Address, cols.Owner, cols.MintedAt, cols.Beneficiary),
+		boil.Whitelist(cols.ID, cols.Address, cols.Owner, cols.MintedAt, cols.Beneficiary, cols.ManufacturerID),
 	)
 }
 

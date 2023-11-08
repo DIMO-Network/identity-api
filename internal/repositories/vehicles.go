@@ -15,6 +15,7 @@ import (
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 	"github.com/vmihailenco/msgpack/v5"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"golang.org/x/exp/slices"
@@ -142,24 +143,24 @@ func (v *Repository) GetVehicles(ctx context.Context, first *int, after *string,
 
 	if first != nil {
 		if last != nil {
-			return nil, errors.New("Pass `first` or `last`, but not both.")
+			return nil, gqlerror.Errorf("Pass `first` or `last`, but not both.")
 		}
 		if *first < 0 {
-			return nil, errors.New("The value for `first` cannot be negative.")
+			return nil, gqlerror.Errorf("The value for `first` cannot be negative.")
 		}
 		if *first > maxPageSize {
-			return nil, fmt.Errorf("The value %d for `first` exceeds the limit %d.", *last, maxPageSize)
+			return nil, gqlerror.Errorf("The value %d for `first` exceeds the limit %d.", *last, maxPageSize)
 		}
 		limit = *first
 	} else {
 		if last == nil {
-			return nil, errors.New("Provide `first` or `last`.")
+			return nil, gqlerror.Errorf("Provide `first` or `last`.")
 		}
 		if *last < 0 {
-			return nil, errors.New("The value for `last` cannot be negative.")
+			return nil, gqlerror.Errorf("The value for `last` cannot be negative.")
 		}
 		if *last > maxPageSize {
-			return nil, fmt.Errorf("The value %d for `last` exceeds the limit %d.", *last, maxPageSize)
+			return nil, gqlerror.Errorf("The value %d for `last` exceeds the limit %d.", *last, maxPageSize)
 		}
 		limit = *last
 	}
@@ -224,7 +225,7 @@ func (v *Repository) GetVehicles(ctx context.Context, first *int, after *string,
 	}
 
 	orderBy := "DESC"
-	if before != nil {
+	if last != nil {
 		orderBy = "ASC"
 	}
 
@@ -251,7 +252,7 @@ func (v *Repository) GetVehicles(ctx context.Context, first *int, after *string,
 		all = all[:limit]
 	}
 
-	if before != nil {
+	if last != nil {
 		slices.Reverse(all)
 	}
 
