@@ -89,6 +89,18 @@ type ComplexityRoot struct {
 		Vehicle   func(childComplexity int) int
 	}
 
+	DCNConnection struct {
+		Edges      func(childComplexity int) int
+		Nodes      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	DCNEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
 	Definition struct {
 		Make  func(childComplexity int) int
 		Model func(childComplexity int) int
@@ -134,6 +146,7 @@ type ComplexityRoot struct {
 		AftermarketDevice  func(childComplexity int, by model.AftermarketDeviceBy) int
 		AftermarketDevices func(childComplexity int, first *int, after *string, last *int, before *string, filterBy *model.AftermarketDevicesFilter) int
 		Dcn                func(childComplexity int, by model.DCNBy) int
+		Dcns               func(childComplexity int, first *int, after *string, last *int, before *string, filterBy *model.DCNFilter) int
 		Node               func(childComplexity int, id string) int
 		Vehicle            func(childComplexity int, tokenID int) int
 		Vehicles           func(childComplexity int, first *int, after *string, last *int, before *string, filterBy *model.VehiclesFilter) int
@@ -188,6 +201,7 @@ type QueryResolver interface {
 	AftermarketDevice(ctx context.Context, by model.AftermarketDeviceBy) (*model.AftermarketDevice, error)
 	AftermarketDevices(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.AftermarketDevicesFilter) (*model.AftermarketDeviceConnection, error)
 	Dcn(ctx context.Context, by model.DCNBy) (*model.Dcn, error)
+	Dcns(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.DCNFilter) (*model.DCNConnection, error)
 }
 type VehicleResolver interface {
 	Manufacturer(ctx context.Context, obj *model.Vehicle) (*model.Manufacturer, error)
@@ -386,6 +400,48 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.DCN.Vehicle(childComplexity), true
 
+	case "DCNConnection.edges":
+		if e.complexity.DCNConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.DCNConnection.Edges(childComplexity), true
+
+	case "DCNConnection.nodes":
+		if e.complexity.DCNConnection.Nodes == nil {
+			break
+		}
+
+		return e.complexity.DCNConnection.Nodes(childComplexity), true
+
+	case "DCNConnection.pageInfo":
+		if e.complexity.DCNConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.DCNConnection.PageInfo(childComplexity), true
+
+	case "DCNConnection.totalCount":
+		if e.complexity.DCNConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.DCNConnection.TotalCount(childComplexity), true
+
+	case "DCNEdge.cursor":
+		if e.complexity.DCNEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.DCNEdge.Cursor(childComplexity), true
+
+	case "DCNEdge.node":
+		if e.complexity.DCNEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.DCNEdge.Node(childComplexity), true
+
 	case "Definition.make":
 		if e.complexity.Definition.Make == nil {
 			break
@@ -582,6 +638,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Dcn(childComplexity, args["by"].(model.DCNBy)), true
+
+	case "Query.dcns":
+		if e.complexity.Query.Dcns == nil {
+			break
+		}
+
+		args, err := ec.field_Query_dcns_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Dcns(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["filterBy"].(*model.DCNFilter)), true
 
 	case "Query.node":
 		if e.complexity.Query.Node == nil {
@@ -782,6 +850,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputAftermarketDeviceBy,
 		ec.unmarshalInputAftermarketDevicesFilter,
 		ec.unmarshalInputDCNBy,
+		ec.unmarshalInputDCNFilter,
 		ec.unmarshalInputPrivilegeFilterBy,
 		ec.unmarshalInputVehiclesFilter,
 	)
@@ -978,6 +1047,57 @@ func (ec *executionContext) field_Query_dcn_args(ctx context.Context, rawArgs ma
 		}
 	}
 	args["by"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_dcns_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *int
+	if tmp, ok := rawArgs["first"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["first"] = arg0
+	var arg1 *string
+	if tmp, ok := rawArgs["after"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["after"] = arg1
+	var arg2 *int
+	if tmp, ok := rawArgs["last"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+		arg2, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["last"] = arg2
+	var arg3 *string
+	if tmp, ok := rawArgs["before"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+		arg3, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["before"] = arg3
+	var arg4 *model.DCNFilter
+	if tmp, ok := rawArgs["filterBy"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filterBy"))
+		arg4, err = ec.unmarshalODCNFilter2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDCNFilter(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["filterBy"] = arg4
 	return args, nil
 }
 
@@ -2306,6 +2426,314 @@ func (ec *executionContext) fieldContext_DCN_vehicle(ctx context.Context, field 
 				return ec.fieldContext_Vehicle_name(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DCNConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.DCNConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DCNConnection_totalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DCNConnection_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DCNConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DCNConnection_edges(ctx context.Context, field graphql.CollectedField, obj *model.DCNConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DCNConnection_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.DCNEdge)
+	fc.Result = res
+	return ec.marshalNDCNEdge2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDCNEdgeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DCNConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DCNConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_DCNEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_DCNEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DCNEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DCNConnection_nodes(ctx context.Context, field graphql.CollectedField, obj *model.DCNConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DCNConnection_nodes(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Nodes, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Dcn)
+	fc.Result = res
+	return ec.marshalNDCN2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDcnᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DCNConnection_nodes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DCNConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "node":
+				return ec.fieldContext_DCN_node(ctx, field)
+			case "owner":
+				return ec.fieldContext_DCN_owner(ctx, field)
+			case "expiresAt":
+				return ec.fieldContext_DCN_expiresAt(ctx, field)
+			case "mintedAt":
+				return ec.fieldContext_DCN_mintedAt(ctx, field)
+			case "name":
+				return ec.fieldContext_DCN_name(ctx, field)
+			case "vehicle":
+				return ec.fieldContext_DCN_vehicle(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DCN", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DCNConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.DCNConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DCNConnection_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DCNConnection_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DCNConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DCNEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.DCNEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DCNEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DCNEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DCNEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DCNEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.DCNEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DCNEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Dcn)
+	fc.Result = res
+	return ec.marshalNDCN2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDcn(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DCNEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DCNEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "node":
+				return ec.fieldContext_DCN_node(ctx, field)
+			case "owner":
+				return ec.fieldContext_DCN_owner(ctx, field)
+			case "expiresAt":
+				return ec.fieldContext_DCN_expiresAt(ctx, field)
+			case "mintedAt":
+				return ec.fieldContext_DCN_mintedAt(ctx, field)
+			case "name":
+				return ec.fieldContext_DCN_name(ctx, field)
+			case "vehicle":
+				return ec.fieldContext_DCN_vehicle(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DCN", field.Name)
 		},
 	}
 	return fc, nil
@@ -3746,6 +4174,71 @@ func (ec *executionContext) fieldContext_Query_dcn(ctx context.Context, field gr
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_dcn_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_dcns(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_dcns(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Dcns(rctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["filterBy"].(*model.DCNFilter))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.DCNConnection)
+	fc.Result = res
+	return ec.marshalNDCNConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDCNConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_dcns(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_DCNConnection_totalCount(ctx, field)
+			case "edges":
+				return ec.fieldContext_DCNConnection_edges(ctx, field)
+			case "nodes":
+				return ec.fieldContext_DCNConnection_nodes(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_DCNConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DCNConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_dcns_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -6911,6 +7404,35 @@ func (ec *executionContext) unmarshalInputDCNBy(ctx context.Context, obj interfa
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputDCNFilter(ctx context.Context, obj interface{}) (model.DCNFilter, error) {
+	var it model.DCNFilter
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"owner"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "owner":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("owner"))
+			data, err := ec.unmarshalOAddress2ᚖgithubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Owner = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputPrivilegeFilterBy(ctx context.Context, obj interface{}) (model.PrivilegeFilterBy, error) {
 	var it model.PrivilegeFilterBy
 	asMap := map[string]interface{}{}
@@ -7309,6 +7831,104 @@ func (ec *executionContext) _DCN(ctx context.Context, sel ast.SelectionSet, obj 
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var dCNConnectionImplementors = []string{"DCNConnection"}
+
+func (ec *executionContext) _DCNConnection(ctx context.Context, sel ast.SelectionSet, obj *model.DCNConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dCNConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DCNConnection")
+		case "totalCount":
+			out.Values[i] = ec._DCNConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "edges":
+			out.Values[i] = ec._DCNConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "nodes":
+			out.Values[i] = ec._DCNConnection_nodes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._DCNConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var dCNEdgeImplementors = []string{"DCNEdge"}
+
+func (ec *executionContext) _DCNEdge(ctx context.Context, sel ast.SelectionSet, obj *model.DCNEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dCNEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DCNEdge")
+		case "cursor":
+			out.Values[i] = ec._DCNEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "node":
+			out.Values[i] = ec._DCNEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -7769,6 +8389,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_dcn(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "dcns":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_dcns(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -8705,6 +9347,50 @@ func (ec *executionContext) marshalNDCN2githubᚗcomᚋDIMOᚑNetworkᚋidentity
 	return ec._DCN(ctx, sel, &v)
 }
 
+func (ec *executionContext) marshalNDCN2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDcnᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Dcn) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNDCN2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDcn(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) marshalNDCN2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDcn(ctx context.Context, sel ast.SelectionSet, v *model.Dcn) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -8718,6 +9404,74 @@ func (ec *executionContext) marshalNDCN2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋident
 func (ec *executionContext) unmarshalNDCNBy2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDCNBy(ctx context.Context, v interface{}) (model.DCNBy, error) {
 	res, err := ec.unmarshalInputDCNBy(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDCNConnection2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDCNConnection(ctx context.Context, sel ast.SelectionSet, v model.DCNConnection) graphql.Marshaler {
+	return ec._DCNConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDCNConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDCNConnection(ctx context.Context, sel ast.SelectionSet, v *model.DCNConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DCNConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDCNEdge2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDCNEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.DCNEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNDCNEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDCNEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDCNEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDCNEdge(ctx context.Context, sel ast.SelectionSet, v *model.DCNEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DCNEdge(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
@@ -9374,6 +10128,14 @@ func (ec *executionContext) marshalODCN2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋident
 		return graphql.Null
 	}
 	return ec._DCN(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalODCNFilter2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDCNFilter(ctx context.Context, v interface{}) (*model.DCNFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputDCNFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalODefinition2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDefinition(ctx context.Context, sel ast.SelectionSet, v *model.Definition) graphql.Marshaler {

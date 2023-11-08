@@ -3,12 +3,16 @@ package repositories
 import (
 	"context"
 	"errors"
+	"time"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
+	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"github.com/volatiletech/null/v8"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"golang.org/x/exp/slices"
 )
 
 func DCNToAPI(d *models.DCN) *gmodel.Dcn {
@@ -58,4 +62,142 @@ func (r *Repository) GetDCNByName(ctx context.Context, name string) (*gmodel.Dcn
 	}
 
 	return DCNToAPI(dcn), nil
+}
+
+func (r *Repository) GetDCNs(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *gmodel.DCNFilter) (*gmodel.DCNConnection, error) {
+	var limit int
+
+	if first != nil {
+		if last != nil {
+			return nil, gqlerror.Errorf("Pass `first` or `last`, but not both.")
+		}
+		if *first < 0 {
+			return nil, gqlerror.Errorf("The value for `first` cannot be negative.")
+		}
+		if *first > maxPageSize {
+			return nil, gqlerror.Errorf("The value %d for `first` exceeds the limit %d.", *last, maxPageSize)
+		}
+		limit = *first
+	} else {
+		if last == nil {
+			return nil, gqlerror.Errorf("Provide `first` or `last`.")
+		}
+		if *last < 0 {
+			return nil, gqlerror.Errorf("The value for `last` cannot be negative.")
+		}
+		if *last > maxPageSize {
+			return nil, gqlerror.Errorf("The value %d for `last` exceeds the limit %d.", *last, maxPageSize)
+		}
+		limit = *last
+	}
+
+	queryMods := []qm.QueryMod{}
+
+	if filterBy != nil && filterBy.Owner != nil {
+		queryMods = append(queryMods, models.DCNWhere.OwnerAddress.EQ(filterBy.Owner.Bytes()))
+	}
+
+	dcnCount, err := models.DCNS(queryMods...).Count(ctx, r.pdb.DBS().Reader)
+	if err != nil {
+		return nil, err
+	}
+
+	orderBy := " DESC"
+	if last != nil {
+		orderBy = " ASC"
+	}
+
+	queryMods = append(queryMods, []qm.QueryMod{
+		qm.Limit(limit + 1),
+		qm.OrderBy(models.DCNColumns.MintedAt + orderBy),
+	}...)
+
+	pHelp := &helpers.PaginationHelper[time.Time]{}
+	if after != nil {
+		afterT, err := pHelp.DecodeCursor(*after)
+		if err != nil {
+			return nil, err
+		}
+
+		queryMods = append(queryMods, models.DCNWhere.MintedAt.LT(*afterT))
+	} else if before != nil {
+		beforeT, err := pHelp.DecodeCursor(*before)
+		if err != nil {
+			return nil, err
+		}
+
+		queryMods = append(queryMods, models.DCNWhere.MintedAt.GT(*beforeT))
+	}
+
+	all, err := models.DCNS(queryMods...).All(ctx, r.pdb.DBS().Reader)
+	if err != nil {
+		return nil, err
+	}
+
+	hasNext := before != nil
+	hasPrevious := after != nil
+
+	if first != nil && len(all) == limit+1 {
+		hasNext = true
+		all = all[:limit]
+	} else if last != nil && len(all) == limit+1 {
+		hasPrevious = true
+		all = all[:limit]
+	}
+
+	if last != nil {
+		slices.Reverse(all)
+	}
+
+	edges := make([]*gmodel.DCNEdge, len(all))
+	nodes := make([]*gmodel.Dcn, len(all))
+
+	for i, dcn := range all {
+		c, err := pHelp.EncodeCursor(dcn.MintedAt)
+		if err != nil {
+			return nil, err
+		}
+		edges[i] = &gmodel.DCNEdge{
+			Node: &gmodel.Dcn{
+				Node:      dcn.Node,
+				Owner:     common.Address(dcn.OwnerAddress),
+				ExpiresAt: &dcn.Expiration.Time,
+				MintedAt:  dcn.MintedAt,
+				Name:      &dcn.Name.String,
+				VehicleID: &dcn.VehicleID.Int,
+			},
+			Cursor: c,
+		}
+		nodes[i] = edges[i].Node
+	}
+
+	var endCur, startCur *string
+
+	if len(all) != 0 {
+		ec, err := pHelp.EncodeCursor(all[len(all)-1].MintedAt)
+		if err != nil {
+			return nil, err
+		}
+		endCur = &ec
+
+		sc, err := pHelp.EncodeCursor(all[0].MintedAt)
+		if err != nil {
+			return nil, err
+		}
+		startCur = &sc
+	}
+
+	res := &gmodel.DCNConnection{
+		TotalCount: int(dcnCount),
+		Edges:      edges,
+		Nodes:      nodes,
+		PageInfo: &gmodel.PageInfo{
+			StartCursor:     startCur,
+			EndCursor:       endCur,
+			HasNextPage:     hasNext,
+			HasPreviousPage: hasPrevious,
+		},
+	}
+
+	return res, nil
 }
