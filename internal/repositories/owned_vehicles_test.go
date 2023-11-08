@@ -344,14 +344,6 @@ func Test_GetOwnedVehicles_Filters(t *testing.T) {
 		}
 	}
 
-	if a, err := models.Privileges().All(ctx, pdb.DBS().Reader); err != nil {
-		assert.NoError(err)
-	} else {
-		for _, b := range a {
-			fmt.Println(b.PrivilegeID, b.UserAddress, b.TokenID)
-		}
-	}
-
 	// Filter by priv expected response
 	privExpectedResp := []gmodel.VehicleEdge{
 		{Node: &gmodel.Vehicle{
