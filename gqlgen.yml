@@ -122,6 +122,30 @@ models:
         resolver: true
       dcn:
         resolver: true
+      earnings:
+        resolver: true
     extraFields:
       ManufacturerID:
         type: "*int"
+  VehicleEarnings:
+    fields:
+      history:
+        resolver: true
+    extraFields:
+      VehicleID:
+        type: "int"
+  Earning:
+    fields:
+      aftermarketDevice:
+        resolver: true
+      syntheticDevice:
+        resolver: true
+      vehicle:
+        resolver: true
+    extraFields:
+      AftermarketDeviceID:
+        type: "*int"
+      SyntheticDeviceID:
+        type: "*int"
+      VehicleID:
+        type: "int"

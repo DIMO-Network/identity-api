@@ -181,6 +181,8 @@ type Vehicle implements Node {
   definition: Definition
   dcn: DCN
   name: String!
+
+  earnings: VehicleEarnings
 }
 
 type Definition {
@@ -200,6 +202,16 @@ type VehicleConnection {
   edges: [VehicleEdge!]!
   nodes: [Vehicle!]!
   pageInfo: PageInfo!
+}
+
+type VehicleEarnings {
+  totalTokens: BigInt!
+  history(
+    first: Int
+    after: String
+    last: Int
+    before: String
+  ): EarningsConnection!
 }
 
 # Aftermarket Types
@@ -335,4 +347,66 @@ type DCN {
   Vehicle, if any, to which the domain is attached.
   """
   vehicle: Vehicle
+}
+
+# Earnings Types
+
+type Earnings {
+  earnedTokens: BigInt!
+  earningsTransfers(first: Int): EarningsConnection!
+}
+
+type Earning {
+  """
+  Week reward was issued
+  """
+  week: Int!
+  """
+  Address of Beneficiary that received reward
+  """
+  beneficiary: Address!
+  """
+  Consecutive period of which vehicle was connected
+  """
+  connectionStreak: Int
+  """
+  Tokens earned for connection period
+  """
+  streakTokens: BigInt!
+  """
+  AftermarketDevice connected to vehicle
+  """
+  aftermarketDevice: AftermarketDevice
+  """
+  Tokens earned by aftermarketDevice
+  """
+  aftermarketDeviceTokens: BigInt!
+  """
+  SyntheticDevice connected to vehicle
+  """
+  syntheticDevice: SyntheticDevice
+  """
+  Tokens earned by SyntheticDevice
+  """
+  syntheticDeviceTokens: BigInt!
+  """
+  Vehicle reward is assigned to
+  """
+  vehicle: Vehicle
+  """
+  When the token was earned
+  """
+  sentAt: Time!
+}
+
+type EarningsEdge {
+  node: Earning!
+  cursor: String!
+}
+
+type EarningsConnection {
+  totalCount: Int!
+  edges: [EarningsEdge!]!
+  nodes: [Earning!]!
+  pageInfo: PageInfo!
 }

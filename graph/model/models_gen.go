@@ -3,6 +3,7 @@
 package model
 
 import (
+	"math/big"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -99,6 +100,49 @@ type Definition struct {
 	Year  *int    `json:"year,omitempty"`
 }
 
+type Earning struct {
+	// Week reward was issued
+	Week int `json:"week"`
+	// Address of Beneficiary that received reward
+	Beneficiary common.Address `json:"beneficiary"`
+	// Consecutive period of which vehicle was connected
+	ConnectionStreak *int `json:"connectionStreak,omitempty"`
+	// Tokens earned for connection period
+	StreakTokens *big.Int `json:"streakTokens"`
+	// AftermarketDevice connected to vehicle
+	AftermarketDevice *AftermarketDevice `json:"aftermarketDevice,omitempty"`
+	// Tokens earned by aftermarketDevice
+	AftermarketDeviceTokens *big.Int `json:"aftermarketDeviceTokens"`
+	// SyntheticDevice connected to vehicle
+	SyntheticDevice *SyntheticDevice `json:"syntheticDevice,omitempty"`
+	// Tokens earned by SyntheticDevice
+	SyntheticDeviceTokens *big.Int `json:"syntheticDeviceTokens"`
+	// Vehicle reward is assigned to
+	Vehicle *Vehicle `json:"vehicle,omitempty"`
+	// When the token was earned
+	SentAt              time.Time `json:"sentAt"`
+	AftermarketDeviceID *int      `json:"-"`
+	SyntheticDeviceID   *int      `json:"-"`
+	VehicleID           int       `json:"-"`
+}
+
+type Earnings struct {
+	EarnedTokens      *big.Int            `json:"earnedTokens"`
+	EarningsTransfers *EarningsConnection `json:"earningsTransfers"`
+}
+
+type EarningsConnection struct {
+	TotalCount int             `json:"totalCount"`
+	Edges      []*EarningsEdge `json:"edges"`
+	Nodes      []*Earning      `json:"nodes"`
+	PageInfo   *PageInfo       `json:"pageInfo"`
+}
+
+type EarningsEdge struct {
+	Node   *Earning `json:"node"`
+	Cursor string   `json:"cursor"`
+}
+
 type Manufacturer struct {
 	// An opaque global identifier for this manufacturer.
 	ID string `json:"id"`
@@ -174,10 +218,11 @@ type Vehicle struct {
 	SyntheticDevice *SyntheticDevice `json:"syntheticDevice,omitempty"`
 	// The device definition for this vehicle; which includes make, model, and year among
 	// other things.
-	Definition     *Definition `json:"definition,omitempty"`
-	Dcn            *Dcn        `json:"dcn,omitempty"`
-	Name           string      `json:"name"`
-	ManufacturerID *int        `json:"-"`
+	Definition     *Definition      `json:"definition,omitempty"`
+	Dcn            *Dcn             `json:"dcn,omitempty"`
+	Name           string           `json:"name"`
+	Earnings       *VehicleEarnings `json:"earnings,omitempty"`
+	ManufacturerID *int             `json:"-"`
 }
 
 func (Vehicle) IsNode()            {}
@@ -188,6 +233,12 @@ type VehicleConnection struct {
 	Edges      []*VehicleEdge `json:"edges"`
 	Nodes      []*Vehicle     `json:"nodes"`
 	PageInfo   *PageInfo      `json:"pageInfo"`
+}
+
+type VehicleEarnings struct {
+	TotalTokens *big.Int            `json:"totalTokens"`
+	History     *EarningsConnection `json:"history"`
+	VehicleID   int                 `json:"-"`
 }
 
 type VehicleEdge struct {
