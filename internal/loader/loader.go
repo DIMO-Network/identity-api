@@ -36,7 +36,7 @@ func NewDataLoader(dbs db.Store) *Loaders {
 	// return the DataLoader
 	return &Loaders{
 		VehicleByID: dataloader.NewBatchedLoader(
-			vehicle.BatchGetLinkedVehicleByAftermarketID,
+			vehicle.BatchGetVehicleByID,
 			dataloader.WithClearCacheOnBatch[int, *model.Vehicle](),
 		),
 		AftermarketDeviceByVehicleID: dataloader.NewBatchedLoader(
