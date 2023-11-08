@@ -181,6 +181,10 @@ func (v *Repository) GetVehicles(ctx context.Context, first *int, after *string,
 			),
 		}
 
+		if filterBy.Owner != nil {
+			queryMods = append(queryMods, models.VehicleWhere.OwnerAddress.EQ(filterBy.Owner.Bytes()))
+		}
+
 		totalCount, err = models.Vehicles(
 			// We're performing this because SQLBoiler doesn't understand DISTINCT ON. If we use
 			// the original version of queryMods the entire SELECT clause will be replaced by
