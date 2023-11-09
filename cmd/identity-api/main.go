@@ -54,7 +54,7 @@ func main() {
 
 	startContractEventsConsumer(ctx, &logger, &settings, dbs)
 
-	repo := repositories.New(dbs)
+	repo := repositories.New(dbs, settings)
 
 	cfg := graph.Config{Resolvers: &graph.Resolver{
 		Repo: repo,
@@ -68,7 +68,7 @@ func main() {
 
 	s := handler.NewDefaultServer(graph.NewExecutableSchema(cfg))
 
-	srv := loader.Middleware(dbs, s)
+	srv := loader.Middleware(dbs, s, settings)
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", srv)

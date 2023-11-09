@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/binary"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -51,4 +52,12 @@ func IntToBytes(intVal int) []byte {
 	binary.LittleEndian.PutUint32(b, uint32(intVal))
 
 	return b
+}
+
+func GetVehicleImageUrl(baseURL string, tokenID int) string {
+	return fmt.Sprintf("%sv1/vehicle/%d", baseURL, tokenID)
+}
+
+func GetAfterMarketDeviceImageUrl(baseURL string, tokenID int) string {
+	return fmt.Sprintf("%sv1/aftermarket/device/%d", baseURL, tokenID)
 }

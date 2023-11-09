@@ -32,8 +32,7 @@ func (s *VehicleTestSuite) SetupSuite() {
 	ctx := context.TODO()
 	var db db.Store
 	db, s.dbCont = helpers.StartContainerDatabase(ctx, s.T(), "../migrations")
-	repo := repositories.New(db)
-	resolver := NewResolver(repo)
+
 	logger := zerolog.Nop()
 	vehicleAddr := common.HexToAddress("0x4e")
 	regAddr := common.HexToAddress("0xB9")
@@ -44,8 +43,11 @@ func (s *VehicleTestSuite) SetupSuite() {
 		VehicleNFTAddr:      vehicleAddr.Hex(),
 	}
 
+	repo := repositories.New(db, settings)
+	resolver := NewResolver(repo)
+
 	s.consumer = services.NewContractsEventsConsumer(db, &logger, &settings)
-	s.handler = loader.Middleware(db, handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: resolver})))
+	s.handler = loader.Middleware(db, handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: resolver})), settings)
 }
 
 func (s *VehicleTestSuite) TearDownSuite() {

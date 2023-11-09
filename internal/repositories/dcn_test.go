@@ -33,7 +33,7 @@ func (o *DCNRepoTestSuite) SetupSuite() {
 		DIMORegistryAddr:    "0x2daeF6FF0E2B61aaBF9ADDE1aFDAfDb4f0f1E660",
 		DIMORegistryChainID: 80001,
 	}
-	o.repo = New(o.pdb)
+	o.repo = New(o.pdb, o.settings)
 }
 
 // TearDownTest after each test truncate tables

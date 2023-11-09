@@ -34,7 +34,7 @@ func (s *VehiclesPrivilegesRepoTestSuite) SetupSuite() {
 		DIMORegistryAddr:    "0x4de1bcf2b7e851e31216fc07989caa902a604784",
 		DIMORegistryChainID: 80001,
 	}
-	s.repo = New(s.pdb)
+	s.repo = New(s.pdb, s.settings)
 }
 
 // TearDownTest after each test truncate tables

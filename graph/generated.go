@@ -8,6 +8,7 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"math/big"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -44,8 +45,10 @@ type Config struct {
 type ResolverRoot interface {
 	AftermarketDevice() AftermarketDeviceResolver
 	DCN() DCNResolver
+	Earning() EarningResolver
 	Query() QueryResolver
 	Vehicle() VehicleResolver
+	VehicleEarnings() VehicleEarningsResolver
 }
 
 type DirectiveRoot struct {
@@ -58,6 +61,7 @@ type ComplexityRoot struct {
 		Beneficiary  func(childComplexity int) int
 		ClaimedAt    func(childComplexity int) int
 		ID           func(childComplexity int) int
+		Image        func(childComplexity int) int
 		Imei         func(childComplexity int) int
 		Manufacturer func(childComplexity int) int
 		MintedAt     func(childComplexity int) int
@@ -106,6 +110,36 @@ type ComplexityRoot struct {
 		Model func(childComplexity int) int
 		URI   func(childComplexity int) int
 		Year  func(childComplexity int) int
+	}
+
+	Earning struct {
+		AftermarketDevice       func(childComplexity int) int
+		AftermarketDeviceTokens func(childComplexity int) int
+		Beneficiary             func(childComplexity int) int
+		ConnectionStreak        func(childComplexity int) int
+		SentAt                  func(childComplexity int) int
+		StreakTokens            func(childComplexity int) int
+		SyntheticDevice         func(childComplexity int) int
+		SyntheticDeviceTokens   func(childComplexity int) int
+		Vehicle                 func(childComplexity int) int
+		Week                    func(childComplexity int) int
+	}
+
+	Earnings struct {
+		EarnedTokens      func(childComplexity int) int
+		EarningsTransfers func(childComplexity int, first *int) int
+	}
+
+	EarningsConnection struct {
+		Edges      func(childComplexity int) int
+		Nodes      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	EarningsEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
 	}
 
 	Manufacturer struct {
@@ -163,7 +197,9 @@ type ComplexityRoot struct {
 		AftermarketDevice func(childComplexity int) int
 		Dcn               func(childComplexity int) int
 		Definition        func(childComplexity int) int
+		Earnings          func(childComplexity int) int
 		ID                func(childComplexity int) int
+		Image             func(childComplexity int) int
 		Manufacturer      func(childComplexity int) int
 		MintedAt          func(childComplexity int) int
 		Name              func(childComplexity int) int
@@ -180,6 +216,11 @@ type ComplexityRoot struct {
 		TotalCount func(childComplexity int) int
 	}
 
+	VehicleEarnings struct {
+		History     func(childComplexity int, first *int, after *string, last *int, before *string) int
+		TotalTokens func(childComplexity int) int
+	}
+
 	VehicleEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
@@ -193,6 +234,13 @@ type AftermarketDeviceResolver interface {
 }
 type DCNResolver interface {
 	Vehicle(ctx context.Context, obj *model.Dcn) (*model.Vehicle, error)
+}
+type EarningResolver interface {
+	AftermarketDevice(ctx context.Context, obj *model.Earning) (*model.AftermarketDevice, error)
+
+	SyntheticDevice(ctx context.Context, obj *model.Earning) (*model.SyntheticDevice, error)
+
+	Vehicle(ctx context.Context, obj *model.Earning) (*model.Vehicle, error)
 }
 type QueryResolver interface {
 	Node(ctx context.Context, id string) (model.Node, error)
@@ -211,6 +259,11 @@ type VehicleResolver interface {
 	SyntheticDevice(ctx context.Context, obj *model.Vehicle) (*model.SyntheticDevice, error)
 
 	Dcn(ctx context.Context, obj *model.Vehicle) (*model.Dcn, error)
+
+	Earnings(ctx context.Context, obj *model.Vehicle) (*model.VehicleEarnings, error)
+}
+type VehicleEarningsResolver interface {
+	History(ctx context.Context, obj *model.VehicleEarnings, first *int, after *string, last *int, before *string) (*model.EarningsConnection, error)
 }
 
 type executableSchema struct {
@@ -259,6 +312,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.AftermarketDevice.ID(childComplexity), true
+
+	case "AftermarketDevice.image":
+		if e.complexity.AftermarketDevice.Image == nil {
+			break
+		}
+
+		return e.complexity.AftermarketDevice.Image(childComplexity), true
 
 	case "AftermarketDevice.imei":
 		if e.complexity.AftermarketDevice.Imei == nil {
@@ -469,6 +529,137 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Definition.Year(childComplexity), true
+
+	case "Earning.aftermarketDevice":
+		if e.complexity.Earning.AftermarketDevice == nil {
+			break
+		}
+
+		return e.complexity.Earning.AftermarketDevice(childComplexity), true
+
+	case "Earning.aftermarketDeviceTokens":
+		if e.complexity.Earning.AftermarketDeviceTokens == nil {
+			break
+		}
+
+		return e.complexity.Earning.AftermarketDeviceTokens(childComplexity), true
+
+	case "Earning.beneficiary":
+		if e.complexity.Earning.Beneficiary == nil {
+			break
+		}
+
+		return e.complexity.Earning.Beneficiary(childComplexity), true
+
+	case "Earning.connectionStreak":
+		if e.complexity.Earning.ConnectionStreak == nil {
+			break
+		}
+
+		return e.complexity.Earning.ConnectionStreak(childComplexity), true
+
+	case "Earning.sentAt":
+		if e.complexity.Earning.SentAt == nil {
+			break
+		}
+
+		return e.complexity.Earning.SentAt(childComplexity), true
+
+	case "Earning.streakTokens":
+		if e.complexity.Earning.StreakTokens == nil {
+			break
+		}
+
+		return e.complexity.Earning.StreakTokens(childComplexity), true
+
+	case "Earning.syntheticDevice":
+		if e.complexity.Earning.SyntheticDevice == nil {
+			break
+		}
+
+		return e.complexity.Earning.SyntheticDevice(childComplexity), true
+
+	case "Earning.syntheticDeviceTokens":
+		if e.complexity.Earning.SyntheticDeviceTokens == nil {
+			break
+		}
+
+		return e.complexity.Earning.SyntheticDeviceTokens(childComplexity), true
+
+	case "Earning.vehicle":
+		if e.complexity.Earning.Vehicle == nil {
+			break
+		}
+
+		return e.complexity.Earning.Vehicle(childComplexity), true
+
+	case "Earning.week":
+		if e.complexity.Earning.Week == nil {
+			break
+		}
+
+		return e.complexity.Earning.Week(childComplexity), true
+
+	case "Earnings.earnedTokens":
+		if e.complexity.Earnings.EarnedTokens == nil {
+			break
+		}
+
+		return e.complexity.Earnings.EarnedTokens(childComplexity), true
+
+	case "Earnings.earningsTransfers":
+		if e.complexity.Earnings.EarningsTransfers == nil {
+			break
+		}
+
+		args, err := ec.field_Earnings_earningsTransfers_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Earnings.EarningsTransfers(childComplexity, args["first"].(*int)), true
+
+	case "EarningsConnection.edges":
+		if e.complexity.EarningsConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.EarningsConnection.Edges(childComplexity), true
+
+	case "EarningsConnection.nodes":
+		if e.complexity.EarningsConnection.Nodes == nil {
+			break
+		}
+
+		return e.complexity.EarningsConnection.Nodes(childComplexity), true
+
+	case "EarningsConnection.pageInfo":
+		if e.complexity.EarningsConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.EarningsConnection.PageInfo(childComplexity), true
+
+	case "EarningsConnection.totalCount":
+		if e.complexity.EarningsConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.EarningsConnection.TotalCount(childComplexity), true
+
+	case "EarningsEdge.cursor":
+		if e.complexity.EarningsEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.EarningsEdge.Cursor(childComplexity), true
+
+	case "EarningsEdge.node":
+		if e.complexity.EarningsEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.EarningsEdge.Node(childComplexity), true
 
 	case "Manufacturer.id":
 		if e.complexity.Manufacturer.ID == nil {
@@ -736,12 +927,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Vehicle.Definition(childComplexity), true
 
+	case "Vehicle.earnings":
+		if e.complexity.Vehicle.Earnings == nil {
+			break
+		}
+
+		return e.complexity.Vehicle.Earnings(childComplexity), true
+
 	case "Vehicle.id":
 		if e.complexity.Vehicle.ID == nil {
 			break
 		}
 
 		return e.complexity.Vehicle.ID(childComplexity), true
+
+	case "Vehicle.image":
+		if e.complexity.Vehicle.Image == nil {
+			break
+		}
+
+		return e.complexity.Vehicle.Image(childComplexity), true
 
 	case "Vehicle.manufacturer":
 		if e.complexity.Vehicle.Manufacturer == nil {
@@ -824,6 +1029,25 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.VehicleConnection.TotalCount(childComplexity), true
+
+	case "VehicleEarnings.history":
+		if e.complexity.VehicleEarnings.History == nil {
+			break
+		}
+
+		args, err := ec.field_VehicleEarnings_history_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.VehicleEarnings.History(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
+
+	case "VehicleEarnings.totalTokens":
+		if e.complexity.VehicleEarnings.TotalTokens == nil {
+			break
+		}
+
+		return e.complexity.VehicleEarnings.TotalTokens(childComplexity), true
 
 	case "VehicleEdge.cursor":
 		if e.complexity.VehicleEdge.Cursor == nil {
@@ -953,6 +1177,21 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_Earnings_earningsTransfers_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *int
+	if tmp, ok := rawArgs["first"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["first"] = arg0
+	return args, nil
+}
 
 func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -1179,6 +1418,48 @@ func (ec *executionContext) field_Query_vehicles_args(ctx context.Context, rawAr
 		}
 	}
 	args["filterBy"] = arg4
+	return args, nil
+}
+
+func (ec *executionContext) field_VehicleEarnings_history_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *int
+	if tmp, ok := rawArgs["first"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["first"] = arg0
+	var arg1 *string
+	if tmp, ok := rawArgs["after"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["after"] = arg1
+	var arg2 *int
+	if tmp, ok := rawArgs["last"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+		arg2, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["last"] = arg2
+	var arg3 *string
+	if tmp, ok := rawArgs["before"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+		arg3, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["before"] = arg3
 	return args, nil
 }
 
@@ -1725,6 +2006,10 @@ func (ec *executionContext) fieldContext_AftermarketDevice_vehicle(ctx context.C
 				return ec.fieldContext_Vehicle_dcn(ctx, field)
 			case "name":
 				return ec.fieldContext_Vehicle_name(ctx, field)
+			case "image":
+				return ec.fieldContext_Vehicle_image(ctx, field)
+			case "earnings":
+				return ec.fieldContext_Vehicle_earnings(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
 		},
@@ -1808,6 +2093,50 @@ func (ec *executionContext) _AftermarketDevice_name(ctx context.Context, field g
 }
 
 func (ec *executionContext) fieldContext_AftermarketDevice_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AftermarketDevice",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AftermarketDevice_image(ctx context.Context, field graphql.CollectedField, obj *model.AftermarketDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AftermarketDevice_image(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Image, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AftermarketDevice_image(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AftermarketDevice",
 		Field:      field,
@@ -1977,6 +2306,8 @@ func (ec *executionContext) fieldContext_AftermarketDeviceConnection_nodes(ctx c
 				return ec.fieldContext_AftermarketDevice_beneficiary(ctx, field)
 			case "name":
 				return ec.fieldContext_AftermarketDevice_name(ctx, field)
+			case "image":
+				return ec.fieldContext_AftermarketDevice_image(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type AftermarketDevice", field.Name)
 		},
@@ -2145,6 +2476,8 @@ func (ec *executionContext) fieldContext_AftermarketDeviceEdge_node(ctx context.
 				return ec.fieldContext_AftermarketDevice_beneficiary(ctx, field)
 			case "name":
 				return ec.fieldContext_AftermarketDevice_name(ctx, field)
+			case "image":
+				return ec.fieldContext_AftermarketDevice_image(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type AftermarketDevice", field.Name)
 		},
@@ -2424,6 +2757,10 @@ func (ec *executionContext) fieldContext_DCN_vehicle(ctx context.Context, field 
 				return ec.fieldContext_Vehicle_dcn(ctx, field)
 			case "name":
 				return ec.fieldContext_Vehicle_name(ctx, field)
+			case "image":
+				return ec.fieldContext_Vehicle_image(ctx, field)
+			case "earnings":
+				return ec.fieldContext_Vehicle_earnings(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
 		},
@@ -2898,6 +3235,933 @@ func (ec *executionContext) fieldContext_Definition_year(ctx context.Context, fi
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Earning_week(ctx context.Context, field graphql.CollectedField, obj *model.Earning) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Earning_week(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Week, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Earning_week(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Earning",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Earning_beneficiary(ctx context.Context, field graphql.CollectedField, obj *model.Earning) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Earning_beneficiary(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Beneficiary, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(common.Address)
+	fc.Result = res
+	return ec.marshalNAddress2githubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Earning_beneficiary(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Earning",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Address does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Earning_connectionStreak(ctx context.Context, field graphql.CollectedField, obj *model.Earning) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Earning_connectionStreak(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ConnectionStreak, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Earning_connectionStreak(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Earning",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Earning_streakTokens(ctx context.Context, field graphql.CollectedField, obj *model.Earning) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Earning_streakTokens(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.StreakTokens, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*big.Int)
+	fc.Result = res
+	return ec.marshalNBigInt2ᚖmathᚋbigᚐInt(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Earning_streakTokens(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Earning",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type BigInt does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Earning_aftermarketDevice(ctx context.Context, field graphql.CollectedField, obj *model.Earning) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Earning_aftermarketDevice(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Earning().AftermarketDevice(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.AftermarketDevice)
+	fc.Result = res
+	return ec.marshalOAftermarketDevice2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDevice(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Earning_aftermarketDevice(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Earning",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_AftermarketDevice_id(ctx, field)
+			case "tokenId":
+				return ec.fieldContext_AftermarketDevice_tokenId(ctx, field)
+			case "manufacturer":
+				return ec.fieldContext_AftermarketDevice_manufacturer(ctx, field)
+			case "address":
+				return ec.fieldContext_AftermarketDevice_address(ctx, field)
+			case "owner":
+				return ec.fieldContext_AftermarketDevice_owner(ctx, field)
+			case "serial":
+				return ec.fieldContext_AftermarketDevice_serial(ctx, field)
+			case "imei":
+				return ec.fieldContext_AftermarketDevice_imei(ctx, field)
+			case "mintedAt":
+				return ec.fieldContext_AftermarketDevice_mintedAt(ctx, field)
+			case "claimedAt":
+				return ec.fieldContext_AftermarketDevice_claimedAt(ctx, field)
+			case "vehicle":
+				return ec.fieldContext_AftermarketDevice_vehicle(ctx, field)
+			case "beneficiary":
+				return ec.fieldContext_AftermarketDevice_beneficiary(ctx, field)
+			case "name":
+				return ec.fieldContext_AftermarketDevice_name(ctx, field)
+			case "image":
+				return ec.fieldContext_AftermarketDevice_image(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AftermarketDevice", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Earning_aftermarketDeviceTokens(ctx context.Context, field graphql.CollectedField, obj *model.Earning) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Earning_aftermarketDeviceTokens(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AftermarketDeviceTokens, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*big.Int)
+	fc.Result = res
+	return ec.marshalNBigInt2ᚖmathᚋbigᚐInt(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Earning_aftermarketDeviceTokens(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Earning",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type BigInt does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Earning_syntheticDevice(ctx context.Context, field graphql.CollectedField, obj *model.Earning) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Earning_syntheticDevice(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Earning().SyntheticDevice(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.SyntheticDevice)
+	fc.Result = res
+	return ec.marshalOSyntheticDevice2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSyntheticDevice(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Earning_syntheticDevice(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Earning",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "tokenId":
+				return ec.fieldContext_SyntheticDevice_tokenId(ctx, field)
+			case "integrationId":
+				return ec.fieldContext_SyntheticDevice_integrationId(ctx, field)
+			case "address":
+				return ec.fieldContext_SyntheticDevice_address(ctx, field)
+			case "mintedAt":
+				return ec.fieldContext_SyntheticDevice_mintedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SyntheticDevice", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Earning_syntheticDeviceTokens(ctx context.Context, field graphql.CollectedField, obj *model.Earning) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Earning_syntheticDeviceTokens(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SyntheticDeviceTokens, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*big.Int)
+	fc.Result = res
+	return ec.marshalNBigInt2ᚖmathᚋbigᚐInt(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Earning_syntheticDeviceTokens(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Earning",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type BigInt does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Earning_vehicle(ctx context.Context, field graphql.CollectedField, obj *model.Earning) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Earning_vehicle(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Earning().Vehicle(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Vehicle)
+	fc.Result = res
+	return ec.marshalOVehicle2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐVehicle(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Earning_vehicle(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Earning",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Vehicle_id(ctx, field)
+			case "tokenId":
+				return ec.fieldContext_Vehicle_tokenId(ctx, field)
+			case "manufacturer":
+				return ec.fieldContext_Vehicle_manufacturer(ctx, field)
+			case "owner":
+				return ec.fieldContext_Vehicle_owner(ctx, field)
+			case "mintedAt":
+				return ec.fieldContext_Vehicle_mintedAt(ctx, field)
+			case "aftermarketDevice":
+				return ec.fieldContext_Vehicle_aftermarketDevice(ctx, field)
+			case "privileges":
+				return ec.fieldContext_Vehicle_privileges(ctx, field)
+			case "syntheticDevice":
+				return ec.fieldContext_Vehicle_syntheticDevice(ctx, field)
+			case "definition":
+				return ec.fieldContext_Vehicle_definition(ctx, field)
+			case "dcn":
+				return ec.fieldContext_Vehicle_dcn(ctx, field)
+			case "name":
+				return ec.fieldContext_Vehicle_name(ctx, field)
+			case "image":
+				return ec.fieldContext_Vehicle_image(ctx, field)
+			case "earnings":
+				return ec.fieldContext_Vehicle_earnings(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Earning_sentAt(ctx context.Context, field graphql.CollectedField, obj *model.Earning) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Earning_sentAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SentAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Earning_sentAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Earning",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Earnings_earnedTokens(ctx context.Context, field graphql.CollectedField, obj *model.Earnings) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Earnings_earnedTokens(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.EarnedTokens, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*big.Int)
+	fc.Result = res
+	return ec.marshalNBigInt2ᚖmathᚋbigᚐInt(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Earnings_earnedTokens(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Earnings",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type BigInt does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Earnings_earningsTransfers(ctx context.Context, field graphql.CollectedField, obj *model.Earnings) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Earnings_earningsTransfers(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.EarningsTransfers, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.EarningsConnection)
+	fc.Result = res
+	return ec.marshalNEarningsConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐEarningsConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Earnings_earningsTransfers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Earnings",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_EarningsConnection_totalCount(ctx, field)
+			case "edges":
+				return ec.fieldContext_EarningsConnection_edges(ctx, field)
+			case "nodes":
+				return ec.fieldContext_EarningsConnection_nodes(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_EarningsConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type EarningsConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Earnings_earningsTransfers_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EarningsConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.EarningsConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_EarningsConnection_totalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_EarningsConnection_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EarningsConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EarningsConnection_edges(ctx context.Context, field graphql.CollectedField, obj *model.EarningsConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_EarningsConnection_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.EarningsEdge)
+	fc.Result = res
+	return ec.marshalNEarningsEdge2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐEarningsEdgeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_EarningsConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EarningsConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "node":
+				return ec.fieldContext_EarningsEdge_node(ctx, field)
+			case "cursor":
+				return ec.fieldContext_EarningsEdge_cursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type EarningsEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EarningsConnection_nodes(ctx context.Context, field graphql.CollectedField, obj *model.EarningsConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_EarningsConnection_nodes(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Nodes, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Earning)
+	fc.Result = res
+	return ec.marshalNEarning2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐEarningᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_EarningsConnection_nodes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EarningsConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "week":
+				return ec.fieldContext_Earning_week(ctx, field)
+			case "beneficiary":
+				return ec.fieldContext_Earning_beneficiary(ctx, field)
+			case "connectionStreak":
+				return ec.fieldContext_Earning_connectionStreak(ctx, field)
+			case "streakTokens":
+				return ec.fieldContext_Earning_streakTokens(ctx, field)
+			case "aftermarketDevice":
+				return ec.fieldContext_Earning_aftermarketDevice(ctx, field)
+			case "aftermarketDeviceTokens":
+				return ec.fieldContext_Earning_aftermarketDeviceTokens(ctx, field)
+			case "syntheticDevice":
+				return ec.fieldContext_Earning_syntheticDevice(ctx, field)
+			case "syntheticDeviceTokens":
+				return ec.fieldContext_Earning_syntheticDeviceTokens(ctx, field)
+			case "vehicle":
+				return ec.fieldContext_Earning_vehicle(ctx, field)
+			case "sentAt":
+				return ec.fieldContext_Earning_sentAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Earning", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EarningsConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.EarningsConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_EarningsConnection_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_EarningsConnection_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EarningsConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EarningsEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.EarningsEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_EarningsEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Earning)
+	fc.Result = res
+	return ec.marshalNEarning2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐEarning(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_EarningsEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EarningsEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "week":
+				return ec.fieldContext_Earning_week(ctx, field)
+			case "beneficiary":
+				return ec.fieldContext_Earning_beneficiary(ctx, field)
+			case "connectionStreak":
+				return ec.fieldContext_Earning_connectionStreak(ctx, field)
+			case "streakTokens":
+				return ec.fieldContext_Earning_streakTokens(ctx, field)
+			case "aftermarketDevice":
+				return ec.fieldContext_Earning_aftermarketDevice(ctx, field)
+			case "aftermarketDeviceTokens":
+				return ec.fieldContext_Earning_aftermarketDeviceTokens(ctx, field)
+			case "syntheticDevice":
+				return ec.fieldContext_Earning_syntheticDevice(ctx, field)
+			case "syntheticDeviceTokens":
+				return ec.fieldContext_Earning_syntheticDeviceTokens(ctx, field)
+			case "vehicle":
+				return ec.fieldContext_Earning_vehicle(ctx, field)
+			case "sentAt":
+				return ec.fieldContext_Earning_sentAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Earning", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EarningsEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.EarningsEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_EarningsEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_EarningsEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EarningsEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -3882,6 +5146,10 @@ func (ec *executionContext) fieldContext_Query_vehicle(ctx context.Context, fiel
 				return ec.fieldContext_Vehicle_dcn(ctx, field)
 			case "name":
 				return ec.fieldContext_Vehicle_name(ctx, field)
+			case "image":
+				return ec.fieldContext_Vehicle_image(ctx, field)
+			case "earnings":
+				return ec.fieldContext_Vehicle_earnings(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
 		},
@@ -4028,6 +5296,8 @@ func (ec *executionContext) fieldContext_Query_aftermarketDevice(ctx context.Con
 				return ec.fieldContext_AftermarketDevice_beneficiary(ctx, field)
 			case "name":
 				return ec.fieldContext_AftermarketDevice_name(ctx, field)
+			case "image":
+				return ec.fieldContext_AftermarketDevice_image(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type AftermarketDevice", field.Name)
 		},
@@ -4839,6 +6109,8 @@ func (ec *executionContext) fieldContext_Vehicle_aftermarketDevice(ctx context.C
 				return ec.fieldContext_AftermarketDevice_beneficiary(ctx, field)
 			case "name":
 				return ec.fieldContext_AftermarketDevice_name(ctx, field)
+			case "image":
+				return ec.fieldContext_AftermarketDevice_image(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type AftermarketDevice", field.Name)
 		},
@@ -5112,6 +6384,97 @@ func (ec *executionContext) fieldContext_Vehicle_name(ctx context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _Vehicle_image(ctx context.Context, field graphql.CollectedField, obj *model.Vehicle) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Vehicle_image(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Image, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Vehicle_image(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Vehicle",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Vehicle_earnings(ctx context.Context, field graphql.CollectedField, obj *model.Vehicle) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Vehicle_earnings(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Vehicle().Earnings(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.VehicleEarnings)
+	fc.Result = res
+	return ec.marshalOVehicleEarnings2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐVehicleEarnings(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Vehicle_earnings(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Vehicle",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "totalTokens":
+				return ec.fieldContext_VehicleEarnings_totalTokens(ctx, field)
+			case "history":
+				return ec.fieldContext_VehicleEarnings_history(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type VehicleEarnings", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _VehicleConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.VehicleConnection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_VehicleConnection_totalCount(ctx, field)
 	if err != nil {
@@ -5267,6 +6630,10 @@ func (ec *executionContext) fieldContext_VehicleConnection_nodes(ctx context.Con
 				return ec.fieldContext_Vehicle_dcn(ctx, field)
 			case "name":
 				return ec.fieldContext_Vehicle_name(ctx, field)
+			case "image":
+				return ec.fieldContext_Vehicle_image(ctx, field)
+			case "earnings":
+				return ec.fieldContext_Vehicle_earnings(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
 		},
@@ -5324,6 +6691,115 @@ func (ec *executionContext) fieldContext_VehicleConnection_pageInfo(ctx context.
 			}
 			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _VehicleEarnings_totalTokens(ctx context.Context, field graphql.CollectedField, obj *model.VehicleEarnings) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VehicleEarnings_totalTokens(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalTokens, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*big.Int)
+	fc.Result = res
+	return ec.marshalNBigInt2ᚖmathᚋbigᚐInt(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VehicleEarnings_totalTokens(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VehicleEarnings",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type BigInt does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _VehicleEarnings_history(ctx context.Context, field graphql.CollectedField, obj *model.VehicleEarnings) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VehicleEarnings_history(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.VehicleEarnings().History(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.EarningsConnection)
+	fc.Result = res
+	return ec.marshalNEarningsConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐEarningsConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VehicleEarnings_history(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VehicleEarnings",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_EarningsConnection_totalCount(ctx, field)
+			case "edges":
+				return ec.fieldContext_EarningsConnection_edges(ctx, field)
+			case "nodes":
+				return ec.fieldContext_EarningsConnection_nodes(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_EarningsConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type EarningsConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_VehicleEarnings_history_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -5389,6 +6865,10 @@ func (ec *executionContext) fieldContext_VehicleEdge_node(ctx context.Context, f
 				return ec.fieldContext_Vehicle_dcn(ctx, field)
 			case "name":
 				return ec.fieldContext_Vehicle_name(ctx, field)
+			case "image":
+				return ec.fieldContext_Vehicle_image(ctx, field)
+			case "earnings":
+				return ec.fieldContext_Vehicle_earnings(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
 		},
@@ -7314,7 +8794,7 @@ func (ec *executionContext) unmarshalInputAftermarketDevicesFilter(ctx context.C
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"owner"}
+	fieldsInOrder := [...]string{"owner", "beneficiary"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -7330,6 +8810,15 @@ func (ec *executionContext) unmarshalInputAftermarketDevicesFilter(ctx context.C
 				return it, err
 			}
 			it.Owner = data
+		case "beneficiary":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("beneficiary"))
+			data, err := ec.unmarshalOAddress2ᚖgithubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Beneficiary = data
 		}
 	}
 
@@ -7644,6 +9133,11 @@ func (ec *executionContext) _AftermarketDevice(ctx context.Context, sel ast.Sele
 			}
 		case "name":
 			out.Values[i] = ec._AftermarketDevice_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "image":
+			out.Values[i] = ec._AftermarketDevice_image(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -7971,6 +9465,313 @@ func (ec *executionContext) _Definition(ctx context.Context, sel ast.SelectionSe
 			out.Values[i] = ec._Definition_model(ctx, field, obj)
 		case "year":
 			out.Values[i] = ec._Definition_year(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var earningImplementors = []string{"Earning"}
+
+func (ec *executionContext) _Earning(ctx context.Context, sel ast.SelectionSet, obj *model.Earning) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, earningImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Earning")
+		case "week":
+			out.Values[i] = ec._Earning_week(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "beneficiary":
+			out.Values[i] = ec._Earning_beneficiary(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "connectionStreak":
+			out.Values[i] = ec._Earning_connectionStreak(ctx, field, obj)
+		case "streakTokens":
+			out.Values[i] = ec._Earning_streakTokens(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "aftermarketDevice":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Earning_aftermarketDevice(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "aftermarketDeviceTokens":
+			out.Values[i] = ec._Earning_aftermarketDeviceTokens(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "syntheticDevice":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Earning_syntheticDevice(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "syntheticDeviceTokens":
+			out.Values[i] = ec._Earning_syntheticDeviceTokens(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "vehicle":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Earning_vehicle(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "sentAt":
+			out.Values[i] = ec._Earning_sentAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var earningsImplementors = []string{"Earnings"}
+
+func (ec *executionContext) _Earnings(ctx context.Context, sel ast.SelectionSet, obj *model.Earnings) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, earningsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Earnings")
+		case "earnedTokens":
+			out.Values[i] = ec._Earnings_earnedTokens(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "earningsTransfers":
+			out.Values[i] = ec._Earnings_earningsTransfers(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var earningsConnectionImplementors = []string{"EarningsConnection"}
+
+func (ec *executionContext) _EarningsConnection(ctx context.Context, sel ast.SelectionSet, obj *model.EarningsConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, earningsConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EarningsConnection")
+		case "totalCount":
+			out.Values[i] = ec._EarningsConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "edges":
+			out.Values[i] = ec._EarningsConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "nodes":
+			out.Values[i] = ec._EarningsConnection_nodes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._EarningsConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var earningsEdgeImplementors = []string{"EarningsEdge"}
+
+func (ec *executionContext) _EarningsEdge(ctx context.Context, sel ast.SelectionSet, obj *model.EarningsEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, earningsEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EarningsEdge")
+		case "node":
+			out.Values[i] = ec._EarningsEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cursor":
+			out.Values[i] = ec._EarningsEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -8714,6 +10515,44 @@ func (ec *executionContext) _Vehicle(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "image":
+			out.Values[i] = ec._Vehicle_image(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "earnings":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Vehicle_earnings(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -8768,6 +10607,81 @@ func (ec *executionContext) _VehicleConnection(ctx context.Context, sel ast.Sele
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var vehicleEarningsImplementors = []string{"VehicleEarnings"}
+
+func (ec *executionContext) _VehicleEarnings(ctx context.Context, sel ast.SelectionSet, obj *model.VehicleEarnings) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, vehicleEarningsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("VehicleEarnings")
+		case "totalTokens":
+			out.Values[i] = ec._VehicleEarnings_totalTokens(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "history":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._VehicleEarnings_history(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -9307,6 +11221,27 @@ func (ec *executionContext) marshalNAftermarketDeviceEdge2ᚖgithubᚗcomᚋDIMO
 	return ec._AftermarketDeviceEdge(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNBigInt2ᚖmathᚋbigᚐInt(ctx context.Context, v interface{}) (*big.Int, error) {
+	res, err := types.UnmarshalBigInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNBigInt2ᚖmathᚋbigᚐInt(ctx context.Context, sel ast.SelectionSet, v *big.Int) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	res := types.MarshalBigInt(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -9472,6 +11407,128 @@ func (ec *executionContext) marshalNDCNEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋi
 		return graphql.Null
 	}
 	return ec._DCNEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNEarning2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐEarningᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Earning) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNEarning2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐEarning(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNEarning2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐEarning(ctx context.Context, sel ast.SelectionSet, v *model.Earning) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Earning(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNEarningsConnection2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐEarningsConnection(ctx context.Context, sel ast.SelectionSet, v model.EarningsConnection) graphql.Marshaler {
+	return ec._EarningsConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNEarningsConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐEarningsConnection(ctx context.Context, sel ast.SelectionSet, v *model.EarningsConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._EarningsConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNEarningsEdge2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐEarningsEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.EarningsEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNEarningsEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐEarningsEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNEarningsEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐEarningsEdge(ctx context.Context, sel ast.SelectionSet, v *model.EarningsEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._EarningsEdge(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
@@ -10219,6 +12276,13 @@ func (ec *executionContext) marshalOVehicle2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋi
 		return graphql.Null
 	}
 	return ec._Vehicle(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOVehicleEarnings2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐVehicleEarnings(ctx context.Context, sel ast.SelectionSet, v *model.VehicleEarnings) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._VehicleEarnings(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOVehiclesFilter2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐVehiclesFilter(ctx context.Context, v interface{}) (*model.VehiclesFilter, error) {

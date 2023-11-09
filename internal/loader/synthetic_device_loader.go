@@ -3,6 +3,7 @@ package loader
 import (
 	"context"
 
+	"github.com/DIMO-Network/identity-api/graph/model"
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/models"
@@ -19,6 +20,15 @@ func GetSyntheticDeviceByVehicleID(ctx context.Context, vehicleID int) (*gmodel.
 	loaders := ctx.Value(dataLoadersKey).(*Loaders)
 	// invoke and get thunk
 	thunk := loaders.SyntheticDeviceByVehicleID.Load(ctx, vehicleID)
+	// read value from thunk
+	return thunk()
+}
+
+func GetSyntheticDeviceByID(ctx context.Context, vehicleID int) (*gmodel.SyntheticDevice, error) {
+	// read loader from context
+	loaders := ctx.Value(dataLoadersKey).(*Loaders)
+	// invoke and get thunk
+	thunk := loaders.SyntheticDeviceByID.Load(ctx, vehicleID)
 	// read value from thunk
 	return thunk()
 }
@@ -51,6 +61,35 @@ func (sd *SyntheticDeviceLoader) BatchGetSyntheticDeviceByVehicleID(ctx context.
 			results[idx] = &dataloader.Result[*gmodel.SyntheticDevice]{}
 		}
 
+	}
+
+	return results
+}
+
+// BatchGetSyntheticDeviceByVehicleID implements the dataloader for finding synthetic devices by their ids and returns
+// them in the order requested
+func (sd *SyntheticDeviceLoader) BatchGetSyntheticDeviceByID(ctx context.Context, syntheticDeviceIDs []int) []*dataloader.Result[*gmodel.SyntheticDevice] {
+	results := make([]*dataloader.Result[*gmodel.SyntheticDevice], len(syntheticDeviceIDs))
+
+	sds, err := models.SyntheticDevices(models.SyntheticDeviceWhere.ID.IN(syntheticDeviceIDs)).All(ctx, sd.db.DBS().Reader)
+	if err != nil {
+		for i := range results {
+			results[i] = &dataloader.Result[*model.SyntheticDevice]{Error: err}
+		}
+		return results
+	}
+
+	sdByID := make(map[int]*models.SyntheticDevice)
+	for _, sdv := range sds {
+		sdByID[sdv.ID] = sdv
+	}
+
+	for i, sdID := range syntheticDeviceIDs {
+		if sdv, ok := sdByID[sdID]; ok {
+			results[i] = &dataloader.Result[*model.SyntheticDevice]{Data: repositories.SyntheticDeviceToAPI(sdv)}
+		} else {
+			results[i] = &dataloader.Result[*model.SyntheticDevice]{}
+		}
 	}
 
 	return results
