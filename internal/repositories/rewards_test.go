@@ -7,11 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DIMO-Network/identity-api/graph/model"
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
-	test "github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/shared/dbtypes"
@@ -34,7 +32,7 @@ type RewardsRepoTestSuite struct {
 
 func (r *RewardsRepoTestSuite) SetupSuite() {
 	r.ctx = context.Background()
-	r.pdb, r.container = test.StartContainerDatabase(r.ctx, r.T(), "../../migrations")
+	r.pdb, r.container = helpers.StartContainerDatabase(r.ctx, r.T(), "../../migrations")
 
 	r.settings = config.Settings{
 		DIMORegistryAddr:    "0x4de1bcf2b7e851e31216fc07989caa902a604784",
@@ -45,7 +43,7 @@ func (r *RewardsRepoTestSuite) SetupSuite() {
 
 // TearDownTest after each test truncate tables
 func (r *RewardsRepoTestSuite) TearDownTest() {
-	test.TruncateTables(r.pdb.DBS().Writer.DB, r.T())
+	helpers.TruncateTables(r.pdb.DBS().Writer.DB, r.T())
 }
 
 // TearDownSuite cleanup at end by terminating container
@@ -112,7 +110,7 @@ func (r *RewardsRepoTestSuite) createDependentRecords() {
 }
 
 func (r *RewardsRepoTestSuite) Test_GetEarningsByVehicleID_Success() {
-	_, ben, err := test.GenerateWallet()
+	_, ben, err := helpers.GenerateWallet()
 	r.NoError(err)
 
 	currTime := time.Now().UTC().Truncate(time.Second)
@@ -196,7 +194,7 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByVehicleID_NoRows() {
 }
 
 func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_Disallow_FirstAndLast() {
-	_, beneficiary, err := test.GenerateWallet()
+	_, beneficiary, err := helpers.GenerateWallet()
 	r.NoError(err)
 
 	currTime := time.Now().UTC().Truncate(time.Second)
@@ -260,7 +258,7 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_Disallow_FirstAn
 }
 
 func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_FwdPagination_First() {
-	_, beneficiary, err := test.GenerateWallet()
+	_, beneficiary, err := helpers.GenerateWallet()
 	r.NoError(err)
 
 	currTime := time.Now().UTC().Truncate(time.Second)
@@ -326,16 +324,16 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_FwdPagination_Fi
 	syntID := 1
 	connStrk := 21
 
-	r.Equal(&model.PageInfo{
+	r.Equal(&gmodel.PageInfo{
 		EndCursor:       &crsr,
 		HasNextPage:     true,
 		HasPreviousPage: false,
 		StartCursor:     &crsr,
 	}, paginatedEarnings.PageInfo)
 	r.Equal(2, paginatedEarnings.TotalCount)
-	r.Equal([]*model.EarningsEdge{
+	r.Equal([]*gmodel.EarningsEdge{
 		{
-			Node: &model.Earning{
+			Node: &gmodel.Earning{
 				Week:                    2,
 				Beneficiary:             common.BytesToAddress(beneficiary.Bytes()),
 				ConnectionStreak:        &connStrk,
@@ -353,7 +351,7 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_FwdPagination_Fi
 }
 
 func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_FwdPagination_First_After() {
-	_, beneficiary, err := test.GenerateWallet()
+	_, beneficiary, err := helpers.GenerateWallet()
 	r.NoError(err)
 
 	currTime := time.Now().UTC().Truncate(time.Second)
@@ -431,16 +429,16 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_FwdPagination_Fi
 	syntID := 1
 	connStrk := [2]int{21, 20}
 
-	r.Equal(&model.PageInfo{
+	r.Equal(&gmodel.PageInfo{
 		EndCursor:       &endCrsr,
 		HasNextPage:     false,
 		HasPreviousPage: true,
 		StartCursor:     &startCrsr,
 	}, paginatedEarnings.PageInfo)
 	r.Equal(3, paginatedEarnings.TotalCount)
-	r.Equal([]*model.EarningsEdge{
+	r.Equal([]*gmodel.EarningsEdge{
 		{
-			Node: &model.Earning{
+			Node: &gmodel.Earning{
 				Week:                    2,
 				Beneficiary:             common.BytesToAddress(beneficiary.Bytes()),
 				ConnectionStreak:        &connStrk[0],
@@ -455,7 +453,7 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_FwdPagination_Fi
 			Cursor: startCrsr,
 		},
 		{
-			Node: &model.Earning{
+			Node: &gmodel.Earning{
 				Week:                    1,
 				Beneficiary:             common.BytesToAddress(beneficiary.Bytes()),
 				ConnectionStreak:        &connStrk[1],
@@ -473,7 +471,7 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_FwdPagination_Fi
 }
 
 func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_FwdPagination_EmptyWhenOutOfBounds() {
-	_, beneficiary, err := test.GenerateWallet()
+	_, beneficiary, err := helpers.GenerateWallet()
 	r.NoError(err)
 
 	currTime := time.Now().UTC().Truncate(time.Second)
@@ -556,7 +554,7 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_FwdPagination_Em
 }
 
 func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_BackPagination_Last() {
-	_, beneficiary, err := test.GenerateWallet()
+	_, beneficiary, err := helpers.GenerateWallet()
 	r.NoError(err)
 
 	currTime := time.Now().UTC().Truncate(time.Second)
@@ -624,16 +622,16 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_BackPagination_L
 
 	connStrk := 20
 
-	r.Equal(&model.PageInfo{
+	r.Equal(&gmodel.PageInfo{
 		EndCursor:       &crsr,
 		HasNextPage:     false,
 		HasPreviousPage: true,
 		StartCursor:     &crsr,
 	}, paginatedEarnings.PageInfo)
 	r.Equal(2, paginatedEarnings.TotalCount)
-	r.Equal([]*model.EarningsEdge{
+	r.Equal([]*gmodel.EarningsEdge{
 		{
-			Node: &model.Earning{
+			Node: &gmodel.Earning{
 				Week:                    1,
 				Beneficiary:             common.BytesToAddress(beneficiary.Bytes()),
 				ConnectionStreak:        &connStrk,
@@ -651,7 +649,7 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_BackPagination_L
 }
 
 func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_BackPagination_Last_Before() {
-	_, beneficiary, err := test.GenerateWallet()
+	_, beneficiary, err := helpers.GenerateWallet()
 	r.NoError(err)
 
 	currTime := time.Now().UTC().Truncate(time.Second)
@@ -730,16 +728,16 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_BackPagination_L
 
 	connStrk := [2]int{21, 22}
 
-	r.Equal(&model.PageInfo{
+	r.Equal(&gmodel.PageInfo{
 		EndCursor:       &endCrsr,
 		HasNextPage:     true,
 		HasPreviousPage: false,
 		StartCursor:     &startCrsr,
 	}, paginatedEarnings.PageInfo)
 	r.Equal(3, paginatedEarnings.TotalCount)
-	r.Equal([]*model.EarningsEdge{
+	r.Equal([]*gmodel.EarningsEdge{
 		{
-			Node: &model.Earning{
+			Node: &gmodel.Earning{
 				Week:                    3,
 				Beneficiary:             common.BytesToAddress(beneficiary.Bytes()),
 				ConnectionStreak:        &connStrk[1],
@@ -754,7 +752,7 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_BackPagination_L
 			Cursor: startCrsr,
 		},
 		{
-			Node: &model.Earning{
+			Node: &gmodel.Earning{
 				Week:                    2,
 				Beneficiary:             common.BytesToAddress(beneficiary.Bytes()),
 				ConnectionStreak:        &connStrk[0],
@@ -772,7 +770,7 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_BackPagination_L
 }
 
 func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_BackPagination_EmptyWhenOutOfBounds() {
-	_, beneficiary, err := test.GenerateWallet()
+	_, beneficiary, err := helpers.GenerateWallet()
 	r.NoError(err)
 
 	currTime := time.Now().UTC().Truncate(time.Second)
