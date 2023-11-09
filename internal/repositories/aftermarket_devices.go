@@ -120,7 +120,7 @@ func (r *Repository) GetAftermarketDevices(ctx context.Context, first *int, afte
 	nodes := make([]*gmodel.AftermarketDevice, len(all))
 
 	for i, da := range all {
-		imageUrl := helpers.GetAfterMarketDeviceImageUrl(r.settings.BaseImageURL, da.ID)
+		imageUrl := helpers.GetAftermarketDeviceImageUrl(r.settings.BaseImageURL, da.ID)
 		ga := AftermarketDeviceToAPI(da, imageUrl)
 
 		edges[i] = &gmodel.AftermarketDeviceEdge{
@@ -177,7 +177,7 @@ func (r *Repository) GetAftermarketDevice(ctx context.Context, by gmodel.Afterma
 		return nil, err
 	}
 
-	imageUrl := helpers.GetAfterMarketDeviceImageUrl(r.settings.BaseImageURL, ad.ID)
+	imageUrl := helpers.GetAftermarketDeviceImageUrl(r.settings.BaseImageURL, ad.ID)
 	return AftermarketDeviceToAPI(ad, imageUrl), nil
 }
 
