@@ -173,7 +173,7 @@ func Test_GetAftermarketDevices_FilterByBeneficiary(t *testing.T) {
 	}
 
 	first := 10
-	adController := New(pdb)
+	adController := New(pdb, config.Settings{})
 	beneFilterRes, err := adController.GetAftermarketDevices(ctx, &first, nil, nil, nil, &model.AftermarketDevicesFilter{Beneficiary: &beneficiary})
 	assert.NoError(t, err)
 

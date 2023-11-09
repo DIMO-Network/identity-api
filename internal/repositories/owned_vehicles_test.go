@@ -308,7 +308,7 @@ func Test_GetOwnedVehicles_Filters(t *testing.T) {
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDir)
 	first := 3
 
-	repo := New(pdb)
+	repo := New(pdb, config.Settings{})
 	_, walletA, err := helpers.GenerateWallet()
 	assert.NoError(err)
 	_, walletB, err := helpers.GenerateWallet()
