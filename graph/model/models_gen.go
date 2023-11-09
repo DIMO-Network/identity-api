@@ -14,6 +14,11 @@ type Node interface {
 	GetID() string
 }
 
+type AfterMarketEarnings struct {
+	TotalTokens *big.Int            `json:"totalTokens"`
+	History     *EarningsConnection `json:"history"`
+}
+
 type AftermarketDevice struct {
 	// An opaque global identifier for this aftermarket device.
 	ID string `json:"id"`
@@ -41,9 +46,11 @@ type AftermarketDevice struct {
 	Beneficiary common.Address `json:"beneficiary"`
 	Name        string         `json:"name"`
 	// The Image Url of the device
-	Image          string `json:"image"`
-	ManufacturerID *int   `json:"-"`
-	VehicleID      *int   `json:"-"`
+	Image string `json:"image"`
+	// The earnings attached to the aftermarket device
+	Earnings       *AfterMarketEarnings `json:"earnings,omitempty"`
+	ManufacturerID *int                 `json:"-"`
+	VehicleID      *int                 `json:"-"`
 }
 
 func (AftermarketDevice) IsNode()            {}

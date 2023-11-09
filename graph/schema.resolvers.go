@@ -27,6 +27,11 @@ func (r *aftermarketDeviceResolver) Vehicle(ctx context.Context, obj *model.Afte
 	return loader.GetVehicleByID(ctx, *obj.VehicleID)
 }
 
+// Earnings is the resolver for the earnings field.
+func (r *aftermarketDeviceResolver) Earnings(ctx context.Context, obj *model.AftermarketDevice, first *int, after *string, last *int, before *string) (*model.AfterMarketEarnings, error) {
+	return r.Repo.GetEarningsByAfterMarketDevice(ctx, obj.TokenID, first, after, last, before)
+}
+
 // Vehicle is the resolver for the vehicle field.
 func (r *dCNResolver) Vehicle(ctx context.Context, obj *model.Dcn) (*model.Vehicle, error) {
 	if obj.VehicleID == nil {

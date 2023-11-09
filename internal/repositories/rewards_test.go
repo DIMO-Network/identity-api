@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"fmt"
+	"log"
 	"math/big"
 	"testing"
 	"time"
@@ -874,4 +875,77 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_NoRows() {
 			HasPreviousPage: false,
 		},
 	}, paginatedEarnings)
+}
+
+func (r *RewardsRepoTestSuite) Test_PaginateAfterMarketEarnings_FwdPagination_First() {
+	_, beneficiary, err := test.GenerateWallet()
+	r.NoError(err)
+
+	currTime := time.Now().UTC().Truncate(time.Second)
+
+	r.createDependentRecords()
+
+	totalEarned := big.NewInt(0)
+
+	aft := models.AftermarketDevice{
+		ID:          111,
+		Address:     beneficiary.Bytes(),
+		Beneficiary: beneficiary.Bytes(),
+		Owner:       beneficiary.Bytes(),
+	}
+	err = aft.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
+	r.NoError(err)
+
+	rw := []models.Reward{
+		{
+			IssuanceWeek:       1,
+			VehicleID:          11,
+			ConnectionStreak:   null.IntFrom(20),
+			AftermarketTokenID: null.IntFrom(1),
+			SyntheticTokenID:   null.IntFrom(1),
+			ReceivedByAddress:  null.BytesFrom(beneficiary.Bytes()),
+			EarnedAt:           currTime,
+		},
+		{
+			IssuanceWeek:       2,
+			VehicleID:          11,
+			ConnectionStreak:   null.IntFrom(21),
+			AftermarketTokenID: null.IntFrom(111),
+			SyntheticTokenID:   null.IntFrom(1),
+			ReceivedByAddress:  null.BytesFrom(beneficiary.Bytes()),
+			EarnedAt:           currTime,
+		},
+	}
+
+	var aftEarn types.NullDecimal
+	var strkEarn types.NullDecimal
+	var syntEarn types.NullDecimal
+
+	for _, rr := range rw {
+		baseAmt, ok := new(big.Int).SetString("59147051345528509681", 10)
+		r.NotZero(ok)
+
+		aftEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(30)))
+		strkEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(50)))
+		syntEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(10)))
+
+		rr.AftermarketEarnings = aftEarn
+		rr.StreakEarnings = strkEarn
+		rr.SyntheticEarnings = syntEarn
+
+		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(aftEarn))
+		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(strkEarn))
+		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(syntEarn))
+
+		err = rr.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
+		r.NoError(err)
+	}
+
+	first := 2
+	afd, err := r.repo.GetEarningsByAfterMarketDevice(r.ctx, 1, &first, nil, nil, nil)
+	r.NoError(err)
+
+	for _, e := range afd.History.Edges {
+		log.Println(e.Cursor, e.Node.Week)
+	}
 }

@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"fmt"
+	"log"
 	"math/big"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
@@ -10,6 +11,7 @@ import (
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/dbtypes"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"github.com/volatiletech/sqlboiler/v4/types"
 	"golang.org/x/exp/slices"
@@ -39,55 +41,15 @@ func RewardToAPI(reward models.Reward) gmodel.Earning {
 	}
 }
 
-func (r *Repository) GetEarningsByVehicleID(ctx context.Context, tokenID int) (*gmodel.VehicleEarnings, error) {
-	type rewardStats struct {
-		TokenSum   types.NullDecimal `boil:"token_sum"`
-		TotalCount int               `boil:"total_count"`
-	}
-	var stats rewardStats
-
-	err := models.Rewards(
-		qm.Select(
-			fmt.Sprintf(
-				`sum(%s + %s + %s) as token_sum`,
-				models.RewardColumns.StreakEarnings, models.RewardColumns.AftermarketEarnings, models.RewardColumns.SyntheticEarnings,
-			),
-			"count(*) as total_count",
-		),
-		models.RewardWhere.VehicleID.EQ(tokenID),
-	).Bind(ctx, r.pdb.DBS().Reader, &stats)
-	if err != nil {
-		return nil, err
-	}
-
-	if stats.TokenSum.IsZero() {
-		return &gmodel.VehicleEarnings{
-			TotalTokens: &big.Int{},
-			History:     &gmodel.EarningsConnection{},
-			VehicleID:   tokenID,
-		}, nil
-	}
-
-	earningsConn := &gmodel.EarningsConnection{
-		TotalCount: stats.TotalCount,
-	}
-
-	return &gmodel.VehicleEarnings{
-		TotalTokens: dbtypes.NullDecimalToInt(stats.TokenSum),
-		History:     earningsConn,
-		VehicleID:   tokenID,
-	}, nil
-}
-
-func (r *Repository) PaginateVehicleEarningsByID(ctx context.Context, vehicleEarnings *gmodel.VehicleEarnings, first *int, after *string, last *int, before *string) (*gmodel.EarningsConnection, error) {
+func (r *Repository) paginateRewards(ctx context.Context, condition []qm.QueryMod, first *int, after *string, last *int, before *string) (*gmodel.EarningsConnection, error) {
 	limit, err := helpers.ValidateFirstLast(first, last, maxPageSize)
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
 
-	queryMods := []qm.QueryMod{
-		models.RewardWhere.VehicleID.EQ(vehicleEarnings.VehicleID),
-	}
+	queryMods := []qm.QueryMod{}
+	queryMods = append(queryMods, condition...)
 
 	if after != nil {
 		afterID, err := helpers.CursorToID(*after)
@@ -163,14 +125,113 @@ func (r *Repository) PaginateVehicleEarningsByID(ctx context.Context, vehicleEar
 		startCursor = &sc
 	}
 
-	vehicleEarnings.History.Edges = edges
-	vehicleEarnings.History.Nodes = nodes
-	vehicleEarnings.History.PageInfo = &gmodel.PageInfo{
-		EndCursor:       endCursor,
-		StartCursor:     startCursor,
-		HasNextPage:     hasNext,
-		HasPreviousPage: hasPrevious,
+	return &gmodel.EarningsConnection{
+		Edges: edges,
+		Nodes: nodes,
+		PageInfo: &gmodel.PageInfo{
+			StartCursor:     startCursor,
+			EndCursor:       endCursor,
+			HasPreviousPage: hasPrevious,
+			HasNextPage:     hasNext,
+		},
+	}, nil
+}
+
+func (r *Repository) GetEarningsByVehicleID(ctx context.Context, tokenID int) (*gmodel.VehicleEarnings, error) {
+	type rewardStats struct {
+		TokenSum   types.NullDecimal `boil:"token_sum"`
+		TotalCount int               `boil:"total_count"`
+	}
+	var stats rewardStats
+
+	err := models.Rewards(
+		qm.Select(
+			fmt.Sprintf(
+				`sum(%s + %s + %s) as token_sum`,
+				models.RewardColumns.StreakEarnings, models.RewardColumns.AftermarketEarnings, models.RewardColumns.SyntheticEarnings,
+			),
+			"count(*) as total_count",
+		),
+		models.RewardWhere.VehicleID.EQ(tokenID),
+	).Bind(ctx, r.pdb.DBS().Reader, &stats)
+	if err != nil {
+		return nil, err
 	}
 
+	if stats.TokenSum.IsZero() {
+		return &gmodel.VehicleEarnings{
+			TotalTokens: &big.Int{},
+			History:     &gmodel.EarningsConnection{},
+			VehicleID:   tokenID,
+		}, nil
+	}
+
+	earningsConn := &gmodel.EarningsConnection{
+		TotalCount: stats.TotalCount,
+	}
+
+	return &gmodel.VehicleEarnings{
+		TotalTokens: dbtypes.NullDecimalToInt(stats.TokenSum),
+		History:     earningsConn,
+		VehicleID:   tokenID,
+	}, nil
+}
+
+func (r *Repository) PaginateVehicleEarningsByID(ctx context.Context, vehicleEarnings *gmodel.VehicleEarnings, first *int, after *string, last *int, before *string) (*gmodel.EarningsConnection, error) {
+	queryMods := []qm.QueryMod{
+		models.RewardWhere.VehicleID.EQ(vehicleEarnings.VehicleID),
+	}
+	vhs, err := r.paginateRewards(ctx, queryMods, first, after, last, before)
+	if err != nil {
+		return nil, err
+	}
+
+	vehicleEarnings.History.Edges = vhs.Edges
+	vehicleEarnings.History.Nodes = vhs.Nodes
+	vehicleEarnings.History.PageInfo = vhs.PageInfo
 	return vehicleEarnings.History, nil
+}
+
+func (r *Repository) GetEarningsByAfterMarketDevice(ctx context.Context, afterMarketID int, first *int, after *string, last *int, before *string) (*gmodel.AfterMarketEarnings, error) {
+	type rewardStats struct {
+		TokenSum   types.NullDecimal `boil:"token_sum"`
+		TotalCount int               `boil:"total_count"`
+	}
+	var stats rewardStats
+
+	err := models.Rewards(
+		qm.Select(
+			fmt.Sprintf(
+				`sum(%s + %s + %s) as token_sum`,
+				models.RewardColumns.StreakEarnings, models.RewardColumns.AftermarketEarnings, models.RewardColumns.SyntheticEarnings,
+			),
+			"count(*) as total_count",
+		),
+		models.RewardWhere.AftermarketTokenID.EQ(null.IntFrom(afterMarketID)),
+	).Bind(ctx, r.pdb.DBS().Reader, &stats)
+	if err != nil {
+		return nil, err
+	}
+
+	if stats.TokenSum.IsZero() {
+		return &gmodel.AfterMarketEarnings{
+			TotalTokens: big.NewInt(0),
+			History:     &gmodel.EarningsConnection{},
+		}, nil
+	}
+
+	queryMods := []qm.QueryMod{
+		models.RewardWhere.AftermarketTokenID.EQ(null.IntFrom(afterMarketID)),
+	}
+
+	afd, err := r.paginateRewards(ctx, queryMods, first, after, last, before)
+	if err != nil {
+		return nil, err
+	}
+
+	afd.TotalCount = stats.TotalCount
+	return &gmodel.AfterMarketEarnings{
+		History:     afd,
+		TotalTokens: dbtypes.NullDecimalToInt(stats.TokenSum),
+	}, nil
 }

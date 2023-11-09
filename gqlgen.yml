@@ -105,6 +105,8 @@ models:
         resolver: true
       manufacturer:
         resolver: true
+      earnings:
+        resolver: true
     extraFields:
       VehicleID:
         type: "*int"
