@@ -877,7 +877,7 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_NoRows() {
 	}, paginatedEarnings)
 }
 
-func (r *RewardsRepoTestSuite) Test_PaginateAfterMarketEarnings_FwdPagination_First() {
+func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_FwdPagination_First() {
 	_, beneficiary, err := test.GenerateWallet()
 	r.NoError(err)
 
