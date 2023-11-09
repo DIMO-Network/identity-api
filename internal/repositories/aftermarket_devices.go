@@ -12,6 +12,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 	"github.com/vmihailenco/msgpack/v5"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -30,32 +31,37 @@ func (r *Repository) GetAftermarketDevices(ctx context.Context, first *int, afte
 
 	if first != nil {
 		if last != nil {
-			return nil, errors.New("Pass `first` or `last`, but not both.")
+			return nil, gqlerror.Errorf("Pass `first` or `last`, but not both.")
 		}
 		if *first < 0 {
-			return nil, errors.New("The value for `first` cannot be negative.")
+			return nil, gqlerror.Errorf("The value for `first` cannot be negative.")
 		}
 		if *first > maxPageSize {
-			return nil, fmt.Errorf("The value %d for `first` exceeds the limit %d.", *last, maxPageSize)
+			return nil, gqlerror.Errorf("The value %d for `first` exceeds the limit %d.", *last, maxPageSize)
 		}
 		limit = *first
 	} else {
 		if last == nil {
-			return nil, errors.New("Provide `first` or `last`.")
+			return nil, gqlerror.Errorf("Provide `first` or `last`.")
 		}
 		if *last < 0 {
-			return nil, errors.New("The value for `last` cannot be negative.")
+			return nil, gqlerror.Errorf("The value for `last` cannot be negative.")
 		}
 		if *last > maxPageSize {
-			return nil, fmt.Errorf("The value %d for `last` exceeds the limit %d.", *last, maxPageSize)
+			return nil, gqlerror.Errorf("The value %d for `last` exceeds the limit %d.", *last, maxPageSize)
 		}
 		limit = *last
 	}
 
 	where := []qm.QueryMod{}
 
-	if filterBy != nil && filterBy.Owner != nil {
-		where = append(where, models.AftermarketDeviceWhere.Owner.EQ(filterBy.Owner.Bytes()))
+	if filterBy != nil {
+		if filterBy.Owner != nil {
+			where = append(where, models.AftermarketDeviceWhere.Owner.EQ(filterBy.Owner.Bytes()))
+		}
+		if filterBy.Beneficiary != nil {
+			where = append(where, models.AftermarketDeviceWhere.Beneficiary.EQ(filterBy.Beneficiary.Bytes()))
+		}
 	}
 
 	adCount, err := models.AftermarketDevices(where...).Count(ctx, r.pdb.DBS().Reader)
@@ -64,7 +70,7 @@ func (r *Repository) GetAftermarketDevices(ctx context.Context, first *int, afte
 	}
 
 	orderBy := " DESC"
-	if before != nil {
+	if last != nil {
 		orderBy = " ASC"
 	}
 
@@ -106,7 +112,7 @@ func (r *Repository) GetAftermarketDevices(ctx context.Context, first *int, afte
 		all = all[:limit]
 	}
 
-	if before != nil {
+	if last != nil {
 		slices.Reverse(all)
 	}
 
@@ -114,7 +120,8 @@ func (r *Repository) GetAftermarketDevices(ctx context.Context, first *int, afte
 	nodes := make([]*gmodel.AftermarketDevice, len(all))
 
 	for i, da := range all {
-		ga := AftermarketDeviceToAPI(da)
+		imageUrl := helpers.GetAfterMarketDeviceImageUrl(r.settings.BaseImageURL, da.ID)
+		ga := AftermarketDeviceToAPI(da, imageUrl)
 
 		edges[i] = &gmodel.AftermarketDeviceEdge{
 			Node:   ga,
@@ -151,7 +158,7 @@ func (r *Repository) GetAftermarketDevices(ctx context.Context, first *int, afte
 
 func (r *Repository) GetAftermarketDevice(ctx context.Context, by gmodel.AftermarketDeviceBy) (*gmodel.AftermarketDevice, error) {
 	if countTrue(by.Address != nil, by.TokenID != nil, by.Serial != nil) != 1 {
-		return nil, errors.New("Pass in exactly one of `address`, `id`, or `serial`.")
+		return nil, gqlerror.Errorf("Pass in exactly one of `address`, `id`, or `serial`.")
 	}
 
 	var qm qm.QueryMod
@@ -170,14 +177,15 @@ func (r *Repository) GetAftermarketDevice(ctx context.Context, by gmodel.Afterma
 		return nil, err
 	}
 
-	return AftermarketDeviceToAPI(ad), nil
+	imageUrl := helpers.GetAfterMarketDeviceImageUrl(r.settings.BaseImageURL, ad.ID)
+	return AftermarketDeviceToAPI(ad, imageUrl), nil
 }
 
 type aftermarketDevicePrimaryKey struct {
 	TokenID int
 }
 
-func AftermarketDeviceToAPI(d *models.AftermarketDevice) *gmodel.AftermarketDevice {
+func AftermarketDeviceToAPI(d *models.AftermarketDevice, imageUrl string) *gmodel.AftermarketDevice {
 	var b bytes.Buffer
 	e := msgpack.NewEncoder(&b)
 	e.UseArrayEncodedStructs(true)
@@ -199,6 +207,7 @@ func AftermarketDeviceToAPI(d *models.AftermarketDevice) *gmodel.AftermarketDevi
 		ClaimedAt:      d.ClaimedAt.Ptr(),
 		ManufacturerID: d.ManufacturerID.Ptr(),
 		Name:           name,
+		Image:          imageUrl,
 	}
 }
 

@@ -35,7 +35,7 @@ input PrivilegeFilterBy {
 }
 
 input AftermarketDeviceBy @oneOf {
-  tokenId: BigInt
+  tokenId: Int
   address: Address
   serial: String
 }
@@ -54,6 +54,7 @@ input AftermarketDevicesFilter {
   Filter for aftermarket devices owned by this address.
   """
   owner: Address
+  beneficiary: Address
 }
 
 type Query {
@@ -62,7 +63,7 @@ type Query {
   """
   View a particular vehicle.
   """
-  vehicle(tokenId: BigInt!): Vehicle!
+  vehicle(tokenId: Int!): Vehicle!
 
   """
   List minted vehicles.
@@ -119,7 +120,7 @@ type Manufacturer implements Node {
   """
   The ERC-721 token id for the manufacturer.
   """
-  tokenId: BigInt!
+  tokenId: Int!
   """
   The name of the manufacturer.
   """
@@ -144,7 +145,7 @@ type Vehicle implements Node {
   """
   The ERC-721 token id for the vehicle.
   """
-  tokenId: BigInt!
+  tokenId: Int!
   """
   The manufacturer of this vehicle.
   """
@@ -182,6 +183,12 @@ type Vehicle implements Node {
   definition: Definition
   dcn: DCN
   name: String!
+  """
+  The Image Url of he vehicle
+  """
+  image: String!
+
+  earnings: VehicleEarnings
 }
 
 type Definition {
@@ -203,6 +210,16 @@ type VehicleConnection {
   pageInfo: PageInfo!
 }
 
+type VehicleEarnings {
+  totalTokens: BigInt!
+  history(
+    first: Int
+    after: String
+    last: Int
+    before: String
+  ): EarningsConnection!
+}
+
 # Aftermarket Types
 
 type AftermarketDevice implements Node {
@@ -213,7 +230,7 @@ type AftermarketDevice implements Node {
   """
   The ERC-721 token id for the device.
   """
-  tokenId: BigInt!
+  tokenId: Int!
   """
   The manufacturer of this aftermarket device.
   """
@@ -254,6 +271,10 @@ type AftermarketDevice implements Node {
   beneficiary: Address!
 
   name: String!
+  """
+  The Image Url of the device
+  """
+  image: String!
 }
 
 type AftermarketDeviceConnection {
@@ -301,8 +322,8 @@ type PrivilegesConnection {
 # SyntheticDevice Types
 
 type SyntheticDevice {
-  tokenId: BigInt!
-  integrationId: BigInt!
+  tokenId: Int!
+  integrationId: Int!
   address: Address!
   mintedAt: Time!
 }
@@ -336,4 +357,66 @@ type DCN {
   Vehicle, if any, to which the domain is attached.
   """
   vehicle: Vehicle
+}
+
+# Earnings Types
+
+type Earnings {
+  earnedTokens: BigInt!
+  earningsTransfers(first: Int): EarningsConnection!
+}
+
+type Earning {
+  """
+  Week reward was issued
+  """
+  week: Int!
+  """
+  Address of Beneficiary that received reward
+  """
+  beneficiary: Address!
+  """
+  Consecutive period of which vehicle was connected
+  """
+  connectionStreak: Int
+  """
+  Tokens earned for connection period
+  """
+  streakTokens: BigInt!
+  """
+  AftermarketDevice connected to vehicle
+  """
+  aftermarketDevice: AftermarketDevice
+  """
+  Tokens earned by aftermarketDevice
+  """
+  aftermarketDeviceTokens: BigInt!
+  """
+  SyntheticDevice connected to vehicle
+  """
+  syntheticDevice: SyntheticDevice
+  """
+  Tokens earned by SyntheticDevice
+  """
+  syntheticDeviceTokens: BigInt!
+  """
+  Vehicle reward is assigned to
+  """
+  vehicle: Vehicle
+  """
+  When the token was earned
+  """
+  sentAt: Time!
+}
+
+type EarningsEdge {
+  node: Earning!
+  cursor: String!
+}
+
+type EarningsConnection {
+  totalCount: Int!
+  edges: [EarningsEdge!]!
+  nodes: [Earning!]!
+  pageInfo: PageInfo!
 }

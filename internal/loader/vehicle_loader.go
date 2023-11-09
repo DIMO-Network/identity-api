@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
+	"github.com/DIMO-Network/identity-api/internal/config"
+	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
@@ -12,7 +14,8 @@ import (
 )
 
 type VehicleLoader struct {
-	db db.Store
+	db       db.Store
+	settings config.Settings
 }
 
 func GetVehicleByID(ctx context.Context, vehicleID int) (*model.Vehicle, error) {
@@ -24,9 +27,8 @@ func GetVehicleByID(ctx context.Context, vehicleID int) (*model.Vehicle, error) 
 	return thunk()
 }
 
-// BatchGetLinkedVehicleByAftermarketID implements the dataloader for finding vehicles linked to aftermarket devices and returns
-// them in the order requested
-func (v *VehicleLoader) BatchGetLinkedVehicleByAftermarketID(ctx context.Context, vehicleIDs []int) []*dataloader.Result[*model.Vehicle] {
+// BatchGetVehicleByID implements the dataloader for finding vehicles by their ids.
+func (v *VehicleLoader) BatchGetVehicleByID(ctx context.Context, vehicleIDs []int) []*dataloader.Result[*model.Vehicle] {
 	results := make([]*dataloader.Result[*model.Vehicle], len(vehicleIDs))
 
 	vehicles, err := models.Vehicles(models.VehicleWhere.ID.IN(vehicleIDs)).All(ctx, v.db.DBS().Reader)
@@ -44,9 +46,10 @@ func (v *VehicleLoader) BatchGetLinkedVehicleByAftermarketID(ctx context.Context
 	}
 
 	for i, k := range vehicleIDs {
-		if v, ok := vehicleByID[k]; ok {
+		if veh, ok := vehicleByID[k]; ok {
+			imageUrl := helpers.GetVehicleImageUrl(v.settings.BaseImageURL, veh.ID)
 			results[i] = &dataloader.Result[*model.Vehicle]{
-				Data: repositories.VehicleToAPI(v),
+				Data: repositories.VehicleToAPI(veh, imageUrl),
 			}
 		} else {
 			results[i] = &dataloader.Result[*model.Vehicle]{Error: fmt.Errorf("no vehicle with id %d", k)}
