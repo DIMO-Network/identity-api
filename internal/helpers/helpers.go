@@ -55,9 +55,9 @@ func IntToBytes(intVal int) []byte {
 }
 
 func GetVehicleImageUrl(baseURL string, tokenID int) string {
-	return fmt.Sprintf("%sv1/vehicle/%d", baseURL, tokenID)
+	return fmt.Sprintf("%s/vehicle/%d/image", baseURL, tokenID)
 }
 
-func GetAfterMarketDeviceImageUrl(baseURL string, tokenID int) string {
-	return fmt.Sprintf("%sv1/aftermarket/device/%d", baseURL, tokenID)
+func GetAftermarketDeviceImageUrl(baseURL string, tokenID int) string {
+	return fmt.Sprintf("%s/aftermarket/device/%d/image", baseURL, tokenID)
 }
