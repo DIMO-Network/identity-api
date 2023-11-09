@@ -66,33 +66,12 @@ func (r *Repository) GetDCNByName(ctx context.Context, name string) (*gmodel.Dcn
 
 func (r *Repository) GetDCNs(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *gmodel.DCNFilter) (*gmodel.DCNConnection, error) {
 	var limit int
-
-	if first != nil {
-		if last != nil {
-			return nil, gqlerror.Errorf("Pass `first` or `last`, but not both.")
-		}
-		if *first < 0 {
-			return nil, gqlerror.Errorf("The value for `first` cannot be negative.")
-		}
-		if *first > maxPageSize {
-			return nil, gqlerror.Errorf("The value %d for `first` exceeds the limit %d.", *last, maxPageSize)
-		}
-		limit = *first
-	} else {
-		if last == nil {
-			return nil, gqlerror.Errorf("Provide `first` or `last`.")
-		}
-		if *last < 0 {
-			return nil, gqlerror.Errorf("The value for `last` cannot be negative.")
-		}
-		if *last > maxPageSize {
-			return nil, gqlerror.Errorf("The value %d for `last` exceeds the limit %d.", *last, maxPageSize)
-		}
-		limit = *last
+	limit, err := helpers.ValidateFirstLast(first, last, maxPageSize)
+	if err != nil {
+		return nil, err
 	}
 
 	queryMods := []qm.QueryMod{}
-
 	if filterBy != nil && filterBy.Owner != nil {
 		queryMods = append(queryMods, models.DCNWhere.OwnerAddress.EQ(filterBy.Owner.Bytes()))
 	}
@@ -107,10 +86,9 @@ func (r *Repository) GetDCNs(ctx context.Context, first *int, after *string, las
 		orderBy = " ASC"
 	}
 
-	queryMods = append(queryMods, []qm.QueryMod{
-		qm.Limit(limit + 1),
-		qm.OrderBy(models.DCNColumns.MintedAt + orderBy),
-	}...)
+	queryMods = append(queryMods,
+		qm.Limit(limit+1),
+		qm.OrderBy(models.DCNColumns.MintedAt+orderBy))
 
 	pHelp := &helpers.PaginationHelper[time.Time]{}
 	if after != nil {
