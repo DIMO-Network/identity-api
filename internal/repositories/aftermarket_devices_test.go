@@ -139,3 +139,54 @@ func Test_GetOwnedAftermarketDevices_Pagination_PreviousPage(t *testing.T) {
 	}
 	assert.Exactly(t, expected, res.Edges)
 }
+
+func Test_GetAftermarketDevices_FilterByBeneficiary(t *testing.T) {
+	ctx := context.Background()
+	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDir)
+
+	var tknID int
+	// dynamically setting bene for each AD
+	// overwriting beneficiary variable each time
+	// when we query below, we are expecting only item in response
+	var beneficiary common.Address
+	for i := 1; i <= 4; i++ {
+		tknID = i
+		beneficiary = common.BigToAddress(big.NewInt(int64(i + 2)))
+		ad := models.AftermarketDevice{
+			ID:          tknID,
+			Owner:       aftermarketDeviceNodeMintedArgs.Owner.Bytes(),
+			Beneficiary: beneficiary.Bytes(),
+			Address:     aftermarketDeviceNodeMintedArgs.AftermarketDeviceAddress.Bytes(),
+		}
+
+		err := ad.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+		assert.NoError(t, err)
+	}
+
+	expectedBeneResp := &model.AftermarketDeviceEdge{
+		Node: &model.AftermarketDevice{
+			TokenID:     tknID,
+			Owner:       aftermarketDeviceNodeMintedArgs.Owner,
+			Beneficiary: beneficiary,
+			Address:     aftermarketDeviceNodeMintedArgs.AftermarketDeviceAddress,
+		},
+	}
+
+	first := 10
+	adController := New(pdb)
+	beneFilterRes, err := adController.GetAftermarketDevices(ctx, &first, nil, nil, nil, &model.AftermarketDevicesFilter{Beneficiary: &beneficiary})
+	assert.NoError(t, err)
+
+	assert.Len(t, beneFilterRes.Edges, 1)
+	assert.Equal(t, beneFilterRes.TotalCount, 1)
+	assert.Exactly(t, expectedBeneResp.Node.TokenID, beneFilterRes.Edges[0].Node.TokenID)
+	assert.Exactly(t, expectedBeneResp.Node.Owner, beneFilterRes.Edges[0].Node.Owner)
+	assert.Exactly(t, expectedBeneResp.Node.Beneficiary, beneFilterRes.Edges[0].Node.Beneficiary)
+	assert.Exactly(t, expectedBeneResp.Node.Address, beneFilterRes.Edges[0].Node.Address)
+
+	// changing filter to owner will return all ADs
+	ownerFilterResp, err := adController.GetAftermarketDevices(ctx, &first, nil, nil, nil, &model.AftermarketDevicesFilter{Owner: &aftermarketDeviceNodeMintedArgs.Owner})
+	assert.NoError(t, err)
+	assert.Len(t, ownerFilterResp.Edges, 4)
+	assert.Equal(t, ownerFilterResp.TotalCount, 4)
+}

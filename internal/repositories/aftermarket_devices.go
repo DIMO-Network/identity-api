@@ -55,8 +55,13 @@ func (r *Repository) GetAftermarketDevices(ctx context.Context, first *int, afte
 
 	where := []qm.QueryMod{}
 
-	if filterBy != nil && filterBy.Owner != nil {
-		where = append(where, models.AftermarketDeviceWhere.Owner.EQ(filterBy.Owner.Bytes()))
+	if filterBy != nil {
+		if filterBy.Owner != nil {
+			where = append(where, models.AftermarketDeviceWhere.Owner.EQ(filterBy.Owner.Bytes()))
+		}
+		if filterBy.Beneficiary != nil {
+			where = append(where, models.AftermarketDeviceWhere.Beneficiary.EQ(filterBy.Beneficiary.Bytes()))
+		}
 	}
 
 	adCount, err := models.AftermarketDevices(where...).Count(ctx, r.pdb.DBS().Reader)
