@@ -12,6 +12,7 @@ import (
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
+
 	test "github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
@@ -856,8 +857,6 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_BackPagination_E
 }
 
 func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_NoRows() {
-	// totalEarned := big.NewInt(0)
-
 	rwrd, err := r.repo.GetEarningsByVehicleID(r.ctx, 11)
 	r.NoError(err)
 
