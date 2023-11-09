@@ -85,7 +85,7 @@ func Test_GetOwnedAftermarketDevices_Pagination_PreviousPage(t *testing.T) {
 	//       |
 	//       before this
 	adController := New(pdb, config.Settings{
-		BaseImageURL: "https://mockUrl.com/",
+		BaseImageURL: "https://mockUrl.com/v1",
 	})
 	last := 2
 	before := "MQ=="
@@ -111,7 +111,7 @@ func Test_GetOwnedAftermarketDevices_Pagination_PreviousPage(t *testing.T) {
 				Owner:       common.BytesToAddress(ad[2].Owner),
 				Beneficiary: common.BytesToAddress(ad[2].Beneficiary),
 				Address:     common.BytesToAddress(ad[2].Address),
-				Image:       "https://mockUrl.com/v1/aftermarket/device/3",
+				Image:       "https://mockUrl.com/v1/aftermarket/device/3/image",
 			},
 			Cursor: "Mw==",
 		},
@@ -122,7 +122,7 @@ func Test_GetOwnedAftermarketDevices_Pagination_PreviousPage(t *testing.T) {
 				Owner:       common.BytesToAddress(ad[1].Owner),
 				Beneficiary: common.BytesToAddress(ad[1].Beneficiary),
 				Address:     common.BytesToAddress(ad[1].Address),
-				Image:       "https://mockUrl.com/v1/aftermarket/device/2",
+				Image:       "https://mockUrl.com/v1/aftermarket/device/2/image",
 			},
 			Cursor: "Mg==",
 		},
