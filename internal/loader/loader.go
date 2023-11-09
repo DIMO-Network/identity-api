@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
+	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/graph-gophers/dataloader/v7"
 )
@@ -26,10 +27,10 @@ type Loaders struct {
 }
 
 // NewDataLoader returns the instantiated Loaders struct for use in a request
-func NewDataLoader(dbs db.Store) *Loaders {
+func NewDataLoader(dbs db.Store, settings config.Settings) *Loaders {
 	// instantiate the user dataloader
-	vehicle := &VehicleLoader{db: dbs}
-	aftermarketDevice := &AftermarketDeviceLoader{db: dbs}
+	vehicle := &VehicleLoader{db: dbs, settings: settings}
+	aftermarketDevice := &AftermarketDeviceLoader{db: dbs, settings: settings}
 	syntheticDevice := &SyntheticDeviceLoader{db: dbs}
 	dcn := &DCNLoader{db: dbs}
 	manufacturer := &ManufacturerLoader{db: dbs}
@@ -68,9 +69,9 @@ func NewDataLoader(dbs db.Store) *Loaders {
 
 // Middleware injects a DataLoader into the request context so it can be
 // used later in the schema resolvers
-func Middleware(db db.Store, next http.Handler) http.Handler {
+func Middleware(db db.Store, next http.Handler, settings config.Settings) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		loader := NewDataLoader(db)
+		loader := NewDataLoader(db, settings)
 		nextCtx := context.WithValue(r.Context(), dataLoadersKey, loader)
 		r = r.WithContext(nextCtx)
 		next.ServeHTTP(w, r)

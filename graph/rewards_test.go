@@ -42,7 +42,7 @@ func (r *RewardsQueryTestSuite) SetupSuite() {
 		DIMORegistryAddr:    "0x4de1bcf2b7e851e31216fc07989caa902a604784",
 		DIMORegistryChainID: 80001,
 	}
-	r.repo = repositories.New(r.pdb)
+	r.repo = repositories.New(r.pdb, r.settings)
 	r.resolver = NewResolver(r.repo)
 }
 
@@ -189,7 +189,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate() {
 	c := client.New(
 		loader.Middleware(
 			r.pdb,
-			handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: r.resolver})),
+			handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: r.resolver})), r.settings,
 		),
 	)
 
@@ -365,7 +365,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate_Firs
 	c := client.New(
 		loader.Middleware(
 			r.pdb,
-			handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: r.resolver})),
+			handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: r.resolver})), r.settings,
 		),
 	)
 
@@ -570,7 +570,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 	c := client.New(
 		loader.Middleware(
 			r.pdb,
-			handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: r.resolver})),
+			handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: r.resolver})), r.settings,
 		),
 	)
 
@@ -775,7 +775,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 	c := client.New(
 		loader.Middleware(
 			r.pdb,
-			handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: r.resolver})),
+			handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: r.resolver})), r.settings,
 		),
 	)
 

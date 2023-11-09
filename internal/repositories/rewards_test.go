@@ -40,7 +40,7 @@ func (r *RewardsRepoTestSuite) SetupSuite() {
 		DIMORegistryAddr:    "0x4de1bcf2b7e851e31216fc07989caa902a604784",
 		DIMORegistryChainID: 80001,
 	}
-	r.repo = New(r.pdb)
+	r.repo = New(r.pdb, r.settings)
 }
 
 // TearDownTest after each test truncate tables

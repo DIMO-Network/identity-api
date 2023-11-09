@@ -34,15 +34,15 @@ func TestDCNQuery(t *testing.T) {
 
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDir)
 
-	repo := repositories.New(pdb)
-	resolver := NewResolver(repo)
-
 	logger := zerolog.New(os.Stdout)
 	settings := config.Settings{
 		DCNRegistryAddr:     "0xE9F4dfE02f895DC17E2e146e578873c9095bA293", // For realism.
 		DIMORegistryChainID: 137,
 		DCNResolverAddr:     "0x60627326F55054Ea448e0a7BC750785bD65EF757",
 	}
+
+	repo := repositories.New(pdb, settings)
+	resolver := NewResolver(repo)
 
 	_, wallet, err := test.GenerateWallet()
 	assert.NoError(err)
@@ -78,7 +78,7 @@ func TestDCNQuery(t *testing.T) {
 	cfg.Directives.OneOf = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
 		return next(ctx)
 	}
-	c := client.New(loader.Middleware(pdb, handler.NewDefaultServer(NewExecutableSchema(cfg))))
+	c := client.New(loader.Middleware(pdb, handler.NewDefaultServer(NewExecutableSchema(cfg)), settings))
 
 	type response struct {
 		DCN struct {

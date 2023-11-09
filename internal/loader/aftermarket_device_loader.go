@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
+	"github.com/DIMO-Network/identity-api/internal/config"
+	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
@@ -11,7 +13,8 @@ import (
 )
 
 type AftermarketDeviceLoader struct {
-	db db.Store
+	db       db.Store
+	settings config.Settings
 }
 
 func GetAftermarketDeviceByVehicleID(ctx context.Context, vehicleID int) (*model.AftermarketDevice, error) {
@@ -53,8 +56,9 @@ func (ad *AftermarketDeviceLoader) BatchGetLinkedAftermarketDeviceByVehicleID(ct
 
 	for i, vID := range vehicleIDs {
 		if am, ok := amByVehicleID[vID]; ok {
+			imageUrl := helpers.GetAfterMarketDeviceImageUrl(ad.settings.BaseImageURL, am.ID)
 			results[i] = &dataloader.Result[*model.AftermarketDevice]{
-				Data: repositories.AftermarketDeviceToAPI(am),
+				Data: repositories.AftermarketDeviceToAPI(am, imageUrl),
 			}
 		} else {
 			results[i] = &dataloader.Result[*model.AftermarketDevice]{}
@@ -83,8 +87,9 @@ func (ad *AftermarketDeviceLoader) BatchGetAftermarketDeviceByID(ctx context.Con
 	}
 
 	for i, adID := range aftermarketDeviceIDs {
-		if ad, ok := adByID[adID]; ok {
-			results[i] = &dataloader.Result[*model.AftermarketDevice]{Data: repositories.AftermarketDeviceToAPI(ad)}
+		if ads, ok := adByID[adID]; ok {
+			imageUrl := helpers.GetAfterMarketDeviceImageUrl(ad.settings.BaseImageURL, ads.ID)
+			results[i] = &dataloader.Result[*model.AftermarketDevice]{Data: repositories.AftermarketDeviceToAPI(ads, imageUrl)}
 		} else {
 			results[i] = &dataloader.Result[*model.AftermarketDevice]{}
 		}

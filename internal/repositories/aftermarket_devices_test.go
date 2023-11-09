@@ -9,6 +9,7 @@ import (
 
 	gmn "github.com/DIMO-Network/go-mnemonic"
 	"github.com/DIMO-Network/identity-api/graph/model"
+	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/services"
 	"github.com/DIMO-Network/identity-api/models"
@@ -46,7 +47,7 @@ func TestAftermarketDeviceNodeMintMultiResponse(t *testing.T) {
 	//     |
 	//     after this
 
-	adController := New(pdb)
+	adController := New(pdb, config.Settings{})
 	first := 2
 	after := "NA==" // 4
 	res, err := adController.GetAftermarketDevices(ctx, &first, &after, nil, nil, &model.AftermarketDevicesFilter{Owner: &aftermarketDeviceNodeMintedArgs.Owner})
@@ -83,7 +84,9 @@ func Test_GetOwnedAftermarketDevices_Pagination_PreviousPage(t *testing.T) {
 	//       ^
 	//       |
 	//       before this
-	adController := New(pdb)
+	adController := New(pdb, config.Settings{
+		BaseImageURL: "https://mockUrl.com/",
+	})
 	last := 2
 	before := "MQ=="
 	startCrsr := "Mw=="
@@ -108,6 +111,7 @@ func Test_GetOwnedAftermarketDevices_Pagination_PreviousPage(t *testing.T) {
 				Owner:       common.BytesToAddress(ad[2].Owner),
 				Beneficiary: common.BytesToAddress(ad[2].Beneficiary),
 				Address:     common.BytesToAddress(ad[2].Address),
+				Image:       "https://mockUrl.com/v1/aftermarket/device/3",
 			},
 			Cursor: "Mw==",
 		},
@@ -118,6 +122,7 @@ func Test_GetOwnedAftermarketDevices_Pagination_PreviousPage(t *testing.T) {
 				Owner:       common.BytesToAddress(ad[1].Owner),
 				Beneficiary: common.BytesToAddress(ad[1].Beneficiary),
 				Address:     common.BytesToAddress(ad[1].Address),
+				Image:       "https://mockUrl.com/v1/aftermarket/device/2",
 			},
 			Cursor: "Mg==",
 		},
