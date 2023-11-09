@@ -95,7 +95,8 @@ func (r *Repository) GetDCNs(ctx context.Context, first *int, after *string, las
 
 	queryMods = append(queryMods,
 		qm.Limit(limit+1),
-		qm.OrderBy(dcnCursorColumnsTuple+orderBy))
+		qm.OrderBy(models.DCNColumns.MintedAt+orderBy+", "+models.DCNColumns.Node+orderBy),
+	)
 
 	pHelp := &helpers.PaginationHelper[DCNCursor]{}
 	if after != nil {
@@ -103,15 +104,17 @@ func (r *Repository) GetDCNs(ctx context.Context, first *int, after *string, las
 		if err != nil {
 			return nil, err
 		}
-
-		queryMods = append(queryMods, qm.Where(dcnCursorColumnsTuple+" < (?, ?)", afterT.MintedAt, afterT.Node))
+		queryMods = append(queryMods,
+			qm.Where(dcnCursorColumnsTuple+" < (?, ?)", afterT.MintedAt, afterT.Node),
+		)
 	} else if before != nil {
 		beforeT, err := pHelp.DecodeCursor(*before)
 		if err != nil {
 			return nil, err
 		}
-
-		queryMods = append(queryMods, qm.Where(dcnCursorColumnsTuple+" > (?, ?)", beforeT.MintedAt, beforeT.Node))
+		queryMods = append(queryMods,
+			qm.Where(dcnCursorColumnsTuple+" < (?, ?)", beforeT.MintedAt, beforeT.Node),
+		)
 	}
 
 	all, err := models.DCNS(queryMods...).All(ctx, r.pdb.DBS().Reader)
