@@ -15,6 +15,11 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+type DCNCursor struct {
+	MintedAt time.Time
+	Node     []byte
+}
+
 func DCNToAPI(d *models.DCN) *gmodel.Dcn {
 	return &gmodel.Dcn{
 		Owner:     common.BytesToAddress(d.OwnerAddress),
@@ -64,6 +69,8 @@ func (r *Repository) GetDCNByName(ctx context.Context, name string) (*gmodel.Dcn
 	return DCNToAPI(dcn), nil
 }
 
+var dcnCursorColumnsTuple = "(" + models.DCNColumns.MintedAt + ", " + models.DCNColumns.Node + ")"
+
 func (r *Repository) GetDCNs(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *gmodel.DCNFilter) (*gmodel.DCNConnection, error) {
 	var limit int
 	limit, err := helpers.ValidateFirstLast(first, last, maxPageSize)
@@ -88,23 +95,23 @@ func (r *Repository) GetDCNs(ctx context.Context, first *int, after *string, las
 
 	queryMods = append(queryMods,
 		qm.Limit(limit+1),
-		qm.OrderBy(models.DCNColumns.MintedAt+orderBy))
+		qm.OrderBy(dcnCursorColumnsTuple+orderBy))
 
-	pHelp := &helpers.PaginationHelper[time.Time]{}
+	pHelp := &helpers.PaginationHelper[DCNCursor]{}
 	if after != nil {
 		afterT, err := pHelp.DecodeCursor(*after)
 		if err != nil {
 			return nil, err
 		}
 
-		queryMods = append(queryMods, models.DCNWhere.MintedAt.LT(*afterT))
+		queryMods = append(queryMods, qm.Where(dcnCursorColumnsTuple+" < (?, ?)", afterT.MintedAt, afterT.Node))
 	} else if before != nil {
 		beforeT, err := pHelp.DecodeCursor(*before)
 		if err != nil {
 			return nil, err
 		}
 
-		queryMods = append(queryMods, models.DCNWhere.MintedAt.GT(*beforeT))
+		queryMods = append(queryMods, qm.Where(dcnCursorColumnsTuple+" > (?, ?)", beforeT.MintedAt, beforeT.Node))
 	}
 
 	all, err := models.DCNS(queryMods...).All(ctx, r.pdb.DBS().Reader)
@@ -131,7 +138,7 @@ func (r *Repository) GetDCNs(ctx context.Context, first *int, after *string, las
 	nodes := make([]*gmodel.Dcn, len(all))
 
 	for i, dcn := range all {
-		c, err := pHelp.EncodeCursor(dcn.MintedAt)
+		c, err := pHelp.EncodeCursor(DCNCursor{MintedAt: dcn.MintedAt, Node: dcn.Node})
 		if err != nil {
 			return nil, err
 		}
@@ -152,17 +159,8 @@ func (r *Repository) GetDCNs(ctx context.Context, first *int, after *string, las
 	var endCur, startCur *string
 
 	if len(all) != 0 {
-		ec, err := pHelp.EncodeCursor(all[len(all)-1].MintedAt)
-		if err != nil {
-			return nil, err
-		}
-		endCur = &ec
-
-		sc, err := pHelp.EncodeCursor(all[0].MintedAt)
-		if err != nil {
-			return nil, err
-		}
-		startCur = &sc
+		startCur = &edges[0].Cursor
+		endCur = &edges[len(edges)-1].Cursor
 	}
 
 	res := &gmodel.DCNConnection{
