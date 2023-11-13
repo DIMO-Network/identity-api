@@ -113,15 +113,15 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate() {
 
 	// Aftermarket Earnings
 	adEarn, ok := new(big.Int).SetString("59147051345528509681", 10)
-	r.NotZero(ok)
+	r.True(ok)
 
 	// Synthetic Earnings
 	synthEarn, ok := new(big.Int).SetString("59147051345528509682", 10)
-	r.NotZero(ok)
+	r.True(ok)
 
 	// Streak Earnings
 	strkEarn, ok := new(big.Int).SetString("59147051345528509684", 10)
-	r.NotZero(ok)
+	r.True(ok)
 
 	var reward = models.Reward{
 		IssuanceWeek:        2,
@@ -261,15 +261,15 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate_Firs
 
 	// Aftermarket Earnings
 	adEarn, ok := new(big.Int).SetString("59147051345528509681", 10)
-	r.NotZero(ok)
+	r.True(ok)
 
 	// Synthetic Earnings
 	synthEarn, ok := new(big.Int).SetString("59147051345528509682", 10)
-	r.NotZero(ok)
+	r.True(ok)
 
 	// Streak Earnings
 	strkEarn, ok := new(big.Int).SetString("59147051345528509684", 10)
-	r.NotZero(ok)
+	r.True(ok)
 
 	var rewards = []models.Reward{
 		{
@@ -466,15 +466,15 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 
 	// Aftermarket Earnings
 	adEarn, ok := new(big.Int).SetString("59147051345528509681", 10)
-	r.NotZero(ok)
+	r.True(ok)
 
 	// Synthetic Earnings
 	synthEarn, ok := new(big.Int).SetString("59147051345528509682", 10)
-	r.NotZero(ok)
+	r.True(ok)
 
 	// Streak Earnings
 	strkEarn, ok := new(big.Int).SetString("59147051345528509684", 10)
-	r.NotZero(ok)
+	r.True(ok)
 
 	var rewards = []models.Reward{
 		{
@@ -671,15 +671,15 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 
 	// Aftermarket Earnings
 	adEarn, ok := new(big.Int).SetString("59147051345528509681", 10)
-	r.NotZero(ok)
+	r.True(ok)
 
 	// Synthetic Earnings
 	synthEarn, ok := new(big.Int).SetString("59147051345528509682", 10)
-	r.NotZero(ok)
+	r.True(ok)
 
 	// Streak Earnings
 	strkEarn, ok := new(big.Int).SetString("59147051345528509684", 10)
-	r.NotZero(ok)
+	r.True(ok)
 
 	var rewards = []models.Reward{
 		{
@@ -876,15 +876,15 @@ func (r *RewardsQueryTestSuite) Test_Query_GetAftermarketDeviceEarnings_FwdPagin
 
 	// Aftermarket Earnings
 	adEarn, ok := new(big.Int).SetString("59147051345528509681", 10)
-	r.NotZero(ok)
+	r.True(ok)
 
 	// Synthetic Earnings
 	synthEarn, ok := new(big.Int).SetString("59147051345528509682", 10)
-	r.NotZero(ok)
+	r.True(ok)
 
 	// Streak Earnings
 	strkEarn, ok := new(big.Int).SetString("59147051345528509684", 10)
-	r.NotZero(ok)
+	r.True(ok)
 
 	var reward = models.Reward{
 		IssuanceWeek:        2,
@@ -910,9 +910,9 @@ func (r *RewardsQueryTestSuite) Test_Query_GetAftermarketDeviceEarnings_FwdPagin
 			  node {
 				id
 				tokenId
-				earnings(first: 1) {
+				earnings {
 				  totalTokens
-				  history {
+				  history(first: 1) {
 					totalCount
 					pageInfo {
 					  startCursor
