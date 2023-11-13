@@ -306,7 +306,6 @@ func Test_GetOwnedVehicles_Filters(t *testing.T) {
 	ctx := context.Background()
 	assert := assert.New(t)
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDir)
-	first := 3
 
 	repo := New(pdb, config.Settings{})
 	_, walletA, err := helpers.GenerateWallet()
@@ -316,7 +315,7 @@ func Test_GetOwnedVehicles_Filters(t *testing.T) {
 	_, walletC, err := helpers.GenerateWallet()
 	assert.NoError(err)
 
-	for _, v := range []struct {
+	data := []struct {
 		TokenID    int
 		Owner      *common.Address
 		Privileged *common.Address
@@ -335,7 +334,9 @@ func Test_GetOwnedVehicles_Filters(t *testing.T) {
 			TokenID: 3,
 			Owner:   walletA,
 		},
-	} {
+	}
+
+	for _, v := range data {
 		vehicle := models.Vehicle{
 			ID:           v.TokenID,
 			OwnerAddress: v.Owner.Bytes(),
@@ -363,52 +364,69 @@ func Test_GetOwnedVehicles_Filters(t *testing.T) {
 		}
 	}
 
-	// Filter By Privileged
-	// Where Priv wallet has both implied (owner) and explicit (granted) privileges
-	// Owner | Privileged | Result
-	// ------+------------+-------
-	// 	     | B          | 1, 2
-	res, err := repo.GetVehicles(ctx, &first, nil, nil, nil, &gmodel.VehiclesFilter{Privileged: walletB})
-	assert.NoError(err)
+	for _, testCases := range []struct {
+		Name           string
+		Description    string
+		First          int
+		Filter         gmodel.VehiclesFilter
+		ExpectedTotal  int
+		ExpectedTokens []int
+		ExpectedOwner  []*common.Address
+	}{
+		{
+			Description: "Filter By Privileged: priv wallet has both implied (owner) and explicit (granted) privileges",
+			// Owner | Privileged | Result
+			// ------+------------+-------
+			// 	     | B          | 1, 2
+			First:          3,
+			Filter:         gmodel.VehiclesFilter{Privileged: walletB},
+			ExpectedTotal:  2,
+			ExpectedTokens: []int{2, 1},
+			ExpectedOwner:  []*common.Address{walletB, walletA},
+		},
+		{
+			Description: "Filter By Owner",
+			// Owner | Privileged | Result
+			// ------+------------+-------
+			// A     |            | 1, 3
+			First:          3,
+			Filter:         gmodel.VehiclesFilter{Owner: walletA},
+			ExpectedTotal:  2,
+			ExpectedTokens: []int{3, 1},
+			ExpectedOwner:  []*common.Address{walletA, walletA},
+		},
+		{
+			Description: "Filter By Privileged & Owner, result must match both criteria (valid combo)",
+			// Owner | Privileged | Result
+			// ------+------------+-------
+			// A     | B          | 1
+			First:          3,
+			Filter:         gmodel.VehiclesFilter{Owner: walletA, Privileged: walletB},
+			ExpectedTotal:  1,
+			ExpectedTokens: []int{1},
+			ExpectedOwner:  []*common.Address{walletA},
+		},
+		{
+			Description: "Filter By Privileged & Owner, result must match both criteria (invalid combo)",
+			// Owner | Privileged | Result
+			// ------+------------+-------
+			// C     | B          |
+			First:          3,
+			Filter:         gmodel.VehiclesFilter{Owner: walletC, Privileged: walletB},
+			ExpectedTotal:  0,
+			ExpectedTokens: []int{},
+			ExpectedOwner:  []*common.Address{},
+		},
+	} {
+		res, err := repo.GetVehicles(ctx, &testCases.First, nil, nil, nil, &testCases.Filter)
+		assert.NoError(err)
 
-	assert.Equal(2, res.TotalCount)
-	assert.Equal(2, res.Edges[0].Node.TokenID)
-	assert.Equal(1, res.Edges[1].Node.TokenID)
-	assert.Equal(walletB, &res.Edges[0].Node.Owner)
-	assert.Equal(walletA, &res.Edges[1].Node.Owner)
-
-	// Filter By Owner
-	// Owner | Privileged | Result
-	// ------+------------+-------
-	// A     |            | 1, 3
-	res, err = repo.GetVehicles(ctx, &first, nil, nil, nil, &gmodel.VehiclesFilter{Owner: walletA})
-	assert.NoError(err)
-
-	assert.Equal(2, res.TotalCount)
-	assert.Equal(3, res.Edges[0].Node.TokenID)
-	assert.Equal(1, res.Edges[1].Node.TokenID)
-	assert.Equal(walletA, &res.Edges[0].Node.Owner)
-	assert.Equal(walletA, &res.Edges[1].Node.Owner)
-
-	// Filter By Privileged & Owner
-	// where result must match both criteria, valid owner and priv wallets passed
-	// Owner | Privileged | Result
-	// ------+------------+-------
-	// A     | B          | 1
-	res, err = repo.GetVehicles(ctx, &first, nil, nil, nil, &gmodel.VehiclesFilter{Owner: walletA, Privileged: walletB})
-	assert.NoError(err)
-
-	assert.Equal(1, res.TotalCount)
-	assert.Equal(1, res.Edges[0].Node.TokenID)
-	assert.Equal(walletA, &res.Edges[0].Node.Owner)
-
-	// Filter By Privileged & Owner
-	// where result must match both criteria, invalid owner and priv wallets passed
-	// Owner | Privileged | Result
-	// ------+------------+-------
-	// C     | B          |
-	res, err = repo.GetVehicles(ctx, &first, nil, nil, nil, &gmodel.VehiclesFilter{Owner: walletC, Privileged: walletB})
-	assert.NoError(err)
-
-	assert.Equal(0, res.TotalCount)
+		assert.Equal(testCases.ExpectedTotal, res.TotalCount)
+		for idx, tknID := range testCases.ExpectedTokens {
+			assert.Equal(tknID, res.Edges[idx].Node.TokenID)
+		}
+		for idx, addr := range testCases.ExpectedOwner {
+			assert.Equal(*addr, res.Edges[idx].Node.Owner)
+		}
+	}
 }
