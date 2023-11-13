@@ -56,11 +56,6 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
-	AfterMarketEarnings struct {
-		History     func(childComplexity int) int
-		TotalTokens func(childComplexity int) int
-	}
-
 	AftermarketDevice struct {
 		Address      func(childComplexity int) int
 		Beneficiary  func(childComplexity int) int
@@ -83,6 +78,11 @@ type ComplexityRoot struct {
 		Nodes      func(childComplexity int) int
 		PageInfo   func(childComplexity int) int
 		TotalCount func(childComplexity int) int
+	}
+
+	AftermarketDeviceEarnings struct {
+		History     func(childComplexity int) int
+		TotalTokens func(childComplexity int) int
 	}
 
 	AftermarketDeviceEdge struct {
@@ -225,7 +225,7 @@ type AftermarketDeviceResolver interface {
 
 	Vehicle(ctx context.Context, obj *model.AftermarketDevice) (*model.Vehicle, error)
 
-	Earnings(ctx context.Context, obj *model.AftermarketDevice, first *int, after *string, last *int, before *string) (*model.AfterMarketEarnings, error)
+	Earnings(ctx context.Context, obj *model.AftermarketDevice, first *int, after *string, last *int, before *string) (*model.AftermarketDeviceEarnings, error)
 }
 type DCNResolver interface {
 	Vehicle(ctx context.Context, obj *model.Dcn) (*model.Vehicle, error)
@@ -278,20 +278,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e, 0, 0, nil}
 	_ = ec
 	switch typeName + "." + field {
-
-	case "AfterMarketEarnings.history":
-		if e.complexity.AfterMarketEarnings.History == nil {
-			break
-		}
-
-		return e.complexity.AfterMarketEarnings.History(childComplexity), true
-
-	case "AfterMarketEarnings.totalTokens":
-		if e.complexity.AfterMarketEarnings.TotalTokens == nil {
-			break
-		}
-
-		return e.complexity.AfterMarketEarnings.TotalTokens(childComplexity), true
 
 	case "AftermarketDevice.address":
 		if e.complexity.AftermarketDevice.Address == nil {
@@ -423,6 +409,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.AftermarketDeviceConnection.TotalCount(childComplexity), true
+
+	case "AftermarketDeviceEarnings.history":
+		if e.complexity.AftermarketDeviceEarnings.History == nil {
+			break
+		}
+
+		return e.complexity.AftermarketDeviceEarnings.History(childComplexity), true
+
+	case "AftermarketDeviceEarnings.totalTokens":
+		if e.complexity.AftermarketDeviceEarnings.TotalTokens == nil {
+			break
+		}
+
+		return e.complexity.AftermarketDeviceEarnings.TotalTokens(childComplexity), true
 
 	case "AftermarketDeviceEdge.cursor":
 		if e.complexity.AftermarketDeviceEdge.Cursor == nil {
@@ -1508,104 +1508,6 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) _AfterMarketEarnings_totalTokens(ctx context.Context, field graphql.CollectedField, obj *model.AfterMarketEarnings) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_AfterMarketEarnings_totalTokens(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.TotalTokens, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*big.Int)
-	fc.Result = res
-	return ec.marshalNBigInt2ᚖmathᚋbigᚐInt(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_AfterMarketEarnings_totalTokens(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "AfterMarketEarnings",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type BigInt does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _AfterMarketEarnings_history(ctx context.Context, field graphql.CollectedField, obj *model.AfterMarketEarnings) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_AfterMarketEarnings_history(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.History, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.EarningsConnection)
-	fc.Result = res
-	return ec.marshalNEarningsConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐEarningsConnection(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_AfterMarketEarnings_history(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "AfterMarketEarnings",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "totalCount":
-				return ec.fieldContext_EarningsConnection_totalCount(ctx, field)
-			case "edges":
-				return ec.fieldContext_EarningsConnection_edges(ctx, field)
-			case "nodes":
-				return ec.fieldContext_EarningsConnection_nodes(ctx, field)
-			case "pageInfo":
-				return ec.fieldContext_EarningsConnection_pageInfo(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type EarningsConnection", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _AftermarketDevice_id(ctx context.Context, field graphql.CollectedField, obj *model.AftermarketDevice) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_AftermarketDevice_id(ctx, field)
 	if err != nil {
@@ -2226,9 +2128,9 @@ func (ec *executionContext) _AftermarketDevice_earnings(ctx context.Context, fie
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.AfterMarketEarnings)
+	res := resTmp.(*model.AftermarketDeviceEarnings)
 	fc.Result = res
-	return ec.marshalOAfterMarketEarnings2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAfterMarketEarnings(ctx, field.Selections, res)
+	return ec.marshalOAftermarketDeviceEarnings2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDeviceEarnings(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AftermarketDevice_earnings(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2240,11 +2142,11 @@ func (ec *executionContext) fieldContext_AftermarketDevice_earnings(ctx context.
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "totalTokens":
-				return ec.fieldContext_AfterMarketEarnings_totalTokens(ctx, field)
+				return ec.fieldContext_AftermarketDeviceEarnings_totalTokens(ctx, field)
 			case "history":
-				return ec.fieldContext_AfterMarketEarnings_history(ctx, field)
+				return ec.fieldContext_AftermarketDeviceEarnings_history(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type AfterMarketEarnings", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type AftermarketDeviceEarnings", field.Name)
 		},
 	}
 	defer func() {
@@ -2478,6 +2380,104 @@ func (ec *executionContext) fieldContext_AftermarketDeviceConnection_pageInfo(ct
 				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AftermarketDeviceEarnings_totalTokens(ctx context.Context, field graphql.CollectedField, obj *model.AftermarketDeviceEarnings) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AftermarketDeviceEarnings_totalTokens(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalTokens, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*big.Int)
+	fc.Result = res
+	return ec.marshalNBigInt2ᚖmathᚋbigᚐInt(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AftermarketDeviceEarnings_totalTokens(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AftermarketDeviceEarnings",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type BigInt does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AftermarketDeviceEarnings_history(ctx context.Context, field graphql.CollectedField, obj *model.AftermarketDeviceEarnings) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AftermarketDeviceEarnings_history(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.History, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.EarningsConnection)
+	fc.Result = res
+	return ec.marshalNEarningsConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐEarningsConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AftermarketDeviceEarnings_history(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AftermarketDeviceEarnings",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_EarningsConnection_totalCount(ctx, field)
+			case "edges":
+				return ec.fieldContext_EarningsConnection_edges(ctx, field)
+			case "nodes":
+				return ec.fieldContext_EarningsConnection_nodes(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_EarningsConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type EarningsConnection", field.Name)
 		},
 	}
 	return fc, nil
@@ -8738,50 +8738,6 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 
 // region    **************************** object.gotpl ****************************
 
-var afterMarketEarningsImplementors = []string{"AfterMarketEarnings"}
-
-func (ec *executionContext) _AfterMarketEarnings(ctx context.Context, sel ast.SelectionSet, obj *model.AfterMarketEarnings) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, afterMarketEarningsImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("AfterMarketEarnings")
-		case "totalTokens":
-			out.Values[i] = ec._AfterMarketEarnings_totalTokens(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "history":
-			out.Values[i] = ec._AfterMarketEarnings_history(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var aftermarketDeviceImplementors = []string{"AftermarketDevice", "Node"}
 
 func (ec *executionContext) _AftermarketDevice(ctx context.Context, sel ast.SelectionSet, obj *model.AftermarketDevice) graphql.Marshaler {
@@ -8989,6 +8945,50 @@ func (ec *executionContext) _AftermarketDeviceConnection(ctx context.Context, se
 			}
 		case "pageInfo":
 			out.Values[i] = ec._AftermarketDeviceConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var aftermarketDeviceEarningsImplementors = []string{"AftermarketDeviceEarnings"}
+
+func (ec *executionContext) _AftermarketDeviceEarnings(ctx context.Context, sel ast.SelectionSet, obj *model.AftermarketDeviceEarnings) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, aftermarketDeviceEarningsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AftermarketDeviceEarnings")
+		case "totalTokens":
+			out.Values[i] = ec._AftermarketDeviceEarnings_totalTokens(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "history":
+			out.Values[i] = ec._AftermarketDeviceEarnings_history(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -11688,18 +11688,18 @@ func (ec *executionContext) marshalOAddress2ᚖgithubᚗcomᚋethereumᚋgoᚑet
 	return res
 }
 
-func (ec *executionContext) marshalOAfterMarketEarnings2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAfterMarketEarnings(ctx context.Context, sel ast.SelectionSet, v *model.AfterMarketEarnings) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._AfterMarketEarnings(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalOAftermarketDevice2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDevice(ctx context.Context, sel ast.SelectionSet, v *model.AftermarketDevice) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._AftermarketDevice(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOAftermarketDeviceEarnings2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDeviceEarnings(ctx context.Context, sel ast.SelectionSet, v *model.AftermarketDeviceEarnings) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._AftermarketDeviceEarnings(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOAftermarketDevicesFilter2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDevicesFilter(ctx context.Context, v interface{}) (*model.AftermarketDevicesFilter, error) {

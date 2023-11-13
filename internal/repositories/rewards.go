@@ -40,10 +40,10 @@ func RewardToAPI(reward models.Reward) gmodel.Earning {
 	}
 }
 
-func (r *Repository) paginateRewards(ctx context.Context, condition []qm.QueryMod, first *int, after *string, last *int, before *string, limit int) (*gmodel.EarningsConnection, error) {
+func (r *Repository) paginateRewards(ctx context.Context, conditions []qm.QueryMod, first *int, after *string, last *int, before *string, limit int) (*gmodel.EarningsConnection, error) {
 
 	queryMods := []qm.QueryMod{}
-	queryMods = append(queryMods, condition...)
+	queryMods = append(queryMods, conditions...)
 
 	if after != nil {
 		afterID, err := helpers.CursorToID(*after)
@@ -191,7 +191,7 @@ func (r *Repository) PaginateVehicleEarningsByID(ctx context.Context, vehicleEar
 	return vehicleEarnings.History, nil
 }
 
-func (r *Repository) GetEarningsByAfterMarketDevice(ctx context.Context, afterMarketID int, first *int, after *string, last *int, before *string) (*gmodel.AfterMarketEarnings, error) {
+func (r *Repository) GetEarningsByAfterMarketDevice(ctx context.Context, afterMarketID int, first *int, after *string, last *int, before *string) (*gmodel.AftermarketDeviceEarnings, error) {
 	limit, err := helpers.ValidateFirstLast(first, last, maxPageSize) // return early if both first and last are provided
 	if err != nil {
 		return nil, err
@@ -217,10 +217,12 @@ func (r *Repository) GetEarningsByAfterMarketDevice(ctx context.Context, afterMa
 		return nil, err
 	}
 
-	if stats.TokenSum.IsZero() {
-		return &gmodel.AfterMarketEarnings{
+	if stats.TotalCount == 0 {
+		return &gmodel.AftermarketDeviceEarnings{
 			TotalTokens: big.NewInt(0),
-			History:     &gmodel.EarningsConnection{},
+			History: &gmodel.EarningsConnection{
+				PageInfo: &gmodel.PageInfo{},
+			},
 		}, nil
 	}
 
@@ -234,7 +236,7 @@ func (r *Repository) GetEarningsByAfterMarketDevice(ctx context.Context, afterMa
 	}
 
 	afd.TotalCount = stats.TotalCount
-	return &gmodel.AfterMarketEarnings{
+	return &gmodel.AftermarketDeviceEarnings{
 		History:     afd,
 		TotalTokens: dbtypes.NullDecimalToInt(stats.TokenSum),
 	}, nil

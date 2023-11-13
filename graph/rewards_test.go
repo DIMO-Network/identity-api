@@ -866,3 +866,123 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 	  }
 	`, beneficiary.Hex(), currTime.Format(time.RFC3339), beneficiary.Hex(), currTime.Format(time.RFC3339), beneficiary.Hex(), beneficiary.Hex()), string(b))
 }
+
+func (r *RewardsQueryTestSuite) Test_Query_GetAftermarketDeviceEarnings_FwdPaginate() {
+	currTime := time.Now().UTC().Truncate(time.Second)
+	_, beneficiary, err := test.GenerateWallet()
+	r.NoError(err)
+
+	r.createDependencies()
+
+	// Aftermarket Earnings
+	adEarn, ok := new(big.Int).SetString("59147051345528509681", 10)
+	r.NotZero(ok)
+
+	// Synthetic Earnings
+	synthEarn, ok := new(big.Int).SetString("59147051345528509682", 10)
+	r.NotZero(ok)
+
+	// Streak Earnings
+	strkEarn, ok := new(big.Int).SetString("59147051345528509684", 10)
+	r.NotZero(ok)
+
+	var reward = models.Reward{
+		IssuanceWeek:        2,
+		VehicleID:           1,
+		ConnectionStreak:    null.IntFrom(20),
+		StreakEarnings:      dbtypes.NullIntToDecimal(strkEarn),
+		AftermarketTokenID:  null.IntFrom(1),
+		AftermarketEarnings: dbtypes.NullIntToDecimal(adEarn),
+		SyntheticTokenID:    null.IntFrom(1),
+		SyntheticEarnings:   dbtypes.NullIntToDecimal(synthEarn),
+		ReceivedByAddress:   null.BytesFrom(beneficiary.Bytes()),
+		EarnedAt:            currTime,
+	}
+
+	err = reward.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
+	r.NoError(err)
+
+	query := `{
+		aftermarketDevices(first: 2) {
+			totalCount
+			edges {
+			  cursor
+			  node {
+				id
+				tokenId
+				earnings(first: 1) {
+				  totalTokens
+				  history {
+					totalCount
+					pageInfo {
+					  startCursor
+					  endCursor
+					  hasPreviousPage
+					  hasNextPage
+					}
+					edges {
+					  node {
+						week
+						beneficiary
+						connectionStreak
+					  }
+					  cursor
+					}
+				  }
+				}
+			  }
+			}
+		  }
+	  }`
+
+	c := client.New(
+		loader.Middleware(
+			r.pdb,
+			handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: r.resolver})), r.settings,
+		),
+	)
+
+	var resp interface{}
+	c.MustPost(query, &resp)
+	b, _ := json.Marshal(resp)
+	fmt.Println(string(b))
+
+	r.JSONEq(fmt.Sprintf(`
+	{
+		"aftermarketDevices": {
+			"totalCount": 1,
+			"edges": [
+				{
+					"cursor": "MQ==",
+					"node": {
+						"id": "AD_kQE=",
+						"tokenId": 1,
+						"earnings": {
+							"totalTokens": "177441154036585529047",
+							"history": {
+								"totalCount": 1,
+								"pageInfo": {
+									"endCursor": "Mg==",
+									"hasNextPage": false,
+									"hasPreviousPage": false,
+									"startCursor": "Mg=="
+								},
+								"edges": [
+									{
+										"node": {
+										  "week": 2,
+										  "beneficiary": "%s",
+										  "connectionStreak": 20
+										},
+										"cursor": "Mg=="
+									  }
+								]
+							}
+						}
+					}
+				}
+			]
+		}
+	}
+	`, beneficiary.Hex()), string(b))
+}

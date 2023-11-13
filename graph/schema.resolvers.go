@@ -28,7 +28,7 @@ func (r *aftermarketDeviceResolver) Vehicle(ctx context.Context, obj *model.Afte
 }
 
 // Earnings is the resolver for the earnings field.
-func (r *aftermarketDeviceResolver) Earnings(ctx context.Context, obj *model.AftermarketDevice, first *int, after *string, last *int, before *string) (*model.AfterMarketEarnings, error) {
+func (r *aftermarketDeviceResolver) Earnings(ctx context.Context, obj *model.AftermarketDevice, first *int, after *string, last *int, before *string) (*model.AftermarketDeviceEarnings, error) {
 	return r.Repo.GetEarningsByAfterMarketDevice(ctx, obj.TokenID, first, after, last, before)
 }
 
