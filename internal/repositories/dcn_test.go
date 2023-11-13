@@ -28,13 +28,6 @@ type DCNRepoTestSuite struct {
 	settings  config.Settings
 }
 
-type GetDCNs struct {
-	Owner     *common.Address
-	VehicleID int
-	MintedAt  time.Time
-	Node      []byte
-}
-
 func (o *DCNRepoTestSuite) SetupSuite() {
 	o.ctx = context.Background()
 	o.pdb, o.container = test.StartContainerDatabase(o.ctx, o.T(), "../../migrations")
@@ -149,82 +142,80 @@ func (o *DCNRepoTestSuite) Test_GetDCNs() {
 	mintedAt, err := time.Parse(time.RFC3339, "2023-11-08T20:46:55Z")
 	o.NoError(err)
 
-	data := []GetDCNs{
-		{
-			Owner:     walletA,
-			VehicleID: 1,
-			MintedAt:  mintedAt.AddDate(0, 0, 2),
-			Node:      []byte{0x1, 170, 166, 15, 216, 74, 75, 44, 94, 252, 64, 71, 50, 35, 193, 212, 53, 140, 163, 41, 192, 80, 127, 168, 193, 96, 213, 8, 56, 94, 182, 22},
-		},
-		{
-			Owner:     walletA,
-			VehicleID: 2,
-			MintedAt:  mintedAt,
-			Node:      []byte{0x2, 170, 166, 15, 216, 74, 75, 44, 94, 252, 64, 71, 50, 35, 193, 212, 53, 140, 163, 41, 192, 80, 127, 168, 193, 96, 213, 8, 56, 94, 182, 22},
-		},
-		{
-			Owner:     walletB,
-			VehicleID: 3,
-			MintedAt:  mintedAt,
-			Node:      []byte{0x3, 170, 166, 15, 216, 74, 75, 44, 94, 252, 64, 71, 50, 35, 193, 212, 53, 140, 163, 41, 192, 80, 127, 168, 193, 96, 213, 8, 56, 94, 182, 22},
-		},
-	}
+	first := 10
+	last := 1
+	pHelp := &helpers.PaginationHelper[DCNCursor]{}
+	cursor, err := pHelp.EncodeCursor(DCNCursor{MintedAt: mintedAt.AddDate(0, 0, 2), Node: common.LeftPadBytes(common.FromHex("0x1"), 32)})
 
-	for _, d := range data {
+	for _, testCase := range []struct {
+		Description string
+		Owner       *common.Address
+		VehicleID   int
+		MintedAt    time.Time
+		Node        []byte
+		First       *int
+		Last        *int
+		Cursor      *string
+	}{
+		{
+			// Node    | Owner | Vehicle ID | Minted At
+			// --------+-------+-------------------------
+			// x1      | A     | 1          | 2023-11-10 20:46:55
+			Description: "first record (ordered by default, DESC)",
+			Owner:       walletA,
+			VehicleID:   1,
+			MintedAt:    mintedAt.AddDate(0, 0, 2),
+			Node:        common.LeftPadBytes(common.FromHex("0x1"), 32),
+			First:       &first,
+		},
+		{
+			// Node    | Owner | Vehicle ID | Minted At
+			// --------+-------+-------------------------
+			// x2      | A     | 2          | 2023-11-08 20:46:55
+			Description: "last record (order ASC)",
+			Owner:       walletA,
+			VehicleID:   2,
+			MintedAt:    mintedAt,
+			Node:        common.LeftPadBytes(common.FromHex("0x2"), 32),
+			Last:        &last,
+		},
+		{
+			// Node    | Owner | Vehicle ID | Minted At
+			// --------+-------+-------------------------
+			// x3      | B     | 3          | 2023-11-08 20:46:55
+			Description: "search after (ordered DESC MintedAt, Node means Token 3 comes before Token 2)",
+			Owner:       walletB,
+			VehicleID:   3,
+			MintedAt:    mintedAt,
+			Node:        common.LeftPadBytes(common.FromHex("0x3"), 32),
+			Cursor:      &cursor,
+			First:       &first,
+		},
+	} {
 		veh := models.Vehicle{
-			ID:           d.VehicleID,
-			OwnerAddress: d.Owner.Bytes(),
+			ID:           testCase.VehicleID,
+			OwnerAddress: testCase.Owner.Bytes(),
 		}
 		err = veh.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer())
 		o.NoError(err)
 
 		dcn := models.DCN{
-			Node:         d.Node,
-			OwnerAddress: d.Owner.Bytes(),
-			VehicleID:    null.IntFrom(d.VehicleID),
-			Name:         null.StringFrom(fmt.Sprintf("dcn-%d", d.VehicleID)),
-			MintedAt:     d.MintedAt,
+			Node:         testCase.Node,
+			OwnerAddress: testCase.Owner.Bytes(),
+			VehicleID:    null.IntFrom(testCase.VehicleID),
+			Name:         null.StringFrom(fmt.Sprintf("dcn-%d", testCase.VehicleID)),
+			MintedAt:     testCase.MintedAt,
 		}
 
 		err = dcn.Insert(o.ctx, o.pdb.DBS().Writer.DB, boil.Infer())
 		o.NoError(err)
+
+		result, err := o.repo.GetDCNs(o.ctx, testCase.First, testCase.Cursor, testCase.Last, nil, nil)
+		o.NoError(err)
+
+		o.Equal(testCase.Owner.Bytes(), result.Nodes[0].Owner.Bytes())
+		o.Equal(testCase.Node, result.Nodes[0].Node)
+		o.Equal(testCase.VehicleID, *result.Nodes[0].VehicleID)
+
 	}
-
-	// first record (ordered by default, DESC)
-	// Node    | Owner | Vehicle ID | Minted At
-	// --------+-------+-------------------------
-	// x1      | A     | 1          | 2023-11-10 20:46:55
-	first := 10
-	dcnFirst, err := o.repo.GetDCNs(o.ctx, &first, nil, nil, nil, nil)
-	o.NoError(err)
-
-	o.Equal(data[0].Owner.Bytes(), dcnFirst.Nodes[0].Owner.Bytes())
-	o.Equal(data[0].Node, dcnFirst.Nodes[0].Node)
-	o.Equal(data[0].VehicleID, *dcnFirst.Nodes[0].VehicleID)
-
-	// last record (order ASC)
-	// Node    | Owner | Vehicle ID | Minted At
-	// --------+-------+-------------------------
-	// x2      | A     | 2          | 2023-11-08 20:46:55
-	last := 1
-	dcnLast, err := o.repo.GetDCNs(o.ctx, nil, nil, &last, nil, nil)
-	o.NoError(err)
-
-	o.Equal(data[1].Owner.Bytes(), dcnLast.Nodes[0].Owner.Bytes())
-	o.Equal(data[1].Node, dcnLast.Nodes[0].Node)
-	o.Equal(data[1].VehicleID, *dcnLast.Nodes[0].VehicleID)
-
-	// search after (ordered DESC MintedAt, Node means Token 3 comes before Token 2)
-	// Node    | Owner | Vehicle ID | Minted At
-	// --------+-------+-------------------------
-	// x3      | B     | 3          | 2023-11-08 20:46:55
-	pHelp := &helpers.PaginationHelper[DCNCursor]{}
-	c, err := pHelp.EncodeCursor(DCNCursor{MintedAt: data[0].MintedAt, Node: data[0].Node})
-	o.NoError(err)
-	dcnAfter, err := o.repo.GetDCNs(o.ctx, &first, &c, nil, nil, nil)
-	o.NoError(err)
-
-	o.Equal(data[2].Owner.Bytes(), dcnAfter.Nodes[0].Owner.Bytes())
-	o.Equal(data[2].Node, dcnAfter.Nodes[0].Node)
-	o.Equal(data[2].VehicleID, *dcnAfter.Nodes[0].VehicleID)
 }
