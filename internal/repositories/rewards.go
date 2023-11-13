@@ -117,11 +117,8 @@ func (r *Repository) paginateRewards(ctx context.Context, conditions []qm.QueryM
 	var endCursor, startCursor *string
 
 	if len(all) != 0 {
-		ec := helpers.IDToCursor(all[len(all)-1].IssuanceWeek)
-		endCursor = &ec
-
-		sc := helpers.IDToCursor(all[0].IssuanceWeek)
-		startCursor = &sc
+		endCursor = &edges[len(edges)-1].Cursor
+		startCursor = &edges[0].Cursor
 	}
 
 	return &gmodel.EarningsConnection{
