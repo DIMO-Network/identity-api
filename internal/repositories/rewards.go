@@ -21,6 +21,11 @@ type RewardsCursor struct {
 	VehicleID int
 }
 
+type EarningsSummary struct {
+	TokenSum   types.NullDecimal `boil:"token_sum"`
+	TotalCount int               `boil:"total_count"`
+}
+
 func RewardToAPI(reward models.Reward) gmodel.Earning {
 	stEarn := dbtypes.NullDecimalToInt(reward.StreakEarnings)
 	adEarn := dbtypes.NullDecimalToInt(reward.AftermarketEarnings)
@@ -131,14 +136,9 @@ func (r *Repository) paginateRewards(ctx context.Context, conditions []qm.QueryM
 	}, nil
 }
 
-func (r *Repository) GetEarningsByVehicleID(ctx context.Context, tokenID int) (*gmodel.VehicleEarnings, error) {
-	type rewardStats struct {
-		TokenSum   types.NullDecimal `boil:"token_sum"`
-		TotalCount int               `boil:"total_count"`
-	}
-	var stats rewardStats
-
-	err := models.Rewards(
+func (r *Repository) GetEarningsSummary(ctx context.Context, conditions []qm.QueryMod) (*EarningsSummary, error) {
+	var summary EarningsSummary
+	queryMods := []qm.QueryMod{
 		qm.Select(
 			fmt.Sprintf(
 				`sum(%s + %s + %s) as token_sum`,
@@ -146,13 +146,24 @@ func (r *Repository) GetEarningsByVehicleID(ctx context.Context, tokenID int) (*
 			),
 			"count(*) as total_count",
 		),
-		models.RewardWhere.VehicleID.EQ(tokenID),
-	).Bind(ctx, r.pdb.DBS().Reader, &stats)
+	}
+	queryMods = append(queryMods, conditions...)
+
+	err := models.Rewards(queryMods...).Bind(ctx, r.pdb.DBS().Reader, &summary)
 	if err != nil {
 		return nil, err
 	}
 
-	if stats.TokenSum.IsZero() {
+	return &summary, nil
+}
+
+func (r *Repository) GetEarningsByVehicleID(ctx context.Context, tokenID int) (*gmodel.VehicleEarnings, error) {
+	summary, err := r.GetEarningsSummary(ctx, []qm.QueryMod{models.RewardWhere.VehicleID.EQ(tokenID)})
+	if err != nil {
+		return nil, err
+	}
+
+	if summary.TokenSum.IsZero() {
 		return &gmodel.VehicleEarnings{
 			TotalTokens: &big.Int{},
 			History:     &gmodel.EarningsConnection{},
@@ -161,11 +172,11 @@ func (r *Repository) GetEarningsByVehicleID(ctx context.Context, tokenID int) (*
 	}
 
 	earningsConn := &gmodel.EarningsConnection{
-		TotalCount: stats.TotalCount,
+		TotalCount: summary.TotalCount,
 	}
 
 	return &gmodel.VehicleEarnings{
-		TotalTokens: dbtypes.NullDecimalToInt(stats.TokenSum),
+		TotalTokens: dbtypes.NullDecimalToInt(summary.TokenSum),
 		History:     earningsConn,
 		VehicleID:   tokenID,
 	}, nil
@@ -192,32 +203,16 @@ func (r *Repository) PaginateVehicleEarningsByID(ctx context.Context, vehicleEar
 }
 
 func (r *Repository) GetEarningsByAfterMarketDeviceID(ctx context.Context, tokenID int) (*gmodel.AftermarketDeviceEarnings, error) {
-	type rewardStats struct {
-		TokenSum   types.NullDecimal `boil:"token_sum"`
-		TotalCount int               `boil:"total_count"`
-	}
-	var stats rewardStats
-
-	err := models.Rewards(
-		qm.Select(
-			fmt.Sprintf(
-				`sum(%s + %s + %s) as token_sum`,
-				models.RewardColumns.StreakEarnings, models.RewardColumns.AftermarketEarnings, models.RewardColumns.SyntheticEarnings,
-			),
-			"count(*) as total_count",
-		),
-		models.RewardWhere.AftermarketTokenID.EQ(null.IntFrom(tokenID)),
-	).Bind(ctx, r.pdb.DBS().Reader, &stats)
+	stats, err := r.GetEarningsSummary(ctx, []qm.QueryMod{models.RewardWhere.AftermarketTokenID.EQ(null.IntFrom(tokenID))})
 	if err != nil {
 		return nil, err
 	}
 
-	if stats.TotalCount == 0 {
+	if stats.TokenSum.IsZero() {
 		return &gmodel.AftermarketDeviceEarnings{
-			TotalTokens: big.NewInt(0),
-			History: &gmodel.EarningsConnection{
-				PageInfo: &gmodel.PageInfo{},
-			},
+			TotalTokens:         &big.Int{},
+			History:             &gmodel.EarningsConnection{},
+			AftermarketDeviceID: tokenID,
 		}, nil
 	}
 

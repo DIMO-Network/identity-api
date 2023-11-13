@@ -18,6 +18,7 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"github.com/volatiletech/sqlboiler/v4/types"
 )
 
@@ -133,6 +134,68 @@ func (r *RewardsRepoTestSuite) createRewardsRecords(count int, args createReward
 	}
 
 	return rewards, nil
+}
+
+func (r *RewardsRepoTestSuite) Test_GetEarningsSummary_Success() {
+	_, ben, err := helpers.GenerateWallet()
+	r.NoError(err)
+
+	currTime := time.Now().UTC().Truncate(time.Second)
+
+	r.createDependentRecords()
+
+	totalEarned := big.NewInt(0)
+
+	rw := []models.Reward{
+		{
+			IssuanceWeek:       1,
+			VehicleID:          11,
+			ConnectionStreak:   null.IntFrom(20),
+			AftermarketTokenID: null.IntFrom(1),
+			SyntheticTokenID:   null.IntFrom(1),
+			ReceivedByAddress:  null.BytesFrom(ben.Bytes()),
+			EarnedAt:           currTime,
+		},
+		{
+			IssuanceWeek:       2,
+			VehicleID:          11,
+			ConnectionStreak:   null.IntFrom(21),
+			AftermarketTokenID: null.IntFrom(1),
+			SyntheticTokenID:   null.IntFrom(1),
+			ReceivedByAddress:  null.BytesFrom(ben.Bytes()),
+			EarnedAt:           currTime,
+		},
+	}
+
+	var aftEarn types.NullDecimal
+	var strkEarn types.NullDecimal
+	var syntEarn types.NullDecimal
+
+	for _, rr := range rw {
+		baseAmt, ok := new(big.Int).SetString("59147051345528509681", 10)
+		r.NotZero(ok)
+
+		aftEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(30)))
+		strkEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(50)))
+		syntEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(10)))
+
+		rr.AftermarketEarnings = aftEarn
+		rr.StreakEarnings = strkEarn
+		rr.SyntheticEarnings = syntEarn
+
+		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(aftEarn))
+		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(strkEarn))
+		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(syntEarn))
+
+		err = rr.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
+		r.NoError(err)
+	}
+
+	summary, err := r.repo.GetEarningsSummary(r.ctx, []qm.QueryMod{models.RewardWhere.VehicleID.EQ(11)})
+	r.NoError(err)
+
+	r.Equal(2, summary.TotalCount)
+	r.Equal(totalEarned, dbtypes.NullDecimalToInt(summary.TokenSum))
 }
 
 func (r *RewardsRepoTestSuite) Test_GetEarningsByVehicleID_Success() {
