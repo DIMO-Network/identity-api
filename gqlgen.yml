@@ -136,6 +136,13 @@ models:
     extraFields:
       VehicleID:
         type: "int"
+  AftermarketDeviceEarnings:
+    fields:
+      history:
+        resolver: true
+    extraFields:
+      AftermarketDeviceID:
+        type: "int"
   Earning:
     fields:
       aftermarketDevice:

@@ -191,19 +191,14 @@ func (r *Repository) PaginateVehicleEarningsByID(ctx context.Context, vehicleEar
 	return vehicleEarnings.History, nil
 }
 
-func (r *Repository) GetEarningsByAfterMarketDevice(ctx context.Context, afterMarketID int, first *int, after *string, last *int, before *string) (*gmodel.AftermarketDeviceEarnings, error) {
-	limit, err := helpers.ValidateFirstLast(first, last, maxPageSize) // return early if both first and last are provided
-	if err != nil {
-		return nil, err
-	}
-
+func (r *Repository) GetEarningsByAfterMarketDeviceID(ctx context.Context, tokenID int) (*gmodel.AftermarketDeviceEarnings, error) {
 	type rewardStats struct {
 		TokenSum   types.NullDecimal `boil:"token_sum"`
 		TotalCount int               `boil:"total_count"`
 	}
 	var stats rewardStats
 
-	err = models.Rewards(
+	err := models.Rewards(
 		qm.Select(
 			fmt.Sprintf(
 				`sum(%s + %s + %s) as token_sum`,
@@ -211,7 +206,7 @@ func (r *Repository) GetEarningsByAfterMarketDevice(ctx context.Context, afterMa
 			),
 			"count(*) as total_count",
 		),
-		models.RewardWhere.AftermarketTokenID.EQ(null.IntFrom(afterMarketID)),
+		models.RewardWhere.AftermarketTokenID.EQ(null.IntFrom(tokenID)),
 	).Bind(ctx, r.pdb.DBS().Reader, &stats)
 	if err != nil {
 		return nil, err
@@ -226,8 +221,25 @@ func (r *Repository) GetEarningsByAfterMarketDevice(ctx context.Context, afterMa
 		}, nil
 	}
 
+	earningsConn := &gmodel.EarningsConnection{
+		TotalCount: stats.TotalCount,
+	}
+
+	return &gmodel.AftermarketDeviceEarnings{
+		TotalTokens:         dbtypes.NullDecimalToInt(stats.TokenSum),
+		History:             earningsConn,
+		AftermarketDeviceID: tokenID,
+	}, nil
+}
+
+func (r *Repository) PaginateAfterMarketDeviceEarningsByID(ctx context.Context, afterMarketDeviceEarnings *gmodel.AftermarketDeviceEarnings, first *int, after *string, last *int, before *string) (*gmodel.EarningsConnection, error) {
+	limit, err := helpers.ValidateFirstLast(first, last, maxPageSize) // return early if both first and last are provided
+	if err != nil {
+		return nil, err
+	}
+
 	queryMods := []qm.QueryMod{
-		models.RewardWhere.AftermarketTokenID.EQ(null.IntFrom(afterMarketID)),
+		models.RewardWhere.AftermarketTokenID.EQ(null.IntFrom(afterMarketDeviceEarnings.AftermarketDeviceID)),
 	}
 
 	afd, err := r.paginateRewards(ctx, queryMods, first, after, last, before, limit)
@@ -235,9 +247,8 @@ func (r *Repository) GetEarningsByAfterMarketDevice(ctx context.Context, afterMa
 		return nil, err
 	}
 
-	afd.TotalCount = stats.TotalCount
-	return &gmodel.AftermarketDeviceEarnings{
-		History:     afd,
-		TotalTokens: dbtypes.NullDecimalToInt(stats.TokenSum),
-	}, nil
+	afterMarketDeviceEarnings.History.Edges = afd.Edges
+	afterMarketDeviceEarnings.History.Nodes = afd.Nodes
+	afterMarketDeviceEarnings.History.PageInfo = afd.PageInfo
+	return afterMarketDeviceEarnings.History, nil
 }

@@ -221,7 +221,12 @@ type VehicleEarnings {
 
 type AftermarketDeviceEarnings {
   totalTokens: BigInt!
-  history: EarningsConnection!
+  history(
+    first: Int
+    after: String
+    last: Int
+    before: String
+  ): EarningsConnection!
 }
 
 # Aftermarket Types
@@ -282,12 +287,7 @@ type AftermarketDevice implements Node {
   """
   The earnings attached to the aftermarket device
   """
-  earnings(
-    first: Int
-    after: String
-    last: Int
-    before: String
-  ): AftermarketDeviceEarnings
+  earnings: AftermarketDeviceEarnings
 }
 
 type AftermarketDeviceConnection {

@@ -65,8 +65,9 @@ type AftermarketDeviceConnection struct {
 }
 
 type AftermarketDeviceEarnings struct {
-	TotalTokens *big.Int            `json:"totalTokens"`
-	History     *EarningsConnection `json:"history"`
+	TotalTokens         *big.Int            `json:"totalTokens"`
+	History             *EarningsConnection `json:"history"`
+	AftermarketDeviceID int                 `json:"-"`
 }
 
 type AftermarketDeviceEdge struct {

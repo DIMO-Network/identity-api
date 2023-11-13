@@ -846,7 +846,7 @@ func (r *RewardsRepoTestSuite) Test_PaginateAfterMarketDeviceEarningsByID_Disall
 
 	first := 1
 	last := 2
-	_, err := r.repo.GetEarningsByAfterMarketDevice(r.ctx, 11, &first, nil, &last, nil)
+	_, err := r.repo.PaginateAfterMarketDeviceEarningsByID(r.ctx, &gmodel.AftermarketDeviceEarnings{}, &first, nil, &last, nil)
 	r.EqualError(err, "pass `first` or `last`, but not both")
 }
 
@@ -901,7 +901,11 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_FwdPagination
 	}
 
 	first := 2
-	afd, err := r.repo.GetEarningsByAfterMarketDevice(r.ctx, 111, &first, nil, nil, nil)
+
+	rwrd, err := r.repo.GetEarningsByAfterMarketDeviceID(r.ctx, 111)
+	r.NoError(err)
+
+	paginatedEarnings, err := r.repo.PaginateAfterMarketDeviceEarningsByID(r.ctx, rwrd, &first, nil, nil, nil)
 	r.NoError(err)
 
 	startCursor := helpers.IDToCursor(2)
@@ -914,8 +918,8 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_FwdPagination
 		HasNextPage:     false,
 		HasPreviousPage: false,
 		StartCursor:     &startCursor,
-	}, afd.History.PageInfo)
-	r.Equal(2, afd.History.TotalCount)
+	}, paginatedEarnings.PageInfo)
+	r.Equal(2, paginatedEarnings.TotalCount)
 	r.Equal([]*gmodel.EarningsEdge{
 		{
 			Node: &gmodel.Earning{
@@ -947,7 +951,7 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_FwdPagination
 			},
 			Cursor: endCursor,
 		},
-	}, afd.History.Edges)
+	}, paginatedEarnings.Edges)
 }
 
 func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_FwdPagination_First_After() {
@@ -1004,7 +1008,10 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_FwdPagination
 	after := "Mw=="
 	aftID := 111
 
-	paginatedEarnings, err := r.repo.GetEarningsByAfterMarketDevice(r.ctx, aftID, &first, &after, nil, nil)
+	rwrd, err := r.repo.GetEarningsByAfterMarketDeviceID(r.ctx, aftID)
+	r.NoError(err)
+
+	paginatedEarnings, err := r.repo.PaginateAfterMarketDeviceEarningsByID(r.ctx, rwrd, &first, &after, nil, nil)
 	r.NoError(err)
 
 	startCrsr := helpers.IDToCursor(2)
@@ -1018,8 +1025,8 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_FwdPagination
 		HasNextPage:     false,
 		HasPreviousPage: true,
 		StartCursor:     &startCrsr,
-	}, paginatedEarnings.History.PageInfo)
-	r.Equal(3, paginatedEarnings.History.TotalCount)
+	}, paginatedEarnings.PageInfo)
+	r.Equal(3, paginatedEarnings.TotalCount)
 	r.Equal([]*gmodel.EarningsEdge{
 		{
 			Node: &gmodel.Earning{
@@ -1051,7 +1058,7 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_FwdPagination
 			},
 			Cursor: endCrsr,
 		},
-	}, paginatedEarnings.History.Edges)
+	}, paginatedEarnings.Edges)
 }
 
 func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_BackPagination_Last() {
@@ -1105,7 +1112,11 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_BackPaginatio
 	}
 
 	last := 1
-	paginatedEarnings, err := r.repo.GetEarningsByAfterMarketDevice(r.ctx, 111, nil, nil, &last, nil)
+
+	rwrd, err := r.repo.GetEarningsByAfterMarketDeviceID(r.ctx, 111)
+	r.NoError(err)
+
+	paginatedEarnings, err := r.repo.PaginateAfterMarketDeviceEarningsByID(r.ctx, rwrd, nil, nil, &last, nil)
 	r.NoError(err)
 
 	crsr := helpers.IDToCursor(1)
@@ -1120,9 +1131,8 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_BackPaginatio
 		HasNextPage:     false,
 		HasPreviousPage: true,
 		StartCursor:     &crsr,
-	}, paginatedEarnings.History.PageInfo)
-	r.Equal(totalEarned, paginatedEarnings.TotalTokens)
-	r.Equal(2, paginatedEarnings.History.TotalCount)
+	}, paginatedEarnings.PageInfo)
+	r.Equal(2, paginatedEarnings.TotalCount)
 	r.Equal([]*gmodel.EarningsEdge{
 		{
 			Node: &gmodel.Earning{
@@ -1139,7 +1149,7 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_BackPaginatio
 			},
 			Cursor: crsr,
 		},
-	}, paginatedEarnings.History.Edges)
+	}, paginatedEarnings.Edges)
 }
 
 func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_BackPagination_Last_Before() {
@@ -1194,7 +1204,11 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_BackPaginatio
 
 	last := 2
 	before := "MQ=="
-	paginatedEarnings, err := r.repo.GetEarningsByAfterMarketDevice(r.ctx, 111, nil, nil, &last, &before)
+
+	rwrd, err := r.repo.GetEarningsByAfterMarketDeviceID(r.ctx, 111)
+	r.NoError(err)
+
+	paginatedEarnings, err := r.repo.PaginateAfterMarketDeviceEarningsByID(r.ctx, rwrd, nil, nil, &last, &before)
 	r.NoError(err)
 
 	startCrsr := helpers.IDToCursor(3)
@@ -1210,8 +1224,8 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_BackPaginatio
 		HasNextPage:     true,
 		HasPreviousPage: false,
 		StartCursor:     &startCrsr,
-	}, paginatedEarnings.History.PageInfo)
-	r.Equal(3, paginatedEarnings.History.TotalCount)
+	}, paginatedEarnings.PageInfo)
+	r.Equal(3, paginatedEarnings.TotalCount)
 	r.Equal([]*gmodel.EarningsEdge{
 		{
 			Node: &gmodel.Earning{
@@ -1243,5 +1257,5 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_BackPaginatio
 			},
 			Cursor: endCrsr,
 		},
-	}, paginatedEarnings.History.Edges)
+	}, paginatedEarnings.Edges)
 }
