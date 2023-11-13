@@ -909,7 +909,7 @@ func (r *RewardsRepoTestSuite) Test_PaginateAfterMarketDeviceEarningsByID_Disall
 
 	first := 1
 	last := 2
-	_, err := r.repo.PaginateAfterMarketDeviceEarningsByID(r.ctx, &gmodel.AftermarketDeviceEarnings{}, &first, nil, &last, nil)
+	_, err := r.repo.PaginateAftermarketDeviceEarningsByID(r.ctx, &gmodel.AftermarketDeviceEarnings{}, &first, nil, &last, nil)
 	r.EqualError(err, "pass `first` or `last`, but not both")
 }
 
@@ -968,7 +968,7 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_FwdPagination
 	rwrd, err := r.repo.GetEarningsByAfterMarketDeviceID(r.ctx, 111)
 	r.NoError(err)
 
-	paginatedEarnings, err := r.repo.PaginateAfterMarketDeviceEarningsByID(r.ctx, rwrd, &first, nil, nil, nil)
+	paginatedEarnings, err := r.repo.PaginateAftermarketDeviceEarningsByID(r.ctx, rwrd, &first, nil, nil, nil)
 	r.NoError(err)
 
 	startCursor := helpers.IDToCursor(2)
@@ -1074,7 +1074,7 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_FwdPagination
 	rwrd, err := r.repo.GetEarningsByAfterMarketDeviceID(r.ctx, aftID)
 	r.NoError(err)
 
-	paginatedEarnings, err := r.repo.PaginateAfterMarketDeviceEarningsByID(r.ctx, rwrd, &first, &after, nil, nil)
+	paginatedEarnings, err := r.repo.PaginateAftermarketDeviceEarningsByID(r.ctx, rwrd, &first, &after, nil, nil)
 	r.NoError(err)
 
 	startCrsr := helpers.IDToCursor(2)
@@ -1179,7 +1179,7 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_BackPaginatio
 	rwrd, err := r.repo.GetEarningsByAfterMarketDeviceID(r.ctx, 111)
 	r.NoError(err)
 
-	paginatedEarnings, err := r.repo.PaginateAfterMarketDeviceEarningsByID(r.ctx, rwrd, nil, nil, &last, nil)
+	paginatedEarnings, err := r.repo.PaginateAftermarketDeviceEarningsByID(r.ctx, rwrd, nil, nil, &last, nil)
 	r.NoError(err)
 
 	crsr := helpers.IDToCursor(1)
@@ -1271,7 +1271,7 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_BackPaginatio
 	rwrd, err := r.repo.GetEarningsByAfterMarketDeviceID(r.ctx, 111)
 	r.NoError(err)
 
-	paginatedEarnings, err := r.repo.PaginateAfterMarketDeviceEarningsByID(r.ctx, rwrd, nil, nil, &last, &before)
+	paginatedEarnings, err := r.repo.PaginateAftermarketDeviceEarningsByID(r.ctx, rwrd, nil, nil, &last, &before)
 	r.NoError(err)
 
 	startCrsr := helpers.IDToCursor(3)

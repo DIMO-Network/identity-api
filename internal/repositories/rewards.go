@@ -227,7 +227,7 @@ func (r *Repository) GetEarningsByAfterMarketDeviceID(ctx context.Context, token
 	}, nil
 }
 
-func (r *Repository) PaginateAfterMarketDeviceEarningsByID(ctx context.Context, afterMarketDeviceEarnings *gmodel.AftermarketDeviceEarnings, first *int, after *string, last *int, before *string) (*gmodel.EarningsConnection, error) {
+func (r *Repository) PaginateAftermarketDeviceEarningsByID(ctx context.Context, afterMarketDeviceEarnings *gmodel.AftermarketDeviceEarnings, first *int, after *string, last *int, before *string) (*gmodel.EarningsConnection, error) {
 	limit, err := helpers.ValidateFirstLast(first, last, maxPageSize) // return early if both first and last are provided
 	if err != nil {
 		return nil, err

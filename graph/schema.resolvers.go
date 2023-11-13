@@ -34,7 +34,7 @@ func (r *aftermarketDeviceResolver) Earnings(ctx context.Context, obj *model.Aft
 
 // History is the resolver for the history field.
 func (r *aftermarketDeviceEarningsResolver) History(ctx context.Context, obj *model.AftermarketDeviceEarnings, first *int, after *string, last *int, before *string) (*model.EarningsConnection, error) {
-	return r.Repo.PaginateAfterMarketDeviceEarningsByID(ctx, obj, first, after, last, before)
+	return r.Repo.PaginateAftermarketDeviceEarningsByID(ctx, obj, first, after, last, before)
 }
 
 // Vehicle is the resolver for the vehicle field.
