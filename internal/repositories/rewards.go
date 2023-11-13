@@ -3,7 +3,6 @@ package repositories
 import (
 	"context"
 	"fmt"
-	"log"
 	"math/big"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
@@ -41,12 +40,7 @@ func RewardToAPI(reward models.Reward) gmodel.Earning {
 	}
 }
 
-func (r *Repository) paginateRewards(ctx context.Context, condition []qm.QueryMod, first *int, after *string, last *int, before *string) (*gmodel.EarningsConnection, error) {
-	limit, err := helpers.ValidateFirstLast(first, last, maxPageSize)
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
+func (r *Repository) paginateRewards(ctx context.Context, condition []qm.QueryMod, first *int, after *string, last *int, before *string, limit int) (*gmodel.EarningsConnection, error) {
 
 	queryMods := []qm.QueryMod{}
 	queryMods = append(queryMods, condition...)
@@ -178,10 +172,15 @@ func (r *Repository) GetEarningsByVehicleID(ctx context.Context, tokenID int) (*
 }
 
 func (r *Repository) PaginateVehicleEarningsByID(ctx context.Context, vehicleEarnings *gmodel.VehicleEarnings, first *int, after *string, last *int, before *string) (*gmodel.EarningsConnection, error) {
+	limit, err := helpers.ValidateFirstLast(first, last, maxPageSize)
+	if err != nil {
+		return nil, err
+	}
+
 	queryMods := []qm.QueryMod{
 		models.RewardWhere.VehicleID.EQ(vehicleEarnings.VehicleID),
 	}
-	vhs, err := r.paginateRewards(ctx, queryMods, first, after, last, before)
+	vhs, err := r.paginateRewards(ctx, queryMods, first, after, last, before, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -193,13 +192,18 @@ func (r *Repository) PaginateVehicleEarningsByID(ctx context.Context, vehicleEar
 }
 
 func (r *Repository) GetEarningsByAfterMarketDevice(ctx context.Context, afterMarketID int, first *int, after *string, last *int, before *string) (*gmodel.AfterMarketEarnings, error) {
+	limit, err := helpers.ValidateFirstLast(first, last, maxPageSize) // return early if both first and last are provided
+	if err != nil {
+		return nil, err
+	}
+
 	type rewardStats struct {
 		TokenSum   types.NullDecimal `boil:"token_sum"`
 		TotalCount int               `boil:"total_count"`
 	}
 	var stats rewardStats
 
-	err := models.Rewards(
+	err = models.Rewards(
 		qm.Select(
 			fmt.Sprintf(
 				`sum(%s + %s + %s) as token_sum`,
@@ -224,7 +228,7 @@ func (r *Repository) GetEarningsByAfterMarketDevice(ctx context.Context, afterMa
 		models.RewardWhere.AftermarketTokenID.EQ(null.IntFrom(afterMarketID)),
 	}
 
-	afd, err := r.paginateRewards(ctx, queryMods, first, after, last, before)
+	afd, err := r.paginateRewards(ctx, queryMods, first, after, last, before, limit)
 	if err != nil {
 		return nil, err
 	}
