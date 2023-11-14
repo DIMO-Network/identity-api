@@ -3,13 +3,22 @@ package repositories
 import (
 	"context"
 	"errors"
+	"time"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
+	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"github.com/volatiletech/null/v8"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"golang.org/x/exp/slices"
 )
+
+type DCNCursor struct {
+	MintedAt time.Time
+	Node     []byte
+}
 
 func DCNToAPI(d *models.DCN) *gmodel.Dcn {
 	return &gmodel.Dcn{
@@ -58,4 +67,116 @@ func (r *Repository) GetDCNByName(ctx context.Context, name string) (*gmodel.Dcn
 	}
 
 	return DCNToAPI(dcn), nil
+}
+
+var dcnCursorColumnsTuple = "(" + models.DCNColumns.MintedAt + ", " + models.DCNColumns.Node + ")"
+
+func (r *Repository) GetDCNs(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *gmodel.DCNFilter) (*gmodel.DCNConnection, error) {
+	var limit int
+	limit, err := helpers.ValidateFirstLast(first, last, maxPageSize)
+	if err != nil {
+		return nil, err
+	}
+
+	queryMods := []qm.QueryMod{}
+	if filterBy != nil && filterBy.Owner != nil {
+		queryMods = append(queryMods, models.DCNWhere.OwnerAddress.EQ(filterBy.Owner.Bytes()))
+	}
+
+	dcnCount, err := models.DCNS(queryMods...).Count(ctx, r.pdb.DBS().Reader)
+	if err != nil {
+		return nil, err
+	}
+
+	orderBy := " DESC"
+	if last != nil {
+		orderBy = " ASC"
+	}
+
+	queryMods = append(queryMods,
+		qm.Limit(limit+1),
+		qm.OrderBy(models.DCNColumns.MintedAt+orderBy+", "+models.DCNColumns.Node+orderBy),
+	)
+
+	pHelp := &helpers.PaginationHelper[DCNCursor]{}
+	if after != nil {
+		afterT, err := pHelp.DecodeCursor(*after)
+		if err != nil {
+			return nil, err
+		}
+		queryMods = append(queryMods,
+			qm.Where(dcnCursorColumnsTuple+" < (?, ?)", afterT.MintedAt, afterT.Node),
+		)
+	} else if before != nil {
+		beforeT, err := pHelp.DecodeCursor(*before)
+		if err != nil {
+			return nil, err
+		}
+		queryMods = append(queryMods,
+			qm.Where(dcnCursorColumnsTuple+" < (?, ?)", beforeT.MintedAt, beforeT.Node),
+		)
+	}
+
+	all, err := models.DCNS(queryMods...).All(ctx, r.pdb.DBS().Reader)
+	if err != nil {
+		return nil, err
+	}
+
+	hasNext := before != nil
+	hasPrevious := after != nil
+
+	if first != nil && len(all) == limit+1 {
+		hasNext = true
+		all = all[:limit]
+	} else if last != nil && len(all) == limit+1 {
+		hasPrevious = true
+		all = all[:limit]
+	}
+
+	if last != nil {
+		slices.Reverse(all)
+	}
+
+	edges := make([]*gmodel.DCNEdge, len(all))
+	nodes := make([]*gmodel.Dcn, len(all))
+
+	for i, dcn := range all {
+		c, err := pHelp.EncodeCursor(DCNCursor{MintedAt: dcn.MintedAt, Node: dcn.Node})
+		if err != nil {
+			return nil, err
+		}
+		edges[i] = &gmodel.DCNEdge{
+			Node: &gmodel.Dcn{
+				Node:      dcn.Node,
+				Owner:     common.Address(dcn.OwnerAddress),
+				ExpiresAt: &dcn.Expiration.Time,
+				MintedAt:  dcn.MintedAt,
+				Name:      &dcn.Name.String,
+				VehicleID: &dcn.VehicleID.Int,
+			},
+			Cursor: c,
+		}
+		nodes[i] = edges[i].Node
+	}
+
+	var endCur, startCur *string
+
+	if len(all) != 0 {
+		startCur = &edges[0].Cursor
+		endCur = &edges[len(edges)-1].Cursor
+	}
+
+	res := &gmodel.DCNConnection{
+		TotalCount: int(dcnCount),
+		Edges:      edges,
+		Nodes:      nodes,
+		PageInfo: &gmodel.PageInfo{
+			StartCursor:     startCur,
+			EndCursor:       endCur,
+			HasNextPage:     hasNext,
+			HasPreviousPage: hasPrevious,
+		},
+	}
+
+	return res, nil
 }

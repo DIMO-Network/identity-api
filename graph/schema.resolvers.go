@@ -122,6 +122,11 @@ func (r *queryResolver) Dcn(ctx context.Context, by model.DCNBy) (*model.Dcn, er
 	return r.Repo.GetDCN(ctx, by)
 }
 
+// Dcns is the resolver for the dcns field.
+func (r *queryResolver) Dcns(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.DCNFilter) (*model.DCNConnection, error) {
+	return r.Repo.GetDCNs(ctx, first, after, last, before, filterBy)
+}
+
 // Manufacturer is the resolver for the manufacturer field.
 func (r *vehicleResolver) Manufacturer(ctx context.Context, obj *model.Vehicle) (*model.Manufacturer, error) {
 	return loader.GetManufacturerID(ctx, *obj.ManufacturerID)

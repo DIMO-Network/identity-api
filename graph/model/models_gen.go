@@ -104,6 +104,23 @@ type DCNBy struct {
 	Name *string `json:"name,omitempty"`
 }
 
+type DCNConnection struct {
+	TotalCount int        `json:"totalCount"`
+	Edges      []*DCNEdge `json:"edges"`
+	Nodes      []*Dcn     `json:"nodes"`
+	PageInfo   *PageInfo  `json:"pageInfo"`
+}
+
+type DCNEdge struct {
+	Cursor string `json:"cursor"`
+	Node   *Dcn   `json:"node"`
+}
+
+type DCNFilter struct {
+	// Filter for DCN owned by this address.
+	Owner *common.Address `json:"owner,omitempty"`
+}
+
 type Definition struct {
 	URI   *string `json:"uri,omitempty"`
 	Make  *string `json:"make,omitempty"`

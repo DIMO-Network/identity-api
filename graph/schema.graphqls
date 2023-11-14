@@ -97,6 +97,18 @@ type Query {
   ): AftermarketDeviceConnection!
 
   dcn(by: DCNBy!): DCN!
+
+  """
+  List DIMO Canonical Names.
+  Ordered by mint time, descending.
+  """
+  dcns(
+    first: Int
+    after: String
+    last: Int
+    before: String
+    filterBy: DCNFilter
+  ): DCNConnection!
 }
 
 # Shared Types
@@ -371,6 +383,25 @@ type DCN {
   Vehicle, if any, to which the domain is attached.
   """
   vehicle: Vehicle
+}
+
+type DCNEdge {
+  cursor: String!
+  node: DCN!
+}
+
+type DCNConnection {
+  totalCount: Int!
+  edges: [DCNEdge!]!
+  nodes: [DCN!]!
+  pageInfo: PageInfo!
+}
+
+input DCNFilter {
+  """
+  Filter for DCN owned by this address.
+  """
+  owner: Address
 }
 
 # Earnings Types
