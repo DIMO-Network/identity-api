@@ -12,6 +12,7 @@ import (
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/volatiletech/null/v8"
@@ -294,4 +295,138 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination_NextPage()
 	}
 
 	s.Exactly(expected, res.Edges)
+}
+
+func Test_GetOwnedVehicles_Filters(t *testing.T) {
+	// Vehicle | Owner | Privileged Users
+	// --------+-------+-----------------
+	// 1       | A     | B
+	// 2       | B     | C
+	// 3       | A     |
+	ctx := context.Background()
+	assert := assert.New(t)
+	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDir)
+
+	repo := New(pdb, config.Settings{})
+	_, walletA, err := helpers.GenerateWallet()
+	assert.NoError(err)
+	_, walletB, err := helpers.GenerateWallet()
+	assert.NoError(err)
+	_, walletC, err := helpers.GenerateWallet()
+	assert.NoError(err)
+
+	data := []struct {
+		TokenID    int
+		Owner      *common.Address
+		Privileged *common.Address
+	}{
+		{
+			TokenID:    1,
+			Owner:      walletA,
+			Privileged: walletB,
+		},
+		{
+			TokenID:    2,
+			Owner:      walletB,
+			Privileged: walletC,
+		},
+		{
+			TokenID: 3,
+			Owner:   walletA,
+		},
+	}
+
+	for _, v := range data {
+		vehicle := models.Vehicle{
+			ID:           v.TokenID,
+			OwnerAddress: v.Owner.Bytes(),
+			Make:         null.StringFrom("Toyota"),
+			Model:        null.StringFrom("Camry"),
+			Year:         null.IntFrom(2022),
+			MintedAt:     time.Now(),
+		}
+		if err := vehicle.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
+			assert.NoError(err)
+		}
+
+		if v.Privileged != nil {
+			privileges := models.Privilege{
+				TokenID:     v.TokenID,
+				PrivilegeID: 1,
+				UserAddress: v.Privileged.Bytes(),
+				SetAt:       time.Now(),
+				ExpiresAt:   time.Now().Add(5 * time.Hour),
+			}
+
+			if err := privileges.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
+				assert.NoError(err)
+			}
+		}
+	}
+
+	for _, testCases := range []struct {
+		Name           string
+		Description    string
+		First          int
+		Filter         gmodel.VehiclesFilter
+		ExpectedTotal  int
+		ExpectedTokens []int
+		ExpectedOwner  []*common.Address
+	}{
+		{
+			Description: "Filter By Privileged: priv wallet has both implied (owner) and explicit (granted) privileges",
+			// Owner | Privileged | Result
+			// ------+------------+-------
+			// 	     | B          | 1, 2
+			First:          3,
+			Filter:         gmodel.VehiclesFilter{Privileged: walletB},
+			ExpectedTotal:  2,
+			ExpectedTokens: []int{2, 1},
+			ExpectedOwner:  []*common.Address{walletB, walletA},
+		},
+		{
+			Description: "Filter By Owner",
+			// Owner | Privileged | Result
+			// ------+------------+-------
+			// A     |            | 1, 3
+			First:          3,
+			Filter:         gmodel.VehiclesFilter{Owner: walletA},
+			ExpectedTotal:  2,
+			ExpectedTokens: []int{3, 1},
+			ExpectedOwner:  []*common.Address{walletA, walletA},
+		},
+		{
+			Description: "Filter By Privileged & Owner, result must match both criteria (valid combo)",
+			// Owner | Privileged | Result
+			// ------+------------+-------
+			// A     | B          | 1
+			First:          3,
+			Filter:         gmodel.VehiclesFilter{Owner: walletA, Privileged: walletB},
+			ExpectedTotal:  1,
+			ExpectedTokens: []int{1},
+			ExpectedOwner:  []*common.Address{walletA},
+		},
+		{
+			Description: "Filter By Privileged & Owner, result must match both criteria (invalid combo)",
+			// Owner | Privileged | Result
+			// ------+------------+-------
+			// C     | B          |
+			First:          3,
+			Filter:         gmodel.VehiclesFilter{Owner: walletC, Privileged: walletB},
+			ExpectedTotal:  0,
+			ExpectedTokens: []int{},
+			ExpectedOwner:  []*common.Address{},
+		},
+	} {
+		res, err := repo.GetVehicles(ctx, &testCases.First, nil, nil, nil, &testCases.Filter)
+		assert.NoError(err)
+
+		assert.Equal(testCases.ExpectedTotal, res.TotalCount)
+		for idx, tknID := range testCases.ExpectedTokens {
+			assert.Equal(tknID, res.Edges[idx].Node.TokenID)
+		}
+		for idx, addr := range testCases.ExpectedOwner {
+			assert.Equal(*addr, res.Edges[idx].Node.Owner)
+		}
+	}
 }

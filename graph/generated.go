@@ -8682,7 +8682,7 @@ func (ec *executionContext) unmarshalInputVehiclesFilter(ctx context.Context, ob
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"privileged"}
+	fieldsInOrder := [...]string{"privileged", "owner"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -8698,6 +8698,15 @@ func (ec *executionContext) unmarshalInputVehiclesFilter(ctx context.Context, ob
 				return it, err
 			}
 			it.Privileged = data
+		case "owner":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("owner"))
+			data, err := ec.unmarshalOAddress2ᚖgithubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Owner = data
 		}
 	}
 
