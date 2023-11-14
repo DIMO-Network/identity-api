@@ -27,6 +27,16 @@ func (r *aftermarketDeviceResolver) Vehicle(ctx context.Context, obj *model.Afte
 	return loader.GetVehicleByID(ctx, *obj.VehicleID)
 }
 
+// Earnings is the resolver for the earnings field.
+func (r *aftermarketDeviceResolver) Earnings(ctx context.Context, obj *model.AftermarketDevice) (*model.AftermarketDeviceEarnings, error) {
+	return r.Repo.GetEarningsByAfterMarketDeviceID(ctx, obj.TokenID)
+}
+
+// History is the resolver for the history field.
+func (r *aftermarketDeviceEarningsResolver) History(ctx context.Context, obj *model.AftermarketDeviceEarnings, first *int, after *string, last *int, before *string) (*model.EarningsConnection, error) {
+	return r.Repo.PaginateAftermarketDeviceEarningsByID(ctx, obj, first, after, last, before)
+}
+
 // Vehicle is the resolver for the vehicle field.
 func (r *dCNResolver) Vehicle(ctx context.Context, obj *model.Dcn) (*model.Vehicle, error) {
 	if obj.VehicleID == nil {
@@ -152,6 +162,11 @@ func (r *Resolver) AftermarketDevice() AftermarketDeviceResolver {
 	return &aftermarketDeviceResolver{r}
 }
 
+// AftermarketDeviceEarnings returns AftermarketDeviceEarningsResolver implementation.
+func (r *Resolver) AftermarketDeviceEarnings() AftermarketDeviceEarningsResolver {
+	return &aftermarketDeviceEarningsResolver{r}
+}
+
 // DCN returns DCNResolver implementation.
 func (r *Resolver) DCN() DCNResolver { return &dCNResolver{r} }
 
@@ -168,6 +183,7 @@ func (r *Resolver) Vehicle() VehicleResolver { return &vehicleResolver{r} }
 func (r *Resolver) VehicleEarnings() VehicleEarningsResolver { return &vehicleEarningsResolver{r} }
 
 type aftermarketDeviceResolver struct{ *Resolver }
+type aftermarketDeviceEarningsResolver struct{ *Resolver }
 type dCNResolver struct{ *Resolver }
 type earningResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }

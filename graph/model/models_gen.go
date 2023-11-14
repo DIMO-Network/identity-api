@@ -41,9 +41,11 @@ type AftermarketDevice struct {
 	Beneficiary common.Address `json:"beneficiary"`
 	Name        string         `json:"name"`
 	// The Image Url of the device
-	Image          string `json:"image"`
-	ManufacturerID *int   `json:"-"`
-	VehicleID      *int   `json:"-"`
+	Image string `json:"image"`
+	// The earnings attached to the aftermarket device
+	Earnings       *AftermarketDeviceEarnings `json:"earnings,omitempty"`
+	ManufacturerID *int                       `json:"-"`
+	VehicleID      *int                       `json:"-"`
 }
 
 func (AftermarketDevice) IsNode()            {}
@@ -60,6 +62,12 @@ type AftermarketDeviceConnection struct {
 	Edges      []*AftermarketDeviceEdge `json:"edges"`
 	Nodes      []*AftermarketDevice     `json:"nodes"`
 	PageInfo   *PageInfo                `json:"pageInfo"`
+}
+
+type AftermarketDeviceEarnings struct {
+	TotalTokens         *big.Int            `json:"totalTokens"`
+	History             *EarningsConnection `json:"history"`
+	AftermarketDeviceID int                 `json:"-"`
 }
 
 type AftermarketDeviceEdge struct {

@@ -105,6 +105,8 @@ models:
         resolver: true
       manufacturer:
         resolver: true
+      earnings:
+        resolver: true
     extraFields:
       VehicleID:
         type: "*int"
@@ -133,6 +135,13 @@ models:
         resolver: true
     extraFields:
       VehicleID:
+        type: "int"
+  AftermarketDeviceEarnings:
+    fields:
+      history:
+        resolver: true
+    extraFields:
+      AftermarketDeviceID:
         type: "int"
   Earning:
     fields:

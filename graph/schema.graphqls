@@ -219,6 +219,16 @@ type VehicleEarnings {
   ): EarningsConnection!
 }
 
+type AftermarketDeviceEarnings {
+  totalTokens: BigInt!
+  history(
+    first: Int
+    after: String
+    last: Int
+    before: String
+  ): EarningsConnection!
+}
+
 # Aftermarket Types
 
 type AftermarketDevice implements Node {
@@ -274,6 +284,10 @@ type AftermarketDevice implements Node {
   The Image Url of the device
   """
   image: String!
+  """
+  The earnings attached to the aftermarket device
+  """
+  earnings: AftermarketDeviceEarnings
 }
 
 type AftermarketDeviceConnection {
