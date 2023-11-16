@@ -19,7 +19,6 @@ import (
 type RewardsCursor struct {
 	Week      int
 	VehicleID int
-	User      common.Address
 }
 
 type EarningsSummary struct {
