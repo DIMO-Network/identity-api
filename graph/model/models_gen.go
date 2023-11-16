@@ -227,6 +227,12 @@ type SyntheticDevice struct {
 	MintedAt      time.Time      `json:"mintedAt"`
 }
 
+type UserRewards struct {
+	TotalTokens *big.Int            `json:"totalTokens"`
+	History     *EarningsConnection `json:"history"`
+	User        *common.Address     `json:"-"`
+}
+
 type Vehicle struct {
 	// An opaque global identifier for this vehicle.
 	ID string `json:"id"`

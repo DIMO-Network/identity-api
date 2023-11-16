@@ -19,6 +19,7 @@ import (
 type RewardsCursor struct {
 	Week      int
 	VehicleID int
+	User      common.Address
 }
 
 type EarningsSummary struct {
@@ -46,26 +47,27 @@ func RewardToAPI(reward models.Reward) gmodel.Earning {
 }
 
 func (r *Repository) paginateRewards(ctx context.Context, conditions []qm.QueryMod, first *int, after *string, last *int, before *string, limit int) (*gmodel.EarningsConnection, error) {
+	rwCursorHelper := &helpers.PaginationHelper[RewardsCursor]{}
 
 	queryMods := []qm.QueryMod{}
 	queryMods = append(queryMods, conditions...)
 
 	if after != nil {
-		afterID, err := helpers.CursorToID(*after)
+		afterCursor, err := rwCursorHelper.DecodeCursor(*after)
 		if err != nil {
 			return nil, err
 		}
 
-		queryMods = append(queryMods, models.RewardWhere.IssuanceWeek.LT(afterID))
+		queryMods = append(queryMods, models.RewardWhere.IssuanceWeek.LT(afterCursor.Week))
 	}
 
 	if before != nil {
-		beforeID, err := helpers.CursorToID(*before)
+		beforeCursor, err := rwCursorHelper.DecodeCursor(*before)
 		if err != nil {
 			return nil, err
 		}
 
-		queryMods = append(queryMods, models.RewardWhere.IssuanceWeek.GT(beforeID))
+		queryMods = append(queryMods, models.RewardWhere.IssuanceWeek.GT(beforeCursor.Week))
 	}
 
 	orderBy := "DESC"
@@ -106,9 +108,15 @@ func (r *Repository) paginateRewards(ctx context.Context, conditions []qm.QueryM
 	for i, rw := range all {
 		reward := RewardToAPI(*rw)
 
+		crsr, err := rwCursorHelper.EncodeCursor(RewardsCursor{
+			Week: reward.Week,
+		})
+		if err != nil {
+			return nil, err
+		}
 		edges[i] = &gmodel.EarningsEdge{
 			Node:   &reward,
-			Cursor: helpers.IDToCursor(reward.Week),
+			Cursor: crsr,
 		}
 
 		nodes[i] = &reward
@@ -243,4 +251,50 @@ func (r *Repository) PaginateAftermarketDeviceEarningsByID(ctx context.Context, 
 	afterMarketDeviceEarnings.History.Nodes = afd.Nodes
 	afterMarketDeviceEarnings.History.PageInfo = afd.PageInfo
 	return afterMarketDeviceEarnings.History, nil
+}
+
+func (r *Repository) GetEarningsByUserAddress(ctx context.Context, user common.Address) (*gmodel.UserRewards, error) {
+	summary, err := r.GetEarningsSummary(ctx, []qm.QueryMod{models.RewardWhere.ReceivedByAddress.EQ(null.BytesFrom(user.Bytes()))})
+	if err != nil {
+		return nil, err
+	}
+
+	if summary.TokenSum.IsZero() {
+		return &gmodel.UserRewards{
+			TotalTokens: &big.Int{},
+			History:     &gmodel.EarningsConnection{},
+		}, nil
+	}
+
+	earningsConn := &gmodel.EarningsConnection{
+		TotalCount: summary.TotalCount,
+	}
+
+	return &gmodel.UserRewards{
+		TotalTokens: dbtypes.NullDecimalToInt(summary.TokenSum),
+		History:     earningsConn,
+		User:        &user,
+	}, nil
+}
+
+func (r *Repository) PaginateGetEarningsByUsersDevices(ctx context.Context, userDeviceEarnings *gmodel.UserRewards, first *int, after *string, last *int, before *string) (*gmodel.EarningsConnection, error) {
+	limit, err := helpers.ValidateFirstLast(first, last, maxPageSize) // return early if both first and last are provided
+	if err != nil {
+		return nil, err
+	}
+
+	queryMods := []qm.QueryMod{
+		models.RewardWhere.ReceivedByAddress.EQ(null.BytesFrom(userDeviceEarnings.User.Bytes())),
+	}
+
+	userDevicesEarnings, err := r.paginateRewards(ctx, queryMods, first, after, last, before, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	userDeviceEarnings.History.Edges = userDevicesEarnings.Edges
+	userDeviceEarnings.History.Nodes = userDevicesEarnings.Nodes
+	userDeviceEarnings.History.PageInfo = userDevicesEarnings.PageInfo
+
+	return userDeviceEarnings.History, nil
 }
