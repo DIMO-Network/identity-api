@@ -1124,7 +1124,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetUserRewards_FwdPaginate() {
 					  "tokenId": 1
 					}
 				  },
-				  "cursor": "kgQA"
+				  "cursor": "kgQB"
 				},
 				{
 				  "node": {
@@ -1145,12 +1145,12 @@ func (r *RewardsQueryTestSuite) Test_Query_GetUserRewards_FwdPaginate() {
 					  "tokenId": 1
 					}
 				  },
-				  "cursor": "kgMA"
+				  "cursor": "kgMB"
 				}
 			  ],
 			  "pageInfo": {
-				"startCursor": "kgQA",
-				"endCursor": "kgMA",
+				"startCursor": "kgQB",
+				"endCursor": "kgMB",
 				"hasPreviousPage": false,
 				"hasNextPage": true
 			  }
@@ -1297,7 +1297,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetUserRewards_BackPaginate_LastBefor
 					  "tokenId": 1
 					}
 				  },
-				  "cursor": "kgMA"
+				  "cursor": "kgMB"
 				},
 				{
 				  "node": {
@@ -1318,12 +1318,12 @@ func (r *RewardsQueryTestSuite) Test_Query_GetUserRewards_BackPaginate_LastBefor
 					  "tokenId": 1
 					}
 				  },
-				  "cursor": "kgIA"
+				  "cursor": "kgIB"
 				}
 			  ],
 			  "pageInfo": {
-				"startCursor": "kgMA",
-				"endCursor": "kgIA",
+				"startCursor": "kgMB",
+				"endCursor": "kgIB",
 				"hasPreviousPage": true,
 				"hasNextPage": false
 			  }
