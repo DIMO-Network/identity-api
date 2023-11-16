@@ -456,7 +456,7 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_FwdPagination_Fi
 	r.NoError(err)
 
 	first := 2
-	after := "kwMAxCoweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA="
+	after := "kgMA"
 	paginatedEarnings, err := r.repo.PaginateVehicleEarningsByID(r.ctx, rwrd, &first, &after, nil, nil)
 	r.NoError(err)
 
@@ -578,7 +578,7 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_FwdPagination_Em
 	r.NoError(err)
 
 	first := 2
-	after := "kwEAxCoweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA="
+	after := "kgEA"
 	paginatedEarnings, err := r.repo.PaginateVehicleEarningsByID(r.ctx, rwrd, &first, &after, nil, nil)
 	r.NoError(err)
 
@@ -758,7 +758,7 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_BackPagination_L
 	r.NoError(err)
 
 	last := 2
-	before := "kwEAxCoweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA="
+	before := "kgEA"
 	paginatedEarnings, err := r.repo.PaginateVehicleEarningsByID(r.ctx, rwrd, nil, nil, &last, &before)
 	r.NoError(err)
 
@@ -882,7 +882,7 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_BackPagination_E
 	r.NoError(err)
 
 	last := 2
-	before := "kwMAxCoweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA="
+	before := "kgMA"
 	paginatedEarnings, err := r.repo.PaginateVehicleEarningsByID(r.ctx, rwrd, nil, nil, &last, &before)
 	r.NoError(err)
 
@@ -902,7 +902,7 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_NoRows() {
 	r.NoError(err)
 
 	last := 2
-	before := "kwMAxCoweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA="
+	before := "kgMA"
 	paginatedEarnings, err := r.repo.PaginateVehicleEarningsByID(r.ctx, rwrd, nil, nil, &last, &before)
 	r.NoError(err)
 
@@ -1084,7 +1084,7 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_FwdPagination
 	}
 
 	first := 2
-	after := "kwMAxCoweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA="
+	after := "kgMA"
 	aftID := 111
 
 	rwrd, err := r.repo.GetEarningsByAfterMarketDeviceID(r.ctx, aftID)
@@ -1287,7 +1287,7 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_BackPaginatio
 	}
 
 	last := 2
-	before := "kwEAxCoweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA="
+	before := "kgEA"
 
 	rwrd, err := r.repo.GetEarningsByAfterMarketDeviceID(r.ctx, 111)
 	r.NoError(err)

@@ -208,7 +208,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate() {
 			  "totalCount": 1,
 			  "edges": [
 				{
-				  "cursor": "kwIAxCoweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA=",
+				  "cursor": "kgIA",
 				  "node": {
 					"week": 2,
 					"beneficiary": "%s",
@@ -240,10 +240,10 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate() {
 				}
 			  ],
 			  "pageInfo": {
-				"endCursor": "kwIAxCoweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA=",
+				"endCursor": "kgIA",
 				"hasNextPage": false,
 				"hasPreviousPage": false,
-				"startCursor": "kwIAxCoweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA="
+				"startCursor": "kgIA"
 			  }
 			}
 		  }
@@ -320,7 +320,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate_Firs
 		  id
 		  earnings {
 			totalTokens
-			history(first: 3, after: "kwQAxCoweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA=") {
+			history(first: 3, after: "kgQA") {
 			  totalCount
 			  edges {
 				cursor
@@ -384,7 +384,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate_Firs
 				"totalCount": 3,
 				"edges": [
 					{
-						"cursor": "kwMAxCoweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA=",
+						"cursor": "kgMA",
 						"node": {
 						"week": 3,
 						"beneficiary": "%s",
@@ -408,7 +408,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate_Firs
 						}
 					},
 					{
-						"cursor": "kwIAxCoweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA=",
+						"cursor": "kgIA",
 						"node": {
 						"week": 2,
 						"beneficiary": "%s",
@@ -445,10 +445,10 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate_Firs
 				}
 				],
 				"pageInfo": {
-				"endCursor": "kwIAxCoweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA=",
+				"endCursor": "kgIA",
 				"hasNextPage": false,
 				"hasPreviousPage": true,
-				"startCursor": "kwMAxCoweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA="
+				"startCursor": "kgMA"
 				}
 			}
 			}
@@ -589,7 +589,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 				"totalCount": 3,
 				"edges": [
 					{
-						"cursor": "kwMAxCoweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA=",
+						"cursor": "kgMA",
 						"node": {
 						"week": 3,
 						"beneficiary": "%s",
@@ -613,7 +613,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 						}
 					},
 					{
-						"cursor": "kwIAxCoweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA=",
+						"cursor": "kgIA",
 						"node": {
 						"week": 2,
 						"beneficiary": "%s",
@@ -650,10 +650,10 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 					}
 				],
 				"pageInfo": {
-				"endCursor": "kwIAxCoweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA=",
+				"endCursor": "kgIA",
 				"hasNextPage": false,
 				"hasPreviousPage": true,
-				"startCursor": "kwMAxCoweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA="
+				"startCursor": "kgMA"
 				}
 			}
 			}
@@ -730,7 +730,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 		  id
 		  earnings {
 			totalTokens
-			history(last: 2, before: "kwIAxCoweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA=") {
+			history(last: 2, before: "kgIA") {
 			  totalCount
 			  edges {
 				cursor
@@ -794,7 +794,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 				"totalCount": 3,
 				"edges": [
 					{
-						"cursor": "kwQAxCoweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA=",
+						"cursor": "kgQA",
 						"node": {
 						"week": 4,
 						"beneficiary": "%s",
@@ -818,7 +818,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 						}
 					},
 					{
-						"cursor": "kwMAxCoweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA=",
+						"cursor": "kgMA",
 						"node": {
 						"week": 3,
 						"beneficiary": "%s",
@@ -855,10 +855,10 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 					}
 				],
 				"pageInfo": {
-				"endCursor": "kwMAxCoweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA=",
+				"endCursor": "kgMA",
 				"hasNextPage": true,
 				"hasPreviousPage": false,
-				"startCursor": "kwQAxCoweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA="
+				"startCursor": "kgQA"
 				}
 			}
 			}
@@ -962,10 +962,10 @@ func (r *RewardsQueryTestSuite) Test_Query_GetAftermarketDeviceEarnings_FwdPagin
 							"history": {
 								"totalCount": 1,
 								"pageInfo": {
-									"endCursor": "kwIAxCoweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA=",
+									"endCursor": "kgIA",
 									"hasNextPage": false,
 									"hasPreviousPage": false,
-									"startCursor": "kwIAxCoweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA="
+									"startCursor": "kgIA"
 								},
 								"edges": [
 									{
@@ -974,7 +974,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetAftermarketDeviceEarnings_FwdPagin
 										  "beneficiary": "%s",
 										  "connectionStreak": 20
 										},
-										"cursor": "kwIAxCoweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA="
+										"cursor": "kgIA"
 									  }
 								]
 							}
@@ -1124,7 +1124,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetUserRewards_FwdPaginate() {
 					  "tokenId": 1
 					}
 				  },
-				  "cursor": "kwQAxCoweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA="
+				  "cursor": "kgQA"
 				},
 				{
 				  "node": {
@@ -1145,12 +1145,12 @@ func (r *RewardsQueryTestSuite) Test_Query_GetUserRewards_FwdPaginate() {
 					  "tokenId": 1
 					}
 				  },
-				  "cursor": "kwMAxCoweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA="
+				  "cursor": "kgMA"
 				}
 			  ],
 			  "pageInfo": {
-				"startCursor": "kwQAxCoweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA=",
-				"endCursor": "kwMAxCoweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA=",
+				"startCursor": "kgQA",
+				"endCursor": "kgMA",
 				"hasPreviousPage": false,
 				"hasNextPage": true
 			  }
@@ -1297,7 +1297,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetUserRewards_BackPaginate_LastBefor
 					  "tokenId": 1
 					}
 				  },
-				  "cursor": "kwMAxCoweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA="
+				  "cursor": "kgMA"
 				},
 				{
 				  "node": {
@@ -1318,12 +1318,12 @@ func (r *RewardsQueryTestSuite) Test_Query_GetUserRewards_BackPaginate_LastBefor
 					  "tokenId": 1
 					}
 				  },
-				  "cursor": "kwIAxCoweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA="
+				  "cursor": "kgIA"
 				}
 			  ],
 			  "pageInfo": {
-				"startCursor": "kwMAxCoweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA=",
-				"endCursor": "kwIAxCoweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA=",
+				"startCursor": "kgMA",
+				"endCursor": "kgIA",
 				"hasPreviousPage": true,
 				"hasNextPage": false
 			  }
