@@ -24,11 +24,12 @@ import (
 
 type RewardsRepoTestSuite struct {
 	suite.Suite
-	ctx       context.Context
-	pdb       db.Store
-	container testcontainers.Container
-	repo      *Repository
-	settings  config.Settings
+	ctx              context.Context
+	pdb              db.Store
+	container        testcontainers.Container
+	repo             *Repository
+	settings         config.Settings
+	paginationHelper helpers.PaginationHelper[RewardsCursor]
 }
 
 type createRewardsRecordsInput struct {
@@ -46,6 +47,8 @@ func (r *RewardsRepoTestSuite) SetupSuite() {
 		DIMORegistryChainID: 80001,
 	}
 	r.repo = New(r.pdb, r.settings)
+	r.paginationHelper = helpers.PaginationHelper[RewardsCursor]{}
+
 }
 
 // TearDownTest after each test truncate tables
@@ -352,7 +355,9 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_FwdPagination_Fi
 	paginatedEarnings, err := r.repo.PaginateVehicleEarningsByID(r.ctx, rwrd, &first, nil, nil, nil)
 	r.NoError(err)
 
-	crsr := helpers.IDToCursor(2)
+	crsr, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 2, VehicleID: 11})
+	r.NoError(err)
+
 	aftID := 1
 	syntID := 1
 	connStrk := 21
@@ -451,12 +456,14 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_FwdPagination_Fi
 	r.NoError(err)
 
 	first := 2
-	after := "Mw=="
+	after := "kgML"
 	paginatedEarnings, err := r.repo.PaginateVehicleEarningsByID(r.ctx, rwrd, &first, &after, nil, nil)
 	r.NoError(err)
 
-	startCrsr := helpers.IDToCursor(2)
-	endCrsr := helpers.IDToCursor(1)
+	startCrsr, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 2, VehicleID: 11})
+	r.NoError(err)
+	endCrsr, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 1, VehicleID: 11})
+	r.NoError(err)
 
 	aftID := 1
 	syntID := 1
@@ -571,7 +578,7 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_FwdPagination_Em
 	r.NoError(err)
 
 	first := 2
-	after := "MQ=="
+	after := "kgEL"
 	paginatedEarnings, err := r.repo.PaginateVehicleEarningsByID(r.ctx, rwrd, &first, &after, nil, nil)
 	r.NoError(err)
 
@@ -648,7 +655,9 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_BackPagination_L
 	paginatedEarnings, err := r.repo.PaginateVehicleEarningsByID(r.ctx, rwrd, nil, nil, &last, nil)
 	r.NoError(err)
 
-	crsr := helpers.IDToCursor(1)
+	crsr, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 1, VehicleID: 11})
+	r.NoError(err)
+
 	r.NoError(err)
 	aftID := 1
 	syntID := 1
@@ -749,12 +758,15 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_BackPagination_L
 	r.NoError(err)
 
 	last := 2
-	before := "MQ=="
+	before := "kgEL"
 	paginatedEarnings, err := r.repo.PaginateVehicleEarningsByID(r.ctx, rwrd, nil, nil, &last, &before)
 	r.NoError(err)
 
-	startCrsr := helpers.IDToCursor(3)
-	endCrsr := helpers.IDToCursor(2)
+	startCrsr, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 3, VehicleID: 11})
+	r.NoError(err)
+
+	endCrsr, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 2, VehicleID: 11})
+	r.NoError(err)
 
 	aftID := 1
 	syntID := 1
@@ -870,7 +882,7 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_BackPagination_E
 	r.NoError(err)
 
 	last := 2
-	before := "Mw=="
+	before := "kgML"
 	paginatedEarnings, err := r.repo.PaginateVehicleEarningsByID(r.ctx, rwrd, nil, nil, &last, &before)
 	r.NoError(err)
 
@@ -890,7 +902,7 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_NoRows() {
 	r.NoError(err)
 
 	last := 2
-	before := "Mw=="
+	before := "kgMA"
 	paginatedEarnings, err := r.repo.PaginateVehicleEarningsByID(r.ctx, rwrd, nil, nil, &last, &before)
 	r.NoError(err)
 
@@ -971,8 +983,12 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_FwdPagination
 	paginatedEarnings, err := r.repo.PaginateAftermarketDeviceEarningsByID(r.ctx, rwrd, &first, nil, nil, nil)
 	r.NoError(err)
 
-	startCursor := helpers.IDToCursor(2)
-	endCursor := helpers.IDToCursor(1)
+	startCursor, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 2, VehicleID: 11})
+	r.NoError(err)
+
+	endCursor, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 1, VehicleID: 11})
+	r.NoError(err)
+
 	syntID := 1
 	aftID := 111
 
@@ -1068,7 +1084,7 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_FwdPagination
 	}
 
 	first := 2
-	after := "Mw=="
+	after := "kgML"
 	aftID := 111
 
 	rwrd, err := r.repo.GetEarningsByAfterMarketDeviceID(r.ctx, aftID)
@@ -1077,8 +1093,11 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_FwdPagination
 	paginatedEarnings, err := r.repo.PaginateAftermarketDeviceEarningsByID(r.ctx, rwrd, &first, &after, nil, nil)
 	r.NoError(err)
 
-	startCrsr := helpers.IDToCursor(2)
-	endCrsr := helpers.IDToCursor(1)
+	startCrsr, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 2, VehicleID: 11})
+	r.NoError(err)
+
+	endCrsr, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 1, VehicleID: 11})
+	r.NoError(err)
 
 	syntID := 1
 	connStrk := [2]int{22, 21}
@@ -1182,7 +1201,9 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_BackPaginatio
 	paginatedEarnings, err := r.repo.PaginateAftermarketDeviceEarningsByID(r.ctx, rwrd, nil, nil, &last, nil)
 	r.NoError(err)
 
-	crsr := helpers.IDToCursor(1)
+	crsr, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 1, VehicleID: 11})
+	r.NoError(err)
+
 	r.NoError(err)
 	aftID := 111
 	syntID := 1
@@ -1266,7 +1287,7 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_BackPaginatio
 	}
 
 	last := 2
-	before := "MQ=="
+	before := "kgEL"
 
 	rwrd, err := r.repo.GetEarningsByAfterMarketDeviceID(r.ctx, 111)
 	r.NoError(err)
@@ -1274,8 +1295,11 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_BackPaginatio
 	paginatedEarnings, err := r.repo.PaginateAftermarketDeviceEarningsByID(r.ctx, rwrd, nil, nil, &last, &before)
 	r.NoError(err)
 
-	startCrsr := helpers.IDToCursor(3)
-	endCrsr := helpers.IDToCursor(2)
+	startCrsr, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 3, VehicleID: 11})
+	r.NoError(err)
+
+	endCrsr, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 2, VehicleID: 11})
+	r.NoError(err)
 
 	aftID := 111
 	syntID := 1
@@ -1321,4 +1345,316 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_BackPaginatio
 			Cursor: endCrsr,
 		},
 	}, paginatedEarnings.Edges)
+}
+
+func (r *RewardsRepoTestSuite) Test_GetEarningsByUserAddress_FwdPagination_First() {
+	_, beneficiary, err := helpers.GenerateWallet()
+	r.NoError(err)
+
+	currTime := time.Now().UTC().Truncate(time.Second)
+
+	r.createDependentRecords()
+
+	totalEarned := big.NewInt(0)
+
+	rw, err := r.createRewardsRecords(2, createRewardsRecordsInput{
+		beneficiary:         *beneficiary,
+		dateTime:            currTime,
+		afterMarketDeviceID: 1,
+	})
+	r.NoError(err)
+
+	var aftEarn types.NullDecimal
+	var strkEarn types.NullDecimal
+	var syntEarn types.NullDecimal
+
+	for _, rr := range rw {
+		baseAmt, ok := new(big.Int).SetString("59147051345528509681", 10)
+		r.NotZero(ok)
+
+		aftEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(30)))
+		strkEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(50)))
+		syntEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(10)))
+
+		rr.AftermarketEarnings = aftEarn
+		rr.StreakEarnings = strkEarn
+		rr.SyntheticEarnings = syntEarn
+
+		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(aftEarn))
+		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(strkEarn))
+		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(syntEarn))
+
+		err = rr.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
+		r.NoError(err)
+	}
+
+	first := 2
+
+	rwrd, err := r.repo.GetEarningsByUserAddress(r.ctx, *beneficiary)
+	r.NoError(err)
+
+	paginatedEarnings, err := r.repo.PaginateGetEarningsByUsersDevices(r.ctx, rwrd, &first, nil, nil, nil)
+	r.NoError(err)
+
+	startCursor, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 2, VehicleID: 11})
+	r.NoError(err)
+
+	endCursor, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 1, VehicleID: 11})
+	r.NoError(err)
+
+	syntID := 1
+	aftID := 1
+
+	r.Equal(&gmodel.PageInfo{
+		EndCursor:       &endCursor,
+		HasNextPage:     false,
+		HasPreviousPage: false,
+		StartCursor:     &startCursor,
+	}, paginatedEarnings.PageInfo)
+	r.Equal(2, paginatedEarnings.TotalCount)
+	r.Equal([]*gmodel.EarningsEdge{
+		{
+			Node: &gmodel.Earning{
+				Week:                    2,
+				Beneficiary:             common.BytesToAddress(beneficiary.Bytes()),
+				ConnectionStreak:        rw[1].ConnectionStreak.Ptr(),
+				StreakTokens:            dbtypes.NullDecimalToInt(strkEarn),
+				AftermarketDeviceID:     &aftID,
+				AftermarketDeviceTokens: dbtypes.NullDecimalToInt(aftEarn),
+				SyntheticDeviceID:       &syntID,
+				SyntheticDeviceTokens:   dbtypes.NullDecimalToInt(syntEarn),
+				SentAt:                  currTime,
+				VehicleID:               11,
+			},
+			Cursor: startCursor,
+		},
+		{
+			Node: &gmodel.Earning{
+				Week:                    1,
+				Beneficiary:             common.BytesToAddress(beneficiary.Bytes()),
+				ConnectionStreak:        rw[0].ConnectionStreak.Ptr(),
+				StreakTokens:            dbtypes.NullDecimalToInt(strkEarn),
+				AftermarketDeviceID:     &aftID,
+				AftermarketDeviceTokens: dbtypes.NullDecimalToInt(aftEarn),
+				SyntheticDeviceID:       &syntID,
+				SyntheticDeviceTokens:   dbtypes.NullDecimalToInt(syntEarn),
+				SentAt:                  currTime,
+				VehicleID:               11,
+			},
+			Cursor: endCursor,
+		},
+	}, paginatedEarnings.Edges)
+}
+
+func (r *RewardsRepoTestSuite) Test_GetEarningsByUserAddress_BackPagination_Last() {
+	_, beneficiary, err := helpers.GenerateWallet()
+	r.NoError(err)
+
+	currTime := time.Now().UTC().Truncate(time.Second)
+
+	r.createDependentRecords()
+
+	totalEarned := big.NewInt(0)
+
+	rw, err := r.createRewardsRecords(2, createRewardsRecordsInput{
+		beneficiary:         *beneficiary,
+		dateTime:            currTime,
+		afterMarketDeviceID: 1,
+	})
+	r.NoError(err)
+
+	var aftEarn types.NullDecimal
+	var strkEarn types.NullDecimal
+	var syntEarn types.NullDecimal
+
+	for _, rr := range rw {
+		baseAmt, ok := new(big.Int).SetString("59147051345528509681", 10)
+		r.NotZero(ok)
+
+		aftEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(30)))
+		strkEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(50)))
+		syntEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(10)))
+
+		rr.AftermarketEarnings = aftEarn
+		rr.StreakEarnings = strkEarn
+		rr.SyntheticEarnings = syntEarn
+
+		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(aftEarn))
+		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(strkEarn))
+		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(syntEarn))
+
+		err = rr.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
+		r.NoError(err)
+	}
+
+	last := 1
+
+	rwrd, err := r.repo.GetEarningsByUserAddress(r.ctx, *beneficiary)
+	r.NoError(err)
+
+	paginatedEarnings, err := r.repo.PaginateGetEarningsByUsersDevices(r.ctx, rwrd, nil, nil, &last, nil)
+	r.NoError(err)
+
+	crsr, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 1, VehicleID: 11})
+	r.NoError(err)
+
+	r.NoError(err)
+	aftID := 1
+	syntID := 1
+
+	connStrk := 21
+
+	r.Equal(&gmodel.PageInfo{
+		EndCursor:       &crsr,
+		HasNextPage:     false,
+		HasPreviousPage: true,
+		StartCursor:     &crsr,
+	}, paginatedEarnings.PageInfo)
+	r.Equal(2, paginatedEarnings.TotalCount)
+	r.Equal([]*gmodel.EarningsEdge{
+		{
+			Node: &gmodel.Earning{
+				Week:                    1,
+				Beneficiary:             common.BytesToAddress(beneficiary.Bytes()),
+				ConnectionStreak:        &connStrk,
+				StreakTokens:            dbtypes.NullDecimalToInt(strkEarn),
+				AftermarketDeviceID:     &aftID,
+				AftermarketDeviceTokens: dbtypes.NullDecimalToInt(aftEarn),
+				SyntheticDeviceID:       &syntID,
+				SyntheticDeviceTokens:   dbtypes.NullDecimalToInt(syntEarn),
+				SentAt:                  currTime,
+				VehicleID:               11,
+			},
+			Cursor: crsr,
+		},
+	}, paginatedEarnings.Edges)
+}
+
+func (r *RewardsRepoTestSuite) Test_GetEarningsByUserAddress_MultipleVehicle_FwdPagination_First() {
+	_, beneficiary, err := helpers.GenerateWallet()
+	r.NoError(err)
+
+	_, owner, err := helpers.GenerateWallet()
+	r.NoError(err)
+
+	currTime := time.Now().UTC().Truncate(time.Second)
+
+	r.createDependentRecords()
+
+	totalEarned := big.NewInt(0)
+
+	veh := models.Vehicle{ // create a brand new vehicle here
+		ID:           5,
+		OwnerAddress: owner.Bytes(),
+	}
+	err = veh.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
+	r.NoError(err)
+
+	rw, err := r.createRewardsRecords(3, createRewardsRecordsInput{
+		beneficiary:         *beneficiary,
+		dateTime:            currTime,
+		afterMarketDeviceID: 1,
+	})
+	r.NoError(err)
+
+	rw[1].VehicleID = 5    // one of the rewards should be for our new vehicle
+	rw[1].IssuanceWeek = 1 // put new vehicle in same week as old vehicle
+
+	var aftEarn types.NullDecimal
+	var strkEarn types.NullDecimal
+	var syntEarn types.NullDecimal
+
+	for _, rr := range rw {
+		baseAmt, ok := new(big.Int).SetString("59147051345528509681", 10)
+		r.NotZero(ok)
+
+		aftEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(30)))
+		strkEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(50)))
+		syntEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(10)))
+
+		rr.AftermarketEarnings = aftEarn
+		rr.StreakEarnings = strkEarn
+		rr.SyntheticEarnings = syntEarn
+
+		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(aftEarn))
+		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(strkEarn))
+		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(syntEarn))
+
+		err = rr.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
+		r.NoError(err)
+	}
+
+	first := 3
+
+	rwrd, err := r.repo.GetEarningsByUserAddress(r.ctx, *beneficiary)
+	r.NoError(err)
+
+	paginatedEarnings, err := r.repo.PaginateGetEarningsByUsersDevices(r.ctx, rwrd, &first, nil, nil, nil)
+	r.NoError(err)
+
+	startCursor, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 3, VehicleID: 11})
+	r.NoError(err)
+
+	endCursor, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 1, VehicleID: 5})
+	r.NoError(err)
+
+	syntID := 1
+	aftID := 1
+
+	r.Equal(&gmodel.PageInfo{
+		EndCursor:       &endCursor,
+		HasNextPage:     false,
+		HasPreviousPage: false,
+		StartCursor:     &startCursor,
+	}, paginatedEarnings.PageInfo)
+	r.Equal(3, paginatedEarnings.TotalCount)
+
+	r.Equal([]*gmodel.EarningsEdge{
+		{
+			Node: &gmodel.Earning{
+				Week:                    3,
+				Beneficiary:             common.BytesToAddress(beneficiary.Bytes()),
+				ConnectionStreak:        rw[2].ConnectionStreak.Ptr(),
+				StreakTokens:            dbtypes.NullDecimalToInt(strkEarn),
+				AftermarketDeviceID:     &aftID,
+				AftermarketDeviceTokens: dbtypes.NullDecimalToInt(aftEarn),
+				SyntheticDeviceID:       &syntID,
+				SyntheticDeviceTokens:   dbtypes.NullDecimalToInt(syntEarn),
+				SentAt:                  currTime,
+				VehicleID:               11,
+			},
+			Cursor: startCursor,
+		},
+		{
+			Node: &gmodel.Earning{
+				Week:                    1,
+				Beneficiary:             common.BytesToAddress(beneficiary.Bytes()),
+				ConnectionStreak:        rw[0].ConnectionStreak.Ptr(),
+				StreakTokens:            dbtypes.NullDecimalToInt(strkEarn),
+				AftermarketDeviceID:     &aftID,
+				AftermarketDeviceTokens: dbtypes.NullDecimalToInt(aftEarn),
+				SyntheticDeviceID:       &syntID,
+				SyntheticDeviceTokens:   dbtypes.NullDecimalToInt(syntEarn),
+				SentAt:                  currTime,
+				VehicleID:               11,
+			},
+			Cursor: "kgEL",
+		},
+		{
+			Node: &gmodel.Earning{
+				Week:                    1,
+				Beneficiary:             common.BytesToAddress(beneficiary.Bytes()),
+				ConnectionStreak:        rw[1].ConnectionStreak.Ptr(),
+				StreakTokens:            dbtypes.NullDecimalToInt(strkEarn),
+				AftermarketDeviceID:     &aftID,
+				AftermarketDeviceTokens: dbtypes.NullDecimalToInt(aftEarn),
+				SyntheticDeviceID:       &syntID,
+				SyntheticDeviceTokens:   dbtypes.NullDecimalToInt(syntEarn),
+				SentAt:                  currTime,
+				VehicleID:               5,
+			},
+			Cursor: endCursor,
+		},
+	}, paginatedEarnings.Edges)
+
 }

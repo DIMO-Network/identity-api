@@ -109,6 +109,8 @@ type Query {
     before: String
     filterBy: DCNFilter
   ): DCNConnection!
+
+  rewards(user: Address!): UserRewards
 }
 
 # Shared Types
@@ -404,7 +406,7 @@ input DCNFilter {
   owner: Address
 }
 
-# Earnings Types
+# Rewards Types
 
 type Earnings {
   earnedTokens: BigInt!
@@ -464,4 +466,14 @@ type EarningsConnection {
   edges: [EarningsEdge!]!
   nodes: [Earning!]!
   pageInfo: PageInfo!
+}
+
+type UserRewards {
+  totalTokens: BigInt!
+  history(
+    first: Int
+    after: String
+    last: Int
+    before: String
+  ): EarningsConnection!
 }

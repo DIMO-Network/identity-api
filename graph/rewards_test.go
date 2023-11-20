@@ -208,7 +208,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate() {
 			  "totalCount": 1,
 			  "edges": [
 				{
-				  "cursor": "Mg==",
+				  "cursor": "kgIB",
 				  "node": {
 					"week": 2,
 					"beneficiary": "%s",
@@ -240,10 +240,10 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate() {
 				}
 			  ],
 			  "pageInfo": {
-				"endCursor": "Mg==",
+				"endCursor": "kgIB",
 				"hasNextPage": false,
 				"hasPreviousPage": false,
-				"startCursor": "Mg=="
+				"startCursor": "kgIB"
 			  }
 			}
 		  }
@@ -320,7 +320,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate_Firs
 		  id
 		  earnings {
 			totalTokens
-			history(first: 3, after: "NA==") {
+			history(first: 2, after: "kgQB") {
 			  totalCount
 			  edges {
 				cursor
@@ -384,7 +384,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate_Firs
 				"totalCount": 3,
 				"edges": [
 					{
-						"cursor": "Mw==",
+						"cursor": "kgMB",
 						"node": {
 						"week": 3,
 						"beneficiary": "%s",
@@ -408,7 +408,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate_Firs
 						}
 					},
 					{
-						"cursor": "Mg==",
+						"cursor": "kgIB",
 						"node": {
 						"week": 2,
 						"beneficiary": "%s",
@@ -445,10 +445,10 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate_Firs
 				}
 				],
 				"pageInfo": {
-				"endCursor": "Mg==",
+				"endCursor": "kgIB",
 				"hasNextPage": false,
 				"hasPreviousPage": true,
-				"startCursor": "Mw=="
+				"startCursor": "kgMB"
 				}
 			}
 			}
@@ -589,7 +589,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 				"totalCount": 3,
 				"edges": [
 					{
-						"cursor": "Mw==",
+						"cursor": "kgMB",
 						"node": {
 						"week": 3,
 						"beneficiary": "%s",
@@ -613,7 +613,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 						}
 					},
 					{
-						"cursor": "Mg==",
+						"cursor": "kgIB",
 						"node": {
 						"week": 2,
 						"beneficiary": "%s",
@@ -650,10 +650,10 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 					}
 				],
 				"pageInfo": {
-				"endCursor": "Mg==",
+				"endCursor": "kgIB",
 				"hasNextPage": false,
 				"hasPreviousPage": true,
-				"startCursor": "Mw=="
+				"startCursor": "kgMB"
 				}
 			}
 			}
@@ -730,7 +730,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 		  id
 		  earnings {
 			totalTokens
-			history(last: 2, before: "Mg==") {
+			history(last: 2, before: "kgIL") {
 			  totalCount
 			  edges {
 				cursor
@@ -794,7 +794,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 				"totalCount": 3,
 				"edges": [
 					{
-						"cursor": "NA==",
+						"cursor": "kgQB",
 						"node": {
 						"week": 4,
 						"beneficiary": "%s",
@@ -818,7 +818,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 						}
 					},
 					{
-						"cursor": "Mw==",
+						"cursor": "kgMB",
 						"node": {
 						"week": 3,
 						"beneficiary": "%s",
@@ -855,10 +855,10 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 					}
 				],
 				"pageInfo": {
-				"endCursor": "Mw==",
+				"endCursor": "kgMB",
 				"hasNextPage": true,
 				"hasPreviousPage": false,
-				"startCursor": "NA=="
+				"startCursor": "kgQB"
 				}
 			}
 			}
@@ -962,10 +962,10 @@ func (r *RewardsQueryTestSuite) Test_Query_GetAftermarketDeviceEarnings_FwdPagin
 							"history": {
 								"totalCount": 1,
 								"pageInfo": {
-									"endCursor": "Mg==",
+									"endCursor": "kgIB",
 									"hasNextPage": false,
 									"hasPreviousPage": false,
-									"startCursor": "Mg=="
+									"startCursor": "kgIB"
 								},
 								"edges": [
 									{
@@ -974,7 +974,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetAftermarketDeviceEarnings_FwdPagin
 										  "beneficiary": "%s",
 										  "connectionStreak": 20
 										},
-										"cursor": "Mg=="
+										"cursor": "kgIB"
 									  }
 								]
 							}
@@ -985,4 +985,350 @@ func (r *RewardsQueryTestSuite) Test_Query_GetAftermarketDeviceEarnings_FwdPagin
 		}
 	}
 	`, beneficiary.Hex()), string(b))
+}
+
+func (r *RewardsQueryTestSuite) Test_Query_GetUserRewards_FwdPaginate() {
+	currTime := time.Now().UTC().Truncate(time.Second)
+	_, beneficiary, err := test.GenerateWallet()
+	r.NoError(err)
+
+	r.createDependencies()
+
+	// Aftermarket Earnings
+	adEarn, ok := new(big.Int).SetString("59147051345528509681", 10)
+	r.True(ok)
+
+	// Synthetic Earnings
+	synthEarn, ok := new(big.Int).SetString("59147051345528509682", 10)
+	r.True(ok)
+
+	// Streak Earnings
+	strkEarn, ok := new(big.Int).SetString("59147051345528509684", 10)
+	r.True(ok)
+
+	var rewards = []models.Reward{
+		{
+			IssuanceWeek:        2,
+			VehicleID:           1,
+			ConnectionStreak:    null.IntFrom(12),
+			StreakEarnings:      dbtypes.NullIntToDecimal(strkEarn),
+			AftermarketTokenID:  null.IntFrom(1),
+			AftermarketEarnings: dbtypes.NullIntToDecimal(adEarn),
+			SyntheticTokenID:    null.IntFrom(1),
+			SyntheticEarnings:   dbtypes.NullIntToDecimal(synthEarn),
+			ReceivedByAddress:   null.BytesFrom(beneficiary.Bytes()),
+			EarnedAt:            currTime,
+		},
+		{
+			IssuanceWeek:        3,
+			VehicleID:           1,
+			ConnectionStreak:    null.IntFrom(13),
+			StreakEarnings:      dbtypes.NullIntToDecimal(strkEarn),
+			AftermarketTokenID:  null.IntFrom(1),
+			AftermarketEarnings: dbtypes.NullIntToDecimal(adEarn),
+			SyntheticTokenID:    null.IntFrom(1),
+			SyntheticEarnings:   dbtypes.NullIntToDecimal(synthEarn),
+			ReceivedByAddress:   null.BytesFrom(beneficiary.Bytes()),
+			EarnedAt:            currTime,
+		},
+		{
+			IssuanceWeek:        4,
+			VehicleID:           1,
+			ConnectionStreak:    null.IntFrom(14),
+			StreakEarnings:      dbtypes.NullIntToDecimal(strkEarn),
+			AftermarketTokenID:  null.IntFrom(1),
+			AftermarketEarnings: dbtypes.NullIntToDecimal(adEarn),
+			SyntheticTokenID:    null.IntFrom(1),
+			SyntheticEarnings:   dbtypes.NullIntToDecimal(synthEarn),
+			ReceivedByAddress:   null.BytesFrom(beneficiary.Bytes()),
+			EarnedAt:            currTime,
+		},
+	}
+
+	for _, rwd := range rewards {
+		err = rwd.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
+		r.NoError(err)
+	}
+
+	query := fmt.Sprintf(`{
+		rewards(user: "%s") {
+			totalTokens
+			history(first: 2) {
+			  totalCount
+			  edges {
+				node {
+				  week
+				  beneficiary
+				  connectionStreak
+				  streakTokens
+				  aftermarketDevice {
+					id
+				  }
+				  aftermarketDeviceTokens
+				  syntheticDevice {
+					tokenId
+				  }
+				  syntheticDeviceTokens
+				  vehicle {
+					id
+					tokenId
+				  }
+				}
+				cursor
+			  }
+			  pageInfo {
+				startCursor
+				endCursor
+				hasPreviousPage
+				hasNextPage
+			  }
+			}
+		}
+	  }`, beneficiary.Hex())
+
+	c := client.New(
+		loader.Middleware(
+			r.pdb,
+			handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: r.resolver})), r.settings,
+		),
+	)
+
+	var resp interface{}
+	c.MustPost(query, &resp)
+	b, _ := json.Marshal(resp)
+	fmt.Println(string(b))
+
+	r.JSONEq(fmt.Sprintf(`
+	{
+		"rewards": {
+			"totalTokens": "532323462109756587141",
+			"history": {
+			  "totalCount": 3,
+			  "edges": [
+				{
+				  "node": {
+					"week": 4,
+					"beneficiary": "%s",
+					"connectionStreak": 14,
+					"streakTokens": "59147051345528509684",
+					"aftermarketDevice": {
+					  "id": "AD_kQE="
+					},
+					"aftermarketDeviceTokens": "59147051345528509681",
+					"syntheticDevice": {
+					  "tokenId": 1
+					},
+					"syntheticDeviceTokens": "59147051345528509682",
+					"vehicle": {
+					  "id": "V_kQE=",
+					  "tokenId": 1
+					}
+				  },
+				  "cursor": "kgQB"
+				},
+				{
+				  "node": {
+					"week": 3,
+					"beneficiary": "%s",
+					"connectionStreak": 13,
+					"streakTokens": "59147051345528509684",
+					"aftermarketDevice": {
+					  "id": "AD_kQE="
+					},
+					"aftermarketDeviceTokens": "59147051345528509681",
+					"syntheticDevice": {
+					  "tokenId": 1
+					},
+					"syntheticDeviceTokens": "59147051345528509682",
+					"vehicle": {
+					  "id": "V_kQE=",
+					  "tokenId": 1
+					}
+				  },
+				  "cursor": "kgMB"
+				}
+			  ],
+			  "pageInfo": {
+				"startCursor": "kgQB",
+				"endCursor": "kgMB",
+				"hasPreviousPage": false,
+				"hasNextPage": true
+			  }
+			}
+		}
+	}
+	`, beneficiary.Hex(), beneficiary.Hex()), string(b))
+}
+
+func (r *RewardsQueryTestSuite) Test_Query_GetUserRewards_BackPaginate_LastBefore() {
+	currTime := time.Now().UTC().Truncate(time.Second)
+	_, beneficiary, err := test.GenerateWallet()
+	r.NoError(err)
+
+	r.createDependencies()
+
+	// Aftermarket Earnings
+	adEarn, ok := new(big.Int).SetString("59147051345528509681", 10)
+	r.True(ok)
+
+	// Synthetic Earnings
+	synthEarn, ok := new(big.Int).SetString("59147051345528509682", 10)
+	r.True(ok)
+
+	// Streak Earnings
+	strkEarn, ok := new(big.Int).SetString("59147051345528509684", 10)
+	r.True(ok)
+
+	var rewards = []models.Reward{
+		{
+			IssuanceWeek:        2,
+			VehicleID:           1,
+			ConnectionStreak:    null.IntFrom(12),
+			StreakEarnings:      dbtypes.NullIntToDecimal(strkEarn),
+			AftermarketTokenID:  null.IntFrom(1),
+			AftermarketEarnings: dbtypes.NullIntToDecimal(adEarn),
+			SyntheticTokenID:    null.IntFrom(1),
+			SyntheticEarnings:   dbtypes.NullIntToDecimal(synthEarn),
+			ReceivedByAddress:   null.BytesFrom(beneficiary.Bytes()),
+			EarnedAt:            currTime,
+		},
+		{
+			IssuanceWeek:        3,
+			VehicleID:           1,
+			ConnectionStreak:    null.IntFrom(13),
+			StreakEarnings:      dbtypes.NullIntToDecimal(strkEarn),
+			AftermarketTokenID:  null.IntFrom(1),
+			AftermarketEarnings: dbtypes.NullIntToDecimal(adEarn),
+			SyntheticTokenID:    null.IntFrom(1),
+			SyntheticEarnings:   dbtypes.NullIntToDecimal(synthEarn),
+			ReceivedByAddress:   null.BytesFrom(beneficiary.Bytes()),
+			EarnedAt:            currTime,
+		},
+		{
+			IssuanceWeek:        4,
+			VehicleID:           1,
+			ConnectionStreak:    null.IntFrom(14),
+			StreakEarnings:      dbtypes.NullIntToDecimal(strkEarn),
+			AftermarketTokenID:  null.IntFrom(1),
+			AftermarketEarnings: dbtypes.NullIntToDecimal(adEarn),
+			SyntheticTokenID:    null.IntFrom(1),
+			SyntheticEarnings:   dbtypes.NullIntToDecimal(synthEarn),
+			ReceivedByAddress:   null.BytesFrom(beneficiary.Bytes()),
+			EarnedAt:            currTime,
+		},
+	}
+
+	for _, rwd := range rewards {
+		err = rwd.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
+		r.NoError(err)
+	}
+
+	query := fmt.Sprintf(`{
+		rewards(user: "%s") {
+			totalTokens
+			history(last: 2) {
+			  totalCount
+			  edges {
+				node {
+				  week
+				  beneficiary
+				  connectionStreak
+				  streakTokens
+				  aftermarketDevice {
+					id
+				  }
+				  aftermarketDeviceTokens
+				  syntheticDevice {
+					tokenId
+				  }
+				  syntheticDeviceTokens
+				  vehicle {
+					id
+					tokenId
+				  }
+				}
+				cursor
+			  }
+			  pageInfo {
+				startCursor
+				endCursor
+				hasPreviousPage
+				hasNextPage
+			  }
+			}
+		}
+	  }`, beneficiary.Hex())
+
+	c := client.New(
+		loader.Middleware(
+			r.pdb,
+			handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: r.resolver})), r.settings,
+		),
+	)
+
+	var resp interface{}
+	c.MustPost(query, &resp)
+	b, _ := json.Marshal(resp)
+	fmt.Println(string(b))
+
+	r.JSONEq(fmt.Sprintf(`
+	{
+		"rewards": {
+			"totalTokens": "532323462109756587141",
+			"history": {
+			  "totalCount": 3,
+			  "edges": [
+				{
+				  "node": {
+					"week": 3,
+					"beneficiary": "%s",
+					"connectionStreak": 13,
+					"streakTokens": "59147051345528509684",
+					"aftermarketDevice": {
+					  "id": "AD_kQE="
+					},
+					"aftermarketDeviceTokens": "59147051345528509681",
+					"syntheticDevice": {
+					  "tokenId": 1
+					},
+					"syntheticDeviceTokens": "59147051345528509682",
+					"vehicle": {
+					  "id": "V_kQE=",
+					  "tokenId": 1
+					}
+				  },
+				  "cursor": "kgMB"
+				},
+				{
+				  "node": {
+					"week": 2,
+					"beneficiary": "%s",
+					"connectionStreak": 12,
+					"streakTokens": "59147051345528509684",
+					"aftermarketDevice": {
+					  "id": "AD_kQE="
+					},
+					"aftermarketDeviceTokens": "59147051345528509681",
+					"syntheticDevice": {
+					  "tokenId": 1
+					},
+					"syntheticDeviceTokens": "59147051345528509682",
+					"vehicle": {
+					  "id": "V_kQE=",
+					  "tokenId": 1
+					}
+				  },
+				  "cursor": "kgIB"
+				}
+			  ],
+			  "pageInfo": {
+				"startCursor": "kgMB",
+				"endCursor": "kgIB",
+				"hasPreviousPage": true,
+				"hasNextPage": false
+			  }
+			}
+		}
+	}
+	`, beneficiary.Hex(), beneficiary.Hex()), string(b))
 }

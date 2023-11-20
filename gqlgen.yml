@@ -143,6 +143,13 @@ models:
     extraFields:
       AftermarketDeviceID:
         type: "int"
+  UserRewards:
+    fields:
+      history:
+        resolver: true
+    extraFields:
+      User:
+        type: "github.com/ethereum/go-ethereum/common.Address"
   Earning:
     fields:
       aftermarketDevice:
