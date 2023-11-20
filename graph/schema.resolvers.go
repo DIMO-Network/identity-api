@@ -12,6 +12,7 @@ import (
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/loader"
 	"github.com/DIMO-Network/identity-api/internal/repositories"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 // Manufacturer is the resolver for the manufacturer field.
@@ -127,6 +128,16 @@ func (r *queryResolver) Dcns(ctx context.Context, first *int, after *string, las
 	return r.Repo.GetDCNs(ctx, first, after, last, before, filterBy)
 }
 
+// Rewards is the resolver for the rewards field.
+func (r *queryResolver) Rewards(ctx context.Context, user common.Address) (*model.UserRewards, error) {
+	return r.Repo.GetEarningsByUserAddress(ctx, user)
+}
+
+// History is the resolver for the history field.
+func (r *userRewardsResolver) History(ctx context.Context, obj *model.UserRewards, first *int, after *string, last *int, before *string) (*model.EarningsConnection, error) {
+	return r.Repo.PaginateGetEarningsByUsersDevices(ctx, obj, first, after, last, before)
+}
+
 // Manufacturer is the resolver for the manufacturer field.
 func (r *vehicleResolver) Manufacturer(ctx context.Context, obj *model.Vehicle) (*model.Manufacturer, error) {
 	return loader.GetManufacturerID(ctx, *obj.ManufacturerID)
@@ -181,6 +192,9 @@ func (r *Resolver) Earning() EarningResolver { return &earningResolver{r} }
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
+// UserRewards returns UserRewardsResolver implementation.
+func (r *Resolver) UserRewards() UserRewardsResolver { return &userRewardsResolver{r} }
+
 // Vehicle returns VehicleResolver implementation.
 func (r *Resolver) Vehicle() VehicleResolver { return &vehicleResolver{r} }
 
@@ -192,5 +206,6 @@ type aftermarketDeviceEarningsResolver struct{ *Resolver }
 type dCNResolver struct{ *Resolver }
 type earningResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type userRewardsResolver struct{ *Resolver }
 type vehicleResolver struct{ *Resolver }
 type vehicleEarningsResolver struct{ *Resolver }
