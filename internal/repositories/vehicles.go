@@ -138,7 +138,6 @@ const maxPageSize = 100
 // @Param last [*int] "the number of devices to return from previous pages"
 // @Param before [*string] "base64 string representing a device tokenID. Pointer to where we start fetching devices from previous pages"
 func (v *Repository) GetVehicles(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *gmodel.VehiclesFilter) (*gmodel.VehicleConnection, error) {
-	var limit int
 	limit, err := helpers.ValidateFirstLast(first, last, maxPageSize)
 	if err != nil {
 		return nil, err

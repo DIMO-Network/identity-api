@@ -46,7 +46,6 @@ func RewardToAPI(reward models.Reward) gmodel.Earning {
 }
 
 func (r *Repository) paginateRewards(ctx context.Context, conditions []qm.QueryMod, first *int, after *string, last *int, before *string, limit int) (*gmodel.EarningsConnection, error) {
-
 	queryMods := []qm.QueryMod{}
 	queryMods = append(queryMods, conditions...)
 

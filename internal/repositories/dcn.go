@@ -72,7 +72,6 @@ func (r *Repository) GetDCNByName(ctx context.Context, name string) (*gmodel.Dcn
 var dcnCursorColumnsTuple = "(" + models.DCNColumns.MintedAt + ", " + models.DCNColumns.Node + ")"
 
 func (r *Repository) GetDCNs(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *gmodel.DCNFilter) (*gmodel.DCNConnection, error) {
-	var limit int
 	limit, err := helpers.ValidateFirstLast(first, last, maxPageSize)
 	if err != nil {
 		return nil, err
