@@ -355,7 +355,7 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_FwdPagination_Fi
 	paginatedEarnings, err := r.repo.PaginateVehicleEarningsByID(r.ctx, rwrd, &first, nil, nil, nil)
 	r.NoError(err)
 
-	crsr, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 2})
+	crsr, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 2, VehicleID: 11})
 	r.NoError(err)
 
 	aftID := 1
@@ -456,13 +456,13 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_FwdPagination_Fi
 	r.NoError(err)
 
 	first := 2
-	after := "kgMA"
+	after := "kgML"
 	paginatedEarnings, err := r.repo.PaginateVehicleEarningsByID(r.ctx, rwrd, &first, &after, nil, nil)
 	r.NoError(err)
 
-	startCrsr, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 2})
+	startCrsr, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 2, VehicleID: 11})
 	r.NoError(err)
-	endCrsr, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 1})
+	endCrsr, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 1, VehicleID: 11})
 	r.NoError(err)
 
 	aftID := 1
@@ -578,7 +578,7 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_FwdPagination_Em
 	r.NoError(err)
 
 	first := 2
-	after := "kgEA"
+	after := "kgEL"
 	paginatedEarnings, err := r.repo.PaginateVehicleEarningsByID(r.ctx, rwrd, &first, &after, nil, nil)
 	r.NoError(err)
 
@@ -655,7 +655,7 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_BackPagination_L
 	paginatedEarnings, err := r.repo.PaginateVehicleEarningsByID(r.ctx, rwrd, nil, nil, &last, nil)
 	r.NoError(err)
 
-	crsr, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 1})
+	crsr, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 1, VehicleID: 11})
 	r.NoError(err)
 
 	r.NoError(err)
@@ -758,14 +758,14 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_BackPagination_L
 	r.NoError(err)
 
 	last := 2
-	before := "kgEA"
+	before := "kgEL"
 	paginatedEarnings, err := r.repo.PaginateVehicleEarningsByID(r.ctx, rwrd, nil, nil, &last, &before)
 	r.NoError(err)
 
-	startCrsr, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 3})
+	startCrsr, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 3, VehicleID: 11})
 	r.NoError(err)
 
-	endCrsr, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 2})
+	endCrsr, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 2, VehicleID: 11})
 	r.NoError(err)
 
 	aftID := 1
@@ -882,7 +882,7 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_BackPagination_E
 	r.NoError(err)
 
 	last := 2
-	before := "kgMA"
+	before := "kgML"
 	paginatedEarnings, err := r.repo.PaginateVehicleEarningsByID(r.ctx, rwrd, nil, nil, &last, &before)
 	r.NoError(err)
 
@@ -983,10 +983,10 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_FwdPagination
 	paginatedEarnings, err := r.repo.PaginateAftermarketDeviceEarningsByID(r.ctx, rwrd, &first, nil, nil, nil)
 	r.NoError(err)
 
-	startCursor, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 2})
+	startCursor, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 2, VehicleID: 11})
 	r.NoError(err)
 
-	endCursor, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 1})
+	endCursor, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 1, VehicleID: 11})
 	r.NoError(err)
 
 	syntID := 1
@@ -1084,7 +1084,7 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_FwdPagination
 	}
 
 	first := 2
-	after := "kgMA"
+	after := "kgML"
 	aftID := 111
 
 	rwrd, err := r.repo.GetEarningsByAfterMarketDeviceID(r.ctx, aftID)
@@ -1093,10 +1093,10 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_FwdPagination
 	paginatedEarnings, err := r.repo.PaginateAftermarketDeviceEarningsByID(r.ctx, rwrd, &first, &after, nil, nil)
 	r.NoError(err)
 
-	startCrsr, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 2})
+	startCrsr, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 2, VehicleID: 11})
 	r.NoError(err)
 
-	endCrsr, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 1})
+	endCrsr, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 1, VehicleID: 11})
 	r.NoError(err)
 
 	syntID := 1
@@ -1201,7 +1201,7 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_BackPaginatio
 	paginatedEarnings, err := r.repo.PaginateAftermarketDeviceEarningsByID(r.ctx, rwrd, nil, nil, &last, nil)
 	r.NoError(err)
 
-	crsr, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 1})
+	crsr, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 1, VehicleID: 11})
 	r.NoError(err)
 
 	r.NoError(err)
@@ -1287,7 +1287,7 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_BackPaginatio
 	}
 
 	last := 2
-	before := "kgEA"
+	before := "kgEL"
 
 	rwrd, err := r.repo.GetEarningsByAfterMarketDeviceID(r.ctx, 111)
 	r.NoError(err)
@@ -1295,10 +1295,10 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_BackPaginatio
 	paginatedEarnings, err := r.repo.PaginateAftermarketDeviceEarningsByID(r.ctx, rwrd, nil, nil, &last, &before)
 	r.NoError(err)
 
-	startCrsr, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 3})
+	startCrsr, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 3, VehicleID: 11})
 	r.NoError(err)
 
-	endCrsr, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 2})
+	endCrsr, err := r.paginationHelper.EncodeCursor(RewardsCursor{Week: 2, VehicleID: 11})
 	r.NoError(err)
 
 	aftID := 111

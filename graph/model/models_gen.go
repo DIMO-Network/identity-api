@@ -230,7 +230,7 @@ type SyntheticDevice struct {
 type UserRewards struct {
 	TotalTokens *big.Int            `json:"totalTokens"`
 	History     *EarningsConnection `json:"history"`
-	User        *common.Address     `json:"-"`
+	User        common.Address      `json:"-"`
 }
 
 type Vehicle struct {

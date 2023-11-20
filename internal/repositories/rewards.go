@@ -26,6 +26,8 @@ type EarningsSummary struct {
 	TotalCount int               `boil:"total_count"`
 }
 
+var rewardsCursorColumns = "(" + models.RewardColumns.IssuanceWeek + ", " + models.RewardColumns.VehicleID + ")"
+
 func RewardToAPI(reward models.Reward) gmodel.Earning {
 	stEarn := dbtypes.NullDecimalToInt(reward.StreakEarnings)
 	adEarn := dbtypes.NullDecimalToInt(reward.AftermarketEarnings)
@@ -51,34 +53,35 @@ func (r *Repository) paginateRewards(ctx context.Context, conditions []qm.QueryM
 	queryMods := []qm.QueryMod{}
 	queryMods = append(queryMods, conditions...)
 
-	if after != nil {
-		afterCursor, err := rwCursorHelper.DecodeCursor(*after)
-		if err != nil {
-			return nil, err
-		}
-
-		queryMods = append(queryMods, models.RewardWhere.IssuanceWeek.LT(afterCursor.Week))
-	}
-
-	if before != nil {
-		beforeCursor, err := rwCursorHelper.DecodeCursor(*before)
-		if err != nil {
-			return nil, err
-		}
-
-		queryMods = append(queryMods, models.RewardWhere.IssuanceWeek.GT(beforeCursor.Week))
-	}
-
-	orderBy := "DESC"
+	orderBy := " DESC"
 	if last != nil {
-		orderBy = "ASC"
+		orderBy = " ASC"
 	}
 
 	queryMods = append(queryMods,
-		// Use limit + 1 here to check if there's another page.
 		qm.Limit(limit+1),
-		qm.OrderBy(models.RewardColumns.IssuanceWeek+" "+orderBy),
+		qm.OrderBy(models.RewardColumns.IssuanceWeek+orderBy+", "+models.RewardColumns.VehicleID+orderBy),
 	)
+
+	if after != nil {
+		afterT, err := rwCursorHelper.DecodeCursor(*after)
+		if err != nil {
+			return nil, err
+		}
+
+		queryMods = append(queryMods,
+			qm.Where(rewardsCursorColumns+" < (?, ?)", afterT.Week, afterT.VehicleID),
+		)
+	} else if before != nil {
+		beforeT, err := rwCursorHelper.DecodeCursor(*before)
+		if err != nil {
+			return nil, err
+		}
+
+		queryMods = append(queryMods,
+			qm.Where(rewardsCursorColumns+" > (?, ?)", beforeT.Week, beforeT.VehicleID),
+		)
+	}
 
 	all, err := models.Rewards(queryMods...).All(ctx, r.pdb.DBS().Reader)
 	if err != nil {
@@ -108,7 +111,8 @@ func (r *Repository) paginateRewards(ctx context.Context, conditions []qm.QueryM
 		reward := RewardToAPI(*rw)
 
 		crsr, err := rwCursorHelper.EncodeCursor(RewardsCursor{
-			Week: reward.Week,
+			Week:      reward.Week,
+			VehicleID: reward.VehicleID,
 		})
 		if err != nil {
 			return nil, err
@@ -272,15 +276,11 @@ func (r *Repository) GetEarningsByUserAddress(ctx context.Context, user common.A
 	return &gmodel.UserRewards{
 		TotalTokens: dbtypes.NullDecimalToInt(summary.TokenSum),
 		History:     earningsConn,
-		User:        &user,
+		User:        user,
 	}, nil
 }
 
-var rewardsColumnsTuple = "(" + models.RewardColumns.IssuanceWeek + ", " + models.RewardColumns.VehicleID + ")"
-
 func (r *Repository) PaginateGetEarningsByUsersDevices(ctx context.Context, userDeviceEarnings *gmodel.UserRewards, first *int, after *string, last *int, before *string) (*gmodel.EarningsConnection, error) {
-	rwCursorHelper := &helpers.PaginationHelper[RewardsCursor]{}
-
 	limit, err := helpers.ValidateFirstLast(first, last, maxPageSize) // return early if both first and last are provided
 	if err != nil {
 		return nil, err
@@ -290,90 +290,13 @@ func (r *Repository) PaginateGetEarningsByUsersDevices(ctx context.Context, user
 		models.RewardWhere.ReceivedByAddress.EQ(null.BytesFrom(userDeviceEarnings.User.Bytes())),
 	}
 
-	orderBy := " DESC"
-	if last != nil {
-		orderBy = " ASC"
-	}
-
-	queryMods = append(queryMods,
-		qm.Limit(limit+1),
-		qm.OrderBy(models.RewardColumns.IssuanceWeek+orderBy+", "+models.RewardColumns.VehicleID+orderBy),
-	)
-
-	if after != nil {
-		afterT, err := rwCursorHelper.DecodeCursor(*after)
-		if err != nil {
-			return nil, err
-		}
-		queryMods = append(queryMods,
-			qm.Where(rewardsColumnsTuple+" < (?, ?)", afterT.Week, afterT.VehicleID),
-		)
-	} else if before != nil {
-		beforeT, err := rwCursorHelper.DecodeCursor(*before)
-		if err != nil {
-			return nil, err
-		}
-		queryMods = append(queryMods,
-			qm.Where(rewardsColumnsTuple+" < (?, ?)", beforeT.Week, beforeT.VehicleID),
-		)
-	}
-
-	all, err := models.Rewards(queryMods...).All(ctx, r.pdb.DBS().Reader)
+	afd, err := r.paginateRewards(ctx, queryMods, first, after, last, before, limit)
 	if err != nil {
 		return nil, err
 	}
 
-	hasNext := before != nil
-	hasPrevious := after != nil
-
-	if first != nil && len(all) == limit+1 {
-		hasNext = true
-		all = all[:limit]
-	} else if last != nil && len(all) == limit+1 {
-		hasPrevious = true
-		all = all[:limit]
-	}
-
-	if last != nil {
-		slices.Reverse(all)
-	}
-
-	edges := make([]*gmodel.EarningsEdge, len(all))
-	nodes := make([]*gmodel.Earning, len(all))
-
-	for i, rw := range all {
-		reward := RewardToAPI(*rw)
-
-		crsr, err := rwCursorHelper.EncodeCursor(RewardsCursor{
-			Week:      reward.Week,
-			VehicleID: reward.VehicleID,
-		})
-		if err != nil {
-			return nil, err
-		}
-		edges[i] = &gmodel.EarningsEdge{
-			Node:   &reward,
-			Cursor: crsr,
-		}
-
-		nodes[i] = &reward
-	}
-
-	var endCursor, startCursor *string
-
-	if len(all) != 0 {
-		endCursor = &edges[len(edges)-1].Cursor
-		startCursor = &edges[0].Cursor
-	}
-
-	userDeviceEarnings.History.Edges = edges
-	userDeviceEarnings.History.Nodes = nodes
-	userDeviceEarnings.History.PageInfo = &gmodel.PageInfo{
-		StartCursor:     startCursor,
-		EndCursor:       endCursor,
-		HasPreviousPage: hasPrevious,
-		HasNextPage:     hasNext,
-	}
-
+	userDeviceEarnings.History.Edges = afd.Edges
+	userDeviceEarnings.History.Nodes = afd.Nodes
+	userDeviceEarnings.History.PageInfo = afd.PageInfo
 	return userDeviceEarnings.History, nil
 }

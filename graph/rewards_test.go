@@ -208,7 +208,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate() {
 			  "totalCount": 1,
 			  "edges": [
 				{
-				  "cursor": "kgIA",
+				  "cursor": "kgIB",
 				  "node": {
 					"week": 2,
 					"beneficiary": "%s",
@@ -240,10 +240,10 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate() {
 				}
 			  ],
 			  "pageInfo": {
-				"endCursor": "kgIA",
+				"endCursor": "kgIB",
 				"hasNextPage": false,
 				"hasPreviousPage": false,
-				"startCursor": "kgIA"
+				"startCursor": "kgIB"
 			  }
 			}
 		  }
@@ -320,7 +320,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate_Firs
 		  id
 		  earnings {
 			totalTokens
-			history(first: 3, after: "kgQA") {
+			history(first: 2, after: "kgQB") {
 			  totalCount
 			  edges {
 				cursor
@@ -384,7 +384,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate_Firs
 				"totalCount": 3,
 				"edges": [
 					{
-						"cursor": "kgMA",
+						"cursor": "kgMB",
 						"node": {
 						"week": 3,
 						"beneficiary": "%s",
@@ -408,7 +408,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate_Firs
 						}
 					},
 					{
-						"cursor": "kgIA",
+						"cursor": "kgIB",
 						"node": {
 						"week": 2,
 						"beneficiary": "%s",
@@ -445,10 +445,10 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate_Firs
 				}
 				],
 				"pageInfo": {
-				"endCursor": "kgIA",
+				"endCursor": "kgIB",
 				"hasNextPage": false,
 				"hasPreviousPage": true,
-				"startCursor": "kgMA"
+				"startCursor": "kgMB"
 				}
 			}
 			}
@@ -589,7 +589,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 				"totalCount": 3,
 				"edges": [
 					{
-						"cursor": "kgMA",
+						"cursor": "kgMB",
 						"node": {
 						"week": 3,
 						"beneficiary": "%s",
@@ -613,7 +613,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 						}
 					},
 					{
-						"cursor": "kgIA",
+						"cursor": "kgIB",
 						"node": {
 						"week": 2,
 						"beneficiary": "%s",
@@ -650,10 +650,10 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 					}
 				],
 				"pageInfo": {
-				"endCursor": "kgIA",
+				"endCursor": "kgIB",
 				"hasNextPage": false,
 				"hasPreviousPage": true,
-				"startCursor": "kgMA"
+				"startCursor": "kgMB"
 				}
 			}
 			}
@@ -730,7 +730,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 		  id
 		  earnings {
 			totalTokens
-			history(last: 2, before: "kgIA") {
+			history(last: 2, before: "kgIL") {
 			  totalCount
 			  edges {
 				cursor
@@ -794,7 +794,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 				"totalCount": 3,
 				"edges": [
 					{
-						"cursor": "kgQA",
+						"cursor": "kgQB",
 						"node": {
 						"week": 4,
 						"beneficiary": "%s",
@@ -818,7 +818,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 						}
 					},
 					{
-						"cursor": "kgMA",
+						"cursor": "kgMB",
 						"node": {
 						"week": 3,
 						"beneficiary": "%s",
@@ -855,10 +855,10 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 					}
 				],
 				"pageInfo": {
-				"endCursor": "kgMA",
+				"endCursor": "kgMB",
 				"hasNextPage": true,
 				"hasPreviousPage": false,
-				"startCursor": "kgQA"
+				"startCursor": "kgQB"
 				}
 			}
 			}
@@ -962,10 +962,10 @@ func (r *RewardsQueryTestSuite) Test_Query_GetAftermarketDeviceEarnings_FwdPagin
 							"history": {
 								"totalCount": 1,
 								"pageInfo": {
-									"endCursor": "kgIA",
+									"endCursor": "kgIB",
 									"hasNextPage": false,
 									"hasPreviousPage": false,
-									"startCursor": "kgIA"
+									"startCursor": "kgIB"
 								},
 								"edges": [
 									{
@@ -974,7 +974,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetAftermarketDeviceEarnings_FwdPagin
 										  "beneficiary": "%s",
 										  "connectionStreak": 20
 										},
-										"cursor": "kgIA"
+										"cursor": "kgIB"
 									  }
 								]
 							}

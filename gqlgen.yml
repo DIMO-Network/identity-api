@@ -149,7 +149,7 @@ models:
         resolver: true
     extraFields:
       User:
-        type: "*github.com/ethereum/go-ethereum/common.Address"
+        type: "github.com/ethereum/go-ethereum/common.Address"
   Earning:
     fields:
       aftermarketDevice:
