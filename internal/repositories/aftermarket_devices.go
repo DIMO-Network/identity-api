@@ -28,29 +28,9 @@ import (
 // @Param before [*string] "base64 string representing a device tokenID. Pointer to where we start fetching devices from previous pages"
 func (r *Repository) GetAftermarketDevices(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *gmodel.AftermarketDevicesFilter) (*gmodel.AftermarketDeviceConnection, error) {
 	var limit int
-
-	if first != nil {
-		if last != nil {
-			return nil, gqlerror.Errorf("Pass `first` or `last`, but not both.")
-		}
-		if *first < 0 {
-			return nil, gqlerror.Errorf("The value for `first` cannot be negative.")
-		}
-		if *first > maxPageSize {
-			return nil, gqlerror.Errorf("The value %d for `first` exceeds the limit %d.", *last, maxPageSize)
-		}
-		limit = *first
-	} else {
-		if last == nil {
-			return nil, gqlerror.Errorf("Provide `first` or `last`.")
-		}
-		if *last < 0 {
-			return nil, gqlerror.Errorf("The value for `last` cannot be negative.")
-		}
-		if *last > maxPageSize {
-			return nil, gqlerror.Errorf("The value %d for `last` exceeds the limit %d.", *last, maxPageSize)
-		}
-		limit = *last
+	limit, err := helpers.ValidateFirstLast(first, last, maxPageSize)
+	if err != nil {
+		return nil, err
 	}
 
 	where := []qm.QueryMod{}
