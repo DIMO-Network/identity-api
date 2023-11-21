@@ -1347,3 +1347,83 @@ func Test_Handle_TokensTransferredForConnectionStreak_Event(t *testing.T) {
 		}, reward[0])
 	}
 }
+
+func TestHandle_SyntheticDevice_NodeBurnet_RewardsNulled_Success(t *testing.T) {
+	ctx := context.Background()
+	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
+	contractEventData.EventName = string(SyntheticDeviceNodeBurned)
+	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
+
+	_, wallet, err := helpers.GenerateWallet()
+	assert.NoError(t, err)
+
+	_, wallet2, err := helpers.GenerateWallet()
+	assert.NoError(t, err)
+
+	currTime := time.Now().UTC().Truncate(time.Second)
+	vehicles := []models.Vehicle{
+		{
+			ID:           1,
+			OwnerAddress: wallet.Bytes(),
+			Make:         null.StringFrom("Toyota"),
+			Model:        null.StringFrom("Camry"),
+			Year:         null.IntFrom(2020),
+			MintedAt:     currTime,
+		},
+	}
+
+	for _, v := range vehicles {
+		if err := v.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
+			assert.NoError(t, err)
+		}
+	}
+
+	sd := models.SyntheticDevice{
+		ID:            1,
+		IntegrationID: 2,
+		VehicleID:     1,
+		DeviceAddress: wallet2.Bytes(),
+		MintedAt:      currTime,
+	}
+
+	err = sd.Insert(ctx, pdb.DBS().Writer.DB, boil.Infer())
+	assert.NoError(t, err)
+
+	rw := models.Reward{
+		IssuanceWeek:     1,
+		VehicleID:        1,
+		ConnectionStreak: null.IntFrom(12),
+		SyntheticTokenID: null.IntFrom(1),
+	}
+	err = rw.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err)
+
+	eventData := SyntheticDeviceNodeBurnedData{
+		SyntheticDeviceNode: big.NewInt(1),
+		VehicleNode:         big.NewInt(1),
+		Owner:               *wallet2,
+	}
+	settings := config.Settings{
+		DIMORegistryAddr:    contractEventData.Contract.String(),
+		DIMORegistryChainID: contractEventData.ChainID,
+	}
+
+	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
+	e := prepareEvent(t, contractEventData, eventData)
+
+	err = contractEventConsumer.Process(ctx, &e)
+	assert.NoError(t, err)
+
+	sds, err := models.SyntheticDevices(
+		models.SyntheticDeviceWhere.VehicleID.EQ(1),
+		models.SyntheticDeviceWhere.ID.EQ(2),
+	).All(ctx, pdb.DBS().Reader)
+	assert.NoError(t, err)
+
+	rws, err := models.Rewards(models.RewardWhere.IssuanceWeek.EQ(1)).One(ctx, pdb.DBS().Reader.DB)
+	assert.NoError(t, err)
+
+	assert.Equal(t, rws.SyntheticTokenID, null.Int{})
+
+	assert.Empty(t, sds)
+}
