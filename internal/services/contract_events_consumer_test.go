@@ -519,8 +519,17 @@ func TestHandle_SyntheticDeviceNodeBurnedEvent_Success(t *testing.T) {
 	err = sd.Insert(ctx, pdb.DBS().Writer.DB, boil.Infer())
 	assert.NoError(t, err)
 
+	rw := models.Reward{
+		IssuanceWeek:     1,
+		VehicleID:        1,
+		ConnectionStreak: null.IntFrom(12),
+		SyntheticTokenID: null.IntFrom(1),
+	}
+	err = rw.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err)
+
 	eventData := SyntheticDeviceNodeBurnedData{
-		SyntheticDeviceNode: big.NewInt(2),
+		SyntheticDeviceNode: big.NewInt(1),
 		VehicleNode:         big.NewInt(1),
 		Owner:               *wallet2,
 	}

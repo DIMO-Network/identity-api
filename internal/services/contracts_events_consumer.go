@@ -525,40 +525,24 @@ func (c *ContractsEventsConsumer) handleSyntheticDeviceNodeBurnedEvent(ctx conte
 		return err
 	}
 
-	tx, err := c.dbs.DBS().Writer.DB.BeginTx(ctx, nil)
-	defer tx.Rollback() //nolint
-	if err != nil {
-		return err
-	}
-
 	sd := models.SyntheticDevice{
 		ID: int(args.SyntheticDeviceNode.Int64()),
 	}
 
-	rw, err := models.Rewards(models.RewardWhere.SyntheticTokenID.EQ(null.IntFrom(sd.ID))).One(ctx, tx)
+	rw, err := models.Rewards(models.RewardWhere.SyntheticTokenID.EQ(null.IntFrom(sd.ID))).One(ctx, c.dbs.DBS().Reader)
 	if err != nil {
 		return err
 	}
 
 	rw.SyntheticTokenID = null.Int{}
 
-	_, err = rw.Update(ctx, tx, boil.Whitelist(models.RewardColumns.SyntheticTokenID))
+	_, err = rw.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.RewardColumns.SyntheticTokenID))
 	if err != nil {
 		return nil
 	}
 
-	_, err = sd.Delete(ctx, tx)
-	if err != nil {
-		return err
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		fmt.Println("Error:", err)
-		return err
-	}
+	_, err = sd.Delete(ctx, c.dbs.DBS().Writer)
 	return err
-
 }
 
 func (c *ContractsEventsConsumer) handleTokensTransferredForDevice(ctx context.Context, e *ContractEventData) error {
