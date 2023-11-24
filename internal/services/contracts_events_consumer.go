@@ -529,19 +529,7 @@ func (c *ContractsEventsConsumer) handleSyntheticDeviceNodeBurnedEvent(ctx conte
 		ID: int(args.SyntheticDeviceNode.Int64()),
 	}
 
-	rw, err := models.Rewards(models.RewardWhere.SyntheticTokenID.EQ(null.IntFrom(sd.ID))).One(ctx, c.dbs.DBS().Reader)
-	if err != nil {
-		return err
-	}
-
-	rw.SyntheticTokenID = null.Int{}
-
-	_, err = rw.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.RewardColumns.SyntheticTokenID))
-	if err != nil {
-		return nil
-	}
-
-	_, err = sd.Delete(ctx, c.dbs.DBS().Writer)
+	_, err := sd.Delete(ctx, c.dbs.DBS().Writer)
 	return err
 }
 
