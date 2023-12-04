@@ -169,7 +169,7 @@ type Vehicle implements Node {
     after: String
     last: Int
     before: String
-    filterBy: PrivilegeFilterBy!
+    filterBy: PrivilegeFilterBy
   ): PrivilegesConnection!
   """
   The paired synthetic device, if any.

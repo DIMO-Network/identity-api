@@ -198,7 +198,7 @@ type ComplexityRoot struct {
 		MintedAt          func(childComplexity int) int
 		Name              func(childComplexity int) int
 		Owner             func(childComplexity int) int
-		Privileges        func(childComplexity int, first *int, after *string, last *int, before *string, filterBy model.PrivilegeFilterBy) int
+		Privileges        func(childComplexity int, first *int, after *string, last *int, before *string, filterBy *model.PrivilegeFilterBy) int
 		SyntheticDevice   func(childComplexity int) int
 		TokenID           func(childComplexity int) int
 	}
@@ -253,7 +253,7 @@ type VehicleResolver interface {
 	Manufacturer(ctx context.Context, obj *model.Vehicle) (*model.Manufacturer, error)
 
 	AftermarketDevice(ctx context.Context, obj *model.Vehicle) (*model.AftermarketDevice, error)
-	Privileges(ctx context.Context, obj *model.Vehicle, first *int, after *string, last *int, before *string, filterBy model.PrivilegeFilterBy) (*model.PrivilegesConnection, error)
+	Privileges(ctx context.Context, obj *model.Vehicle, first *int, after *string, last *int, before *string, filterBy *model.PrivilegeFilterBy) (*model.PrivilegesConnection, error)
 	SyntheticDevice(ctx context.Context, obj *model.Vehicle) (*model.SyntheticDevice, error)
 
 	Dcn(ctx context.Context, obj *model.Vehicle) (*model.Dcn, error)
@@ -956,7 +956,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Vehicle.Privileges(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["filterBy"].(model.PrivilegeFilterBy)), true
+		return e.complexity.Vehicle.Privileges(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["filterBy"].(*model.PrivilegeFilterBy)), true
 
 	case "Vehicle.syntheticDevice":
 		if e.complexity.Vehicle.SyntheticDevice == nil {
@@ -1462,10 +1462,10 @@ func (ec *executionContext) field_Vehicle_privileges_args(ctx context.Context, r
 		}
 	}
 	args["before"] = arg3
-	var arg4 model.PrivilegeFilterBy
+	var arg4 *model.PrivilegeFilterBy
 	if tmp, ok := rawArgs["filterBy"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filterBy"))
-		arg4, err = ec.unmarshalNPrivilegeFilterBy2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐPrivilegeFilterBy(ctx, tmp)
+		arg4, err = ec.unmarshalOPrivilegeFilterBy2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐPrivilegeFilterBy(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -5885,7 +5885,7 @@ func (ec *executionContext) _Vehicle_privileges(ctx context.Context, field graph
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Vehicle().Privileges(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["filterBy"].(model.PrivilegeFilterBy))
+		return ec.resolvers.Vehicle().Privileges(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["filterBy"].(*model.PrivilegeFilterBy))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11279,11 +11279,6 @@ func (ec *executionContext) marshalNPrivilegeEdge2ᚖgithubᚗcomᚋDIMOᚑNetwo
 	return ec._PrivilegeEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNPrivilegeFilterBy2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐPrivilegeFilterBy(ctx context.Context, v interface{}) (model.PrivilegeFilterBy, error) {
-	res, err := ec.unmarshalInputPrivilegeFilterBy(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
 func (ec *executionContext) marshalNPrivilegesConnection2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐPrivilegesConnection(ctx context.Context, sel ast.SelectionSet, v model.PrivilegesConnection) graphql.Marshaler {
 	return ec._PrivilegesConnection(ctx, sel, &v)
 }
@@ -11829,6 +11824,14 @@ func (ec *executionContext) marshalONode2githubᚗcomᚋDIMOᚑNetworkᚋidentit
 		return graphql.Null
 	}
 	return ec._Node(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOPrivilegeFilterBy2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐPrivilegeFilterBy(ctx context.Context, v interface{}) (*model.PrivilegeFilterBy, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputPrivilegeFilterBy(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v interface{}) (*string, error) {
