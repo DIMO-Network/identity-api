@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/DIMO-Network/identity-api/internal/config"
@@ -17,7 +16,6 @@ import (
 	"github.com/goccy/go-json"
 	"github.com/rs/zerolog"
 	"github.com/volatiletech/null/v8"
-	"github.com/volatiletech/sqlboiler/queries"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/types"
 )
@@ -600,13 +598,10 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceAddressResetEvent(ctx c
 		return err
 	}
 
-	_, err := queries.Raw(fmt.Sprintf(
-		`UPDATE identity_api.%s 
-		SET address = decode('%s', 'hex')
-		WHERE id = %d;`,
-		models.TableNames.AftermarketDevices,
-		strings.TrimPrefix(args.AftermarketDeviceAddress.String(), "0x"),
-		args.TokenId,
-	)).Exec(c.dbs.DBS().Writer)
+	amd, err := models.AftermarketDevices(
+		models.AftermarketDeviceWhere.ID.EQ(int(args.TokenId.Int64())),
+	).One(ctx, c.dbs.DBS().Reader)
+	amd.Address = args.AftermarketDeviceAddress.Bytes()
+	_, err = amd.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.AftermarketDeviceColumns.Address))
 	return err
 }
