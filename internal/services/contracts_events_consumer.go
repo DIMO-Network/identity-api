@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/DIMO-Network/identity-api/internal/config"
@@ -16,6 +17,7 @@ import (
 	"github.com/goccy/go-json"
 	"github.com/rs/zerolog"
 	"github.com/volatiletech/null/v8"
+	"github.com/volatiletech/sqlboiler/queries"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/types"
 )
@@ -51,6 +53,7 @@ const (
 	VehicleIdChanged                     EventName = "VehicleIdChanged"
 	TokensTransferredForDevice           EventName = "TokensTransferredForDevice"
 	TokensTransferredForConnectionStreak EventName = "TokensTransferredForConnectionStreak"
+	AftermarketDeviceAddressReset        EventName = "AftermarketDeviceAddressReset"
 )
 
 func (r EventName) String() string {
@@ -119,6 +122,8 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 			return c.handleAftermarketDeviceUnpairedEvent(ctx, &data)
 		case BeneficiarySetEvent:
 			return c.handleBeneficiarySetEvent(ctx, &data)
+		case AftermarketDeviceAddressReset:
+			return c.handleAftermarketDeviceAddressResetEvent(ctx, &data)
 
 		case SyntheticDeviceNodeMinted:
 			return c.handleSyntheticDeviceNodeMintedEvent(ctx, &data)
@@ -586,5 +591,22 @@ func (c *ContractsEventsConsumer) handleTokensTransferredForConnectionStreak(ctx
 
 	_, err := reward.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(cols.StreakEarnings, cols.ConnectionStreak))
 
+	return err
+}
+
+func (c *ContractsEventsConsumer) handleAftermarketDeviceAddressResetEvent(ctx context.Context, e *ContractEventData) error {
+	var args AftermarketDeviceAddressResetData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	_, err := queries.Raw(fmt.Sprintf(
+		`UPDATE identity_api.%s 
+		SET address = decode('%s', 'hex')
+		WHERE id = %d;`,
+		models.TableNames.AftermarketDevices,
+		strings.TrimPrefix(args.AftermarketDeviceAddress.String(), "0x"),
+		args.TokenId,
+	)).Exec(c.dbs.DBS().Writer)
 	return err
 }
