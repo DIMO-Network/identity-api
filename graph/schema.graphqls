@@ -47,6 +47,7 @@ input VehiclesFilter {
   """
   privileged: Address
   owner: Address
+  manufacturer: ManufacturerFilter
 }
 
 input AftermarketDevicesFilter {
@@ -476,4 +477,13 @@ type UserRewards {
     last: Int
     before: String
   ): EarningsConnection!
+}
+
+input ManufacturerFilter {
+  """
+  Filter for vehicles with a given manufacturer. This allows for both querying by
+  manufacturer name (ie, "ford") as well as count by manufacturer (ie, 100)
+  """
+  name: String
+  totalCount: Int
 }

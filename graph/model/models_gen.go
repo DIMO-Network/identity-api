@@ -187,6 +187,13 @@ type Manufacturer struct {
 func (Manufacturer) IsNode()            {}
 func (this Manufacturer) GetID() string { return this.ID }
 
+type ManufacturerFilter struct {
+	// Filter for vehicles with a given manufacturer. This allows for both querying by
+	// manufacturer name (ie, "ford") as well as count by manufacturer (ie, 100)
+	Name       *string `json:"name,omitempty"`
+	TotalCount *int    `json:"totalCount,omitempty"`
+}
+
 type PageInfo struct {
 	StartCursor     *string `json:"startCursor,omitempty"`
 	EndCursor       *string `json:"endCursor,omitempty"`
@@ -285,6 +292,7 @@ type VehicleEdge struct {
 type VehiclesFilter struct {
 	// Filter for vehicles to which the given address has access. This includes vehicles
 	// that this address owns.
-	Privileged *common.Address `json:"privileged,omitempty"`
-	Owner      *common.Address `json:"owner,omitempty"`
+	Privileged   *common.Address     `json:"privileged,omitempty"`
+	Owner        *common.Address     `json:"owner,omitempty"`
+	Manufacturer *ManufacturerFilter `json:"manufacturer,omitempty"`
 }

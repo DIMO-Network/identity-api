@@ -1155,6 +1155,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputAftermarketDevicesFilter,
 		ec.unmarshalInputDCNBy,
 		ec.unmarshalInputDCNFilter,
+		ec.unmarshalInputManufacturerFilter,
 		ec.unmarshalInputPrivilegeFilterBy,
 		ec.unmarshalInputVehiclesFilter,
 	)
@@ -9434,6 +9435,44 @@ func (ec *executionContext) unmarshalInputDCNFilter(ctx context.Context, obj int
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputManufacturerFilter(ctx context.Context, obj interface{}) (model.ManufacturerFilter, error) {
+	var it model.ManufacturerFilter
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"name", "totalCount"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "totalCount":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("totalCount"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TotalCount = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputPrivilegeFilterBy(ctx context.Context, obj interface{}) (model.PrivilegeFilterBy, error) {
 	var it model.PrivilegeFilterBy
 	asMap := map[string]interface{}{}
@@ -9470,7 +9509,7 @@ func (ec *executionContext) unmarshalInputVehiclesFilter(ctx context.Context, ob
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"privileged", "owner"}
+	fieldsInOrder := [...]string{"privileged", "owner", "manufacturer"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -9495,6 +9534,15 @@ func (ec *executionContext) unmarshalInputVehiclesFilter(ctx context.Context, ob
 				return it, err
 			}
 			it.Owner = data
+		case "manufacturer":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("manufacturer"))
+			data, err := ec.unmarshalOManufacturerFilter2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐManufacturerFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Manufacturer = data
 		}
 	}
 
@@ -12948,6 +12996,14 @@ func (ec *executionContext) marshalOManufacturer2ᚖgithubᚗcomᚋDIMOᚑNetwor
 		return graphql.Null
 	}
 	return ec._Manufacturer(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOManufacturerFilter2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐManufacturerFilter(ctx context.Context, v interface{}) (*model.ManufacturerFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputManufacturerFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalONode2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐNode(ctx context.Context, sel ast.SelectionSet, v model.Node) graphql.Marshaler {

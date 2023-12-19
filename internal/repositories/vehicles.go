@@ -145,50 +145,66 @@ func (v *Repository) GetVehicles(ctx context.Context, first *int, after *string,
 
 	var totalCount int64
 	var queryMods []qm.QueryMod
-	if filterBy != nil && filterBy.Privileged != nil {
-		addr := *filterBy.Privileged
-		queryMods = []qm.QueryMod{
-			qm.Select("DISTINCT ON (" + models.VehicleTableColumns.ID + ") " + helpers.WithSchema(models.TableNames.Vehicles) + ".*"),
-			qm.LeftOuterJoin(
-				helpers.WithSchema(models.TableNames.Privileges) + " ON " + models.VehicleTableColumns.ID + " = " + models.PrivilegeTableColumns.TokenID,
-			),
-			qm.Expr(
-				models.VehicleWhere.OwnerAddress.EQ(addr.Bytes()),
-				qm.Or2(
-					qm.Expr(
-						models.PrivilegeWhere.UserAddress.EQ(addr.Bytes()),
-						models.PrivilegeWhere.ExpiresAt.GTE(time.Now()),
+	if filterBy != nil {
+		if filterBy.Privileged != nil {
+			addr := *filterBy.Privileged
+			queryMods = []qm.QueryMod{
+				qm.Select("DISTINCT ON (" + models.VehicleTableColumns.ID + ") " + helpers.WithSchema(models.TableNames.Vehicles) + ".*"),
+				qm.LeftOuterJoin(
+					helpers.WithSchema(models.TableNames.Privileges) + " ON " + models.VehicleTableColumns.ID + " = " + models.PrivilegeTableColumns.TokenID,
+				),
+				qm.Expr(
+					models.VehicleWhere.OwnerAddress.EQ(addr.Bytes()),
+					qm.Or2(
+						qm.Expr(
+							models.PrivilegeWhere.UserAddress.EQ(addr.Bytes()),
+							models.PrivilegeWhere.ExpiresAt.GTE(time.Now()),
+						),
 					),
 				),
-			),
-		}
+			}
 
-		if filterBy.Owner != nil {
-			queryMods = append(queryMods, models.VehicleWhere.OwnerAddress.EQ(filterBy.Owner.Bytes()))
-		}
+			if filterBy.Owner != nil {
+				queryMods = append(queryMods, models.VehicleWhere.OwnerAddress.EQ(filterBy.Owner.Bytes()))
+			}
 
-		totalCount, err = models.Vehicles(
-			// We're performing this because SQLBoiler doesn't understand DISTINCT ON. If we use
-			// the original version of queryMods the entire SELECT clause will be replaced by
-			// SELECT COUNT(*), and we'll probably over-count the number of vehicles.
-			append([]qm.QueryMod{qm.Distinct(models.VehicleTableColumns.ID)}, queryMods[1:]...)...,
-		).Count(ctx, v.pdb.DBS().Reader)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		if filterBy != nil && filterBy.Owner != nil {
-			queryMods = append(queryMods,
-				models.VehicleWhere.OwnerAddress.EQ(filterBy.Owner.Bytes()),
-			)
-		}
+			totalCount, err = models.Vehicles(
+				// We're performing this because SQLBoiler doesn't understand DISTINCT ON. If we use
+				// the original version of queryMods the entire SELECT clause will be replaced by
+				// SELECT COUNT(*), and we'll probably over-count the number of vehicles.
+				append([]qm.QueryMod{qm.Distinct(models.VehicleTableColumns.ID)}, queryMods[1:]...)...,
+			).Count(ctx, v.pdb.DBS().Reader)
+			if err != nil {
+				return nil, err
+			}
 
-		totalCount, err = models.Vehicles(queryMods...).Count(ctx, v.pdb.DBS().Reader)
-		if err != nil {
-			return nil, err
+		} else {
+			if filterBy.Manufacturer != nil {
+				if filterBy.Manufacturer.Name != nil {
+					queryMods = append(queryMods, []qm.QueryMod{
+						qm.LeftOuterJoin(
+							helpers.WithSchema(models.TableNames.Manufacturers) + " ON " + models.ManufacturerTableColumns.ID + " = " + models.VehicleTableColumns.ManufacturerID,
+						),
+						qm.Expr(models.ManufacturerWhere.Name.EQ(strings.ToLower(*filterBy.Manufacturer.Name))),
+					}...)
+				}
+			}
+
+			if filterBy.Owner != nil {
+				queryMods = append(queryMods,
+					models.VehicleWhere.OwnerAddress.EQ(filterBy.Owner.Bytes()),
+				)
+			}
+
 		}
 
 	}
+
+	totalCount, err = models.Vehicles(queryMods...).Count(ctx, v.pdb.DBS().Reader)
+	if err != nil {
+		return nil, err
+	}
+
 	if after != nil {
 		afterID, err := helpers.CursorToID(*after)
 		if err != nil {
