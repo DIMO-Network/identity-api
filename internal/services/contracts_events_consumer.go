@@ -601,6 +601,10 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceAddressResetEvent(ctx c
 	amd, err := models.AftermarketDevices(
 		models.AftermarketDeviceWhere.ID.EQ(int(args.TokenId.Int64())),
 	).One(ctx, c.dbs.DBS().Reader)
+	if err != nil {
+		return err
+	}
+
 	amd.Address = args.AftermarketDeviceAddress.Bytes()
 	_, err = amd.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.AftermarketDeviceColumns.Address))
 	return err
