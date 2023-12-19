@@ -51,6 +51,7 @@ const (
 	VehicleIdChanged                     EventName = "VehicleIdChanged"
 	TokensTransferredForDevice           EventName = "TokensTransferredForDevice"
 	TokensTransferredForConnectionStreak EventName = "TokensTransferredForConnectionStreak"
+	AftermarketDeviceAddressReset        EventName = "AftermarketDeviceAddressReset"
 )
 
 func (r EventName) String() string {
@@ -119,6 +120,8 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 			return c.handleAftermarketDeviceUnpairedEvent(ctx, &data)
 		case BeneficiarySetEvent:
 			return c.handleBeneficiarySetEvent(ctx, &data)
+		case AftermarketDeviceAddressReset:
+			return c.handleAftermarketDeviceAddressResetEvent(ctx, &data)
 
 		case SyntheticDeviceNodeMinted:
 			return c.handleSyntheticDeviceNodeMintedEvent(ctx, &data)
@@ -586,5 +589,23 @@ func (c *ContractsEventsConsumer) handleTokensTransferredForConnectionStreak(ctx
 
 	_, err := reward.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(cols.StreakEarnings, cols.ConnectionStreak))
 
+	return err
+}
+
+func (c *ContractsEventsConsumer) handleAftermarketDeviceAddressResetEvent(ctx context.Context, e *ContractEventData) error {
+	var args AftermarketDeviceAddressResetData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	amd, err := models.AftermarketDevices(
+		models.AftermarketDeviceWhere.ID.EQ(int(args.TokenId.Int64())),
+	).One(ctx, c.dbs.DBS().Reader)
+	if err != nil {
+		return err
+	}
+
+	amd.Address = args.AftermarketDeviceAddress.Bytes()
+	_, err = amd.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.AftermarketDeviceColumns.Address))
 	return err
 }
