@@ -77,8 +77,9 @@ type AftermarketDeviceEdge struct {
 
 type AftermarketDevicesFilter struct {
 	// Filter for aftermarket devices owned by this address.
-	Owner       *common.Address `json:"owner,omitempty"`
-	Beneficiary *common.Address `json:"beneficiary,omitempty"`
+	Owner          *common.Address `json:"owner,omitempty"`
+	Beneficiary    *common.Address `json:"beneficiary,omitempty"`
+	ManufacturerID *int            `json:"manufacturerId,omitempty"`
 }
 
 // Represents a DIMO Canonical Name. Typically these are human-readable labels for

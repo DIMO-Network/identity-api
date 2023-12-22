@@ -55,6 +55,7 @@ input AftermarketDevicesFilter {
   """
   owner: Address
   beneficiary: Address
+  manufacturerId: Int
 }
 
 type Query {
