@@ -99,6 +99,7 @@ func TestHandleAftermarketDeviceAttributeSetEvent(t *testing.T) {
 		Owner:       common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		Beneficiary: common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		Imei:        null.StringFrom("garbage-imei-value"),
+		DevEui:      null.StringFrom("garbage-deveui-value"),
 	}
 	err := d.Insert(ctx, pdb.DBS().Writer.DB, boil.Infer())
 	assert.NoError(t, err)
@@ -112,6 +113,7 @@ func TestHandleAftermarketDeviceAttributeSetEvent(t *testing.T) {
 	assert.Equal(t, aftermarketDeviceAttributesSerial.TokenID.Int64(), int64(ad.ID))
 	assert.Equal(t, aftermarketDeviceAttributesSerial.Info, ad.Serial.String)
 	assert.Equal(t, d.Imei.String, ad.Imei.String)
+	assert.Equal(t, d.DevEui.String, ad.DevEui.String)
 	assert.Equal(t, common.FromHex("0xaba3A41bd932244Dd08186e4c19F1a7E48cbcDf4"), ad.Address)
 	assert.Equal(t, common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"), ad.Owner)
 	assert.Equal(t, time.Time{}, ad.MintedAt)
