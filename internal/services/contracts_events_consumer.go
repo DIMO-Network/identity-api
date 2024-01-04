@@ -364,6 +364,14 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceAttributeSetEvent(ctx c
 			boil.Whitelist(models.AftermarketDeviceColumns.Imei)); err != nil {
 			return err
 		}
+	case "DevEUI":
+		ad.DevEui = null.StringFrom(args.Info)
+		if _, err := ad.Update(
+			ctx,
+			c.dbs.DBS().Writer,
+			boil.Whitelist(models.AftermarketDeviceColumns.DevEui)); err != nil {
+			return err
+		}
 	}
 
 	return nil
