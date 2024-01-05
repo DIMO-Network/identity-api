@@ -92,7 +92,7 @@ func (r *queryResolver) Node(ctx context.Context, id string) (model.Node, error)
 		if err != nil {
 			return nil, err
 		}
-		return r.Repo.GetManufacturer(ctx, ti)
+		return r.Repo.GetManufacturer(ctx, model.ManufacturerBy{TokenID: &ti})
 	}
 
 	return nil, errors.New("Unrecognized global id.")
@@ -131,6 +131,11 @@ func (r *queryResolver) Dcns(ctx context.Context, first *int, after *string, las
 // Rewards is the resolver for the rewards field.
 func (r *queryResolver) Rewards(ctx context.Context, user common.Address) (*model.UserRewards, error) {
 	return r.Repo.GetEarningsByUserAddress(ctx, user)
+}
+
+// Manufacturer is the resolver for the manufacturer field.
+func (r *queryResolver) Manufacturer(ctx context.Context, by model.ManufacturerBy) (*model.Manufacturer, error) {
+	return r.Repo.GetManufacturer(ctx, by)
 }
 
 // History is the resolver for the history field.

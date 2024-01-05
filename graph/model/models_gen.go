@@ -183,10 +183,17 @@ type Manufacturer struct {
 	Owner common.Address `json:"owner"`
 	// The block timestamp at which this manufacturer was minted.
 	MintedAt time.Time `json:"mintedAt"`
+	// aftermarket devices associated with manufacturer
+	AftermarketDevices *AftermarketDeviceConnection `json:"aftermarketDevices,omitempty"`
 }
 
 func (Manufacturer) IsNode()            {}
 func (this Manufacturer) GetID() string { return this.ID }
+
+type ManufacturerBy struct {
+	Name    *string `json:"name,omitempty"`
+	TokenID *int    `json:"tokenId,omitempty"`
+}
 
 type PageInfo struct {
 	StartCursor     *string `json:"startCursor,omitempty"`
