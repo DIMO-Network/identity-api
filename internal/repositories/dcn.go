@@ -148,10 +148,10 @@ func (r *Repository) GetDCNs(ctx context.Context, first *int, after *string, las
 			Node: &gmodel.Dcn{
 				Node:      dcn.Node,
 				Owner:     common.Address(dcn.OwnerAddress),
-				ExpiresAt: &dcn.Expiration.Time,
+				ExpiresAt: dcn.Expiration.Ptr(),
 				MintedAt:  dcn.MintedAt,
-				Name:      &dcn.Name.String,
-				VehicleID: &dcn.VehicleID.Int,
+				Name:      dcn.Name.Ptr(),
+				VehicleID: dcn.VehicleID.Ptr(),
 			},
 			Cursor: c,
 		}
