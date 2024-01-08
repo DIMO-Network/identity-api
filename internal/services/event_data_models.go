@@ -144,3 +144,9 @@ type TokensTransferredForConnectionStreakData struct {
 	ConnectionStreak *big.Int
 	Week             *big.Int
 }
+
+type AftermarketDeviceAddressResetData struct {
+	ManufacturerId           *big.Int
+	TokenId                  *big.Int
+	AftermarketDeviceAddress common.Address
+}

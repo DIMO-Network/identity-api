@@ -30,6 +30,8 @@ type AftermarketDevice struct {
 	Serial *string `json:"serial,omitempty"`
 	// The International Mobile Equipment Identity (IMEI) for the device.
 	Imei *string `json:"imei,omitempty"`
+	// Extended Unique Identifier (EUI) for LoRa devices.
+	DevEui *string `json:"devEui,omitempty"`
 	// The block timestamp at which this device was minted.
 	MintedAt time.Time `json:"mintedAt"`
 	// The block timestamp at which this device was claimed, if it has been claimed. Devices must be
@@ -77,8 +79,9 @@ type AftermarketDeviceEdge struct {
 
 type AftermarketDevicesFilter struct {
 	// Filter for aftermarket devices owned by this address.
-	Owner       *common.Address `json:"owner,omitempty"`
-	Beneficiary *common.Address `json:"beneficiary,omitempty"`
+	Owner          *common.Address `json:"owner,omitempty"`
+	Beneficiary    *common.Address `json:"beneficiary,omitempty"`
+	ManufacturerID *int            `json:"manufacturerId,omitempty"`
 }
 
 // Represents a DIMO Canonical Name. Typically these are human-readable labels for

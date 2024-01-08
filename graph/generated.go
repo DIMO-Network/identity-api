@@ -62,6 +62,7 @@ type ComplexityRoot struct {
 		Address      func(childComplexity int) int
 		Beneficiary  func(childComplexity int) int
 		ClaimedAt    func(childComplexity int) int
+		DevEui       func(childComplexity int) int
 		Earnings     func(childComplexity int) int
 		ID           func(childComplexity int) int
 		Image        func(childComplexity int) int
@@ -328,6 +329,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.AftermarketDevice.ClaimedAt(childComplexity), true
+
+	case "AftermarketDevice.devEui":
+		if e.complexity.AftermarketDevice.DevEui == nil {
+			break
+		}
+
+		return e.complexity.AftermarketDevice.DevEui(childComplexity), true
 
 	case "AftermarketDevice.earnings":
 		if e.complexity.AftermarketDevice.Earnings == nil {
@@ -2042,6 +2050,47 @@ func (ec *executionContext) fieldContext_AftermarketDevice_imei(ctx context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _AftermarketDevice_devEui(ctx context.Context, field graphql.CollectedField, obj *model.AftermarketDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AftermarketDevice_devEui(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DevEui, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AftermarketDevice_devEui(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AftermarketDevice",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _AftermarketDevice_mintedAt(ctx context.Context, field graphql.CollectedField, obj *model.AftermarketDevice) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_AftermarketDevice_mintedAt(ctx, field)
 	if err != nil {
@@ -2522,6 +2571,8 @@ func (ec *executionContext) fieldContext_AftermarketDeviceConnection_nodes(ctx c
 				return ec.fieldContext_AftermarketDevice_serial(ctx, field)
 			case "imei":
 				return ec.fieldContext_AftermarketDevice_imei(ctx, field)
+			case "devEui":
+				return ec.fieldContext_AftermarketDevice_devEui(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_AftermarketDevice_mintedAt(ctx, field)
 			case "claimedAt":
@@ -2803,6 +2854,8 @@ func (ec *executionContext) fieldContext_AftermarketDeviceEdge_node(ctx context.
 				return ec.fieldContext_AftermarketDevice_serial(ctx, field)
 			case "imei":
 				return ec.fieldContext_AftermarketDevice_imei(ctx, field)
+			case "devEui":
+				return ec.fieldContext_AftermarketDevice_devEui(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_AftermarketDevice_mintedAt(ctx, field)
 			case "claimedAt":
@@ -3802,6 +3855,8 @@ func (ec *executionContext) fieldContext_Earning_aftermarketDevice(ctx context.C
 				return ec.fieldContext_AftermarketDevice_serial(ctx, field)
 			case "imei":
 				return ec.fieldContext_AftermarketDevice_imei(ctx, field)
+			case "devEui":
+				return ec.fieldContext_AftermarketDevice_devEui(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_AftermarketDevice_mintedAt(ctx, field)
 			case "claimedAt":
@@ -5627,6 +5682,8 @@ func (ec *executionContext) fieldContext_Query_aftermarketDevice(ctx context.Con
 				return ec.fieldContext_AftermarketDevice_serial(ctx, field)
 			case "imei":
 				return ec.fieldContext_AftermarketDevice_imei(ctx, field)
+			case "devEui":
+				return ec.fieldContext_AftermarketDevice_devEui(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_AftermarketDevice_mintedAt(ctx, field)
 			case "claimedAt":
@@ -6609,6 +6666,8 @@ func (ec *executionContext) fieldContext_Vehicle_aftermarketDevice(ctx context.C
 				return ec.fieldContext_AftermarketDevice_serial(ctx, field)
 			case "imei":
 				return ec.fieldContext_AftermarketDevice_imei(ctx, field)
+			case "devEui":
+				return ec.fieldContext_AftermarketDevice_devEui(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_AftermarketDevice_mintedAt(ctx, field)
 			case "claimedAt":
@@ -9306,7 +9365,7 @@ func (ec *executionContext) unmarshalInputAftermarketDevicesFilter(ctx context.C
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"owner", "beneficiary"}
+	fieldsInOrder := [...]string{"owner", "beneficiary", "manufacturerId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -9331,6 +9390,15 @@ func (ec *executionContext) unmarshalInputAftermarketDevicesFilter(ctx context.C
 				return it, err
 			}
 			it.Beneficiary = data
+		case "manufacturerId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("manufacturerId"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ManufacturerID = data
 		}
 	}
 
@@ -9607,6 +9675,8 @@ func (ec *executionContext) _AftermarketDevice(ctx context.Context, sel ast.Sele
 			out.Values[i] = ec._AftermarketDevice_serial(ctx, field, obj)
 		case "imei":
 			out.Values[i] = ec._AftermarketDevice_imei(ctx, field, obj)
+		case "devEui":
+			out.Values[i] = ec._AftermarketDevice_devEui(ctx, field, obj)
 		case "mintedAt":
 			out.Values[i] = ec._AftermarketDevice_mintedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

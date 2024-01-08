@@ -3,9 +3,11 @@ package repositories
 import (
 	"context"
 	"fmt"
+	"github.com/volatiletech/null/v8"
 	"math/big"
 	"strings"
 	"testing"
+	"time"
 
 	gmn "github.com/DIMO-Network/go-mnemonic"
 	"github.com/DIMO-Network/identity-api/graph/model"
@@ -189,4 +191,78 @@ func Test_GetAftermarketDevices_FilterByBeneficiary(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, ownerFilterResp.Edges, 4)
 	assert.Equal(t, ownerFilterResp.TotalCount, 4)
+}
+
+func Test_GetAftermarketDevices_FilterByManufacturerID(t *testing.T) {
+	ctx := context.Background()
+	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDir)
+
+	manufacturerID := 1
+	mnfs := []models.Manufacturer{
+		{
+			ID:       manufacturerID,
+			Owner:    common.HexToAddress("1").Bytes(),
+			MintedAt: time.Now(),
+			Name:     "Toyota",
+		},
+		{
+			ID:       2,
+			Owner:    common.HexToAddress("2").Bytes(),
+			MintedAt: time.Now(),
+			Name:     "Honda",
+		},
+	}
+	for _, m := range mnfs {
+		err := m.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+		assert.NoError(t, err)
+	}
+
+	for i := 1; i <= 4; i++ {
+		ad := models.AftermarketDevice{
+			ID:             i,
+			Owner:          aftermarketDeviceNodeMintedArgs.Owner.Bytes(),
+			Beneficiary:    common.BigToAddress(big.NewInt(int64(i + 2))).Bytes(),
+			Address:        aftermarketDeviceNodeMintedArgs.AftermarketDeviceAddress.Bytes(),
+			ManufacturerID: null.IntFrom(manufacturerID),
+		}
+
+		if i%2 == 0 {
+			ad.ManufacturerID = null.IntFrom(2)
+		}
+
+		err := ad.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+		assert.NoError(t, err)
+	}
+
+	first := 10
+	adController := New(pdb, config.Settings{})
+	actual, err := adController.GetAftermarketDevices(ctx, &first, nil, nil, nil, &model.AftermarketDevicesFilter{ManufacturerID: &manufacturerID})
+	assert.NoError(t, err)
+
+	assert.Len(t, actual.Edges, 2)
+	assert.Equal(t, actual.TotalCount, 2)
+
+	expected := []struct {
+		id             string
+		manufacturerID *int
+		owner          common.Address
+		beneficiary    common.Address
+	}{
+		{
+			id:             "AD_kQM=",
+			manufacturerID: &manufacturerID,
+			owner:          aftermarketDeviceNodeMintedArgs.Owner,
+		},
+		{
+			id:             "AD_kQE=",
+			manufacturerID: &manufacturerID,
+			owner:          aftermarketDeviceNodeMintedArgs.Owner,
+		},
+	}
+
+	for i, e := range expected {
+		assert.Exactly(t, e.id, actual.Edges[i].Node.ID)
+		assert.Exactly(t, e.manufacturerID, actual.Edges[i].Node.ManufacturerID)
+		assert.Exactly(t, e.owner, actual.Edges[i].Node.Owner)
+	}
 }

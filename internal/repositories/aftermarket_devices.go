@@ -41,6 +41,9 @@ func (r *Repository) GetAftermarketDevices(ctx context.Context, first *int, afte
 		if filterBy.Beneficiary != nil {
 			where = append(where, models.AftermarketDeviceWhere.Beneficiary.EQ(filterBy.Beneficiary.Bytes()))
 		}
+		if filterBy.ManufacturerID != nil {
+			where = append(where, models.AftermarketDeviceWhere.ManufacturerID.EQ(null.IntFrom(*filterBy.ManufacturerID)))
+		}
 	}
 
 	adCount, err := models.AftermarketDevices(where...).Count(ctx, r.pdb.DBS().Reader)
@@ -180,6 +183,7 @@ func AftermarketDeviceToAPI(d *models.AftermarketDevice, imageUrl string) *gmode
 		Owner:          common.BytesToAddress(d.Owner),
 		Serial:         d.Serial.Ptr(),
 		Imei:           d.Imei.Ptr(),
+		DevEui:         d.DevEui.Ptr(),
 		Beneficiary:    common.BytesToAddress(d.Beneficiary),
 		VehicleID:      d.VehicleID.Ptr(),
 		MintedAt:       d.MintedAt,

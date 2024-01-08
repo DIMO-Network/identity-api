@@ -55,6 +55,7 @@ input AftermarketDevicesFilter {
   """
   owner: Address
   beneficiary: Address
+  manufacturerId: Int
 }
 
 type Query {
@@ -276,6 +277,10 @@ type AftermarketDevice implements Node {
   The International Mobile Equipment Identity (IMEI) for the device.
   """
   imei: String
+  """
+  Extended Unique Identifier (EUI) for LoRa devices.
+  """
+  devEui: String
   """
   The block timestamp at which this device was minted.
   """

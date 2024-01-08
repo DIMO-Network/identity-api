@@ -99,6 +99,7 @@ func TestHandleAftermarketDeviceAttributeSetEvent(t *testing.T) {
 		Owner:       common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		Beneficiary: common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		Imei:        null.StringFrom("garbage-imei-value"),
+		DevEui:      null.StringFrom("garbage-deveui-value"),
 	}
 	err := d.Insert(ctx, pdb.DBS().Writer.DB, boil.Infer())
 	assert.NoError(t, err)
@@ -112,6 +113,7 @@ func TestHandleAftermarketDeviceAttributeSetEvent(t *testing.T) {
 	assert.Equal(t, aftermarketDeviceAttributesSerial.TokenID.Int64(), int64(ad.ID))
 	assert.Equal(t, aftermarketDeviceAttributesSerial.Info, ad.Serial.String)
 	assert.Equal(t, d.Imei.String, ad.Imei.String)
+	assert.Equal(t, d.DevEui.String, ad.DevEui.String)
 	assert.Equal(t, common.FromHex("0xaba3A41bd932244Dd08186e4c19F1a7E48cbcDf4"), ad.Address)
 	assert.Equal(t, common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"), ad.Owner)
 	assert.Equal(t, time.Time{}, ad.MintedAt)
@@ -1435,4 +1437,42 @@ func TestHandle_SyntheticDevice_NodeBurnet_RewardsNulled_Success(t *testing.T) {
 	assert.Equal(t, rws.SyntheticTokenID, null.Int{})
 
 	assert.Empty(t, sds)
+}
+
+func TestHandleAftermarketDeviceAddressResetEvent(t *testing.T) {
+	ctx := context.Background()
+	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
+	contractEventData.EventName = string(AftermarketDeviceAddressReset)
+	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
+
+	settings := config.Settings{
+		DIMORegistryAddr:    contractEventData.Contract.String(),
+		DIMORegistryChainID: contractEventData.ChainID,
+	}
+
+	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
+	eventData := AftermarketDeviceAddressResetData{
+		TokenId:                  big.NewInt(1),
+		ManufacturerId:           big.NewInt(2),
+		AftermarketDeviceAddress: common.HexToAddress("0x19995Cee27AbBe71b85A09B73D24EA26Fa9325a0"),
+	}
+	e := prepareEvent(t, contractEventData, eventData)
+
+	amd := models.AftermarketDevice{
+		ID:          1,
+		Address:     common.FromHex("0xaba3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Owner:       common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Beneficiary: common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Imei:        null.StringFrom("garbage-imei-value"),
+	}
+	err := amd.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err)
+
+	err = contractEventConsumer.Process(ctx, &e)
+	assert.NoError(t, err)
+
+	updatedAmd, err := models.AftermarketDevices(models.AftermarketDeviceWhere.ID.EQ(amd.ID)).One(ctx, pdb.DBS().Reader)
+	assert.NoError(t, err)
+
+	assert.Equal(t, eventData.AftermarketDeviceAddress, common.BytesToAddress(updatedAmd.Address))
 }
