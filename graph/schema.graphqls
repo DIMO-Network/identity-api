@@ -278,7 +278,7 @@ type AftermarketDevice implements Node {
   """
   imei: String
   """
-  Extended Unique Identifier (EUI) for the device.
+  Extended Unique Identifier (EUI) for LoRa devices.
   """
   devEui: String
   """
