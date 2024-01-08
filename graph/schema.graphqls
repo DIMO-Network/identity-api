@@ -151,7 +151,7 @@ type Manufacturer implements Node {
   """
   mintedAt: Time!
   """
-  aftermarket devices associated with manufacturer
+  A Relay-style connection listing any aftermarket devices associated with manufacturer.
   """
   aftermarketDevices(
     first: Int
@@ -159,7 +159,7 @@ type Manufacturer implements Node {
     last: Int
     before: String
     filterBy: AftermarketDevicesFilter
-  ): AftermarketDeviceConnection
+  ): AftermarketDeviceConnection!
 }
 
 # Vehicles Types

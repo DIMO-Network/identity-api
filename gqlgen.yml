@@ -92,6 +92,10 @@ models:
       - github.com/DIMO-Network/identity-api/graph/types.BigInt
   Bytes:
     model: github.com/DIMO-Network/identity-api/graph/types.Bytes
+  Manufacturer:
+    fields:
+      aftermarketDevices:
+        resolver: true
   DCN:
     fields:
       vehicle:

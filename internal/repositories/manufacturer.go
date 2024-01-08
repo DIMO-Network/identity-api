@@ -73,13 +73,7 @@ func (r *Repository) GetManufacturer(ctx context.Context, by gmodel.Manufacturer
 	if err != nil {
 		return nil, err
 	}
-	first := 10
-	ads, err := r.GetAftermarketDevices(ctx, &first, nil, nil, nil, &gmodel.AftermarketDevicesFilter{
-		ManufacturerID: by.TokenID,
-	})
 
 	res := ManufacturerToAPI(m)
-	res.AftermarketDevices = ads
-
 	return res, nil
 }

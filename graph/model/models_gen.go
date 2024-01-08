@@ -183,8 +183,8 @@ type Manufacturer struct {
 	Owner common.Address `json:"owner"`
 	// The block timestamp at which this manufacturer was minted.
 	MintedAt time.Time `json:"mintedAt"`
-	// aftermarket devices associated with manufacturer
-	AftermarketDevices *AftermarketDeviceConnection `json:"aftermarketDevices,omitempty"`
+	// A Relay-style connection listing any aftermarket devices associated with manufacturer.
+	AftermarketDevices *AftermarketDeviceConnection `json:"aftermarketDevices"`
 }
 
 func (Manufacturer) IsNode()            {}
