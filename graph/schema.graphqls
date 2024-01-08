@@ -278,9 +278,9 @@ type AftermarketDevice implements Node {
   """
   imei: String
   """
-  Extended Unique Identifier (EUI) assigned to Macarons.
+  Extended Unique Identifier (EUI) for the device.
   """
-  devEUI: String
+  devEui: String
   """
   The block timestamp at which this device was minted.
   """

@@ -30,8 +30,8 @@ type AftermarketDevice struct {
 	Serial *string `json:"serial,omitempty"`
 	// The International Mobile Equipment Identity (IMEI) for the device.
 	Imei *string `json:"imei,omitempty"`
-	// Extended Unique Identifier (EUI) assigned to Macarons.
-	DevEui *string `json:"devEUI,omitempty"`
+	// Extended Unique Identifier (EUI) for the device.
+	DevEui *string `json:"devEui,omitempty"`
 	// The block timestamp at which this device was minted.
 	MintedAt time.Time `json:"mintedAt"`
 	// The block timestamp at which this device was claimed, if it has been claimed. Devices must be

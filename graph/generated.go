@@ -330,7 +330,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.AftermarketDevice.ClaimedAt(childComplexity), true
 
-	case "AftermarketDevice.devEUI":
+	case "AftermarketDevice.devEui":
 		if e.complexity.AftermarketDevice.DevEui == nil {
 			break
 		}
@@ -2050,8 +2050,8 @@ func (ec *executionContext) fieldContext_AftermarketDevice_imei(ctx context.Cont
 	return fc, nil
 }
 
-func (ec *executionContext) _AftermarketDevice_devEUI(ctx context.Context, field graphql.CollectedField, obj *model.AftermarketDevice) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_AftermarketDevice_devEUI(ctx, field)
+func (ec *executionContext) _AftermarketDevice_devEui(ctx context.Context, field graphql.CollectedField, obj *model.AftermarketDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AftermarketDevice_devEui(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -2078,7 +2078,7 @@ func (ec *executionContext) _AftermarketDevice_devEUI(ctx context.Context, field
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_AftermarketDevice_devEUI(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_AftermarketDevice_devEui(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AftermarketDevice",
 		Field:      field,
@@ -2571,8 +2571,8 @@ func (ec *executionContext) fieldContext_AftermarketDeviceConnection_nodes(ctx c
 				return ec.fieldContext_AftermarketDevice_serial(ctx, field)
 			case "imei":
 				return ec.fieldContext_AftermarketDevice_imei(ctx, field)
-			case "devEUI":
-				return ec.fieldContext_AftermarketDevice_devEUI(ctx, field)
+			case "devEui":
+				return ec.fieldContext_AftermarketDevice_devEui(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_AftermarketDevice_mintedAt(ctx, field)
 			case "claimedAt":
@@ -2854,8 +2854,8 @@ func (ec *executionContext) fieldContext_AftermarketDeviceEdge_node(ctx context.
 				return ec.fieldContext_AftermarketDevice_serial(ctx, field)
 			case "imei":
 				return ec.fieldContext_AftermarketDevice_imei(ctx, field)
-			case "devEUI":
-				return ec.fieldContext_AftermarketDevice_devEUI(ctx, field)
+			case "devEui":
+				return ec.fieldContext_AftermarketDevice_devEui(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_AftermarketDevice_mintedAt(ctx, field)
 			case "claimedAt":
@@ -3855,8 +3855,8 @@ func (ec *executionContext) fieldContext_Earning_aftermarketDevice(ctx context.C
 				return ec.fieldContext_AftermarketDevice_serial(ctx, field)
 			case "imei":
 				return ec.fieldContext_AftermarketDevice_imei(ctx, field)
-			case "devEUI":
-				return ec.fieldContext_AftermarketDevice_devEUI(ctx, field)
+			case "devEui":
+				return ec.fieldContext_AftermarketDevice_devEui(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_AftermarketDevice_mintedAt(ctx, field)
 			case "claimedAt":
@@ -5682,8 +5682,8 @@ func (ec *executionContext) fieldContext_Query_aftermarketDevice(ctx context.Con
 				return ec.fieldContext_AftermarketDevice_serial(ctx, field)
 			case "imei":
 				return ec.fieldContext_AftermarketDevice_imei(ctx, field)
-			case "devEUI":
-				return ec.fieldContext_AftermarketDevice_devEUI(ctx, field)
+			case "devEui":
+				return ec.fieldContext_AftermarketDevice_devEui(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_AftermarketDevice_mintedAt(ctx, field)
 			case "claimedAt":
@@ -6666,8 +6666,8 @@ func (ec *executionContext) fieldContext_Vehicle_aftermarketDevice(ctx context.C
 				return ec.fieldContext_AftermarketDevice_serial(ctx, field)
 			case "imei":
 				return ec.fieldContext_AftermarketDevice_imei(ctx, field)
-			case "devEUI":
-				return ec.fieldContext_AftermarketDevice_devEUI(ctx, field)
+			case "devEui":
+				return ec.fieldContext_AftermarketDevice_devEui(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_AftermarketDevice_mintedAt(ctx, field)
 			case "claimedAt":
@@ -9675,8 +9675,8 @@ func (ec *executionContext) _AftermarketDevice(ctx context.Context, sel ast.Sele
 			out.Values[i] = ec._AftermarketDevice_serial(ctx, field, obj)
 		case "imei":
 			out.Values[i] = ec._AftermarketDevice_imei(ctx, field, obj)
-		case "devEUI":
-			out.Values[i] = ec._AftermarketDevice_devEUI(ctx, field, obj)
+		case "devEui":
+			out.Values[i] = ec._AftermarketDevice_devEui(ctx, field, obj)
 		case "mintedAt":
 			out.Values[i] = ec._AftermarketDevice_mintedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
