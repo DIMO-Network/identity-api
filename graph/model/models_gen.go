@@ -75,6 +75,12 @@ type AftermarketDeviceEdge struct {
 	Node   *AftermarketDevice `json:"node"`
 }
 
+type AftermarketDevicesByManufacturerFilter struct {
+	// Filter for aftermarket devices owned by this address.
+	Owner       *common.Address `json:"owner,omitempty"`
+	Beneficiary *common.Address `json:"beneficiary,omitempty"`
+}
+
 type AftermarketDevicesFilter struct {
 	// Filter for aftermarket devices owned by this address.
 	Owner          *common.Address `json:"owner,omitempty"`

@@ -158,8 +158,17 @@ type Manufacturer implements Node {
     after: String
     last: Int
     before: String
-    filterBy: AftermarketDevicesFilter
+    filterBy: AftermarketDevicesByManufacturerFilter
   ): AftermarketDeviceConnection!
+}
+
+# filter aftermarketDevices associated with manufacturer
+input AftermarketDevicesByManufacturerFilter {
+  """
+  Filter for aftermarket devices owned by this address.
+  """
+  owner: Address
+  beneficiary: Address
 }
 
 # Vehicles Types

@@ -152,7 +152,7 @@ type ComplexityRoot struct {
 	}
 
 	Manufacturer struct {
-		AftermarketDevices func(childComplexity int, first *int, after *string, last *int, before *string, filterBy *model.AftermarketDevicesFilter) int
+		AftermarketDevices func(childComplexity int, first *int, after *string, last *int, before *string, filterBy *model.AftermarketDevicesByManufacturerFilter) int
 		ID                 func(childComplexity int) int
 		MintedAt           func(childComplexity int) int
 		Name               func(childComplexity int) int
@@ -265,7 +265,7 @@ type EarningResolver interface {
 	Vehicle(ctx context.Context, obj *model.Earning) (*model.Vehicle, error)
 }
 type ManufacturerResolver interface {
-	AftermarketDevices(ctx context.Context, obj *model.Manufacturer, first *int, after *string, last *int, before *string, filterBy *model.AftermarketDevicesFilter) (*model.AftermarketDeviceConnection, error)
+	AftermarketDevices(ctx context.Context, obj *model.Manufacturer, first *int, after *string, last *int, before *string, filterBy *model.AftermarketDevicesByManufacturerFilter) (*model.AftermarketDeviceConnection, error)
 }
 type QueryResolver interface {
 	Node(ctx context.Context, id string) (model.Node, error)
@@ -727,7 +727,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Manufacturer.AftermarketDevices(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["filterBy"].(*model.AftermarketDevicesFilter)), true
+		return e.complexity.Manufacturer.AftermarketDevices(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["filterBy"].(*model.AftermarketDevicesByManufacturerFilter)), true
 
 	case "Manufacturer.id":
 		if e.complexity.Manufacturer.ID == nil {
@@ -1183,6 +1183,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	ec := executionContext{rc, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputAftermarketDeviceBy,
+		ec.unmarshalInputAftermarketDevicesByManufacturerFilter,
 		ec.unmarshalInputAftermarketDevicesFilter,
 		ec.unmarshalInputDCNBy,
 		ec.unmarshalInputDCNFilter,
@@ -1386,10 +1387,10 @@ func (ec *executionContext) field_Manufacturer_aftermarketDevices_args(ctx conte
 		}
 	}
 	args["before"] = arg3
-	var arg4 *model.AftermarketDevicesFilter
+	var arg4 *model.AftermarketDevicesByManufacturerFilter
 	if tmp, ok := rawArgs["filterBy"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filterBy"))
-		arg4, err = ec.unmarshalOAftermarketDevicesFilter2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDevicesFilter(ctx, tmp)
+		arg4, err = ec.unmarshalOAftermarketDevicesByManufacturerFilter2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDevicesByManufacturerFilter(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -4842,7 +4843,7 @@ func (ec *executionContext) _Manufacturer_aftermarketDevices(ctx context.Context
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Manufacturer().AftermarketDevices(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["filterBy"].(*model.AftermarketDevicesFilter))
+		return ec.resolvers.Manufacturer().AftermarketDevices(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["filterBy"].(*model.AftermarketDevicesByManufacturerFilter))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9535,6 +9536,44 @@ func (ec *executionContext) unmarshalInputAftermarketDeviceBy(ctx context.Contex
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputAftermarketDevicesByManufacturerFilter(ctx context.Context, obj interface{}) (model.AftermarketDevicesByManufacturerFilter, error) {
+	var it model.AftermarketDevicesByManufacturerFilter
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"owner", "beneficiary"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "owner":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("owner"))
+			data, err := ec.unmarshalOAddress2ᚖgithubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Owner = data
+		case "beneficiary":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("beneficiary"))
+			data, err := ec.unmarshalOAddress2ᚖgithubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Beneficiary = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputAftermarketDevicesFilter(ctx context.Context, obj interface{}) (model.AftermarketDevicesFilter, error) {
 	var it model.AftermarketDevicesFilter
 	asMap := map[string]interface{}{}
@@ -13243,6 +13282,14 @@ func (ec *executionContext) marshalOAftermarketDeviceEarnings2ᚖgithubᚗcomᚋ
 		return graphql.Null
 	}
 	return ec._AftermarketDeviceEarnings(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOAftermarketDevicesByManufacturerFilter2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDevicesByManufacturerFilter(ctx context.Context, v interface{}) (*model.AftermarketDevicesByManufacturerFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputAftermarketDevicesByManufacturerFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOAftermarketDevicesFilter2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDevicesFilter(ctx context.Context, v interface{}) (*model.AftermarketDevicesFilter, error) {

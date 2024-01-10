@@ -70,7 +70,7 @@ func (r *earningResolver) Vehicle(ctx context.Context, obj *model.Earning) (*mod
 }
 
 // AftermarketDevices is the resolver for the aftermarketDevices field on the manufacturer object.
-func (r *manufacturerResolver) AftermarketDevices(ctx context.Context, obj *model.Manufacturer, first *int, after *string, last *int, before *string, filterBy *model.AftermarketDevicesFilter) (*model.AftermarketDeviceConnection, error) {
+func (r *manufacturerResolver) AftermarketDevices(ctx context.Context, obj *model.Manufacturer, first *int, after *string, last *int, before *string, filterBy *model.AftermarketDevicesByManufacturerFilter) (*model.AftermarketDeviceConnection, error) {
 	return r.Repo.GetAftermarketDevicesForManufacturer(ctx, obj, first, after, last, before, filterBy)
 }
 

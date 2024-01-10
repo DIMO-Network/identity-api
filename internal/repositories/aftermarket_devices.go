@@ -227,19 +227,13 @@ func countTrue(ps ...bool) int {
 	return out
 }
 
-func (r *Repository) GetAftermarketDevicesForManufacturer(ctx context.Context, obj *model.Manufacturer, first *int, after *string, last *int, before *string, filterBy *model.AftermarketDevicesFilter) (*gmodel.AftermarketDeviceConnection, error) {
-	if filterBy != nil {
-		if filterBy.ManufacturerID != nil {
-			if filterBy.ManufacturerID != &obj.TokenID {
-				return nil, gqlerror.Errorf("Aftermarket device filter must be consistent with manufacturer query.")
-			}
-		}
-		filterBy.ManufacturerID = &obj.TokenID
-		return r.GetAftermarketDevices(ctx, first, after, last, before, filterBy)
-	}
-
-	filterBy = &model.AftermarketDevicesFilter{
+func (r *Repository) GetAftermarketDevicesForManufacturer(ctx context.Context, obj *model.Manufacturer, first *int, after *string, last *int, before *string, filterBy *model.AftermarketDevicesByManufacturerFilter) (*gmodel.AftermarketDeviceConnection, error) {
+	filter := &model.AftermarketDevicesFilter{
 		ManufacturerID: &obj.TokenID,
 	}
-	return r.GetAftermarketDevices(ctx, first, after, last, before, filterBy)
+	if filterBy != nil {
+		filter.Owner = filterBy.Owner
+		filter.Beneficiary = filterBy.Beneficiary
+	}
+	return r.GetAftermarketDevices(ctx, first, after, last, before, filter)
 }
