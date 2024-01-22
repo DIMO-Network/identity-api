@@ -69,6 +69,11 @@ func (r *earningResolver) Vehicle(ctx context.Context, obj *model.Earning) (*mod
 	return loader.GetVehicleByID(ctx, obj.VehicleID)
 }
 
+// AftermarketDevices is the resolver for the aftermarketDevices field on the manufacturer object.
+func (r *manufacturerResolver) AftermarketDevices(ctx context.Context, obj *model.Manufacturer, first *int, after *string, last *int, before *string, filterBy *model.AftermarketDevicesFilter) (*model.AftermarketDeviceConnection, error) {
+	return r.Repo.GetAftermarketDevicesForManufacturer(ctx, obj, first, after, last, before, filterBy)
+}
+
 // Node is the resolver for the node field.
 func (r *queryResolver) Node(ctx context.Context, id string) (model.Node, error) {
 	if strings.HasPrefix(id, "V_") {
@@ -92,7 +97,7 @@ func (r *queryResolver) Node(ctx context.Context, id string) (model.Node, error)
 		if err != nil {
 			return nil, err
 		}
-		return r.Repo.GetManufacturer(ctx, ti)
+		return r.Repo.GetManufacturer(ctx, model.ManufacturerBy{TokenID: &ti})
 	}
 
 	return nil, errors.New("Unrecognized global id.")
@@ -131,6 +136,11 @@ func (r *queryResolver) Dcns(ctx context.Context, first *int, after *string, las
 // Rewards is the resolver for the rewards field.
 func (r *queryResolver) Rewards(ctx context.Context, user common.Address) (*model.UserRewards, error) {
 	return r.Repo.GetEarningsByUserAddress(ctx, user)
+}
+
+// Manufacturer is the resolver for the manufacturer field.
+func (r *queryResolver) Manufacturer(ctx context.Context, by model.ManufacturerBy) (*model.Manufacturer, error) {
+	return r.Repo.GetManufacturer(ctx, by)
 }
 
 // History is the resolver for the history field.
@@ -189,6 +199,9 @@ func (r *Resolver) DCN() DCNResolver { return &dCNResolver{r} }
 // Earning returns EarningResolver implementation.
 func (r *Resolver) Earning() EarningResolver { return &earningResolver{r} }
 
+// Manufacturer returns ManufacturerResolver implementation.
+func (r *Resolver) Manufacturer() ManufacturerResolver { return &manufacturerResolver{r} }
+
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
@@ -205,6 +218,7 @@ type aftermarketDeviceResolver struct{ *Resolver }
 type aftermarketDeviceEarningsResolver struct{ *Resolver }
 type dCNResolver struct{ *Resolver }
 type earningResolver struct{ *Resolver }
+type manufacturerResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type userRewardsResolver struct{ *Resolver }
 type vehicleResolver struct{ *Resolver }

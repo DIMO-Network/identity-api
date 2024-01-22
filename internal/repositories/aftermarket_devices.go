@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/DIMO-Network/identity-api/graph/model"
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/models"
@@ -225,4 +226,21 @@ func countTrue(ps ...bool) int {
 	}
 
 	return out
+}
+
+func (r *Repository) GetAftermarketDevicesForManufacturer(ctx context.Context, obj *model.Manufacturer, first *int, after *string, last *int, before *string, filterBy *model.AftermarketDevicesFilter) (*gmodel.AftermarketDeviceConnection, error) {
+	if filterBy != nil {
+		if filterBy.ManufacturerID != nil {
+			if filterBy.ManufacturerID != &obj.TokenID {
+				return nil, gqlerror.Errorf("Aftermarket device filter must be consistent with manufacturer query.")
+			}
+		}
+		filterBy.ManufacturerID = &obj.TokenID
+		return r.GetAftermarketDevices(ctx, first, after, last, before, filterBy)
+	}
+
+	filterBy = &model.AftermarketDevicesFilter{
+		ManufacturerID: &obj.TokenID,
+	}
+	return r.GetAftermarketDevices(ctx, first, after, last, before, filterBy)
 }
