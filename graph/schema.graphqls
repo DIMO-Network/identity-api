@@ -383,6 +383,10 @@ type DCN {
   """
   node: Bytes!
   """
+  The token id for the domain. This is simply the node reinterpreted as a uint256.
+  """
+  tokenId: BigInt!
+  """
   Ethereum address of domain owner.
   """
   owner: Address!

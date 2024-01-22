@@ -100,6 +100,7 @@ type ComplexityRoot struct {
 		Name      func(childComplexity int) int
 		Node      func(childComplexity int) int
 		Owner     func(childComplexity int) int
+		TokenID   func(childComplexity int) int
 		Vehicle   func(childComplexity int) int
 	}
 
@@ -516,6 +517,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.DCN.Owner(childComplexity), true
+
+	case "DCN.tokenId":
+		if e.complexity.DCN.TokenID == nil {
+			break
+		}
+
+		return e.complexity.DCN.TokenID(childComplexity), true
 
 	case "DCN.vehicle":
 		if e.complexity.DCN.Vehicle == nil {
@@ -3021,6 +3029,50 @@ func (ec *executionContext) fieldContext_DCN_node(ctx context.Context, field gra
 	return fc, nil
 }
 
+func (ec *executionContext) _DCN_tokenId(ctx context.Context, field graphql.CollectedField, obj *model.Dcn) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DCN_tokenId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TokenID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*big.Int)
+	fc.Result = res
+	return ec.marshalNBigInt2ᚖmathᚋbigᚐInt(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DCN_tokenId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DCN",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type BigInt does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _DCN_owner(ctx context.Context, field graphql.CollectedField, obj *model.Dcn) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_DCN_owner(ctx, field)
 	if err != nil {
@@ -3395,6 +3447,8 @@ func (ec *executionContext) fieldContext_DCNConnection_nodes(ctx context.Context
 			switch field.Name {
 			case "node":
 				return ec.fieldContext_DCN_node(ctx, field)
+			case "tokenId":
+				return ec.fieldContext_DCN_tokenId(ctx, field)
 			case "owner":
 				return ec.fieldContext_DCN_owner(ctx, field)
 			case "expiresAt":
@@ -3551,6 +3605,8 @@ func (ec *executionContext) fieldContext_DCNEdge_node(ctx context.Context, field
 			switch field.Name {
 			case "node":
 				return ec.fieldContext_DCN_node(ctx, field)
+			case "tokenId":
+				return ec.fieldContext_DCN_tokenId(ctx, field)
 			case "owner":
 				return ec.fieldContext_DCN_owner(ctx, field)
 			case "expiresAt":
@@ -5987,6 +6043,8 @@ func (ec *executionContext) fieldContext_Query_dcn(ctx context.Context, field gr
 			switch field.Name {
 			case "node":
 				return ec.fieldContext_DCN_node(ctx, field)
+			case "tokenId":
+				return ec.fieldContext_DCN_tokenId(ctx, field)
 			case "owner":
 				return ec.fieldContext_DCN_owner(ctx, field)
 			case "expiresAt":
@@ -7130,6 +7188,8 @@ func (ec *executionContext) fieldContext_Vehicle_dcn(ctx context.Context, field 
 			switch field.Name {
 			case "node":
 				return ec.fieldContext_DCN_node(ctx, field)
+			case "tokenId":
+				return ec.fieldContext_DCN_tokenId(ctx, field)
 			case "owner":
 				return ec.fieldContext_DCN_owner(ctx, field)
 			case "expiresAt":
@@ -10278,6 +10338,11 @@ func (ec *executionContext) _DCN(ctx context.Context, sel ast.SelectionSet, obj 
 			out.Values[i] = graphql.MarshalString("DCN")
 		case "node":
 			out.Values[i] = ec._DCN_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "tokenId":
+			out.Values[i] = ec._DCN_tokenId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}

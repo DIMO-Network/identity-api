@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"errors"
+	"math/big"
 	"time"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
@@ -23,6 +24,7 @@ type DCNCursor struct {
 func DCNToAPI(d *models.DCN) *gmodel.Dcn {
 	return &gmodel.Dcn{
 		Owner:     common.BytesToAddress(d.OwnerAddress),
+		TokenID:   new(big.Int).SetBytes(d.Node),
 		Node:      d.Node,
 		ExpiresAt: d.Expiration.Ptr(),
 		Name:      d.Name.Ptr(),

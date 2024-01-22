@@ -89,6 +89,8 @@ type AftermarketDevicesFilter struct {
 type Dcn struct {
 	// The namehash of the domain.
 	Node []byte `json:"node"`
+	// The token id for the domain. This is simply the node reinterpreted as a uint256.
+	TokenID *big.Int `json:"tokenId"`
 	// Ethereum address of domain owner.
 	Owner common.Address `json:"owner"`
 	// The block timestamp at which the domain will cease to be valid.
