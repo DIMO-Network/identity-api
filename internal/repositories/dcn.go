@@ -147,14 +147,7 @@ func (r *Repository) GetDCNs(ctx context.Context, first *int, after *string, las
 			return nil, err
 		}
 		edges[i] = &gmodel.DCNEdge{
-			Node: &gmodel.Dcn{
-				Node:      dcn.Node,
-				Owner:     common.Address(dcn.OwnerAddress),
-				ExpiresAt: dcn.Expiration.Ptr(),
-				MintedAt:  dcn.MintedAt,
-				Name:      dcn.Name.Ptr(),
-				VehicleID: dcn.VehicleID.Ptr(),
-			},
+			Node:   DCNToAPI(dcn),
 			Cursor: c,
 		}
 		nodes[i] = edges[i].Node
