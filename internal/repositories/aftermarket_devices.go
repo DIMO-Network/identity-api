@@ -45,6 +45,9 @@ func (r *Repository) GetAftermarketDevices(ctx context.Context, first *int, afte
 		if filterBy.ManufacturerID != nil {
 			where = append(where, models.AftermarketDeviceWhere.ManufacturerID.EQ(null.IntFrom(*filterBy.ManufacturerID)))
 		}
+		if filterBy.Serial != nil {
+			where = append(where, models.AftermarketDeviceWhere.Serial.EQ(null.StringFrom(*filterBy.Serial)))
+		}
 	}
 
 	adCount, err := models.AftermarketDevices(where...).Count(ctx, r.pdb.DBS().Reader)

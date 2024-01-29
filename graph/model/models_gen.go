@@ -80,6 +80,7 @@ type AftermarketDeviceEdge struct {
 type AftermarketDevicesFilter struct {
 	// Filter for aftermarket devices owned by this address.
 	Owner          *common.Address `json:"owner,omitempty"`
+	Serial         *string         `json:"serial,omitempty"`
 	Beneficiary    *common.Address `json:"beneficiary,omitempty"`
 	ManufacturerID *int            `json:"manufacturerId,omitempty"`
 }
