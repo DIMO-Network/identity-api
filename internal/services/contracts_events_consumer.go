@@ -471,6 +471,12 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceTransferredEvent(ctx co
 		Beneficiary: args.To.Bytes(),
 	}
 
+	if args.To == zeroAddress {
+		// Must be a burn.
+		_, err := ad.Delete(ctx, c.dbs.DBS().Writer)
+		return err
+	}
+
 	_, err := ad.Update(
 		ctx,
 		c.dbs.DBS().Writer,
