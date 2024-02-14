@@ -1,4 +1,4 @@
-package repositories
+package reward
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
+	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/shared/dbtypes"
@@ -40,13 +41,13 @@ type createRewardsRecordsInput struct {
 
 func (r *RewardsRepoTestSuite) SetupSuite() {
 	r.ctx = context.Background()
-	r.pdb, r.container = helpers.StartContainerDatabase(r.ctx, r.T(), "../../migrations")
+	r.pdb, r.container = helpers.StartContainerDatabase(r.ctx, r.T(), "../../../migrations")
 
 	r.settings = config.Settings{
 		DIMORegistryAddr:    "0x4de1bcf2b7e851e31216fc07989caa902a604784",
 		DIMORegistryChainID: 80001,
 	}
-	r.repo = New(r.pdb, r.settings)
+	r.repo = &Repository{repositories.New(r.pdb, r.settings)}
 	r.paginationHelper = helpers.PaginationHelper[RewardsCursor]{}
 
 }

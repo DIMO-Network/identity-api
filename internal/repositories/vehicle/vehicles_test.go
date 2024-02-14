@@ -1,4 +1,4 @@
-package repositories
+package vehicle
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/config"
 	test "github.com/DIMO-Network/identity-api/internal/helpers"
+	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/ethereum/go-ethereum/common"
@@ -17,8 +18,6 @@ import (
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
-
-const migrationsDir = "../../migrations"
 
 type AccessibleVehiclesRepoTestSuite struct {
 	suite.Suite
@@ -31,7 +30,7 @@ type AccessibleVehiclesRepoTestSuite struct {
 
 func (o *AccessibleVehiclesRepoTestSuite) SetupSuite() {
 	o.ctx = context.Background()
-	o.pdb, o.container = test.StartContainerDatabase(o.ctx, o.T(), "../../migrations")
+	o.pdb, o.container = test.StartContainerDatabase(o.ctx, o.T(), "../../../migrations")
 
 	o.settings = config.Settings{
 		DIMORegistryAddr:    "0x4de1bcf2b7e851e31216fc07989caa902a604784",
@@ -39,7 +38,7 @@ func (o *AccessibleVehiclesRepoTestSuite) SetupSuite() {
 		BaseImageURL:        "https://mockUrl.com/v1",
 		BaseVehicleDataURI:  "https://dimoData/vehicles/",
 	}
-	o.repo = New(o.pdb, o.settings)
+	o.repo = &Repository{repositories.New(o.pdb, o.settings)}
 }
 
 // TearDownTest after each test truncate tables

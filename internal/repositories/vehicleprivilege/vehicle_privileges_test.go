@@ -1,4 +1,4 @@
-package repositories
+package vehicleprivilege
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
+	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/stretchr/testify/suite"
@@ -28,13 +29,13 @@ type VehiclesPrivilegesRepoTestSuite struct {
 
 func (s *VehiclesPrivilegesRepoTestSuite) SetupSuite() {
 	s.ctx = context.Background()
-	s.pdb, s.container = helpers.StartContainerDatabase(s.ctx, s.T(), "../../migrations")
+	s.pdb, s.container = helpers.StartContainerDatabase(s.ctx, s.T(), "../../../migrations")
 
 	s.settings = config.Settings{
 		DIMORegistryAddr:    "0x4de1bcf2b7e851e31216fc07989caa902a604784",
 		DIMORegistryChainID: 80001,
 	}
-	s.repo = New(s.pdb, s.settings)
+	s.repo = &Repository{repositories.New(s.pdb, s.settings)}
 }
 
 // TearDownTest after each test truncate tables

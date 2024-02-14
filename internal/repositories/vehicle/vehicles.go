@@ -1,4 +1,4 @@
-package repositories
+package vehicle
 
 import (
 	"bytes"
@@ -10,30 +10,17 @@ import (
 	"time"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
-	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
+	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/models"
-	"github.com/DIMO-Network/shared/db"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/vmihailenco/msgpack/v5"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"golang.org/x/exp/slices"
 )
 
-const (
-	defaultPageSize = 20
-)
-
 type Repository struct {
-	pdb      db.Store
-	settings config.Settings
-}
-
-func New(pdb db.Store, settings config.Settings) *Repository {
-	return &Repository{
-		pdb:      pdb,
-		settings: settings,
-	}
+	*repositories.Repository
 }
 
 type vehiclePrimaryKey struct {
@@ -103,8 +90,8 @@ func (v *Repository) createVehiclesResponse(totalCount int64, vehicles models.Ve
 	nodes := make([]*gmodel.Vehicle, len(vehicles))
 
 	for i, dv := range vehicles {
-		imageUrl := helpers.GetVehicleImageUrl(v.settings.BaseImageURL, dv.ID)
-		dataURI := helpers.GetVehicleDataURI(v.settings.BaseVehicleDataURI, dv.ID)
+		imageUrl := helpers.GetVehicleImageUrl(v.Settings.BaseImageURL, dv.ID)
+		dataURI := helpers.GetVehicleDataURI(v.Settings.BaseVehicleDataURI, dv.ID)
 		gv := VehicleToAPI(dv, imageUrl, dataURI)
 
 		edges[i] = &gmodel.VehicleEdge{
@@ -130,8 +117,6 @@ func (v *Repository) createVehiclesResponse(totalCount int64, vehicles models.Ve
 	return res
 }
 
-const maxPageSize = 100
-
 // GetVehicles godoc
 // @Description gets devices for an owner address
 // @Param addr [common.Address] "eth address of owner"
@@ -140,7 +125,7 @@ const maxPageSize = 100
 // @Param last [*int] "the number of devices to return from previous pages"
 // @Param before [*string] "base64 string representing a device tokenID. Pointer to where we start fetching devices from previous pages"
 func (v *Repository) GetVehicles(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *gmodel.VehiclesFilter) (*gmodel.VehicleConnection, error) {
-	limit, err := helpers.ValidateFirstLast(first, last, maxPageSize)
+	limit, err := helpers.ValidateFirstLast(first, last, repositories.MaxPageSize)
 	if err != nil {
 		return nil, err
 	}
@@ -174,7 +159,7 @@ func (v *Repository) GetVehicles(ctx context.Context, first *int, after *string,
 			// the original version of queryMods the entire SELECT clause will be replaced by
 			// SELECT COUNT(*), and we'll probably over-count the number of vehicles.
 			append([]qm.QueryMod{qm.Distinct(models.VehicleTableColumns.ID)}, queryMods[1:]...)...,
-		).Count(ctx, v.pdb.DBS().Reader)
+		).Count(ctx, v.PDB.DBS().Reader)
 		if err != nil {
 			return nil, err
 		}
@@ -185,7 +170,7 @@ func (v *Repository) GetVehicles(ctx context.Context, first *int, after *string,
 			)
 		}
 
-		totalCount, err = models.Vehicles(queryMods...).Count(ctx, v.pdb.DBS().Reader)
+		totalCount, err = models.Vehicles(queryMods...).Count(ctx, v.PDB.DBS().Reader)
 		if err != nil {
 			return nil, err
 		}
@@ -220,7 +205,7 @@ func (v *Repository) GetVehicles(ctx context.Context, first *int, after *string,
 		qm.OrderBy(models.VehicleColumns.ID+" "+orderBy),
 	)
 
-	all, err := models.Vehicles(queryMods...).All(ctx, v.pdb.DBS().Reader)
+	all, err := models.Vehicles(queryMods...).All(ctx, v.PDB.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}
@@ -245,11 +230,11 @@ func (v *Repository) GetVehicles(ctx context.Context, first *int, after *string,
 }
 
 func (r *Repository) GetVehicle(ctx context.Context, id int) (*gmodel.Vehicle, error) {
-	v, err := models.FindVehicle(ctx, r.pdb.DBS().Reader, id)
+	v, err := models.FindVehicle(ctx, r.PDB.DBS().Reader, id)
 	if err != nil {
 		return nil, err
 	}
-	imageUrl := helpers.GetVehicleImageUrl(r.settings.BaseImageURL, v.ID)
-	dataURI := helpers.GetVehicleDataURI(r.settings.BaseVehicleDataURI, v.ID)
+	imageUrl := helpers.GetVehicleImageUrl(r.Settings.BaseImageURL, v.ID)
+	dataURI := helpers.GetVehicleDataURI(r.Settings.BaseVehicleDataURI, v.ID)
 	return VehicleToAPI(v, imageUrl, dataURI), nil
 }

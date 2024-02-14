@@ -1,24 +1,28 @@
-package repositories
+package aftermarket
 
 import (
 	"context"
 	"fmt"
-	"github.com/volatiletech/null/v8"
 	"math/big"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/volatiletech/null/v8"
+
 	gmn "github.com/DIMO-Network/go-mnemonic"
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
+	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/internal/services"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
+
+const migrationsDir = "../../../migrations"
 
 var aftermarketDeviceNodeMintedArgs = services.AftermarketDeviceNodeMintedData{
 	AftermarketDeviceAddress: common.HexToAddress("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
@@ -49,7 +53,7 @@ func TestAftermarketDeviceNodeMintMultiResponse(t *testing.T) {
 	//     |
 	//     after this
 
-	adController := New(pdb, config.Settings{})
+	adController := Repository{Repository: repositories.New(pdb, config.Settings{})}
 	first := 2
 	after := "NA==" // 4
 	res, err := adController.GetAftermarketDevices(ctx, &first, &after, nil, nil, &model.AftermarketDevicesFilter{Owner: &aftermarketDeviceNodeMintedArgs.Owner})
@@ -86,9 +90,10 @@ func Test_GetOwnedAftermarketDevices_Pagination_PreviousPage(t *testing.T) {
 	//       ^
 	//       |
 	//       before this
-	adController := New(pdb, config.Settings{
+	repo := repositories.New(pdb, config.Settings{
 		BaseImageURL: "https://mockUrl.com/v1",
 	})
+	adController := Repository{Repository: repo}
 	last := 2
 	before := "MQ=="
 	startCrsr := "Mw=="
@@ -175,7 +180,7 @@ func Test_GetAftermarketDevices_FilterByBeneficiary(t *testing.T) {
 	}
 
 	first := 10
-	adController := New(pdb, config.Settings{})
+	adController := Repository{Repository: repositories.New(pdb, config.Settings{})}
 	beneFilterRes, err := adController.GetAftermarketDevices(ctx, &first, nil, nil, nil, &model.AftermarketDevicesFilter{Beneficiary: &beneficiary})
 	assert.NoError(t, err)
 
@@ -235,7 +240,8 @@ func Test_GetAftermarketDevices_FilterByManufacturerID(t *testing.T) {
 	}
 
 	first := 10
-	adController := New(pdb, config.Settings{})
+	repo := repositories.New(pdb, config.Settings{})
+	adController := Repository{Repository: repo}
 	actual, err := adController.GetAftermarketDevices(ctx, &first, nil, nil, nil, &model.AftermarketDevicesFilter{ManufacturerID: &manufacturerID})
 	assert.NoError(t, err)
 

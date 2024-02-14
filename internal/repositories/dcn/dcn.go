@@ -1,4 +1,4 @@
-package repositories
+package dcn
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
+	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/vektah/gqlparser/v2/gqlerror"
@@ -15,6 +16,10 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"golang.org/x/exp/slices"
 )
+
+type Repository struct {
+	*repositories.Repository
+}
 
 type DCNCursor struct {
 	MintedAt time.Time
@@ -34,7 +39,7 @@ func DCNToAPI(d *models.DCN) *gmodel.Dcn {
 }
 
 func (r *Repository) GetDCN(ctx context.Context, by gmodel.DCNBy) (*gmodel.Dcn, error) {
-	if countTrue(len(by.Node) != 0, by.Name != nil) != 1 {
+	if repositories.CountTrue(len(by.Node) != 0, by.Name != nil) != 1 {
 		return nil, gqlerror.Errorf("Provide exactly one of `name` or `node`.")
 	}
 
@@ -52,7 +57,7 @@ func (r *Repository) GetDCNByNode(ctx context.Context, node []byte) (*gmodel.Dcn
 
 	dcn, err := models.DCNS(
 		models.DCNWhere.Node.EQ(node),
-	).One(ctx, r.pdb.DBS().Reader)
+	).One(ctx, r.PDB.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +68,7 @@ func (r *Repository) GetDCNByNode(ctx context.Context, node []byte) (*gmodel.Dcn
 func (r *Repository) GetDCNByName(ctx context.Context, name string) (*gmodel.Dcn, error) {
 	dcn, err := models.DCNS(
 		models.DCNWhere.Name.EQ(null.StringFrom(name)),
-	).One(ctx, r.pdb.DBS().Reader)
+	).One(ctx, r.PDB.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +79,7 @@ func (r *Repository) GetDCNByName(ctx context.Context, name string) (*gmodel.Dcn
 var dcnCursorColumnsTuple = "(" + models.DCNColumns.MintedAt + ", " + models.DCNColumns.Node + ")"
 
 func (r *Repository) GetDCNs(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *gmodel.DCNFilter) (*gmodel.DCNConnection, error) {
-	limit, err := helpers.ValidateFirstLast(first, last, maxPageSize)
+	limit, err := helpers.ValidateFirstLast(first, last, repositories.MaxPageSize)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +89,7 @@ func (r *Repository) GetDCNs(ctx context.Context, first *int, after *string, las
 		queryMods = append(queryMods, models.DCNWhere.OwnerAddress.EQ(filterBy.Owner.Bytes()))
 	}
 
-	dcnCount, err := models.DCNS(queryMods...).Count(ctx, r.pdb.DBS().Reader)
+	dcnCount, err := models.DCNS(queryMods...).Count(ctx, r.PDB.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +123,7 @@ func (r *Repository) GetDCNs(ctx context.Context, first *int, after *string, las
 		)
 	}
 
-	all, err := models.DCNS(queryMods...).All(ctx, r.pdb.DBS().Reader)
+	all, err := models.DCNS(queryMods...).All(ctx, r.PDB.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}

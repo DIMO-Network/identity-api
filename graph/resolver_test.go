@@ -41,7 +41,7 @@ var ad2 = models.AftermarketDevice{
 	Beneficiary: common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 }
 
-var vehicle = models.Vehicle{
+var testVehicle = models.Vehicle{
 	ID:           11,
 	OwnerAddress: common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 	Make:         null.StringFrom("Ford"),
@@ -65,7 +65,7 @@ func TestResolver(t *testing.T) {
 	ctx := context.Background()
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDir)
 
-	err := vehicle.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	err := testVehicle.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	assert.NoError(err)
 
 	err = aftermarketDevice.Insert(ctx, pdb.DBS().Writer, boil.Infer())

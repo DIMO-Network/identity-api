@@ -1,4 +1,4 @@
-package repositories
+package vehicleprivilege
 
 import (
 	"context"
@@ -8,10 +8,17 @@ import (
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
+	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
+
+const defaultPageSize = 20
+
+type Repository struct {
+	*repositories.Repository
+}
 
 type PrivilegeCursor struct {
 	SetAt       time.Time
@@ -95,7 +102,7 @@ func (p *Repository) GetPrivilegesForVehicle(ctx context.Context, tokenID int, f
 		queryMods = append(queryMods, models.PrivilegeWhere.UserAddress.EQ(filterBy.User.Bytes()))
 	}
 
-	totalCount, err := models.Privileges(queryMods...).Count(ctx, p.pdb.DBS().Reader)
+	totalCount, err := models.Privileges(queryMods...).Count(ctx, p.PDB.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}
@@ -133,7 +140,7 @@ func (p *Repository) GetPrivilegesForVehicle(ctx context.Context, tokenID int, f
 		),
 	)
 
-	page, err := models.Privileges(queryMods...).All(ctx, p.pdb.DBS().Reader)
+	page, err := models.Privileges(queryMods...).All(ctx, p.PDB.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}

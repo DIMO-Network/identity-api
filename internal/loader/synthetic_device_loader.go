@@ -5,7 +5,7 @@ import (
 
 	"github.com/DIMO-Network/identity-api/graph/model"
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
-	"github.com/DIMO-Network/identity-api/internal/repositories"
+	"github.com/DIMO-Network/identity-api/internal/repositories/synthetic"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/graph-gophers/dataloader/v7"
@@ -55,7 +55,7 @@ func (sd *SyntheticDeviceLoader) BatchGetSyntheticDeviceByVehicleID(ctx context.
 	for idx, vid := range vehicleIDs {
 		if sdv, ok := sdByVehicleID[vid]; ok {
 			results[idx] = &dataloader.Result[*gmodel.SyntheticDevice]{
-				Data: repositories.SyntheticDeviceToAPI(sdv),
+				Data: synthetic.SyntheticDeviceToAPI(sdv),
 			}
 		} else {
 			results[idx] = &dataloader.Result[*gmodel.SyntheticDevice]{}
@@ -86,7 +86,7 @@ func (sd *SyntheticDeviceLoader) BatchGetSyntheticDeviceByID(ctx context.Context
 
 	for i, sdID := range syntheticDeviceIDs {
 		if sdv, ok := sdByID[sdID]; ok {
-			results[i] = &dataloader.Result[*model.SyntheticDevice]{Data: repositories.SyntheticDeviceToAPI(sdv)}
+			results[i] = &dataloader.Result[*model.SyntheticDevice]{Data: synthetic.SyntheticDeviceToAPI(sdv)}
 		} else {
 			results[i] = &dataloader.Result[*model.SyntheticDevice]{}
 		}

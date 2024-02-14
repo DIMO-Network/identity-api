@@ -1,4 +1,4 @@
-package repositories
+package vehicle
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
+	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/ethereum/go-ethereum/common"
@@ -28,7 +29,7 @@ type OwnedVehiclesRepoTestSuite struct {
 	settings  config.Settings
 }
 
-// const migrationsDir = "../../migrations"
+const migrationsDir = "../../../migrations"
 
 func (s *OwnedVehiclesRepoTestSuite) SetupSuite() {
 	s.ctx = context.Background()
@@ -40,7 +41,7 @@ func (s *OwnedVehiclesRepoTestSuite) SetupSuite() {
 		BaseImageURL:        "https://mockUrl.com/v1",
 		BaseVehicleDataURI:  "https://dimoData/vehicles/",
 	}
-	s.repo = New(s.pdb, s.settings)
+	s.repo = &Repository{repositories.New(s.pdb, s.settings)}
 }
 
 // TearDownTest after each test truncate tables
@@ -312,7 +313,7 @@ func Test_GetOwnedVehicles_Filters(t *testing.T) {
 	assert := assert.New(t)
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDir)
 
-	repo := New(pdb, config.Settings{})
+	repo := Repository{repositories.New(pdb, config.Settings{})}
 	_, walletA, err := helpers.GenerateWallet()
 	assert.NoError(err)
 	_, walletB, err := helpers.GenerateWallet()

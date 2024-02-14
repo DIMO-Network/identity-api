@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
-	"github.com/DIMO-Network/identity-api/internal/repositories"
+	"github.com/DIMO-Network/identity-api/internal/repositories/manufacturer"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/graph-gophers/dataloader/v7"
@@ -44,7 +44,7 @@ func (v *ManufacturerLoader) BatchGetManufacturerByID(ctx context.Context, manuf
 	for i, k := range manufacturerIDs {
 		if v, ok := manufacturerByID[k]; ok {
 			results[i] = &dataloader.Result[*model.Manufacturer]{
-				Data: repositories.ManufacturerToAPI(v),
+				Data: manufacturer.ManufacturerToAPI(v),
 			}
 		} else {
 			results[i] = &dataloader.Result[*model.Manufacturer]{Error: fmt.Errorf("no manufacturer with id %d", k)}

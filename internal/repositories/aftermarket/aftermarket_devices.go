@@ -1,4 +1,4 @@
-package repositories
+package aftermarket
 
 import (
 	"bytes"
@@ -11,6 +11,7 @@ import (
 	"github.com/DIMO-Network/identity-api/graph/model"
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
+	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/vektah/gqlparser/v2/gqlerror"
@@ -20,6 +21,10 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+type Repository struct {
+	*repositories.Repository
+}
+
 // GetOwnedAftermarketDevices godoc
 // @Description gets aftermarket devices for an owner address
 // @Param addr [common.Address] "eth address of owner"
@@ -28,7 +33,7 @@ import (
 // @Param last [*int] "the number of devices to return from previous pages"
 // @Param before [*string] "base64 string representing a device tokenID. Pointer to where we start fetching devices from previous pages"
 func (r *Repository) GetAftermarketDevices(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *gmodel.AftermarketDevicesFilter) (*gmodel.AftermarketDeviceConnection, error) {
-	limit, err := helpers.ValidateFirstLast(first, last, maxPageSize)
+	limit, err := helpers.ValidateFirstLast(first, last, repositories.MaxPageSize)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +52,7 @@ func (r *Repository) GetAftermarketDevices(ctx context.Context, first *int, afte
 		}
 	}
 
-	adCount, err := models.AftermarketDevices(where...).Count(ctx, r.pdb.DBS().Reader)
+	adCount, err := models.AftermarketDevices(where...).Count(ctx, r.PDB.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +84,7 @@ func (r *Repository) GetAftermarketDevices(ctx context.Context, first *int, afte
 		queryMods = append(queryMods, models.AftermarketDeviceWhere.ID.GT(beforeID))
 	}
 
-	all, err := models.AftermarketDevices(queryMods...).All(ctx, r.pdb.DBS().Reader)
+	all, err := models.AftermarketDevices(queryMods...).All(ctx, r.PDB.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +108,7 @@ func (r *Repository) GetAftermarketDevices(ctx context.Context, first *int, afte
 	nodes := make([]*gmodel.AftermarketDevice, len(all))
 
 	for i, da := range all {
-		imageUrl := helpers.GetAftermarketDeviceImageUrl(r.settings.BaseImageURL, da.ID)
+		imageUrl := helpers.GetAftermarketDeviceImageUrl(r.Settings.BaseImageURL, da.ID)
 		ga := AftermarketDeviceToAPI(da, imageUrl)
 
 		edges[i] = &gmodel.AftermarketDeviceEdge{
@@ -140,7 +145,7 @@ func (r *Repository) GetAftermarketDevices(ctx context.Context, first *int, afte
 }
 
 func (r *Repository) GetAftermarketDevice(ctx context.Context, by gmodel.AftermarketDeviceBy) (*gmodel.AftermarketDevice, error) {
-	if countTrue(by.Address != nil, by.TokenID != nil, by.Serial != nil) != 1 {
+	if repositories.CountTrue(by.Address != nil, by.TokenID != nil, by.Serial != nil) != 1 {
 		return nil, gqlerror.Errorf("Pass in exactly one of `address`, `id`, or `serial`.")
 	}
 
@@ -155,12 +160,12 @@ func (r *Repository) GetAftermarketDevice(ctx context.Context, by gmodel.Afterma
 		qm = models.AftermarketDeviceWhere.Serial.EQ(null.StringFrom(*by.Serial))
 	}
 
-	ad, err := models.AftermarketDevices(qm).One(ctx, r.pdb.DBS().Reader)
+	ad, err := models.AftermarketDevices(qm).One(ctx, r.PDB.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}
 
-	imageUrl := helpers.GetAftermarketDeviceImageUrl(r.settings.BaseImageURL, ad.ID)
+	imageUrl := helpers.GetAftermarketDeviceImageUrl(r.Settings.BaseImageURL, ad.ID)
 	return AftermarketDeviceToAPI(ad, imageUrl), nil
 }
 
@@ -214,18 +219,6 @@ func AftermarketDeviceIDToToken(id string) (int, error) {
 	}
 
 	return pk.TokenID, nil
-}
-
-func countTrue(ps ...bool) int {
-	out := 0
-
-	for _, p := range ps {
-		if p {
-			out++
-		}
-	}
-
-	return out
 }
 
 func (r *Repository) GetAftermarketDevicesForManufacturer(ctx context.Context, obj *model.Manufacturer, first *int, after *string, last *int, before *string, filterBy *model.AftermarketDevicesFilter) (*gmodel.AftermarketDeviceConnection, error) {

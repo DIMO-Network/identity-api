@@ -1,4 +1,4 @@
-package repositories
+package reward
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
+	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/dbtypes"
 	"github.com/ethereum/go-ethereum/common"
@@ -15,6 +16,10 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/types"
 	"golang.org/x/exp/slices"
 )
+
+type Repository struct {
+	*repositories.Repository
+}
 
 type RewardsCursor struct {
 	Week      int
@@ -83,7 +88,7 @@ func (r *Repository) paginateRewards(ctx context.Context, conditions []qm.QueryM
 		)
 	}
 
-	all, err := models.Rewards(queryMods...).All(ctx, r.pdb.DBS().Reader)
+	all, err := models.Rewards(queryMods...).All(ctx, r.PDB.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +162,7 @@ func (r *Repository) GetEarningsSummary(ctx context.Context, conditions []qm.Que
 	}
 	queryMods = append(queryMods, conditions...)
 
-	err := models.Rewards(queryMods...).Bind(ctx, r.pdb.DBS().Reader, &summary)
+	err := models.Rewards(queryMods...).Bind(ctx, r.PDB.DBS().Reader, &summary)
 	if err != nil {
 		return nil, err
 	}
@@ -191,7 +196,7 @@ func (r *Repository) GetEarningsByVehicleID(ctx context.Context, tokenID int) (*
 }
 
 func (r *Repository) PaginateVehicleEarningsByID(ctx context.Context, vehicleEarnings *gmodel.VehicleEarnings, first *int, after *string, last *int, before *string) (*gmodel.EarningsConnection, error) {
-	limit, err := helpers.ValidateFirstLast(first, last, maxPageSize)
+	limit, err := helpers.ValidateFirstLast(first, last, repositories.MaxPageSize)
 	if err != nil {
 		return nil, err
 	}
@@ -236,7 +241,7 @@ func (r *Repository) GetEarningsByAfterMarketDeviceID(ctx context.Context, token
 }
 
 func (r *Repository) PaginateAftermarketDeviceEarningsByID(ctx context.Context, afterMarketDeviceEarnings *gmodel.AftermarketDeviceEarnings, first *int, after *string, last *int, before *string) (*gmodel.EarningsConnection, error) {
-	limit, err := helpers.ValidateFirstLast(first, last, maxPageSize) // return early if both first and last are provided
+	limit, err := helpers.ValidateFirstLast(first, last, repositories.MaxPageSize) // return early if both first and last are provided
 	if err != nil {
 		return nil, err
 	}
@@ -281,7 +286,7 @@ func (r *Repository) GetEarningsByUserAddress(ctx context.Context, user common.A
 }
 
 func (r *Repository) PaginateGetEarningsByUsersDevices(ctx context.Context, userDeviceEarnings *gmodel.UserRewards, first *int, after *string, last *int, before *string) (*gmodel.EarningsConnection, error) {
-	limit, err := helpers.ValidateFirstLast(first, last, maxPageSize) // return early if both first and last are provided
+	limit, err := helpers.ValidateFirstLast(first, last, repositories.MaxPageSize) // return early if both first and last are provided
 	if err != nil {
 		return nil, err
 	}

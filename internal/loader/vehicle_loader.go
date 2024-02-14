@@ -7,7 +7,7 @@ import (
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
-	"github.com/DIMO-Network/identity-api/internal/repositories"
+	"github.com/DIMO-Network/identity-api/internal/repositories/vehicle"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/graph-gophers/dataloader/v7"
@@ -50,7 +50,7 @@ func (v *VehicleLoader) BatchGetVehicleByID(ctx context.Context, vehicleIDs []in
 			imageUrl := helpers.GetVehicleImageUrl(v.settings.BaseImageURL, veh.ID)
 			dataURI := helpers.GetVehicleDataURI(v.settings.BaseImageURL, veh.ID)
 			results[i] = &dataloader.Result[*model.Vehicle]{
-				Data: repositories.VehicleToAPI(veh, imageUrl, dataURI),
+				Data: vehicle.VehicleToAPI(veh, imageUrl, dataURI),
 			}
 		} else {
 			results[i] = &dataloader.Result[*model.Vehicle]{Error: fmt.Errorf("no vehicle with id %d", k)}
