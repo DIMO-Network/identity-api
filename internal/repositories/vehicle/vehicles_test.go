@@ -1,22 +1,41 @@
 package vehicle
 
 import (
+	"cmp"
 	"context"
 	"fmt"
+	"slices"
 	"testing"
 	"time"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/config"
+	"github.com/DIMO-Network/identity-api/internal/helpers"
 	test "github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
+)
+
+var (
+	toyota     = null.StringFrom("Toyota")
+	honda      = null.StringFrom("Honda")
+	camry      = null.StringFrom("Camry")
+	highlander = null.StringFrom("Highlander")
+	rav4       = null.StringFrom("RAV4")
+	corolla    = null.StringFrom("Corolla")
+	civic      = null.StringFrom("civic")
+	accord     = null.StringFrom("accord")
+	year2018   = null.IntFrom(2018)
+	year2020   = null.IntFrom(2020)
+	year2022   = null.IntFrom(2022)
+	year2023   = null.IntFrom(2023)
 )
 
 type AccessibleVehiclesRepoTestSuite struct {
@@ -78,18 +97,18 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Success() {
 		{
 			ID:            1,
 			OwnerAddress:  wallet.Bytes(),
-			Make:          null.StringFrom("Toyota"),
-			Model:         null.StringFrom("Camry"),
-			Year:          null.IntFrom(2020),
+			Make:          toyota,
+			Model:         camry,
+			Year:          year2020,
 			MintedAt:      currTime,
 			DefinitionURI: null.StringFrom(ddfUrl[0]),
 		},
 		{
 			ID:            2,
 			OwnerAddress:  wallet.Bytes(),
-			Make:          null.StringFrom("Toyota"),
-			Model:         null.StringFrom("Camry"),
-			Year:          null.IntFrom(2022),
+			Make:          toyota,
+			Model:         camry,
+			Year:          year2022,
 			MintedAt:      currTime,
 			DefinitionURI: null.StringFrom(ddfUrl[1]),
 		},
@@ -185,18 +204,18 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination(
 		{
 			ID:            1,
 			OwnerAddress:  wallet.Bytes(),
-			Make:          null.StringFrom("Toyota"),
-			Model:         null.StringFrom("Camry"),
-			Year:          null.IntFrom(2020),
+			Make:          toyota,
+			Model:         camry,
+			Year:          year2020,
 			MintedAt:      currTime,
 			DefinitionURI: null.StringFrom(ddfUrl[0]),
 		},
 		{
 			ID:            2,
 			OwnerAddress:  wallet.Bytes(),
-			Make:          null.StringFrom("Toyota"),
-			Model:         null.StringFrom("Camry"),
-			Year:          null.IntFrom(2022),
+			Make:          toyota,
+			Model:         camry,
+			Year:          year2022,
 			MintedAt:      currTime,
 			DefinitionURI: null.StringFrom(ddfUrl[1]),
 		},
@@ -259,18 +278,18 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 		{
 			ID:            1,
 			OwnerAddress:  wallet.Bytes(),
-			Make:          null.StringFrom("Toyota"),
-			Model:         null.StringFrom("Camry"),
-			Year:          null.IntFrom(2020),
+			Make:          toyota,
+			Model:         camry,
+			Year:          year2020,
 			MintedAt:      currTime,
 			DefinitionURI: null.StringFrom(ddfUrl[0]),
 		},
 		{
 			ID:            2,
 			OwnerAddress:  wallet.Bytes(),
-			Make:          null.StringFrom("Toyota"),
-			Model:         null.StringFrom("Camry"),
-			Year:          null.IntFrom(2022),
+			Make:          toyota,
+			Model:         camry,
+			Year:          year2022,
 			MintedAt:      currTime,
 			DefinitionURI: null.StringFrom(ddfUrl[1]),
 		},
@@ -337,18 +356,18 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_OwnedByUser
 		{
 			ID:            1,
 			OwnerAddress:  wallet.Bytes(),
-			Make:          null.StringFrom("Toyota"),
-			Model:         null.StringFrom("Camry"),
-			Year:          null.IntFrom(2020),
+			Make:          toyota,
+			Model:         camry,
+			Year:          year2020,
 			MintedAt:      currTime,
 			DefinitionURI: null.StringFrom(ddfUrl[0]),
 		},
 		{
 			ID:            2,
 			OwnerAddress:  wallet2.Bytes(),
-			Make:          null.StringFrom("Toyota"),
-			Model:         null.StringFrom("Camry"),
-			Year:          null.IntFrom(2022),
+			Make:          toyota,
+			Model:         camry,
+			Year:          year2022,
 			MintedAt:      currTime,
 			DefinitionURI: null.StringFrom(ddfUrl[1]),
 		},
@@ -447,18 +466,18 @@ func (o *AccessibleVehiclesRepoTestSuite) TestVehiclesMultiplePrivsOnOne() {
 		{
 			ID:            1,
 			OwnerAddress:  wallet.Bytes(),
-			Make:          null.StringFrom("Toyota"),
-			Model:         null.StringFrom("Camry"),
-			Year:          null.IntFrom(2020),
+			Make:          toyota,
+			Model:         camry,
+			Year:          year2020,
 			MintedAt:      currTime,
 			DefinitionURI: null.StringFrom(ddfUrl[0]),
 		},
 		{
 			ID:            2,
 			OwnerAddress:  wallet2.Bytes(),
-			Make:          null.StringFrom("Toyota"),
-			Model:         null.StringFrom("Camry"),
-			Year:          null.IntFrom(2022),
+			Make:          toyota,
+			Model:         camry,
+			Year:          year2022,
 			MintedAt:      currTime,
 			DefinitionURI: null.StringFrom(ddfUrl[1]),
 		},
@@ -556,33 +575,33 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 		{
 			ID:           1,
 			OwnerAddress: wallet.Bytes(),
-			Make:         null.StringFrom("Toyota"),
-			Model:        null.StringFrom("Camry"),
-			Year:         null.IntFrom(2020),
+			Make:         toyota,
+			Model:        camry,
+			Year:         year2020,
 			MintedAt:     currTime,
 		},
 		{
 			ID:           2,
 			OwnerAddress: wallet.Bytes(),
-			Make:         null.StringFrom("Toyota"),
-			Model:        null.StringFrom("Rav4"),
-			Year:         null.IntFrom(2022),
+			Make:         toyota,
+			Model:        rav4,
+			Year:         year2022,
 			MintedAt:     currTime,
 		},
 		{
 			ID:           3,
 			OwnerAddress: wallet.Bytes(),
-			Make:         null.StringFrom("Toyota"),
-			Model:        null.StringFrom("Corolla"),
-			Year:         null.IntFrom(2023),
+			Make:         toyota,
+			Model:        corolla,
+			Year:         year2023,
 			MintedAt:     currTime,
 		},
 		{
 			ID:           4,
 			OwnerAddress: wallet.Bytes(),
-			Make:         null.StringFrom("Toyota"),
-			Model:        null.StringFrom("Highlander"),
-			Year:         null.IntFrom(2018),
+			Make:         toyota,
+			Model:        highlander,
+			Year:         year2018,
 			MintedAt:     currTime,
 		},
 	}
@@ -669,33 +688,33 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 		{
 			ID:           1,
 			OwnerAddress: wallet.Bytes(),
-			Make:         null.StringFrom("Toyota"),
-			Model:        null.StringFrom("Camry"),
-			Year:         null.IntFrom(2020),
+			Make:         toyota,
+			Model:        camry,
+			Year:         year2020,
 			MintedAt:     currTime,
 		},
 		{
 			ID:           2,
 			OwnerAddress: wallet.Bytes(),
-			Make:         null.StringFrom("Toyota"),
-			Model:        null.StringFrom("Rav4"),
-			Year:         null.IntFrom(2022),
+			Make:         toyota,
+			Model:        rav4,
+			Year:         year2022,
 			MintedAt:     currTime,
 		},
 		{
 			ID:           3,
 			OwnerAddress: wallet.Bytes(),
-			Make:         null.StringFrom("Toyota"),
-			Model:        null.StringFrom("Corolla"),
-			Year:         null.IntFrom(2023),
+			Make:         toyota,
+			Model:        corolla,
+			Year:         year2023,
 			MintedAt:     currTime,
 		},
 		{
 			ID:           4,
 			OwnerAddress: wallet.Bytes(),
-			Make:         null.StringFrom("Toyota"),
-			Model:        null.StringFrom("Highlander"),
-			Year:         null.IntFrom(2018),
+			Make:         toyota,
+			Model:        highlander,
+			Year:         year2018,
 			MintedAt:     currTime,
 		},
 	}
@@ -768,33 +787,33 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 		{
 			ID:           1,
 			OwnerAddress: wallet.Bytes(),
-			Make:         null.StringFrom("Toyota"),
-			Model:        null.StringFrom("Camry"),
-			Year:         null.IntFrom(2020),
+			Make:         toyota,
+			Model:        camry,
+			Year:         year2020,
 			MintedAt:     currTime,
 		},
 		{
 			ID:           2,
 			OwnerAddress: wallet.Bytes(),
-			Make:         null.StringFrom("Toyota"),
-			Model:        null.StringFrom("Rav4"),
-			Year:         null.IntFrom(2022),
+			Make:         toyota,
+			Model:        rav4,
+			Year:         year2022,
 			MintedAt:     currTime,
 		},
 		{
 			ID:           3,
 			OwnerAddress: wallet.Bytes(),
-			Make:         null.StringFrom("Toyota"),
-			Model:        null.StringFrom("Corolla"),
-			Year:         null.IntFrom(2023),
+			Make:         toyota,
+			Model:        corolla,
+			Year:         year2023,
 			MintedAt:     currTime,
 		},
 		{
 			ID:           4,
 			OwnerAddress: wallet.Bytes(),
-			Make:         null.StringFrom("Toyota"),
-			Model:        null.StringFrom("Highlander"),
-			Year:         null.IntFrom(2018),
+			Make:         toyota,
+			Model:        highlander,
+			Year:         year2018,
 			MintedAt:     currTime,
 		},
 	}
@@ -875,33 +894,33 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 		{
 			ID:           1,
 			OwnerAddress: wallet.Bytes(),
-			Make:         null.StringFrom("Toyota"),
-			Model:        null.StringFrom("Camry"),
-			Year:         null.IntFrom(2020),
+			Make:         toyota,
+			Model:        camry,
+			Year:         year2020,
 			MintedAt:     currTime,
 		},
 		{
 			ID:           2,
 			OwnerAddress: wallet.Bytes(),
-			Make:         null.StringFrom("Toyota"),
-			Model:        null.StringFrom("Rav4"),
-			Year:         null.IntFrom(2022),
+			Make:         toyota,
+			Model:        rav4,
+			Year:         year2022,
 			MintedAt:     currTime,
 		},
 		{
 			ID:           3,
 			OwnerAddress: wallet.Bytes(),
-			Make:         null.StringFrom("Toyota"),
-			Model:        null.StringFrom("Corolla"),
-			Year:         null.IntFrom(2023),
+			Make:         toyota,
+			Model:        corolla,
+			Year:         year2023,
 			MintedAt:     currTime,
 		},
 		{
 			ID:           4,
 			OwnerAddress: wallet.Bytes(),
-			Make:         null.StringFrom("Toyota"),
-			Model:        null.StringFrom("Highlander"),
-			Year:         null.IntFrom(2018),
+			Make:         toyota,
+			Model:        highlander,
+			Year:         year2018,
 			MintedAt:     currTime,
 		},
 	}
@@ -977,4 +996,248 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 		o.NoError(err)
 	}
 	o.Exactly(expected, res.Edges)
+}
+
+func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
+	_, wallet1, err := test.GenerateWallet()
+	o.NoError(err)
+
+	_, wallet2, err := test.GenerateWallet()
+	o.NoError(err)
+
+	currTime := time.Now().UTC().Truncate(time.Second)
+	testVehicle1 := models.Vehicle{
+		ID:           1,
+		OwnerAddress: wallet1.Bytes(),
+		Make:         toyota,
+		Model:        camry,
+		Year:         year2020,
+		MintedAt:     currTime,
+	}
+	vehicle1ImageURL := helpers.GetVehicleImageUrl(o.settings.BaseImageURL, testVehicle1.ID)
+	vehicle1DataURI := helpers.GetVehicleDataURI(o.settings.BaseVehicleDataURI, testVehicle1.ID)
+	vehicle1AsAPI := VehicleToAPI(&testVehicle1, vehicle1ImageURL, vehicle1DataURI)
+
+	testVehicle2 := models.Vehicle{
+		ID:           2,
+		OwnerAddress: wallet1.Bytes(),
+		Make:         honda,
+		Model:        civic,
+		Year:         year2022,
+		MintedAt:     currTime,
+	}
+	vehicle2ImageURL := helpers.GetVehicleImageUrl(o.settings.BaseImageURL, testVehicle2.ID)
+	vehicle2DataURI := helpers.GetVehicleDataURI(o.settings.BaseVehicleDataURI, testVehicle2.ID)
+	vehicle2AsAPI := VehicleToAPI(&testVehicle2, vehicle2ImageURL, vehicle2DataURI)
+
+	testVehicle3 := models.Vehicle{
+		ID:           3,
+		OwnerAddress: wallet2.Bytes(),
+		Make:         toyota,
+		Model:        rav4,
+		Year:         year2022,
+		MintedAt:     currTime,
+	}
+	vehicle3ImageURL := helpers.GetVehicleImageUrl(o.settings.BaseImageURL, testVehicle3.ID)
+	vehicle3DataURI := helpers.GetVehicleDataURI(o.settings.BaseVehicleDataURI, testVehicle3.ID)
+	vehicle3AsAPI := VehicleToAPI(&testVehicle3, vehicle3ImageURL, vehicle3DataURI)
+
+	testVehicle4 := models.Vehicle{
+		ID:           4,
+		OwnerAddress: wallet2.Bytes(),
+		Make:         honda,
+		Model:        accord,
+		Year:         year2020,
+		MintedAt:     currTime,
+	}
+	vehicle4ImageURL := helpers.GetVehicleImageUrl(o.settings.BaseImageURL, testVehicle4.ID)
+	vehicle4DataURI := helpers.GetVehicleDataURI(o.settings.BaseVehicleDataURI, testVehicle4.ID)
+	vehicle4AsAPI := VehicleToAPI(&testVehicle4, vehicle4ImageURL, vehicle4DataURI)
+
+	vehicles := []models.Vehicle{testVehicle1, testVehicle2, testVehicle3, testVehicle4}
+	first := len(vehicles)
+	for _, v := range vehicles {
+		if err := v.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer()); err != nil {
+			o.Require().NoError(err)
+		}
+	}
+
+	privileges := []models.Privilege{
+		{
+			TokenID:     testVehicle3.ID,
+			PrivilegeID: 1,
+			UserAddress: wallet1.Bytes(),
+			SetAt:       currTime,
+			ExpiresAt:   currTime.Add(time.Hour),
+		},
+	}
+
+	for _, p := range privileges {
+		if err := p.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer()); err != nil {
+			o.NoError(err)
+		}
+	}
+
+	// create table of tests for testing the o.repo.GetVehicles function
+	tests := []struct {
+		name    string
+		filter  *gmodel.VehiclesFilter
+		results []*gmodel.VehicleEdge
+	}{
+		{
+			name:   "No filters",
+			filter: nil,
+			results: []*gmodel.VehicleEdge{
+				{Node: vehicle1AsAPI},
+				{Node: vehicle2AsAPI},
+				{Node: vehicle3AsAPI},
+				{Node: vehicle4AsAPI},
+			},
+		},
+		{
+			name:   "Empty filters",
+			filter: &gmodel.VehiclesFilter{},
+			results: []*gmodel.VehicleEdge{
+				{Node: vehicle1AsAPI},
+				{Node: vehicle2AsAPI},
+				{Node: vehicle3AsAPI},
+				{Node: vehicle4AsAPI},
+			},
+		},
+		{
+			name: "Filter by owner",
+			filter: &gmodel.VehiclesFilter{
+				Owner: wallet1,
+			},
+			results: []*gmodel.VehicleEdge{
+				{Node: vehicle1AsAPI},
+				{Node: vehicle2AsAPI},
+			},
+		},
+		{
+			name: "Filter by Privileged",
+			filter: &gmodel.VehiclesFilter{
+				Privileged: wallet1,
+			},
+			results: []*gmodel.VehicleEdge{
+				{Node: vehicle1AsAPI},
+				{Node: vehicle2AsAPI},
+				{Node: vehicle3AsAPI},
+			},
+		},
+		{
+			name: "Filter by Make",
+			filter: &gmodel.VehiclesFilter{
+				Make: toyota.Ptr(),
+			},
+			results: []*gmodel.VehicleEdge{
+				{Node: vehicle1AsAPI},
+				{Node: vehicle3AsAPI},
+			},
+		},
+		{
+			name: "Filter by Model",
+			filter: &gmodel.VehiclesFilter{
+				Model: camry.Ptr(),
+			},
+			results: []*gmodel.VehicleEdge{
+				{Node: vehicle1AsAPI},
+			},
+		},
+		{
+			name: "Filter by Year",
+			filter: &gmodel.VehiclesFilter{
+				Year: year2022.Ptr(),
+			},
+			results: []*gmodel.VehicleEdge{
+				{Node: vehicle2AsAPI},
+				{Node: vehicle3AsAPI},
+			},
+		},
+
+		{
+			name: "Filter by Owner and Privileged same address",
+			filter: &gmodel.VehiclesFilter{
+				Privileged: wallet1,
+				Owner:      wallet1,
+			},
+			results: []*gmodel.VehicleEdge{
+				{Node: vehicle1AsAPI},
+				{Node: vehicle2AsAPI},
+			},
+		},
+		{
+			name: "Filter by Owner and Privileged different addresses",
+			filter: &gmodel.VehiclesFilter{
+				Privileged: wallet1,
+				Owner:      wallet2,
+			},
+			results: []*gmodel.VehicleEdge{
+				{Node: vehicle3AsAPI},
+			},
+		},
+		{
+			name: "Filter by Privileged and Make",
+			filter: &gmodel.VehiclesFilter{
+				Privileged: wallet1,
+				Make:       toyota.Ptr(),
+			},
+			results: []*gmodel.VehicleEdge{
+				{Node: vehicle1AsAPI},
+				{Node: vehicle3AsAPI},
+			},
+		},
+		{
+			name: "Filter by Privileged and Model",
+			filter: &gmodel.VehiclesFilter{
+				Privileged: wallet1,
+				Model:      camry.Ptr(),
+			},
+			results: []*gmodel.VehicleEdge{
+				{Node: vehicle1AsAPI},
+			},
+		},
+		{
+			name: "Filter by Privileged and Year",
+			filter: &gmodel.VehiclesFilter{
+				Privileged: wallet1,
+				Year:       year2022.Ptr(),
+			},
+			results: []*gmodel.VehicleEdge{
+				{Node: vehicle2AsAPI},
+				{Node: vehicle3AsAPI},
+			},
+		},
+		{
+			name: "Filter No Results",
+			filter: &gmodel.VehiclesFilter{
+				Owner:      wallet1,
+				Privileged: wallet2,
+			},
+			results: []*gmodel.VehicleEdge{},
+		},
+	}
+
+	for i := range tests {
+		tt := tests[i]
+		o.Run(tt.name, func() {
+			res, err := o.repo.GetVehicles(o.ctx, &first, nil, nil, nil, tt.filter)
+			o.Require().NoError(err)
+			o.Require().NotNil(res)
+			requireEqualVehicles(o.T(), tt.results, res.Edges)
+			o.Require().Equalf(len(tt.results), res.TotalCount, "Test %s: expected total count to be %d, got %d", tt.name, len(tt.results), res.TotalCount)
+		})
+	}
+}
+
+// requireEqualVehicles is a helper function to compare two slices of VehicleEdges
+func requireEqualVehicles(t *testing.T, expected, actual []*gmodel.VehicleEdge) {
+	t.Helper()
+	require.Len(t, actual, len(expected))
+	slices.SortFunc(expected, func(a, b *gmodel.VehicleEdge) int {
+		return cmp.Compare(a.Node.ID, b.Node.ID) * -1
+	})
+	for i := range expected {
+		require.Equal(t, expected[i].Node, actual[i].Node)
+	}
 }
