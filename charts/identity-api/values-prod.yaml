@@ -2,7 +2,7 @@ replicaCount: 2
 image:
   repository: dimozone/identity-api
   pullPolicy: IfNotPresent
-  tag: 0.1.18
+  tag: 0.1.19
 cronJob:
   enabled: false
   schedule: 0 0 * * 0
