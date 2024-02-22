@@ -1,4 +1,4 @@
-package repositories
+package dcn
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	test "github.com/DIMO-Network/identity-api/internal/helpers"
+	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/ethereum/go-ethereum/common"
@@ -30,13 +31,13 @@ type DCNRepoTestSuite struct {
 
 func (o *DCNRepoTestSuite) SetupSuite() {
 	o.ctx = context.Background()
-	o.pdb, o.container = test.StartContainerDatabase(o.ctx, o.T(), "../../migrations")
+	o.pdb, o.container = test.StartContainerDatabase(o.ctx, o.T(), "../../../migrations")
 
 	o.settings = config.Settings{
 		DIMORegistryAddr:    "0x2daeF6FF0E2B61aaBF9ADDE1aFDAfDb4f0f1E660",
 		DIMORegistryChainID: 80001,
 	}
-	o.repo = New(o.pdb, o.settings)
+	o.repo = &Repository{repositories.New(o.pdb, o.settings)}
 }
 
 // TearDownTest after each test truncate tables

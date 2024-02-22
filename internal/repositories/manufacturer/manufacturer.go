@@ -1,4 +1,4 @@
-package repositories
+package manufacturer
 
 import (
 	"bytes"
@@ -9,12 +9,17 @@ import (
 	"strings"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
+	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"github.com/vmihailenco/msgpack/v5"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
+
+type Repository struct {
+	*repositories.Repository
+}
 
 type manufacturerPrimaryKey struct {
 	TokenID int
@@ -57,7 +62,7 @@ func ManufacturerIDToToken(id string) (int, error) {
 }
 
 func (r *Repository) GetManufacturer(ctx context.Context, by gmodel.ManufacturerBy) (*gmodel.Manufacturer, error) {
-	if countTrue(by.TokenID != nil, by.Name != nil) != 1 {
+	if repositories.CountTrue(by.TokenID != nil, by.Name != nil) != 1 {
 		return nil, gqlerror.Errorf("Provide exactly one of `name` or `tokenID`.")
 	}
 
@@ -69,7 +74,7 @@ func (r *Repository) GetManufacturer(ctx context.Context, by gmodel.Manufacturer
 		qm = models.ManufacturerWhere.Name.EQ(*by.Name)
 	}
 
-	m, err := models.Manufacturers(qm).One(ctx, r.pdb.DBS().Reader)
+	m, err := models.Manufacturers(qm).One(ctx, r.PDB.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
-	"github.com/DIMO-Network/identity-api/internal/repositories"
+	"github.com/DIMO-Network/identity-api/internal/repositories/dcn"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/graph-gophers/dataloader/v7"
@@ -41,9 +41,9 @@ func (d *DCNLoader) BatchGetDCNByVehicleID(ctx context.Context, vehicleIDs []int
 	}
 
 	for idx, vid := range vehicleIDs {
-		if dcn, ok := dcnByVehicleID[vid]; ok {
+		if dcnModel, ok := dcnByVehicleID[vid]; ok {
 			results[idx] = &dataloader.Result[*gmodel.Dcn]{
-				Data: repositories.DCNToAPI(dcn),
+				Data: dcn.DCNToAPI(dcnModel),
 			}
 		} else {
 			results[idx] = &dataloader.Result[*gmodel.Dcn]{}

@@ -1,4 +1,4 @@
-package repositories
+package manufacturer
 
 import (
 	"context"
@@ -8,11 +8,14 @@ import (
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
+	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
+
+const migrationsDir = "../../../migrations"
 
 func TestGetManufacturer(t *testing.T) {
 	ctx := context.Background()
@@ -32,7 +35,7 @@ func TestGetManufacturer(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
-	controller := New(pdb, config.Settings{})
+	controller := Repository{repositories.New(pdb, config.Settings{})}
 	for i := 0; i < 6; i++ {
 		tokenID := i
 		res, err := controller.GetManufacturer(ctx, model.ManufacturerBy{TokenID: &tokenID})

@@ -11,7 +11,9 @@ import (
 
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/loader"
-	"github.com/DIMO-Network/identity-api/internal/repositories"
+	"github.com/DIMO-Network/identity-api/internal/repositories/aftermarket"
+	"github.com/DIMO-Network/identity-api/internal/repositories/manufacturer"
+	"github.com/DIMO-Network/identity-api/internal/repositories/vehicle"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -30,12 +32,12 @@ func (r *aftermarketDeviceResolver) Vehicle(ctx context.Context, obj *model.Afte
 
 // Earnings is the resolver for the earnings field.
 func (r *aftermarketDeviceResolver) Earnings(ctx context.Context, obj *model.AftermarketDevice) (*model.AftermarketDeviceEarnings, error) {
-	return r.Repo.GetEarningsByAfterMarketDeviceID(ctx, obj.TokenID)
+	return r.reward.GetEarningsByAfterMarketDeviceID(ctx, obj.TokenID)
 }
 
 // History is the resolver for the history field.
 func (r *aftermarketDeviceEarningsResolver) History(ctx context.Context, obj *model.AftermarketDeviceEarnings, first *int, after *string, last *int, before *string) (*model.EarningsConnection, error) {
-	return r.Repo.PaginateAftermarketDeviceEarningsByID(ctx, obj, first, after, last, before)
+	return r.reward.PaginateAftermarketDeviceEarningsByID(ctx, obj, first, after, last, before)
 }
 
 // Vehicle is the resolver for the vehicle field.
@@ -71,33 +73,33 @@ func (r *earningResolver) Vehicle(ctx context.Context, obj *model.Earning) (*mod
 
 // AftermarketDevices is the resolver for the aftermarketDevices field on the manufacturer object.
 func (r *manufacturerResolver) AftermarketDevices(ctx context.Context, obj *model.Manufacturer, first *int, after *string, last *int, before *string, filterBy *model.AftermarketDevicesFilter) (*model.AftermarketDeviceConnection, error) {
-	return r.Repo.GetAftermarketDevicesForManufacturer(ctx, obj, first, after, last, before, filterBy)
+	return r.aftermarket.GetAftermarketDevicesForManufacturer(ctx, obj, first, after, last, before, filterBy)
 }
 
 // Node is the resolver for the node field.
 func (r *queryResolver) Node(ctx context.Context, id string) (model.Node, error) {
 	if strings.HasPrefix(id, "V_") {
-		ti, err := repositories.VehicleIDToToken(id)
+		ti, err := vehicle.VehicleIDToToken(id)
 		if err != nil {
 			return nil, err
 		}
-		return r.Repo.GetVehicle(ctx, ti)
+		return r.vehicle.GetVehicle(ctx, ti)
 	}
 
 	if strings.HasPrefix(id, "AD_") {
-		ti, err := repositories.AftermarketDeviceIDToToken(id)
+		ti, err := aftermarket.AftermarketDeviceIDToToken(id)
 		if err != nil {
 			return nil, err
 		}
-		return r.Repo.GetAftermarketDevice(ctx, model.AftermarketDeviceBy{TokenID: &ti})
+		return r.aftermarket.GetAftermarketDevice(ctx, model.AftermarketDeviceBy{TokenID: &ti})
 	}
 
 	if strings.HasPrefix(id, "M_") {
-		ti, err := repositories.ManufacturerIDToToken(id)
+		ti, err := manufacturer.ManufacturerIDToToken(id)
 		if err != nil {
 			return nil, err
 		}
-		return r.Repo.GetManufacturer(ctx, model.ManufacturerBy{TokenID: &ti})
+		return r.manufacturer.GetManufacturer(ctx, model.ManufacturerBy{TokenID: &ti})
 	}
 
 	return nil, errors.New("Unrecognized global id.")
@@ -105,47 +107,47 @@ func (r *queryResolver) Node(ctx context.Context, id string) (model.Node, error)
 
 // Vehicle is the resolver for the vehicle field.
 func (r *queryResolver) Vehicle(ctx context.Context, tokenID int) (*model.Vehicle, error) {
-	return r.Repo.GetVehicle(ctx, tokenID)
+	return r.vehicle.GetVehicle(ctx, tokenID)
 }
 
 // Vehicles is the resolver for the vehicles field.
 func (r *queryResolver) Vehicles(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.VehiclesFilter) (*model.VehicleConnection, error) {
-	return r.Repo.GetVehicles(ctx, first, after, last, before, filterBy)
+	return r.vehicle.GetVehicles(ctx, first, after, last, before, filterBy)
 }
 
 // AftermarketDevice is the resolver for the aftermarketDevice field.
 func (r *queryResolver) AftermarketDevice(ctx context.Context, by model.AftermarketDeviceBy) (*model.AftermarketDevice, error) {
-	return r.Repo.GetAftermarketDevice(ctx, by)
+	return r.aftermarket.GetAftermarketDevice(ctx, by)
 }
 
 // AftermarketDevices is the resolver for the aftermarketDevices field.
 func (r *queryResolver) AftermarketDevices(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.AftermarketDevicesFilter) (*model.AftermarketDeviceConnection, error) {
-	return r.Repo.GetAftermarketDevices(ctx, first, after, last, before, filterBy)
+	return r.aftermarket.GetAftermarketDevices(ctx, first, after, last, before, filterBy)
 }
 
 // Dcn is the resolver for the dcn field.
 func (r *queryResolver) Dcn(ctx context.Context, by model.DCNBy) (*model.Dcn, error) {
-	return r.Repo.GetDCN(ctx, by)
+	return r.dcn.GetDCN(ctx, by)
 }
 
 // Dcns is the resolver for the dcns field.
 func (r *queryResolver) Dcns(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.DCNFilter) (*model.DCNConnection, error) {
-	return r.Repo.GetDCNs(ctx, first, after, last, before, filterBy)
+	return r.dcn.GetDCNs(ctx, first, after, last, before, filterBy)
 }
 
 // Rewards is the resolver for the rewards field.
 func (r *queryResolver) Rewards(ctx context.Context, user common.Address) (*model.UserRewards, error) {
-	return r.Repo.GetEarningsByUserAddress(ctx, user)
+	return r.reward.GetEarningsByUserAddress(ctx, user)
 }
 
 // Manufacturer is the resolver for the manufacturer field.
 func (r *queryResolver) Manufacturer(ctx context.Context, by model.ManufacturerBy) (*model.Manufacturer, error) {
-	return r.Repo.GetManufacturer(ctx, by)
+	return r.manufacturer.GetManufacturer(ctx, by)
 }
 
 // History is the resolver for the history field.
 func (r *userRewardsResolver) History(ctx context.Context, obj *model.UserRewards, first *int, after *string, last *int, before *string) (*model.EarningsConnection, error) {
-	return r.Repo.PaginateGetEarningsByUsersDevices(ctx, obj, first, after, last, before)
+	return r.reward.PaginateGetEarningsByUsersDevices(ctx, obj, first, after, last, before)
 }
 
 // Manufacturer is the resolver for the manufacturer field.
@@ -160,7 +162,7 @@ func (r *vehicleResolver) AftermarketDevice(ctx context.Context, obj *model.Vehi
 
 // Privileges is the resolver for the privileges field.
 func (r *vehicleResolver) Privileges(ctx context.Context, obj *model.Vehicle, first *int, after *string, last *int, before *string, filterBy *model.PrivilegeFilterBy) (*model.PrivilegesConnection, error) {
-	return r.Repo.GetPrivilegesForVehicle(ctx, obj.TokenID, first, after, last, before, filterBy)
+	return r.vehicleprivilege.GetPrivilegesForVehicle(ctx, obj.TokenID, first, after, last, before, filterBy)
 }
 
 // SyntheticDevice is the resolver for the syntheticDevice field.
@@ -175,12 +177,12 @@ func (r *vehicleResolver) Dcn(ctx context.Context, obj *model.Vehicle) (*model.D
 
 // Earnings is the resolver for the earnings field.
 func (r *vehicleResolver) Earnings(ctx context.Context, obj *model.Vehicle) (*model.VehicleEarnings, error) {
-	return r.Repo.GetEarningsByVehicleID(ctx, obj.TokenID)
+	return r.reward.GetEarningsByVehicleID(ctx, obj.TokenID)
 }
 
 // History is the resolver for the history field.
 func (r *vehicleEarningsResolver) History(ctx context.Context, obj *model.VehicleEarnings, first *int, after *string, last *int, before *string) (*model.EarningsConnection, error) {
-	return r.Repo.PaginateVehicleEarningsByID(ctx, obj, first, after, last, before)
+	return r.reward.PaginateVehicleEarningsByID(ctx, obj, first, after, last, before)
 }
 
 // AftermarketDevice returns AftermarketDeviceResolver implementation.
