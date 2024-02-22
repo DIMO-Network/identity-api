@@ -18,4 +18,6 @@ type Settings struct {
 	SyntheticDeviceAddr   string      `yaml:"SYNTHETIC_DEVICE_CONTRACT_ADDRESS"`
 	RewardsContractAddr   string      `yaml:"REWARDS_CONTRACT_ADDRESS"`
 	BaseImageURL          string      `yaml:"BASE_IMAGE_URL"`
+
+	BaseVehicleDataURI string `yaml:"BASE_VEHICLE_DATA_URI"`
 }

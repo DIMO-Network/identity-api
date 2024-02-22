@@ -40,7 +40,7 @@ type vehiclePrimaryKey struct {
 	TokenID int
 }
 
-func VehicleToAPI(v *models.Vehicle, imageUrl string) *gmodel.Vehicle {
+func VehicleToAPI(v *models.Vehicle, imageUrl string, dataURI string) *gmodel.Vehicle {
 	var b bytes.Buffer
 	e := msgpack.NewEncoder(&b)
 	e.UseArrayEncodedStructs(true)
@@ -64,6 +64,7 @@ func VehicleToAPI(v *models.Vehicle, imageUrl string) *gmodel.Vehicle {
 		ManufacturerID: v.ManufacturerID.Ptr(),
 		Name:           name,
 		Image:          imageUrl,
+		DataURI:        dataURI,
 	}
 }
 
@@ -103,7 +104,8 @@ func (v *Repository) createVehiclesResponse(totalCount int64, vehicles models.Ve
 
 	for i, dv := range vehicles {
 		imageUrl := helpers.GetVehicleImageUrl(v.settings.BaseImageURL, dv.ID)
-		gv := VehicleToAPI(dv, imageUrl)
+		dataURI := helpers.GetVehicleDataURI(v.settings.BaseVehicleDataURI, dv.ID)
+		gv := VehicleToAPI(dv, imageUrl, dataURI)
 
 		edges[i] = &gmodel.VehicleEdge{
 			Node:   gv,
@@ -248,5 +250,6 @@ func (r *Repository) GetVehicle(ctx context.Context, id int) (*gmodel.Vehicle, e
 		return nil, err
 	}
 	imageUrl := helpers.GetVehicleImageUrl(r.settings.BaseImageURL, v.ID)
-	return VehicleToAPI(v, imageUrl), nil
+	dataURI := helpers.GetVehicleDataURI(r.settings.BaseVehicleDataURI, v.ID)
+	return VehicleToAPI(v, imageUrl, dataURI), nil
 }

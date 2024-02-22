@@ -270,6 +270,7 @@ type Vehicle struct {
 	// The Image Url of he vehicle
 	Image          string           `json:"image"`
 	Earnings       *VehicleEarnings `json:"earnings,omitempty"`
+	DataURI        string           `json:"dataUri"`
 	ManufacturerID *int             `json:"-"`
 }
 

@@ -48,8 +48,9 @@ func (v *VehicleLoader) BatchGetVehicleByID(ctx context.Context, vehicleIDs []in
 	for i, k := range vehicleIDs {
 		if veh, ok := vehicleByID[k]; ok {
 			imageUrl := helpers.GetVehicleImageUrl(v.settings.BaseImageURL, veh.ID)
+			dataURI := helpers.GetVehicleDataURI(v.settings.BaseImageURL, veh.ID)
 			results[i] = &dataloader.Result[*model.Vehicle]{
-				Data: repositories.VehicleToAPI(veh, imageUrl),
+				Data: repositories.VehicleToAPI(veh, imageUrl, dataURI),
 			}
 		} else {
 			results[i] = &dataloader.Result[*model.Vehicle]{Error: fmt.Errorf("no vehicle with id %d", k)}
