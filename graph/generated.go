@@ -214,6 +214,7 @@ type ComplexityRoot struct {
 
 	Vehicle struct {
 		AftermarketDevice func(childComplexity int) int
+		DataURI           func(childComplexity int) int
 		Dcn               func(childComplexity int) int
 		Definition        func(childComplexity int) int
 		Earnings          func(childComplexity int) int
@@ -1039,6 +1040,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Vehicle.AftermarketDevice(childComplexity), true
+
+	case "Vehicle.dataUri":
+		if e.complexity.Vehicle.DataURI == nil {
+			break
+		}
+
+		return e.complexity.Vehicle.DataURI(childComplexity), true
 
 	case "Vehicle.dcn":
 		if e.complexity.Vehicle.Dcn == nil {
@@ -2346,6 +2354,8 @@ func (ec *executionContext) fieldContext_AftermarketDevice_vehicle(ctx context.C
 				return ec.fieldContext_Vehicle_image(ctx, field)
 			case "earnings":
 				return ec.fieldContext_Vehicle_earnings(ctx, field)
+			case "dataUri":
+				return ec.fieldContext_Vehicle_dataUri(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
 		},
@@ -3305,6 +3315,8 @@ func (ec *executionContext) fieldContext_DCN_vehicle(ctx context.Context, field 
 				return ec.fieldContext_Vehicle_image(ctx, field)
 			case "earnings":
 				return ec.fieldContext_Vehicle_earnings(ctx, field)
+			case "dataUri":
+				return ec.fieldContext_Vehicle_dataUri(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
 		},
@@ -4235,6 +4247,8 @@ func (ec *executionContext) fieldContext_Earning_vehicle(ctx context.Context, fi
 				return ec.fieldContext_Vehicle_image(ctx, field)
 			case "earnings":
 				return ec.fieldContext_Vehicle_earnings(ctx, field)
+			case "dataUri":
+				return ec.fieldContext_Vehicle_dataUri(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
 		},
@@ -5767,6 +5781,8 @@ func (ec *executionContext) fieldContext_Query_vehicle(ctx context.Context, fiel
 				return ec.fieldContext_Vehicle_image(ctx, field)
 			case "earnings":
 				return ec.fieldContext_Vehicle_earnings(ctx, field)
+			case "dataUri":
+				return ec.fieldContext_Vehicle_dataUri(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
 		},
@@ -7342,6 +7358,50 @@ func (ec *executionContext) fieldContext_Vehicle_earnings(ctx context.Context, f
 	return fc, nil
 }
 
+func (ec *executionContext) _Vehicle_dataUri(ctx context.Context, field graphql.CollectedField, obj *model.Vehicle) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Vehicle_dataUri(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DataURI, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Vehicle_dataUri(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Vehicle",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _VehicleConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.VehicleConnection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_VehicleConnection_totalCount(ctx, field)
 	if err != nil {
@@ -7501,6 +7561,8 @@ func (ec *executionContext) fieldContext_VehicleConnection_nodes(ctx context.Con
 				return ec.fieldContext_Vehicle_image(ctx, field)
 			case "earnings":
 				return ec.fieldContext_Vehicle_earnings(ctx, field)
+			case "dataUri":
+				return ec.fieldContext_Vehicle_dataUri(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
 		},
@@ -7736,6 +7798,8 @@ func (ec *executionContext) fieldContext_VehicleEdge_node(ctx context.Context, f
 				return ec.fieldContext_Vehicle_image(ctx, field)
 			case "earnings":
 				return ec.fieldContext_Vehicle_earnings(ctx, field)
+			case "dataUri":
+				return ec.fieldContext_Vehicle_dataUri(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
 		},
@@ -11773,6 +11837,11 @@ func (ec *executionContext) _Vehicle(ctx context.Context, sel ast.SelectionSet, 
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "dataUri":
+			out.Values[i] = ec._Vehicle_dataUri(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

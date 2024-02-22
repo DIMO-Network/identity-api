@@ -19,5 +19,5 @@ type Settings struct {
 	RewardsContractAddr   string      `yaml:"REWARDS_CONTRACT_ADDRESS"`
 	BaseImageURL          string      `yaml:"BASE_IMAGE_URL"`
 
-	BASE_VEHICLE_DATA_URI string `yaml:"BASE_VEHICLE_DATA_URI"`
+	BaseVehicleDataURI string `yaml:"BASE_VEHICLE_DATA_URI"`
 }

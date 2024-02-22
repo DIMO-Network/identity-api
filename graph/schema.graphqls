@@ -216,6 +216,8 @@ type Vehicle implements Node {
   image: String!
 
   earnings: VehicleEarnings
+
+  dataUri: String!
 }
 
 type Definition {

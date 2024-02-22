@@ -61,3 +61,7 @@ func GetVehicleImageUrl(baseURL string, tokenID int) string {
 func GetAftermarketDeviceImageUrl(baseURL string, tokenID int) string {
 	return fmt.Sprintf("%s/aftermarket/device/%d/image", baseURL, tokenID)
 }
+
+func GetVehicleDataURI(baseURL string, tokenID int) string {
+	return fmt.Sprintf("%s/vehicles/%d", baseURL, tokenID)
+}
