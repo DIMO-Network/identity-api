@@ -232,6 +232,9 @@ type Vehicle implements Node {
   """
   definition: Definition
   dcn: DCN
+  """
+  Encoded name of the device
+  """
   name: String!
   """
   The Image Url of he vehicle
@@ -335,7 +338,9 @@ type AftermarketDevice implements Node {
   The beneficiary for this device, who receives any associated rewards. Defaults to the owner.
   """
   beneficiary: Address!
-
+  """
+  Encoded name of the device
+  """
   name: String!
   """
   The Image Url of the device
@@ -392,9 +397,25 @@ type PrivilegesConnection {
 # SyntheticDevice Types
 
 type SyntheticDevice {
+  """
+  Encoded name of the device
+  """
+  name: String!
+  """
+  The ERC-721 token id for the device.
+  """
   tokenId: Int!
+  """
+  Type of integration for the synthetic device.
+  """
   integrationId: Int!
+  """
+  The Ethereum address for the device.
+  """
   address: Address!
+  """
+  The block timestamp at which this device was minted.
+  """
   mintedAt: Time!
 }
 

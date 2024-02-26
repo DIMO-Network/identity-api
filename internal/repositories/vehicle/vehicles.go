@@ -35,7 +35,7 @@ func VehicleToAPI(v *models.Vehicle, imageUrl string, dataURI string) *gmodel.Ve
 	e.UseArrayEncodedStructs(true)
 
 	_ = e.Encode(vehiclePrimaryKey{TokenID: v.ID})
-	nameList := mnemonic.FromInt64WithObfuscation(int64(v.ID))
+	nameList := mnemonic.FromInt32WithObfuscation(int32(v.ID))
 	name := strings.Join(nameList, " ")
 
 	return &gmodel.Vehicle{

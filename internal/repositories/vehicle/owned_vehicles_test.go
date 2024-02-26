@@ -161,7 +161,7 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Success() {
 	}
 
 	for _, veh := range expected {
-		veh.Node.Name = strings.Join(mnemonic.FromInt64WithObfuscation(int64(veh.Node.TokenID)), " ")
+		veh.Node.Name = strings.Join(mnemonic.FromInt32WithObfuscation(int32(veh.Node.TokenID)), " ")
 	}
 
 	s.Exactly(expected, res.Edges)
@@ -225,7 +225,7 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination() {
 	}
 
 	for _, veh := range expected {
-		veh.Node.Name = strings.Join(mnemonic.FromInt64WithObfuscation(int64(veh.Node.TokenID)), " ")
+		veh.Node.Name = strings.Join(mnemonic.FromInt32WithObfuscation(int32(veh.Node.TokenID)), " ")
 	}
 
 	s.Exactly(expected, res.Edges)
@@ -290,7 +290,7 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination_NextPage()
 	}
 
 	for _, veh := range expected {
-		veh.Node.Name = strings.Join(mnemonic.FromInt64WithObfuscation(int64(veh.Node.TokenID)), " ")
+		veh.Node.Name = strings.Join(mnemonic.FromInt32WithObfuscation(int32(veh.Node.TokenID)), " ")
 	}
 
 	s.Exactly(expected, res.Edges)

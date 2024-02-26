@@ -135,7 +135,7 @@ func Test_GetOwnedAftermarketDevices_Pagination_PreviousPage(t *testing.T) {
 	}
 
 	for _, af := range expected {
-		name := strings.Join(mnemonic.FromInt64WithObfuscation(int64(af.Node.TokenID)), " ")
+		name := strings.Join(mnemonic.FromInt32WithObfuscation(int32(af.Node.TokenID)), " ")
 
 		af.Node.Name = name
 	}

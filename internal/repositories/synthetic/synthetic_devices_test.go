@@ -26,6 +26,7 @@ func Test_SyntheticDeviceToAPI(t *testing.T) {
 	res := SyntheticDeviceToAPI(sd)
 
 	assert.Exactly(t, &model.SyntheticDevice{
+		Name:          "learn island zoo",
 		TokenID:       1,
 		IntegrationID: 2,
 		Address:       *wallet,

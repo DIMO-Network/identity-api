@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -182,7 +183,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Success() {
 	}
 
 	for _, veh := range expected {
-		veh.Node.Name = strings.Join(mnemonic.FromInt64WithObfuscation(int64(veh.Node.TokenID)), " ")
+		veh.Node.Name = strings.Join(mnemonic.FromInt32WithObfuscation(int32(veh.Node.TokenID)), " ")
 	}
 
 	o.Exactly(expected, res.Edges)
@@ -253,7 +254,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination(
 	}
 
 	for _, veh := range expected {
-		veh.Node.Name = strings.Join(mnemonic.FromInt64WithObfuscation(int64(veh.Node.TokenID)), " ")
+		veh.Node.Name = strings.Join(mnemonic.FromInt32WithObfuscation(int32(veh.Node.TokenID)), " ")
 	}
 
 	o.Exactly(expected, res.Edges)
@@ -325,7 +326,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 	}
 
 	for _, veh := range expected {
-		veh.Node.Name = strings.Join(mnemonic.FromInt64WithObfuscation(int64(veh.Node.TokenID)), " ")
+		veh.Node.Name = strings.Join(mnemonic.FromInt32WithObfuscation(int32(veh.Node.TokenID)), " ")
 	}
 
 	o.Exactly(expected, res.Edges)
@@ -432,7 +433,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_OwnedByUser
 	}
 
 	for _, veh := range expected {
-		veh.Node.Name = strings.Join(mnemonic.FromInt64WithObfuscation(int64(veh.Node.TokenID)), " ")
+		veh.Node.Name = strings.Join(mnemonic.FromInt32WithObfuscation(int32(veh.Node.TokenID)), " ")
 	}
 
 	o.Exactly(expected, res.Edges)
@@ -546,7 +547,7 @@ func (o *AccessibleVehiclesRepoTestSuite) TestVehiclesMultiplePrivsOnOne() {
 	}
 
 	for _, veh := range expected {
-		veh.Node.Name = strings.Join(mnemonic.FromInt64WithObfuscation(int64(veh.Node.TokenID)), " ")
+		veh.Node.Name = strings.Join(mnemonic.FromInt32WithObfuscation(int32(veh.Node.TokenID)), " ")
 	}
 
 	o.Exactly(expected, res.Edges)
@@ -657,7 +658,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 	}
 
 	for _, veh := range expected {
-		veh.Node.Name = strings.Join(mnemonic.FromInt64WithObfuscation(int64(veh.Node.TokenID)), " ")
+		veh.Node.Name = strings.Join(mnemonic.FromInt32WithObfuscation(int32(veh.Node.TokenID)), " ")
 	}
 	o.Exactly(expected, res.Edges)
 }
@@ -753,7 +754,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 	}
 
 	for _, veh := range expected {
-		veh.Node.Name = strings.Join(mnemonic.FromInt64WithObfuscation(int64(veh.Node.TokenID)), " ")
+		veh.Node.Name = strings.Join(mnemonic.FromInt32WithObfuscation(int32(veh.Node.TokenID)), " ")
 	}
 	o.Exactly(expected, res.Edges)
 }
@@ -856,7 +857,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 		},
 	}
 	for _, veh := range expected {
-		veh.Node.Name = strings.Join(mnemonic.FromInt64WithObfuscation(int64(veh.Node.TokenID)), " ")
+		veh.Node.Name = strings.Join(mnemonic.FromInt32WithObfuscation(int32(veh.Node.TokenID)), " ")
 	}
 
 	o.Exactly(expected, res.Edges)
@@ -967,7 +968,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 	}
 
 	for _, veh := range expected {
-		veh.Node.Name = strings.Join(mnemonic.FromInt64WithObfuscation(int64(veh.Node.TokenID)), " ")
+		veh.Node.Name = strings.Join(mnemonic.FromInt32WithObfuscation(int32(veh.Node.TokenID)), " ")
 	}
 	o.Exactly(expected, res.Edges)
 }

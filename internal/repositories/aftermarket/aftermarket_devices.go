@@ -181,7 +181,7 @@ func AftermarketDeviceToAPI(d *models.AftermarketDevice, imageUrl string) *gmode
 
 	_ = e.Encode(aftermarketDevicePrimaryKey{TokenID: d.ID})
 
-	nameList := mnemonic.FromInt64WithObfuscation(int64(d.ID))
+	nameList := mnemonic.FromInt32WithObfuscation(int32(d.ID))
 	name := strings.Join(nameList, " ")
 
 	return &gmodel.AftermarketDevice{
