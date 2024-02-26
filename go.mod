@@ -4,8 +4,8 @@ go 1.21
 
 require (
 	github.com/99designs/gqlgen v0.17.39
+	github.com/DIMO-Network/mnemonic v0.0.0-20240226173518-343f1791b339
 	github.com/DIMO-Network/shared v0.10.5
-	github.com/KevinJoiner/mnemonic v0.0.0-20240226152104-479c63aec3a4
 	github.com/docker/go-connections v0.4.0
 	github.com/ericlagergren/decimal v0.0.0-20190420051523-6335edbaa640
 	github.com/ethereum/go-ethereum v1.13.4
