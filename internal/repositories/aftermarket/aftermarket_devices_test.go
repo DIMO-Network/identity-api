@@ -8,17 +8,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/volatiletech/null/v8"
-
-	gmn "github.com/DIMO-Network/go-mnemonic"
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/internal/services"
 	"github.com/DIMO-Network/identity-api/models"
+	"github.com/KevinJoiner/mnemonic"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
@@ -136,11 +135,7 @@ func Test_GetOwnedAftermarketDevices_Pagination_PreviousPage(t *testing.T) {
 	}
 
 	for _, af := range expected {
-		mn, err := gmn.EntropyToMnemonicThreeWords(af.Node.Address.Bytes())
-		if err != nil {
-			assert.NoError(t, err)
-		}
-		name := strings.Join(mn, " ")
+		name := strings.Join(mnemonic.FromInt64WithObfuscation(int64(af.Node.TokenID)), " ")
 
 		af.Node.Name = name
 	}

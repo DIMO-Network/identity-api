@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
+	"github.com/KevinJoiner/mnemonic"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -181,10 +183,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Success() {
 	}
 
 	for _, veh := range expected {
-		bid := test.IntToBytes(veh.Node.TokenID)
-		veh.Node.Name, err = test.CreateMnemonic(bid)
-
-		o.NoError(err)
+		veh.Node.Name = strings.Join(mnemonic.FromInt64WithObfuscation(int64(veh.Node.TokenID)), " ")
 	}
 
 	o.Exactly(expected, res.Edges)
@@ -255,10 +254,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination(
 	}
 
 	for _, veh := range expected {
-		bid := test.IntToBytes(veh.Node.TokenID)
-		veh.Node.Name, err = test.CreateMnemonic(bid)
-
-		o.NoError(err)
+		veh.Node.Name = strings.Join(mnemonic.FromInt64WithObfuscation(int64(veh.Node.TokenID)), " ")
 	}
 
 	o.Exactly(expected, res.Edges)
@@ -330,10 +326,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 	}
 
 	for _, veh := range expected {
-		bid := test.IntToBytes(veh.Node.TokenID)
-		veh.Node.Name, err = test.CreateMnemonic(bid)
-
-		o.NoError(err)
+		veh.Node.Name = strings.Join(mnemonic.FromInt64WithObfuscation(int64(veh.Node.TokenID)), " ")
 	}
 
 	o.Exactly(expected, res.Edges)
@@ -440,10 +433,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_OwnedByUser
 	}
 
 	for _, veh := range expected {
-		bid := test.IntToBytes(veh.Node.TokenID)
-		veh.Node.Name, err = test.CreateMnemonic(bid)
-
-		o.NoError(err)
+		veh.Node.Name = strings.Join(mnemonic.FromInt64WithObfuscation(int64(veh.Node.TokenID)), " ")
 	}
 
 	o.Exactly(expected, res.Edges)
@@ -557,10 +547,7 @@ func (o *AccessibleVehiclesRepoTestSuite) TestVehiclesMultiplePrivsOnOne() {
 	}
 
 	for _, veh := range expected {
-		bid := test.IntToBytes(veh.Node.TokenID)
-		veh.Node.Name, err = test.CreateMnemonic(bid)
-
-		o.NoError(err)
+		veh.Node.Name = strings.Join(mnemonic.FromInt64WithObfuscation(int64(veh.Node.TokenID)), " ")
 	}
 
 	o.Exactly(expected, res.Edges)
@@ -671,10 +658,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 	}
 
 	for _, veh := range expected {
-		bid := test.IntToBytes(veh.Node.TokenID)
-		veh.Node.Name, err = test.CreateMnemonic(bid)
-
-		o.NoError(err)
+		veh.Node.Name = strings.Join(mnemonic.FromInt64WithObfuscation(int64(veh.Node.TokenID)), " ")
 	}
 	o.Exactly(expected, res.Edges)
 }
@@ -770,10 +754,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 	}
 
 	for _, veh := range expected {
-		bid := test.IntToBytes(veh.Node.TokenID)
-		veh.Node.Name, err = test.CreateMnemonic(bid)
-
-		o.NoError(err)
+		veh.Node.Name = strings.Join(mnemonic.FromInt64WithObfuscation(int64(veh.Node.TokenID)), " ")
 	}
 	o.Exactly(expected, res.Edges)
 }
@@ -876,10 +857,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 		},
 	}
 	for _, veh := range expected {
-		bid := test.IntToBytes(veh.Node.TokenID)
-		veh.Node.Name, err = test.CreateMnemonic(bid)
-
-		o.NoError(err)
+		veh.Node.Name = strings.Join(mnemonic.FromInt64WithObfuscation(int64(veh.Node.TokenID)), " ")
 	}
 
 	o.Exactly(expected, res.Edges)
@@ -990,10 +968,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 	}
 
 	for _, veh := range expected {
-		bid := test.IntToBytes(veh.Node.TokenID)
-		veh.Node.Name, err = test.CreateMnemonic(bid)
-
-		o.NoError(err)
+		veh.Node.Name = strings.Join(mnemonic.FromInt64WithObfuscation(int64(veh.Node.TokenID)), " ")
 	}
 	o.Exactly(expected, res.Edges)
 }

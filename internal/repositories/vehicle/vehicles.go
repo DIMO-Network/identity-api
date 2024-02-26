@@ -13,6 +13,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/models"
+	"github.com/KevinJoiner/mnemonic"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/vmihailenco/msgpack/v5"
 	"github.com/volatiletech/null/v8"
@@ -34,9 +35,8 @@ func VehicleToAPI(v *models.Vehicle, imageUrl string, dataURI string) *gmodel.Ve
 	e.UseArrayEncodedStructs(true)
 
 	_ = e.Encode(vehiclePrimaryKey{TokenID: v.ID})
-
-	bid := helpers.IntToBytes(v.ID)
-	name, _ := helpers.CreateMnemonic(bid)
+	nameList := mnemonic.FromInt64WithObfuscation(int64(v.ID))
+	name := strings.Join(nameList, " ")
 
 	return &gmodel.Vehicle{
 		ID:       "V_" + base64.StdEncoding.EncodeToString(b.Bytes()),
