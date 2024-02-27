@@ -15,6 +15,7 @@ import (
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/vmihailenco/msgpack/v5"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"golang.org/x/exp/slices"
 )
@@ -131,29 +132,8 @@ func (v *Repository) GetVehicles(ctx context.Context, first *int, after *string,
 	}
 
 	var totalCount int64
-	var queryMods []qm.QueryMod
+	queryMods := queryModsFromFilters(filterBy)
 	if filterBy != nil && filterBy.Privileged != nil {
-		addr := *filterBy.Privileged
-		queryMods = []qm.QueryMod{
-			qm.Select("DISTINCT ON (" + models.VehicleTableColumns.ID + ") " + helpers.WithSchema(models.TableNames.Vehicles) + ".*"),
-			qm.LeftOuterJoin(
-				helpers.WithSchema(models.TableNames.Privileges) + " ON " + models.VehicleTableColumns.ID + " = " + models.PrivilegeTableColumns.TokenID,
-			),
-			qm.Expr(
-				models.VehicleWhere.OwnerAddress.EQ(addr.Bytes()),
-				qm.Or2(
-					qm.Expr(
-						models.PrivilegeWhere.UserAddress.EQ(addr.Bytes()),
-						models.PrivilegeWhere.ExpiresAt.GTE(time.Now()),
-					),
-				),
-			),
-		}
-
-		if filterBy.Owner != nil {
-			queryMods = append(queryMods, models.VehicleWhere.OwnerAddress.EQ(filterBy.Owner.Bytes()))
-		}
-
 		totalCount, err = models.Vehicles(
 			// We're performing this because SQLBoiler doesn't understand DISTINCT ON. If we use
 			// the original version of queryMods the entire SELECT clause will be replaced by
@@ -164,18 +144,12 @@ func (v *Repository) GetVehicles(ctx context.Context, first *int, after *string,
 			return nil, err
 		}
 	} else {
-		if filterBy != nil && filterBy.Owner != nil {
-			queryMods = append(queryMods,
-				models.VehicleWhere.OwnerAddress.EQ(filterBy.Owner.Bytes()),
-			)
-		}
-
 		totalCount, err = models.Vehicles(queryMods...).Count(ctx, v.PDB.DBS().Reader)
 		if err != nil {
 			return nil, err
 		}
-
 	}
+
 	if after != nil {
 		afterID, err := helpers.CursorToID(*after)
 		if err != nil {
@@ -237,4 +211,50 @@ func (r *Repository) GetVehicle(ctx context.Context, id int) (*gmodel.Vehicle, e
 	imageUrl := helpers.GetVehicleImageUrl(r.Settings.BaseImageURL, v.ID)
 	dataURI := helpers.GetVehicleDataURI(r.Settings.BaseVehicleDataURI, v.ID)
 	return VehicleToAPI(v, imageUrl, dataURI), nil
+}
+
+// queryModsFromFilters returns a slice of query mods from the given filters.
+func queryModsFromFilters(filter *gmodel.VehiclesFilter) []qm.QueryMod {
+	var queryMods []qm.QueryMod
+	if filter == nil {
+		return queryMods
+	}
+
+	// To maintain correct count behavior the privilege filter must be the first filter added to the query.
+	if filter.Privileged != nil {
+		addr := *filter.Privileged
+		queryMods = append(queryMods,
+			// SELECT DISTINCT ON (vehicles.id) identity_api.vehicles.*
+			// LEFT OUTER JOIN identity_api.privileges ON vehicles.id = privileges.token_id
+			// WHERE vehicles.owner_address = <filter.Privileged> OR (privileges.user_address = <filter.Privileged> AND privileges.expires_at >= <time.Now()> )
+			qm.Select("DISTINCT ON ("+models.VehicleTableColumns.ID+") "+helpers.WithSchema(models.TableNames.Vehicles)+".*"),
+			qm.LeftOuterJoin(
+				helpers.WithSchema(models.TableNames.Privileges)+" ON "+models.VehicleTableColumns.ID+" = "+models.PrivilegeTableColumns.TokenID,
+			),
+			qm.Expr(
+				models.VehicleWhere.OwnerAddress.EQ(addr.Bytes()),
+				qm.Or2(
+					qm.Expr(
+						models.PrivilegeWhere.UserAddress.EQ(addr.Bytes()),
+						models.PrivilegeWhere.ExpiresAt.GTE(time.Now()),
+					),
+				),
+			),
+		)
+	}
+
+	if filter.Make != nil {
+		queryMods = append(queryMods, models.VehicleWhere.Make.EQ(null.StringFrom(*filter.Make)))
+	}
+	if filter.Model != nil {
+		queryMods = append(queryMods, models.VehicleWhere.Model.EQ(null.StringFrom(*filter.Model)))
+	}
+	if filter.Year != nil {
+		queryMods = append(queryMods, models.VehicleWhere.Year.EQ(null.IntFrom(*filter.Year)))
+	}
+	if filter.Owner != nil {
+		queryMods = append(queryMods, models.VehicleWhere.OwnerAddress.EQ(filter.Owner.Bytes()))
+	}
+
+	return queryMods
 }

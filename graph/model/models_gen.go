@@ -295,9 +295,18 @@ type VehicleEdge struct {
 	Cursor string   `json:"cursor"`
 }
 
+// The VehiclesFilter input is used to specify filtering criteria for querying vehicles.
+// Vehicles must match all of the specified criteria.
 type VehiclesFilter struct {
-	// Filter for vehicles to which the given address has access. This includes vehicles
+	// Privileged filters for vehicles to which the given address has access. This includes vehicles
 	// that this address owns.
 	Privileged *common.Address `json:"privileged,omitempty"`
-	Owner      *common.Address `json:"owner,omitempty"`
+	// Owner filters for vehicles that this address owns.
+	Owner *common.Address `json:"owner,omitempty"`
+	// Make filters for vehicles that are of the given make.
+	Make *string `json:"make,omitempty"`
+	// Model filters for vehicles that are of the given model.
+	Model *string `json:"model,omitempty"`
+	// Year filters for vehicles that are of the given year.
+	Year *int `json:"year,omitempty"`
 }

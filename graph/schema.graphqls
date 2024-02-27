@@ -40,13 +40,36 @@ input AftermarketDeviceBy @oneOf {
   serial: String
 }
 
+"""
+The VehiclesFilter input is used to specify filtering criteria for querying vehicles.
+Vehicles must match all of the specified criteria.
+"""
 input VehiclesFilter {
   """
-  Filter for vehicles to which the given address has access. This includes vehicles
+  Privileged filters for vehicles to which the given address has access. This includes vehicles
   that this address owns.
   """
   privileged: Address
+
+  """
+  Owner filters for vehicles that this address owns.
+  """
   owner: Address
+
+  """
+  Make filters for vehicles that are of the given make.
+  """
+  make: String
+
+  """
+  Model filters for vehicles that are of the given model.
+  """
+  model: String
+
+  """
+  Year filters for vehicles that are of the given year.
+  """
+  year: Int
 }
 
 input AftermarketDevicesFilter {
