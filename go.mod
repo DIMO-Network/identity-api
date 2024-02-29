@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/99designs/gqlgen v0.17.39
-	github.com/DIMO-Network/go-mnemonic v0.0.0-20230406181942-6ddfe6f8c21c
+	github.com/DIMO-Network/mnemonic v0.0.0-20240226173518-343f1791b339
 	github.com/DIMO-Network/shared v0.10.5
 	github.com/docker/go-connections v0.4.0
 	github.com/ericlagergren/decimal v0.0.0-20190420051523-6335edbaa640
@@ -26,7 +26,7 @@ require (
 	github.com/volatiletech/null/v8 v8.1.2
 	github.com/volatiletech/sqlboiler/v4 v4.15.0
 	github.com/volatiletech/strmangle v0.0.5
-	golang.org/x/exp v0.0.0-20231006140011-7918f672742d
+	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225
 )
 
 require (
@@ -45,10 +45,10 @@ require (
 	github.com/aws/smithy-go v1.15.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.2.0 // indirect
+	github.com/c2h5oh/hide v0.0.0-20181204203522-190260264be9 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
-	github.com/containerd/containerd v1.7.11 // indirect
-	github.com/containerd/log v0.1.0 // indirect
+	github.com/containerd/containerd v1.7.6 // indirect
 	github.com/cpuguy83/dockercfg v0.3.1 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -118,11 +118,11 @@ require (
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
 	golang.org/x/crypto v0.19.0 // indirect
-	golang.org/x/mod v0.13.0 // indirect
-	golang.org/x/net v0.17.0 // indirect
+	golang.org/x/mod v0.15.0 // indirect
+	golang.org/x/net v0.21.0 // indirect
 	golang.org/x/sys v0.17.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
-	golang.org/x/tools v0.14.0 // indirect
+	golang.org/x/tools v0.18.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20231016165738-49dd2c1f3d0b // indirect
 	google.golang.org/grpc v1.59.0 // indirect

@@ -13,6 +13,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/models"
+	"github.com/DIMO-Network/mnemonic"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"github.com/vmihailenco/msgpack/v5"
@@ -180,7 +181,8 @@ func AftermarketDeviceToAPI(d *models.AftermarketDevice, imageUrl string) *gmode
 
 	_ = e.Encode(aftermarketDevicePrimaryKey{TokenID: d.ID})
 
-	name, _ := helpers.CreateMnemonic(d.Address)
+	nameList := mnemonic.FromInt32WithObfuscation(int32(d.ID))
+	name := strings.Join(nameList, " ")
 
 	return &gmodel.AftermarketDevice{
 		ID:             "AD_" + base64.StdEncoding.EncodeToString(b.Bytes()),

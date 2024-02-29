@@ -3,6 +3,7 @@ package vehicle
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/models"
+	"github.com/DIMO-Network/mnemonic"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
@@ -159,10 +161,7 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Success() {
 	}
 
 	for _, veh := range expected {
-		bid := helpers.IntToBytes(veh.Node.TokenID)
-		veh.Node.Name, err = helpers.CreateMnemonic(bid)
-
-		s.NoError(err)
+		veh.Node.Name = strings.Join(mnemonic.FromInt32WithObfuscation(int32(veh.Node.TokenID)), " ")
 	}
 
 	s.Exactly(expected, res.Edges)
@@ -226,10 +225,7 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination() {
 	}
 
 	for _, veh := range expected {
-		bid := helpers.IntToBytes(veh.Node.TokenID)
-		veh.Node.Name, err = helpers.CreateMnemonic(bid)
-
-		s.NoError(err)
+		veh.Node.Name = strings.Join(mnemonic.FromInt32WithObfuscation(int32(veh.Node.TokenID)), " ")
 	}
 
 	s.Exactly(expected, res.Edges)
@@ -294,10 +290,7 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination_NextPage()
 	}
 
 	for _, veh := range expected {
-		bid := helpers.IntToBytes(veh.Node.TokenID)
-		veh.Node.Name, err = helpers.CreateMnemonic(bid)
-
-		s.NoError(err)
+		veh.Node.Name = strings.Join(mnemonic.FromInt32WithObfuscation(int32(veh.Node.TokenID)), " ")
 	}
 
 	s.Exactly(expected, res.Edges)

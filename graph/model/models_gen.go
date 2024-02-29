@@ -41,7 +41,8 @@ type AftermarketDevice struct {
 	Vehicle *Vehicle `json:"vehicle,omitempty"`
 	// The beneficiary for this device, who receives any associated rewards. Defaults to the owner.
 	Beneficiary common.Address `json:"beneficiary"`
-	Name        string         `json:"name"`
+	// Encoded name of the device
+	Name string `json:"name"`
 	// The Image Url of the device
 	Image string `json:"image"`
 	// The earnings attached to the aftermarket device
@@ -233,10 +234,16 @@ type PrivilegesConnection struct {
 }
 
 type SyntheticDevice struct {
-	TokenID       int            `json:"tokenId"`
-	IntegrationID int            `json:"integrationId"`
-	Address       common.Address `json:"address"`
-	MintedAt      time.Time      `json:"mintedAt"`
+	// Encoded name of the device
+	Name string `json:"name"`
+	// The ERC-721 token id for the device.
+	TokenID int `json:"tokenId"`
+	// Type of integration for the synthetic device.
+	IntegrationID int `json:"integrationId"`
+	// The Ethereum address for the device.
+	Address common.Address `json:"address"`
+	// The block timestamp at which this device was minted.
+	MintedAt time.Time `json:"mintedAt"`
 }
 
 type UserRewards struct {
@@ -266,7 +273,8 @@ type Vehicle struct {
 	// other things.
 	Definition *Definition `json:"definition,omitempty"`
 	Dcn        *Dcn        `json:"dcn,omitempty"`
-	Name       string      `json:"name"`
+	// Encoded name of the device
+	Name string `json:"name"`
 	// The Image Url of he vehicle
 	Image          string           `json:"image"`
 	Earnings       *VehicleEarnings `json:"earnings,omitempty"`
