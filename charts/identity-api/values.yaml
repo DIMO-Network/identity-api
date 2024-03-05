@@ -66,7 +66,7 @@ ingress:
     nginx.ingress.kubernetes.io/auth-tls-verify-client: 'on'
     nginx.ingress.kubernetes.io/enable-cors: 'true'
     nginx.ingress.kubernetes.io/cors-allow-origin: https://app.dev.dimo.zone, https://admin.dev.dimo.zone
-    nginx.ingress.kubernetes.io/limit-rps: '3'
+    nginx.ingress.kubernetes.io/limit-rps: '25'
     external-dns.alpha.kubernetes.io/hostname: identity-api.dev.dimo.zone
   hosts:
     - host: identity-api.dev.dimo.zone
