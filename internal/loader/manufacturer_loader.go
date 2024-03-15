@@ -43,8 +43,10 @@ func (v *ManufacturerLoader) BatchGetManufacturerByID(ctx context.Context, manuf
 
 	for i, k := range manufacturerIDs {
 		if v, ok := manufacturerByID[k]; ok {
+			obj, err := manufacturer.ToAPI(v)
 			results[i] = &dataloader.Result[*model.Manufacturer]{
-				Data: manufacturer.ManufacturerToAPI(v),
+				Data:  obj,
+				Error: err,
 			}
 		} else {
 			results[i] = &dataloader.Result[*model.Manufacturer]{Error: fmt.Errorf("no manufacturer with id %d", k)}

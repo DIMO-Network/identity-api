@@ -3,10 +3,7 @@ package manufacturer
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
-	"errors"
 	"fmt"
-	"strings"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
@@ -17,6 +14,9 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
+// TokenPrefix is the prfix for the global token id for manufacturers.
+const TokenPrefix = "M"
+
 type Repository struct {
 	*base.Repository
 }
@@ -25,33 +25,24 @@ type manufacturerPrimaryKey struct {
 	TokenID int
 }
 
-func ManufacturerToAPI(m *models.Manufacturer) *gmodel.Manufacturer {
-	var b bytes.Buffer
-	e := msgpack.NewEncoder(&b)
-	e.UseArrayEncodedStructs(true)
-
-	_ = e.Encode(manufacturerPrimaryKey{TokenID: m.ID})
+// ToAPI converts a manufacturer to a corresponding graphql model.
+func ToAPI(m *models.Manufacturer) (*gmodel.Manufacturer, error) {
+	globalID, err := base.EncodeGlobalTokenID(TokenPrefix, m.ID)
+	if err != nil {
+		return nil, fmt.Errorf("error encoding manufacturer id: %w", err)
+	}
 
 	return &gmodel.Manufacturer{
-		ID: "M_" + base64.StdEncoding.EncodeToString(b.Bytes()), TokenID: m.ID,
+		ID:       globalID,
+		TokenID:  m.ID,
 		Owner:    common.BytesToAddress(m.Owner),
 		MintedAt: m.MintedAt,
 		Name:     m.Name,
-	}
+	}, nil
 }
 
-func ManufacturerIDToToken(id string) (int, error) {
-	if !strings.HasPrefix(id, "M_") {
-		return 0, errors.New("id lacks the M_ prefix")
-	}
-
-	id = strings.TrimPrefix(id, "M_")
-
-	b, err := base64.StdEncoding.DecodeString(id)
-	if err != nil {
-		return 0, err
-	}
-
+// IDToToken converts token data to a token id.
+func IDToToken(b []byte) (int, error) {
 	var pk manufacturerPrimaryKey
 	d := msgpack.NewDecoder(bytes.NewBuffer(b))
 	if err := d.Decode(&pk); err != nil {
@@ -79,6 +70,5 @@ func (r *Repository) GetManufacturer(ctx context.Context, by gmodel.Manufacturer
 		return nil, err
 	}
 
-	res := ManufacturerToAPI(m)
-	return res, nil
+	return ToAPI(m)
 }

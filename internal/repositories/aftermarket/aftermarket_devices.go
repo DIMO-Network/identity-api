@@ -3,8 +3,6 @@ package aftermarket
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -21,6 +19,9 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"golang.org/x/exp/slices"
 )
+
+// TokenPrefix is the prefix for a global token id for aftermarket devices.
+const TokenPrefix = "AD"
 
 type Repository struct {
 	*base.Repository
@@ -107,10 +108,14 @@ func (r *Repository) GetAftermarketDevices(ctx context.Context, first *int, afte
 
 	edges := make([]*gmodel.AftermarketDeviceEdge, len(all))
 	nodes := make([]*gmodel.AftermarketDevice, len(all))
-
+	var errList gqlerror.List
 	for i, da := range all {
 		imageUrl := helpers.GetAftermarketDeviceImageUrl(r.Settings.BaseImageURL, da.ID)
-		ga := AftermarketDeviceToAPI(da, imageUrl)
+		ga, err := ToAPI(da, imageUrl)
+		if err != nil {
+			errList = append(errList, gqlerror.Errorf("error converting aftermarket device to API: %v", err))
+			continue
+		}
 
 		edges[i] = &gmodel.AftermarketDeviceEdge{
 			Node:   ga,
@@ -141,7 +146,9 @@ func (r *Repository) GetAftermarketDevices(ctx context.Context, first *int, afte
 			HasPreviousPage: hasPrevious,
 		},
 	}
-
+	if errList != nil {
+		return res, errList
+	}
 	return res, nil
 }
 
@@ -167,25 +174,25 @@ func (r *Repository) GetAftermarketDevice(ctx context.Context, by gmodel.Afterma
 	}
 
 	imageUrl := helpers.GetAftermarketDeviceImageUrl(r.Settings.BaseImageURL, ad.ID)
-	return AftermarketDeviceToAPI(ad, imageUrl), nil
+	return ToAPI(ad, imageUrl)
 }
 
 type aftermarketDevicePrimaryKey struct {
 	TokenID int
 }
 
-func AftermarketDeviceToAPI(d *models.AftermarketDevice, imageUrl string) *gmodel.AftermarketDevice {
-	var b bytes.Buffer
-	e := msgpack.NewEncoder(&b)
-	e.UseArrayEncodedStructs(true)
-
-	_ = e.Encode(aftermarketDevicePrimaryKey{TokenID: d.ID})
+// ToAPI converts a vehicle to a corresponding API vehicle.
+func ToAPI(d *models.AftermarketDevice, imageUrl string) (*gmodel.AftermarketDevice, error) {
+	globalID, err := base.EncodeGlobalTokenID(TokenPrefix, d.ID)
+	if err != nil {
+		return nil, fmt.Errorf("error encoding vehicle id: %w", err)
+	}
 
 	nameList := mnemonic.FromInt32WithObfuscation(int32(d.ID))
 	name := strings.Join(nameList, " ")
 
 	return &gmodel.AftermarketDevice{
-		ID:             "AD_" + base64.StdEncoding.EncodeToString(b.Bytes()),
+		ID:             globalID,
 		TokenID:        d.ID,
 		Address:        common.BytesToAddress(d.Address),
 		Owner:          common.BytesToAddress(d.Owner),
@@ -199,21 +206,11 @@ func AftermarketDeviceToAPI(d *models.AftermarketDevice, imageUrl string) *gmode
 		ManufacturerID: d.ManufacturerID.Ptr(),
 		Name:           name,
 		Image:          imageUrl,
-	}
+	}, nil
 }
 
-func AftermarketDeviceIDToToken(id string) (int, error) {
-	if !strings.HasPrefix(id, "AD_") {
-		return 0, errors.New("id lacks the AD_ prefix")
-	}
-
-	id = strings.TrimPrefix(id, "AD_")
-
-	b, err := base64.StdEncoding.DecodeString(id)
-	if err != nil {
-		return 0, err
-	}
-
+// IDToToken converts token data to a token id.
+func IDToToken(b []byte) (int, error) {
 	var pk aftermarketDevicePrimaryKey
 	d := msgpack.NewDecoder(bytes.NewBuffer(b))
 	if err := d.Decode(&pk); err != nil {
