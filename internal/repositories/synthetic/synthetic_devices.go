@@ -4,14 +4,14 @@ import (
 	"strings"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
-	"github.com/DIMO-Network/identity-api/internal/repositories"
+	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/mnemonic"
 	"github.com/ethereum/go-ethereum/common"
 )
 
 type Repository struct {
-	*repositories.Repository
+	*base.Repository
 }
 
 func SyntheticDeviceToAPI(sd *models.SyntheticDevice) *gmodel.SyntheticDevice {

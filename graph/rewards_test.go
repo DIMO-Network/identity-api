@@ -13,7 +13,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/config"
 	test "github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/loader"
-	"github.com/DIMO-Network/identity-api/internal/repositories"
+	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/shared/dbtypes"
@@ -31,7 +31,7 @@ type RewardsQueryTestSuite struct {
 	container testcontainers.Container
 	settings  config.Settings
 	resolver  *Resolver
-	repo      *repositories.Repository
+	repo      *base.Repository
 }
 
 func (r *RewardsQueryTestSuite) SetupSuite() {
@@ -42,7 +42,7 @@ func (r *RewardsQueryTestSuite) SetupSuite() {
 		DIMORegistryAddr:    "0x4de1bcf2b7e851e31216fc07989caa902a604784",
 		DIMORegistryChainID: 80001,
 	}
-	r.repo = repositories.New(r.pdb, r.settings)
+	r.repo = base.New(r.pdb, r.settings)
 	r.resolver = NewResolver(r.repo)
 }
 

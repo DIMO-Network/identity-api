@@ -1,8 +1,8 @@
 package graph
 
 import (
-	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/internal/repositories/aftermarket"
+	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/internal/repositories/dcn"
 	"github.com/DIMO-Network/identity-api/internal/repositories/manufacturer"
 	"github.com/DIMO-Network/identity-api/internal/repositories/reward"
@@ -27,7 +27,7 @@ type Resolver struct {
 	vehicleprivilege vehicleprivilege.Repository
 }
 
-func NewResolver(repo *repositories.Repository) *Resolver {
+func NewResolver(repo *base.Repository) *Resolver {
 	return &Resolver{
 		aftermarket:      aftermarket.Repository{Repository: repo},
 		dcn:              dcn.Repository{Repository: repo},

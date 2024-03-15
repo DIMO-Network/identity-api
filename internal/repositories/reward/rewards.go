@@ -7,7 +7,7 @@ import (
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
-	"github.com/DIMO-Network/identity-api/internal/repositories"
+	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/dbtypes"
 	"github.com/ethereum/go-ethereum/common"
@@ -18,7 +18,7 @@ import (
 )
 
 type Repository struct {
-	*repositories.Repository
+	*base.Repository
 }
 
 type RewardsCursor struct {
@@ -196,7 +196,7 @@ func (r *Repository) GetEarningsByVehicleID(ctx context.Context, tokenID int) (*
 }
 
 func (r *Repository) PaginateVehicleEarningsByID(ctx context.Context, vehicleEarnings *gmodel.VehicleEarnings, first *int, after *string, last *int, before *string) (*gmodel.EarningsConnection, error) {
-	limit, err := helpers.ValidateFirstLast(first, last, repositories.MaxPageSize)
+	limit, err := helpers.ValidateFirstLast(first, last, base.MaxPageSize)
 	if err != nil {
 		return nil, err
 	}
@@ -241,7 +241,7 @@ func (r *Repository) GetEarningsByAfterMarketDeviceID(ctx context.Context, token
 }
 
 func (r *Repository) PaginateAftermarketDeviceEarningsByID(ctx context.Context, afterMarketDeviceEarnings *gmodel.AftermarketDeviceEarnings, first *int, after *string, last *int, before *string) (*gmodel.EarningsConnection, error) {
-	limit, err := helpers.ValidateFirstLast(first, last, repositories.MaxPageSize) // return early if both first and last are provided
+	limit, err := helpers.ValidateFirstLast(first, last, base.MaxPageSize) // return early if both first and last are provided
 	if err != nil {
 		return nil, err
 	}
@@ -286,7 +286,7 @@ func (r *Repository) GetEarningsByUserAddress(ctx context.Context, user common.A
 }
 
 func (r *Repository) PaginateGetEarningsByUsersDevices(ctx context.Context, userDeviceEarnings *gmodel.UserRewards, first *int, after *string, last *int, before *string) (*gmodel.EarningsConnection, error) {
-	limit, err := helpers.ValidateFirstLast(first, last, repositories.MaxPageSize) // return early if both first and last are provided
+	limit, err := helpers.ValidateFirstLast(first, last, base.MaxPageSize) // return early if both first and last are provided
 	if err != nil {
 		return nil, err
 	}

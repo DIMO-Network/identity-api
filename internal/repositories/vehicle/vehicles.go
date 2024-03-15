@@ -11,7 +11,7 @@ import (
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
-	"github.com/DIMO-Network/identity-api/internal/repositories"
+	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/mnemonic"
 	"github.com/ethereum/go-ethereum/common"
@@ -22,7 +22,7 @@ import (
 )
 
 type Repository struct {
-	*repositories.Repository
+	*base.Repository
 }
 
 type vehiclePrimaryKey struct {
@@ -126,7 +126,7 @@ func (v *Repository) createVehiclesResponse(totalCount int64, vehicles models.Ve
 // @Param last [*int] "the number of devices to return from previous pages"
 // @Param before [*string] "base64 string representing a device tokenID. Pointer to where we start fetching devices from previous pages"
 func (v *Repository) GetVehicles(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *gmodel.VehiclesFilter) (*gmodel.VehicleConnection, error) {
-	limit, err := helpers.ValidateFirstLast(first, last, repositories.MaxPageSize)
+	limit, err := helpers.ValidateFirstLast(first, last, base.MaxPageSize)
 	if err != nil {
 		return nil, err
 	}

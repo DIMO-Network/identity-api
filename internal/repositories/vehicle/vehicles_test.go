@@ -13,7 +13,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	test "github.com/DIMO-Network/identity-api/internal/helpers"
-	"github.com/DIMO-Network/identity-api/internal/repositories"
+	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/mnemonic"
 	"github.com/DIMO-Network/shared/db"
@@ -59,7 +59,7 @@ func (o *AccessibleVehiclesRepoTestSuite) SetupSuite() {
 		BaseImageURL:        "https://mockUrl.com/v1",
 		BaseVehicleDataURI:  "https://dimoData/vehicles/",
 	}
-	o.repo = &Repository{repositories.New(o.pdb, o.settings)}
+	o.repo = &Repository{base.New(o.pdb, o.settings)}
 }
 
 // TearDownTest after each test truncate tables

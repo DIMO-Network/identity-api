@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
-	"github.com/DIMO-Network/identity-api/internal/repositories"
+	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/vektah/gqlparser/v2/gqlerror"
@@ -18,7 +18,7 @@ import (
 )
 
 type Repository struct {
-	*repositories.Repository
+	*base.Repository
 }
 
 type manufacturerPrimaryKey struct {
@@ -62,7 +62,7 @@ func ManufacturerIDToToken(id string) (int, error) {
 }
 
 func (r *Repository) GetManufacturer(ctx context.Context, by gmodel.ManufacturerBy) (*gmodel.Manufacturer, error) {
-	if repositories.CountTrue(by.TokenID != nil, by.Name != nil) != 1 {
+	if base.CountTrue(by.TokenID != nil, by.Name != nil) != 1 {
 		return nil, gqlerror.Errorf("Provide exactly one of `name` or `tokenID`.")
 	}
 

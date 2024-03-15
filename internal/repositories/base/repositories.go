@@ -1,4 +1,4 @@
-package repositories
+package base
 
 import (
 	"github.com/DIMO-Network/identity-api/internal/config"
@@ -10,11 +10,13 @@ const (
 	MaxPageSize = 100
 )
 
+// Repository is the base repository for all repositories.
 type Repository struct {
 	PDB      db.Store
 	Settings config.Settings
 }
 
+// New creates a new base repository.
 func New(pdb db.Store, settings config.Settings) *Repository {
 	return &Repository{
 		PDB:      pdb,
@@ -22,6 +24,7 @@ func New(pdb db.Store, settings config.Settings) *Repository {
 	}
 }
 
+// CountTrue counts the number of true values in a list of booleans.
 func CountTrue(ps ...bool) int {
 	out := 0
 
