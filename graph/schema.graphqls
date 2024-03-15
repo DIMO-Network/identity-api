@@ -423,7 +423,11 @@ type SyntheticDevice {
 Represents a DIMO Canonical Name. Typically these are human-readable labels for
 vehicles.
 """
-type DCN {
+type DCN implements Node{
+  """
+  An opaque global identifier for this DCN.
+  """
+  id: ID!
   """
   The namehash of the domain.
   """

@@ -8,11 +8,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/big"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/loader"
 	"github.com/DIMO-Network/identity-api/internal/repositories/aftermarket"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
+	"github.com/DIMO-Network/identity-api/internal/repositories/dcn"
 	"github.com/DIMO-Network/identity-api/internal/repositories/manufacturer"
 	"github.com/DIMO-Network/identity-api/internal/repositories/vehicle"
 	"github.com/ethereum/go-ethereum/common"
@@ -90,6 +92,9 @@ func (r *queryResolver) Node(ctx context.Context, id string) (model.Node, error)
 		return r.aftermarket.GetAftermarketDevice(ctx, model.AftermarketDeviceBy{TokenID: &objID})
 	case manufacturer.TokenPrefix:
 		return r.manufacturer.GetManufacturer(ctx, model.ManufacturerBy{TokenID: &objID})
+	case dcn.TokenPrefix:
+		b := big.NewInt(int64(objID)).Bytes()
+		return r.dcn.GetDCN(ctx, model.DCNBy{Node: b})
 	default:
 		return nil, errors.New("Unrecognized global id.")
 	}

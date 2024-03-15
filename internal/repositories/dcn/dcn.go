@@ -3,6 +3,7 @@ package dcn
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math/big"
 	"time"
 
@@ -17,6 +18,9 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+// TokenPrefix is the prefix for a global token id for DCNs.
+const TokenPrefix = "D"
+
 type Repository struct {
 	*base.Repository
 }
@@ -26,16 +30,23 @@ type DCNCursor struct {
 	Node     []byte
 }
 
-func DCNToAPI(d *models.DCN) *gmodel.Dcn {
+// ToAPI converts a DCN database row to a DCN API model.
+func ToAPI(d *models.DCN) (*gmodel.Dcn, error) {
+	tokenID := new(big.Int).SetBytes(d.Node)
+	gobalID, err := base.EncodeGlobalTokenID(TokenPrefix, int(tokenID.Int64()))
+	if err != nil {
+		return nil, fmt.Errorf("error encoding dcn id: %w", err)
+	}
 	return &gmodel.Dcn{
+		ID:        gobalID,
 		Owner:     common.BytesToAddress(d.OwnerAddress),
-		TokenID:   new(big.Int).SetBytes(d.Node),
+		TokenID:   tokenID,
 		Node:      d.Node,
 		ExpiresAt: d.Expiration.Ptr(),
 		Name:      d.Name.Ptr(),
 		VehicleID: d.VehicleID.Ptr(),
 		MintedAt:  d.MintedAt,
-	}
+	}, nil
 }
 
 func (r *Repository) GetDCN(ctx context.Context, by gmodel.DCNBy) (*gmodel.Dcn, error) {
@@ -62,7 +73,7 @@ func (r *Repository) GetDCNByNode(ctx context.Context, node []byte) (*gmodel.Dcn
 		return nil, err
 	}
 
-	return DCNToAPI(dcn), nil
+	return ToAPI(dcn)
 }
 
 func (r *Repository) GetDCNByName(ctx context.Context, name string) (*gmodel.Dcn, error) {
@@ -73,7 +84,7 @@ func (r *Repository) GetDCNByName(ctx context.Context, name string) (*gmodel.Dcn
 		return nil, err
 	}
 
-	return DCNToAPI(dcn), nil
+	return ToAPI(dcn)
 }
 
 var dcnCursorColumnsTuple = "(" + models.DCNColumns.MintedAt + ", " + models.DCNColumns.Node + ")"
@@ -145,14 +156,19 @@ func (r *Repository) GetDCNs(ctx context.Context, first *int, after *string, las
 
 	edges := make([]*gmodel.DCNEdge, len(all))
 	nodes := make([]*gmodel.Dcn, len(all))
-
+	var errList gqlerror.List
 	for i, dcn := range all {
 		c, err := pHelp.EncodeCursor(DCNCursor{MintedAt: dcn.MintedAt, Node: dcn.Node})
 		if err != nil {
 			return nil, err
 		}
+		apiDCN, err := ToAPI(dcn)
+		if err != nil {
+			errList = append(errList, gqlerror.Errorf("error converting dcn to api: %v", err))
+			continue
+		}
 		edges[i] = &gmodel.DCNEdge{
-			Node:   DCNToAPI(dcn),
+			Node:   apiDCN,
 			Cursor: c,
 		}
 		nodes[i] = edges[i].Node
@@ -176,6 +192,8 @@ func (r *Repository) GetDCNs(ctx context.Context, first *int, after *string, las
 			HasPreviousPage: hasPrevious,
 		},
 	}
-
+	if errList != nil {
+		return res, errList
+	}
 	return res, nil
 }

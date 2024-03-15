@@ -42,8 +42,10 @@ func (d *DCNLoader) BatchGetDCNByVehicleID(ctx context.Context, vehicleIDs []int
 
 	for idx, vid := range vehicleIDs {
 		if dcnModel, ok := dcnByVehicleID[vid]; ok {
+			dcnAPI, err := dcn.ToAPI(dcnModel)
 			results[idx] = &dataloader.Result[*gmodel.Dcn]{
-				Data: dcn.DCNToAPI(dcnModel),
+				Data:  dcnAPI,
+				Error: err,
 			}
 		} else {
 			results[idx] = &dataloader.Result[*gmodel.Dcn]{}
