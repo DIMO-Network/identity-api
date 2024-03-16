@@ -54,7 +54,8 @@ func main() {
 
 	startContractEventsConsumer(ctx, &logger, &settings, dbs)
 
-	baseRepo := base.NewRepository(dbs, settings)
+	repoLogger := logger.With().Str("component", "repository").Logger()
+	baseRepo := base.NewRepository(dbs, settings, &repoLogger)
 
 	cfg := graph.Config{Resolvers: graph.NewResolver(baseRepo)}
 	cfg.Directives.OneOf = func(ctx context.Context, _ any, next graphql.Resolver) (any, error) {

@@ -11,6 +11,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
@@ -35,7 +36,8 @@ func TestGetManufacturer(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
-	controller := Repository{base.NewRepository(pdb, config.Settings{})}
+	logger := zerolog.Nop()
+	controller := Repository{base.NewRepository(pdb, config.Settings{}, &logger)}
 	for i := 0; i < 6; i++ {
 		tokenID := i
 		res, err := controller.GetManufacturer(ctx, model.ManufacturerBy{TokenID: &tokenID})

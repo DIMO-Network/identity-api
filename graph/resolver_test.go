@@ -15,6 +15,7 @@ import (
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/goccy/go-json"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -78,8 +79,8 @@ func TestResolver(t *testing.T) {
 	assert.NoError(err)
 
 	settings := config.Settings{}
-
-	repo := base.NewRepository(pdb, settings)
+	logger := zerolog.Nop()
+	repo := base.NewRepository(pdb, settings, &logger)
 	resolver := NewResolver(repo)
 	c := client.New(loader.Middleware(pdb, handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: resolver})), settings))
 

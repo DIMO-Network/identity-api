@@ -15,6 +15,7 @@ import (
 	"github.com/DIMO-Network/mnemonic"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
@@ -43,7 +44,8 @@ func (s *OwnedVehiclesRepoTestSuite) SetupSuite() {
 		BaseImageURL:        "https://mockUrl.com/v1",
 		BaseVehicleDataURI:  "https://dimoData/vehicles/",
 	}
-	s.repo = &Repository{base.NewRepository(s.pdb, s.settings)}
+	logger := zerolog.Nop()
+	s.repo = &Repository{base.NewRepository(s.pdb, s.settings, &logger)}
 }
 
 // TearDownTest after each test truncate tables
@@ -306,7 +308,8 @@ func Test_GetOwnedVehicles_Filters(t *testing.T) {
 	assert := assert.New(t)
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDir)
 
-	repo := Repository{base.NewRepository(pdb, config.Settings{})}
+	logger := zerolog.Nop()
+	repo := Repository{base.NewRepository(pdb, config.Settings{}, &logger)}
 	_, walletA, err := helpers.GenerateWallet()
 	assert.NoError(err)
 	_, walletB, err := helpers.GenerateWallet()
