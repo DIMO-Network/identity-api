@@ -9,6 +9,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/rs/zerolog"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 	"github.com/vmihailenco/msgpack/v5"
 )
 
@@ -17,7 +18,12 @@ const (
 	MaxPageSize = 100
 )
 
-var errInvalidToken = fmt.Errorf("invalid token")
+var (
+	errInvalidToken = fmt.Errorf("invalid token")
+
+	// InternalError is a generic error message for internal errors.
+	InternalError = gqlerror.Errorf("Internal error")
+)
 
 // Repository is the base repository for all repositories.
 type Repository struct {

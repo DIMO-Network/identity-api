@@ -6,17 +6,16 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
 )
 
 // SyntheticDevice is the resolver for the syntheticDevice field.
 func (r *queryResolver) SyntheticDevice(ctx context.Context, by model.SyntheticDeviceBy) (*model.SyntheticDevice, error) {
-	panic(fmt.Errorf("not implemented: SyntheticDevice - syntheticDevice"))
+	return r.synthetic.GetSyntheticDevice(ctx, by)
 }
 
 // SyntheticDevices is the resolver for the syntheticDevices field.
 func (r *queryResolver) SyntheticDevices(ctx context.Context, first *int, last *int, after *string, before *string, filterBy *model.SyntheticDevicesFilter) (*model.SyntheticDeviceConnection, error) {
-	panic(fmt.Errorf("not implemented: SyntheticDevices - syntheticDevices"))
+	return r.synthetic.GetSyntheticDevices(ctx, first, last, after, before, filterBy)
 }

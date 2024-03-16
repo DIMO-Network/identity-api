@@ -15,6 +15,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/internal/repositories/dcn"
 	"github.com/DIMO-Network/identity-api/internal/repositories/manufacturer"
+	"github.com/DIMO-Network/identity-api/internal/repositories/synthetic"
 	"github.com/DIMO-Network/identity-api/internal/repositories/vehicle"
 )
 
@@ -34,6 +35,8 @@ func (r *queryResolver) Node(ctx context.Context, id string) (model.Node, error)
 	case dcn.TokenPrefix:
 		b := big.NewInt(int64(objID)).Bytes()
 		return r.dcn.GetDCN(ctx, model.DCNBy{Node: b})
+	case synthetic.TokenPrefix:
+		return r.synthetic.GetSyntheticDevice(ctx, model.SyntheticDeviceBy{TokenID: &objID})
 	default:
 		return nil, errors.New("Unrecognized global id.")
 	}
