@@ -11,73 +11,12 @@ import (
 	"math/big"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
-	"github.com/DIMO-Network/identity-api/internal/loader"
 	"github.com/DIMO-Network/identity-api/internal/repositories/aftermarket"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/internal/repositories/dcn"
 	"github.com/DIMO-Network/identity-api/internal/repositories/manufacturer"
 	"github.com/DIMO-Network/identity-api/internal/repositories/vehicle"
-	"github.com/ethereum/go-ethereum/common"
 )
-
-// Manufacturer is the resolver for the manufacturer field.
-func (r *aftermarketDeviceResolver) Manufacturer(ctx context.Context, obj *model.AftermarketDevice) (*model.Manufacturer, error) {
-	return loader.GetManufacturerID(ctx, *obj.ManufacturerID)
-}
-
-// Vehicle is the resolver for the vehicle field.
-func (r *aftermarketDeviceResolver) Vehicle(ctx context.Context, obj *model.AftermarketDevice) (*model.Vehicle, error) {
-	if obj.VehicleID == nil {
-		return nil, nil
-	}
-	return loader.GetVehicleByID(ctx, *obj.VehicleID)
-}
-
-// Earnings is the resolver for the earnings field.
-func (r *aftermarketDeviceResolver) Earnings(ctx context.Context, obj *model.AftermarketDevice) (*model.AftermarketDeviceEarnings, error) {
-	return r.reward.GetEarningsByAfterMarketDeviceID(ctx, obj.TokenID)
-}
-
-// History is the resolver for the history field.
-func (r *aftermarketDeviceEarningsResolver) History(ctx context.Context, obj *model.AftermarketDeviceEarnings, first *int, after *string, last *int, before *string) (*model.EarningsConnection, error) {
-	return r.reward.PaginateAftermarketDeviceEarningsByID(ctx, obj, first, after, last, before)
-}
-
-// Vehicle is the resolver for the vehicle field.
-func (r *dCNResolver) Vehicle(ctx context.Context, obj *model.Dcn) (*model.Vehicle, error) {
-	if obj.VehicleID == nil {
-		return nil, nil
-	}
-	return loader.GetVehicleByID(ctx, *obj.VehicleID)
-}
-
-// AftermarketDevice is the resolver for the aftermarketDevice field.
-func (r *earningResolver) AftermarketDevice(ctx context.Context, obj *model.Earning) (*model.AftermarketDevice, error) {
-	if obj.AftermarketDeviceID == nil {
-		return nil, nil
-	}
-
-	return loader.GetAftermarketDeviceByID(ctx, *obj.AftermarketDeviceID)
-}
-
-// SyntheticDevice is the resolver for the syntheticDevice field.
-func (r *earningResolver) SyntheticDevice(ctx context.Context, obj *model.Earning) (*model.SyntheticDevice, error) {
-	if obj.SyntheticDeviceID == nil {
-		return nil, nil
-	}
-
-	return loader.GetSyntheticDeviceByID(ctx, *obj.SyntheticDeviceID)
-}
-
-// Vehicle is the resolver for the vehicle field.
-func (r *earningResolver) Vehicle(ctx context.Context, obj *model.Earning) (*model.Vehicle, error) {
-	return loader.GetVehicleByID(ctx, obj.VehicleID)
-}
-
-// AftermarketDevices is the resolver for the aftermarketDevices field on the manufacturer object.
-func (r *manufacturerResolver) AftermarketDevices(ctx context.Context, obj *model.Manufacturer, first *int, after *string, last *int, before *string, filterBy *model.AftermarketDevicesFilter) (*model.AftermarketDeviceConnection, error) {
-	return r.aftermarket.GetAftermarketDevicesForManufacturer(ctx, obj, first, after, last, before, filterBy)
-}
 
 // Node is the resolver for the node field.
 func (r *queryResolver) Node(ctx context.Context, id string) (model.Node, error) {
@@ -100,123 +39,7 @@ func (r *queryResolver) Node(ctx context.Context, id string) (model.Node, error)
 	}
 }
 
-// Vehicle is the resolver for the vehicle field.
-func (r *queryResolver) Vehicle(ctx context.Context, tokenID int) (*model.Vehicle, error) {
-	return r.vehicle.GetVehicle(ctx, tokenID)
-}
-
-// Vehicles is the resolver for the vehicles field.
-func (r *queryResolver) Vehicles(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.VehiclesFilter) (*model.VehicleConnection, error) {
-	return r.vehicle.GetVehicles(ctx, first, after, last, before, filterBy)
-}
-
-// AftermarketDevice is the resolver for the aftermarketDevice field.
-func (r *queryResolver) AftermarketDevice(ctx context.Context, by model.AftermarketDeviceBy) (*model.AftermarketDevice, error) {
-	return r.aftermarket.GetAftermarketDevice(ctx, by)
-}
-
-// AftermarketDevices is the resolver for the aftermarketDevices field.
-func (r *queryResolver) AftermarketDevices(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.AftermarketDevicesFilter) (*model.AftermarketDeviceConnection, error) {
-	return r.aftermarket.GetAftermarketDevices(ctx, first, after, last, before, filterBy)
-}
-
-// Dcn is the resolver for the dcn field.
-func (r *queryResolver) Dcn(ctx context.Context, by model.DCNBy) (*model.Dcn, error) {
-	return r.dcn.GetDCN(ctx, by)
-}
-
-// Dcns is the resolver for the dcns field.
-func (r *queryResolver) Dcns(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.DCNFilter) (*model.DCNConnection, error) {
-	return r.dcn.GetDCNs(ctx, first, after, last, before, filterBy)
-}
-
-// Rewards is the resolver for the rewards field.
-func (r *queryResolver) Rewards(ctx context.Context, user common.Address) (*model.UserRewards, error) {
-	return r.reward.GetEarningsByUserAddress(ctx, user)
-}
-
-// Manufacturer is the resolver for the manufacturer field.
-func (r *queryResolver) Manufacturer(ctx context.Context, by model.ManufacturerBy) (*model.Manufacturer, error) {
-	return r.manufacturer.GetManufacturer(ctx, by)
-}
-
-// History is the resolver for the history field.
-func (r *userRewardsResolver) History(ctx context.Context, obj *model.UserRewards, first *int, after *string, last *int, before *string) (*model.EarningsConnection, error) {
-	return r.reward.PaginateGetEarningsByUsersDevices(ctx, obj, first, after, last, before)
-}
-
-// Manufacturer is the resolver for the manufacturer field.
-func (r *vehicleResolver) Manufacturer(ctx context.Context, obj *model.Vehicle) (*model.Manufacturer, error) {
-	return loader.GetManufacturerID(ctx, *obj.ManufacturerID)
-}
-
-// AftermarketDevice is the resolver for the aftermarketDevice field.
-func (r *vehicleResolver) AftermarketDevice(ctx context.Context, obj *model.Vehicle) (*model.AftermarketDevice, error) {
-	return loader.GetAftermarketDeviceByVehicleID(ctx, obj.TokenID)
-}
-
-// Privileges is the resolver for the privileges field.
-func (r *vehicleResolver) Privileges(ctx context.Context, obj *model.Vehicle, first *int, after *string, last *int, before *string, filterBy *model.PrivilegeFilterBy) (*model.PrivilegesConnection, error) {
-	return r.vehicleprivilege.GetPrivilegesForVehicle(ctx, obj.TokenID, first, after, last, before, filterBy)
-}
-
-// SyntheticDevice is the resolver for the syntheticDevice field.
-func (r *vehicleResolver) SyntheticDevice(ctx context.Context, obj *model.Vehicle) (*model.SyntheticDevice, error) {
-	return loader.GetSyntheticDeviceByVehicleID(ctx, obj.TokenID)
-}
-
-// Dcn is the resolver for the dcn field.
-func (r *vehicleResolver) Dcn(ctx context.Context, obj *model.Vehicle) (*model.Dcn, error) {
-	return loader.GetDCNByVehicleID(ctx, obj.TokenID)
-}
-
-// Earnings is the resolver for the earnings field.
-func (r *vehicleResolver) Earnings(ctx context.Context, obj *model.Vehicle) (*model.VehicleEarnings, error) {
-	return r.reward.GetEarningsByVehicleID(ctx, obj.TokenID)
-}
-
-// History is the resolver for the history field.
-func (r *vehicleEarningsResolver) History(ctx context.Context, obj *model.VehicleEarnings, first *int, after *string, last *int, before *string) (*model.EarningsConnection, error) {
-	return r.reward.PaginateVehicleEarningsByID(ctx, obj, first, after, last, before)
-}
-
-// AftermarketDevice returns AftermarketDeviceResolver implementation.
-func (r *Resolver) AftermarketDevice() AftermarketDeviceResolver {
-	return &aftermarketDeviceResolver{r}
-}
-
-// AftermarketDeviceEarnings returns AftermarketDeviceEarningsResolver implementation.
-func (r *Resolver) AftermarketDeviceEarnings() AftermarketDeviceEarningsResolver {
-	return &aftermarketDeviceEarningsResolver{r}
-}
-
-// DCN returns DCNResolver implementation.
-func (r *Resolver) DCN() DCNResolver { return &dCNResolver{r} }
-
-// Earning returns EarningResolver implementation.
-func (r *Resolver) Earning() EarningResolver { return &earningResolver{r} }
-
-// Manufacturer returns ManufacturerResolver implementation.
-func (r *Resolver) Manufacturer() ManufacturerResolver { return &manufacturerResolver{r} }
-
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
-// UserRewards returns UserRewardsResolver implementation.
-func (r *Resolver) UserRewards() UserRewardsResolver { return &userRewardsResolver{r} }
-
-// Vehicle returns VehicleResolver implementation.
-func (r *Resolver) Vehicle() VehicleResolver { return &vehicleResolver{r} }
-
-// VehicleEarnings returns VehicleEarningsResolver implementation.
-func (r *Resolver) VehicleEarnings() VehicleEarningsResolver { return &vehicleEarningsResolver{r} }
-
-type aftermarketDeviceResolver struct{ *Resolver }
-type aftermarketDeviceEarningsResolver struct{ *Resolver }
-type dCNResolver struct{ *Resolver }
-type earningResolver struct{ *Resolver }
-type manufacturerResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-type userRewardsResolver struct{ *Resolver }
-type vehicleResolver struct{ *Resolver }
-type vehicleEarningsResolver struct{ *Resolver }

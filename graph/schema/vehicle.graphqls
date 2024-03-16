@@ -1,0 +1,192 @@
+# Vehicle related types
+
+extend type Query {
+  """
+  View a particular vehicle.
+  """
+  vehicle(
+    """
+    The token ID of the vehicle.
+    """
+    tokenId: Int!
+  ): Vehicle!
+
+  """
+  List minted vehicles.
+
+  For now, these are always ordered by token ID in descending order.
+  """
+  vehicles(
+    """
+    The number of vehicles to retrieve.
+    Mutually exclusive with `last`.
+    """
+    first: Int
+    """
+    A cursor for pagination. Retrieve vehicles after this cursor.
+    """
+    after: String
+    """
+    The number of vehicles to retrieve from the end of the list.
+    Mutually exclusive with `first`.
+    """
+    last: Int
+    """
+    A cursor for pagination. Retrieve vehicles before this cursor.
+    """
+    before: String
+    """
+    Filter the vehicles based on specific criteria.
+    """
+    filterBy: VehiclesFilter
+  ): VehicleConnection!
+}
+
+"""
+The VehiclesFilter input is used to specify filtering criteria for querying vehicles.
+Vehicles must match all of the specified criteria.
+"""
+input VehiclesFilter {
+  """
+  Privileged filters for vehicles to which the given address has access. This includes vehicles
+  that this address owns.
+  """
+  privileged: Address
+
+  """
+  Owner filters for vehicles that this address owns.
+  """
+  owner: Address
+
+  """
+  Make filters for vehicles that are of the given make.
+  """
+  make: String
+
+  """
+  Model filters for vehicles that are of the given model.
+  """
+  model: String
+
+  """
+  Year filters for vehicles that are of the given year.
+  """
+  year: Int
+}
+
+type Vehicle implements Node {
+  """
+  An opaque global identifier for this vehicle.
+  """
+  id: ID!
+  """
+  The ERC-721 token id for the vehicle.
+  """
+  tokenId: Int!
+  """
+  The manufacturer of this vehicle.
+  """
+  manufacturer: Manufacturer
+  """
+  The Ethereum address of the owner of this vehicle.
+  """
+  owner: Address!
+  """
+  The block timestamp at which this vehicle was minted.
+  """
+  mintedAt: Time!
+  """
+  The paired aftermarket device, if any.
+  """
+  aftermarketDevice: AftermarketDevice
+  """
+  A Relay-style connection listing any active privilege grants on this vehicle.
+  """
+  privileges(
+    first: Int
+    after: String
+    last: Int
+    before: String
+    filterBy: PrivilegeFilterBy
+  ): PrivilegesConnection!
+  """
+  The paired synthetic device, if any.
+  """
+  syntheticDevice: SyntheticDevice
+  """
+  The device definition for this vehicle; which includes make, model, and year among
+  other things.
+  """
+  definition: Definition
+  dcn: DCN
+  """
+  Encoded name of the device
+  """
+  name: String!
+  """
+  The Image Url of he vehicle
+  """
+  image: String!
+
+  earnings: VehicleEarnings
+
+  dataUri: String!
+}
+
+type Definition {
+  uri: String
+  make: String
+  model: String
+  year: Int
+}
+
+"""
+An edge in a VehicleConnection.
+"""
+type VehicleEdge {
+  node: Vehicle!
+  cursor: String!
+}
+
+"""
+The Connection type for Vehicle.
+"""
+type VehicleConnection {
+  totalCount: Int!
+  edges: [VehicleEdge!]!
+  nodes: [Vehicle!]!
+  pageInfo: PageInfo!
+}
+
+type VehicleEarnings {
+  totalTokens: BigInt!
+  history(
+    first: Int
+    after: String
+    last: Int
+    before: String
+  ): EarningsConnection!
+}
+
+type SyntheticDevice {
+  """
+  Encoded name of the device
+  """
+  name: String!
+  """
+  The ERC-721 token id for the device.
+  """
+  tokenId: Int!
+  """
+  Type of integration for the synthetic device.
+  """
+  integrationId: Int!
+  """
+  The Ethereum address for the device.
+  """
+  address: Address!
+  """
+  The block timestamp at which this device was minted.
+  """
+  mintedAt: Time!
+}

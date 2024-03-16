@@ -1,0 +1,127 @@
+# DIMO Canonical Name (DCN) related schema
+
+extend type Query {
+  """
+  View a particular DIMO Canonical Name.
+  """
+  dcn(by: DCNBy!): DCN!
+
+  """
+  List DIMO Canonical Names.
+  """
+  dcns(
+    """
+    Returns the first n elements from the list.
+    Mutually exclusive with `last`.
+    """
+    first: Int
+    """
+    A cursor for pagination. Retrieve DCNs after this cursor.
+    """
+    after: String
+    """
+    Returns the last n elements from the list.
+    """
+    last: Int
+    """
+    A cursor for pagination. Retrieve DCNs before this cursor.
+    """
+    before: String
+    """
+    Filters the DCNs based on the specified criteria.
+    """
+    filterBy: DCNFilter
+  ): DCNConnection!
+}
+
+"""
+Represents a DIMO Canonical Name. This is a unique identifier for a vehicle.
+"""
+type DCN implements Node {
+  """
+  An opaque global identifier for this DCN.
+  """
+  id: ID!
+  """
+  The namehash of the domain.
+  """
+  node: Bytes!
+  """
+  The token id for the domain. This is simply the node reinterpreted as a uint256.
+  """
+  tokenId: BigInt!
+  """
+  Ethereum address of domain owner.
+  """
+  owner: Address!
+  """
+  The block timestamp at which the domain will cease to be valid.
+  """
+  expiresAt: Time
+  """
+  The block timestamp at which the domain was created.
+  """
+  mintedAt: Time!
+  """
+  Human readable name, if any, for the domain; for example, "reddy.dimo".
+  """
+  name: String
+  """
+  Vehicle, if any, to which the domain is attached.
+  """
+  vehicle: Vehicle
+}
+
+"""
+An edge in a DCNConnection.
+"""
+type DCNEdge {
+  """
+  A cursor for use in pagination.
+  """
+  cursor: String!
+  """
+  The item at the end of the edge.
+  """
+  node: DCN!
+}
+
+"""
+The Connection type for DCN.
+"""
+type DCNConnection {
+  """
+  The total count of DCNs in the connection.
+  """
+  totalCount: Int!
+  """
+  A list of edges.
+  """
+  edges: [DCNEdge!]!
+  """
+  A list of nodes in the connection
+  """
+  nodes: [DCN!]!
+  """
+  Information to aid in pagination.
+  """
+  pageInfo: PageInfo!
+}
+
+"""
+Filter for DCN.
+"""
+input DCNFilter {
+  """
+  Filter for DCN owned by this address.
+  """
+  owner: Address
+}
+
+"""
+Input used to specify a unique DCN to query.
+"""
+input DCNBy @oneOf {
+  node: Bytes
+  name: String
+}

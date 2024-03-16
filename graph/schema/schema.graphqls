@@ -1,0 +1,54 @@
+"""
+A point in time, encoded per RFC-3999. Typically these will be in second precision,
+just like the blockchain, and in UTC.
+"""
+scalar Time
+
+"""
+A 20-byte Ethereum address, encoded as a checksummed hex string with 0x prefix.
+"""
+scalar Address
+
+"""
+An integer of arbitrary precision, decimal-encoded. Typically a uint256.
+"""
+scalar BigInt
+
+"""
+An array of byte, encoded as a lowercase hex string with 0x prefix.
+"""
+scalar Bytes
+
+"""
+This directive on an input object indicates that a client must specify one of the
+fields of the object and no others. Typically used for lookups.
+"""
+directive @oneOf on INPUT_OBJECT
+
+"""
+The root query type for the GraphQL schema.
+"""
+type Query {
+  """
+  View a particular node.
+  """
+  node(
+    """
+    The ID of the node.
+    """
+    id: ID!
+  ): Node
+}
+
+# Shared Types
+
+interface Node {
+  id: ID!
+}
+
+type PageInfo {
+  startCursor: String
+  endCursor: String
+  hasPreviousPage: Boolean!
+  hasNextPage: Boolean!
+}
