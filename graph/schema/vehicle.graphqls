@@ -167,26 +167,3 @@ type VehicleEarnings {
     before: String
   ): EarningsConnection!
 }
-
-type SyntheticDevice {
-  """
-  Encoded name of the device
-  """
-  name: String!
-  """
-  The ERC-721 token id for the device.
-  """
-  tokenId: Int!
-  """
-  Type of integration for the synthetic device.
-  """
-  integrationId: Int!
-  """
-  The Ethereum address for the device.
-  """
-  address: Address!
-  """
-  The block timestamp at which this device was minted.
-  """
-  mintedAt: Time!
-}

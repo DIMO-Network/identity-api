@@ -253,7 +253,10 @@ type PrivilegesConnection struct {
 	PageInfo   *PageInfo        `json:"pageInfo"`
 }
 
+// The SyntheticDevice is a software connection established to connect the vehicle to the DIMO network.
 type SyntheticDevice struct {
+	// An opaque global identifier for this syntheticDevice.
+	ID string `json:"id"`
 	// Encoded name of the device
 	Name string `json:"name"`
 	// The ERC-721 token id for the device.
@@ -264,6 +267,46 @@ type SyntheticDevice struct {
 	Address common.Address `json:"address"`
 	// The block timestamp at which this device was minted.
 	MintedAt time.Time `json:"mintedAt"`
+}
+
+func (SyntheticDevice) IsNode()            {}
+func (this SyntheticDevice) GetID() string { return this.ID }
+
+// The SyntheticDeviceBy input is used to specify a unique synthetic device to query.
+type SyntheticDeviceBy struct {
+	// The token id for the synthetic device.
+	TokenID *int `json:"tokenId,omitempty"`
+	// The Ethereum address for the synthetic device.
+	Address *common.Address `json:"address,omitempty"`
+}
+
+// The Connection type for SyntheticDevice.
+type SyntheticDeviceConnection struct {
+	// The total count of SyntheticDevices in the connection.
+	TotalCount int `json:"totalCount"`
+	// A list of edges.
+	Edges []*SyntheticDeviceEdge `json:"edges"`
+	// A list of nodes in the connection (without going through the `edges` field).
+	Nodes []*SyntheticDevice `json:"nodes"`
+	// Information to aid in pagination.
+	PageInfo *PageInfo `json:"pageInfo"`
+}
+
+// An edge in a SytheticDeviceConnection.
+type SyntheticDeviceEdge struct {
+	// A cursor for use in pagination.
+	Cursor string `json:"cursor"`
+	// The item at the end of the edge.
+	Node *SyntheticDevice `json:"node"`
+}
+
+// The SyntheticDevicesFilter input is used to specify filtering criteria for querying synthetic devices.
+// Synthetic devices must match all of the specified criteria.
+type SyntheticDevicesFilter struct {
+	// Filter for synthetic devices owned by this address.
+	Owner *common.Address `json:"owner,omitempty"`
+	// Filter for synthetic devices with this integration id.
+	IntegrationID *int `json:"integrationId,omitempty"`
 }
 
 type UserRewards struct {
