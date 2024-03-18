@@ -30,13 +30,13 @@ func ToAPI(v *models.Vehicle, imageUrl string, dataURI string) (*gmodel.Vehicle,
 	nameList := mnemonic.FromInt32WithObfuscation(int32(v.ID))
 	name := strings.Join(nameList, " ")
 
-	gobalID, err := base.EncodeGlobalTokenID(TokenPrefix, v.ID)
+	globalID, err := base.EncodeGlobalTokenID(TokenPrefix, v.ID)
 	if err != nil {
 		return nil, fmt.Errorf("error encoding vehicle id: %w", err)
 	}
 
 	return &gmodel.Vehicle{
-		ID:       gobalID,
+		ID:       globalID,
 		TokenID:  v.ID,
 		Owner:    common.BytesToAddress(v.OwnerAddress),
 		MintedAt: v.MintedAt,

@@ -33,12 +33,12 @@ type DCNCursor struct {
 // ToAPI converts a DCN database row to a DCN API model.
 func ToAPI(d *models.DCN) (*gmodel.Dcn, error) {
 	tokenID := new(big.Int).SetBytes(d.Node)
-	gobalID, err := base.EncodeGlobalTokenID(TokenPrefix, int(tokenID.Int64()))
+	globalID, err := base.EncodeGlobalTokenID(TokenPrefix, int(tokenID.Int64()))
 	if err != nil {
 		return nil, fmt.Errorf("error encoding dcn id: %w", err)
 	}
 	return &gmodel.Dcn{
-		ID:        gobalID,
+		ID:        globalID,
 		Owner:     common.BytesToAddress(d.OwnerAddress),
 		TokenID:   tokenID,
 		Node:      d.Node,
