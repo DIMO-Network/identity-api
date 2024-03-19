@@ -16,7 +16,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	test "github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/loader"
-	"github.com/DIMO-Network/identity-api/internal/repositories"
+	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/internal/services"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared"
@@ -41,7 +41,7 @@ func TestDCNQuery(t *testing.T) {
 		DCNResolverAddr:     "0x60627326F55054Ea448e0a7BC750785bD65EF757",
 	}
 
-	repo := repositories.New(pdb, settings)
+	repo := base.NewRepository(pdb, settings)
 	resolver := NewResolver(repo)
 
 	_, wallet, err := test.GenerateWallet()

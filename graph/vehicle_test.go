@@ -11,7 +11,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/loader"
-	"github.com/DIMO-Network/identity-api/internal/repositories"
+	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/internal/services"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/ethereum/go-ethereum/common"
@@ -43,7 +43,7 @@ func (s *VehicleTestSuite) SetupSuite() {
 		VehicleNFTAddr:      vehicleAddr.Hex(),
 	}
 
-	repo := repositories.New(db, settings)
+	repo := base.NewRepository(db, settings)
 	resolver := NewResolver(repo)
 
 	s.consumer = services.NewContractsEventsConsumer(db, &logger, &settings)

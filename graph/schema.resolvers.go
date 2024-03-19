@@ -7,11 +7,14 @@ package graph
 import (
 	"context"
 	"errors"
-	"strings"
+	"fmt"
+	"math/big"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/loader"
 	"github.com/DIMO-Network/identity-api/internal/repositories/aftermarket"
+	"github.com/DIMO-Network/identity-api/internal/repositories/base"
+	"github.com/DIMO-Network/identity-api/internal/repositories/dcn"
 	"github.com/DIMO-Network/identity-api/internal/repositories/manufacturer"
 	"github.com/DIMO-Network/identity-api/internal/repositories/vehicle"
 	"github.com/ethereum/go-ethereum/common"
@@ -78,31 +81,23 @@ func (r *manufacturerResolver) AftermarketDevices(ctx context.Context, obj *mode
 
 // Node is the resolver for the node field.
 func (r *queryResolver) Node(ctx context.Context, id string) (model.Node, error) {
-	if strings.HasPrefix(id, "V_") {
-		ti, err := vehicle.VehicleIDToToken(id)
-		if err != nil {
-			return nil, err
-		}
-		return r.vehicle.GetVehicle(ctx, ti)
+	prefix, objID, err := base.DecodeGlobalTokenID(id)
+	if err != nil {
+		return nil, fmt.Errorf("could not decode global id: %w", err)
 	}
-
-	if strings.HasPrefix(id, "AD_") {
-		ti, err := aftermarket.AftermarketDeviceIDToToken(id)
-		if err != nil {
-			return nil, err
-		}
-		return r.aftermarket.GetAftermarketDevice(ctx, model.AftermarketDeviceBy{TokenID: &ti})
+	switch prefix {
+	case vehicle.TokenPrefix:
+		return r.vehicle.GetVehicle(ctx, objID)
+	case aftermarket.TokenPrefix:
+		return r.aftermarket.GetAftermarketDevice(ctx, model.AftermarketDeviceBy{TokenID: &objID})
+	case manufacturer.TokenPrefix:
+		return r.manufacturer.GetManufacturer(ctx, model.ManufacturerBy{TokenID: &objID})
+	case dcn.TokenPrefix:
+		b := big.NewInt(int64(objID)).Bytes()
+		return r.dcn.GetDCN(ctx, model.DCNBy{Node: b})
+	default:
+		return nil, errors.New("Unrecognized global id.")
 	}
-
-	if strings.HasPrefix(id, "M_") {
-		ti, err := manufacturer.ManufacturerIDToToken(id)
-		if err != nil {
-			return nil, err
-		}
-		return r.manufacturer.GetManufacturer(ctx, model.ManufacturerBy{TokenID: &ti})
-	}
-
-	return nil, errors.New("Unrecognized global id.")
 }
 
 // Vehicle is the resolver for the vehicle field.

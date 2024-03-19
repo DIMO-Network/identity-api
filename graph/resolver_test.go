@@ -11,7 +11,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/loader"
-	"github.com/DIMO-Network/identity-api/internal/repositories"
+	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/goccy/go-json"
@@ -79,7 +79,7 @@ func TestResolver(t *testing.T) {
 
 	settings := config.Settings{}
 
-	repo := repositories.New(pdb, settings)
+	repo := base.NewRepository(pdb, settings)
 	resolver := NewResolver(repo)
 	c := client.New(loader.Middleware(pdb, handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: resolver})), settings))
 

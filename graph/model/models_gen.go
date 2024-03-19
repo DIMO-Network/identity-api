@@ -88,6 +88,8 @@ type AftermarketDevicesFilter struct {
 // Represents a DIMO Canonical Name. Typically these are human-readable labels for
 // vehicles.
 type Dcn struct {
+	// An opaque global identifier for this DCN.
+	ID string `json:"id"`
 	// The namehash of the domain.
 	Node []byte `json:"node"`
 	// The token id for the domain. This is simply the node reinterpreted as a uint256.
@@ -104,6 +106,9 @@ type Dcn struct {
 	Vehicle   *Vehicle `json:"vehicle,omitempty"`
 	VehicleID *int     `json:"-"`
 }
+
+func (Dcn) IsNode()            {}
+func (this Dcn) GetID() string { return this.ID }
 
 type DCNBy struct {
 	Node []byte  `json:"node,omitempty"`

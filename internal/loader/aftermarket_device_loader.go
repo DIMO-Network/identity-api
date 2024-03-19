@@ -57,8 +57,10 @@ func (ad *AftermarketDeviceLoader) BatchGetLinkedAftermarketDeviceByVehicleID(ct
 	for i, vID := range vehicleIDs {
 		if am, ok := amByVehicleID[vID]; ok {
 			imageUrl := helpers.GetAftermarketDeviceImageUrl(ad.settings.BaseImageURL, am.ID)
+			obj, err := aftermarket.ToAPI(am, imageUrl)
 			results[i] = &dataloader.Result[*model.AftermarketDevice]{
-				Data: aftermarket.AftermarketDeviceToAPI(am, imageUrl),
+				Data:  obj,
+				Error: err,
 			}
 		} else {
 			results[i] = &dataloader.Result[*model.AftermarketDevice]{}
@@ -89,7 +91,11 @@ func (ad *AftermarketDeviceLoader) BatchGetAftermarketDeviceByID(ctx context.Con
 	for i, adID := range aftermarketDeviceIDs {
 		if ads, ok := adByID[adID]; ok {
 			imageUrl := helpers.GetAftermarketDeviceImageUrl(ad.settings.BaseImageURL, ads.ID)
-			results[i] = &dataloader.Result[*model.AftermarketDevice]{Data: aftermarket.AftermarketDeviceToAPI(ads, imageUrl)}
+			obj, err := aftermarket.ToAPI(ads, imageUrl)
+			results[i] = &dataloader.Result[*model.AftermarketDevice]{
+				Data:  obj,
+				Error: err,
+			}
 		} else {
 			results[i] = &dataloader.Result[*model.AftermarketDevice]{}
 		}

@@ -8,7 +8,7 @@ import (
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
-	"github.com/DIMO-Network/identity-api/internal/repositories"
+	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -17,7 +17,7 @@ import (
 const defaultPageSize = 20
 
 type Repository struct {
-	*repositories.Repository
+	*base.Repository
 }
 
 type PrivilegeCursor struct {

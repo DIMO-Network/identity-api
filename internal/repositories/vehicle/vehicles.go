@@ -1,45 +1,42 @@
 package vehicle
 
 import (
-	"bytes"
 	"context"
-	"encoding/base64"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
-	"github.com/DIMO-Network/identity-api/internal/repositories"
+	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/mnemonic"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/vmihailenco/msgpack/v5"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"golang.org/x/exp/slices"
 )
 
+// TokenPrefix is the prefix for a global token id for vehicles.
+const TokenPrefix = "V"
+
 type Repository struct {
-	*repositories.Repository
+	*base.Repository
 }
 
-type vehiclePrimaryKey struct {
-	TokenID int
-}
-
-func VehicleToAPI(v *models.Vehicle, imageUrl string, dataURI string) *gmodel.Vehicle {
-	var b bytes.Buffer
-	e := msgpack.NewEncoder(&b)
-	e.UseArrayEncodedStructs(true)
-
-	_ = e.Encode(vehiclePrimaryKey{TokenID: v.ID})
+// ToAPI converts a vehicle to a corresponding graphql model.
+func ToAPI(v *models.Vehicle, imageUrl string, dataURI string) (*gmodel.Vehicle, error) {
 	nameList := mnemonic.FromInt32WithObfuscation(int32(v.ID))
 	name := strings.Join(nameList, " ")
 
+	globalID, err := base.EncodeGlobalTokenID(TokenPrefix, v.ID)
+	if err != nil {
+		return nil, fmt.Errorf("error encoding vehicle id: %w", err)
+	}
+
 	return &gmodel.Vehicle{
-		ID:       "V_" + base64.StdEncoding.EncodeToString(b.Bytes()),
+		ID:       globalID,
 		TokenID:  v.ID,
 		Owner:    common.BytesToAddress(v.OwnerAddress),
 		MintedAt: v.MintedAt,
@@ -53,31 +50,11 @@ func VehicleToAPI(v *models.Vehicle, imageUrl string, dataURI string) *gmodel.Ve
 		Name:           name,
 		Image:          imageUrl,
 		DataURI:        dataURI,
-	}
+	}, nil
 }
 
-func VehicleIDToToken(id string) (int, error) {
-	if !strings.HasPrefix(id, "V_") {
-		return 0, errors.New("id lacks the V_ prefix")
-	}
-
-	id = strings.TrimPrefix(id, "V_")
-
-	b, err := base64.StdEncoding.DecodeString(id)
-	if err != nil {
-		return 0, err
-	}
-
-	var pk vehiclePrimaryKey
-	d := msgpack.NewDecoder(bytes.NewBuffer(b))
-	if err := d.Decode(&pk); err != nil {
-		return 0, fmt.Errorf("error decoding vehicle id: %w", err)
-	}
-
-	return pk.TokenID, nil
-}
-
-func (v *Repository) createVehiclesResponse(totalCount int64, vehicles models.VehicleSlice, hasNext bool, hasPrevious bool) *gmodel.VehicleConnection {
+func (v *Repository) createVehiclesResponse(totalCount int64, vehicles models.VehicleSlice, hasNext bool, hasPrevious bool) (*gmodel.VehicleConnection, error) {
+	var errList gqlerror.List
 	var endCur, startCur *string
 	if len(vehicles) != 0 {
 		ec := helpers.IDToCursor(vehicles[len(vehicles)-1].ID)
@@ -93,7 +70,11 @@ func (v *Repository) createVehiclesResponse(totalCount int64, vehicles models.Ve
 	for i, dv := range vehicles {
 		imageUrl := helpers.GetVehicleImageUrl(v.Settings.BaseImageURL, dv.ID)
 		dataURI := helpers.GetVehicleDataURI(v.Settings.BaseVehicleDataURI, dv.ID)
-		gv := VehicleToAPI(dv, imageUrl, dataURI)
+		gv, err := ToAPI(dv, imageUrl, dataURI)
+		if err != nil {
+			errList = append(errList, gqlerror.Wrap(err))
+			continue
+		}
 
 		edges[i] = &gmodel.VehicleEdge{
 			Node:   gv,
@@ -114,8 +95,10 @@ func (v *Repository) createVehiclesResponse(totalCount int64, vehicles models.Ve
 		},
 		TotalCount: int(totalCount),
 	}
-
-	return res
+	if errList != nil {
+		return res, errList
+	}
+	return res, nil
 }
 
 // GetVehicles godoc
@@ -126,7 +109,7 @@ func (v *Repository) createVehiclesResponse(totalCount int64, vehicles models.Ve
 // @Param last [*int] "the number of devices to return from previous pages"
 // @Param before [*string] "base64 string representing a device tokenID. Pointer to where we start fetching devices from previous pages"
 func (v *Repository) GetVehicles(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *gmodel.VehiclesFilter) (*gmodel.VehicleConnection, error) {
-	limit, err := helpers.ValidateFirstLast(first, last, repositories.MaxPageSize)
+	limit, err := helpers.ValidateFirstLast(first, last, base.MaxPageSize)
 	if err != nil {
 		return nil, err
 	}
@@ -200,7 +183,7 @@ func (v *Repository) GetVehicles(ctx context.Context, first *int, after *string,
 		slices.Reverse(all)
 	}
 
-	return v.createVehiclesResponse(totalCount, all, hasNext, hasPrevious), nil
+	return v.createVehiclesResponse(totalCount, all, hasNext, hasPrevious)
 }
 
 func (r *Repository) GetVehicle(ctx context.Context, id int) (*gmodel.Vehicle, error) {
@@ -210,7 +193,7 @@ func (r *Repository) GetVehicle(ctx context.Context, id int) (*gmodel.Vehicle, e
 	}
 	imageUrl := helpers.GetVehicleImageUrl(r.Settings.BaseImageURL, v.ID)
 	dataURI := helpers.GetVehicleDataURI(r.Settings.BaseVehicleDataURI, v.ID)
-	return VehicleToAPI(v, imageUrl, dataURI), nil
+	return ToAPI(v, imageUrl, dataURI)
 }
 
 // queryModsFromFilters returns a slice of query mods from the given filters.

@@ -14,16 +14,16 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/rs/zerolog"
 
 	"github.com/DIMO-Network/identity-api/graph"
 	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/identity-api/internal/loader"
-	"github.com/DIMO-Network/identity-api/internal/repositories"
+	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/internal/services"
 	"github.com/DIMO-Network/shared"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/shared/kafka"
-	"github.com/rs/zerolog"
 )
 
 func main() {
@@ -54,9 +54,9 @@ func main() {
 
 	startContractEventsConsumer(ctx, &logger, &settings, dbs)
 
-	repo := repositories.New(dbs, settings)
+	baseRepo := base.NewRepository(dbs, settings)
 
-	cfg := graph.Config{Resolvers: graph.NewResolver(repo)}
+	cfg := graph.Config{Resolvers: graph.NewResolver(baseRepo)}
 	cfg.Directives.OneOf = func(ctx context.Context, _ any, next graphql.Resolver) (any, error) {
 		// The directive on its own is advisory; everything is enforced inside of the resolver
 		return next(ctx)
