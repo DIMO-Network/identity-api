@@ -37,7 +37,7 @@ func (o *DCNRepoTestSuite) SetupSuite() {
 		DIMORegistryAddr:    "0x2daeF6FF0E2B61aaBF9ADDE1aFDAfDb4f0f1E660",
 		DIMORegistryChainID: 80001,
 	}
-	o.repo = &Repository{base.New(o.pdb, o.settings)}
+	o.repo = &Repository{base.NewRepository(o.pdb, o.settings)}
 }
 
 // TearDownTest after each test truncate tables

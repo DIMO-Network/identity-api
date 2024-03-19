@@ -35,7 +35,7 @@ func TestGetManufacturer(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
-	controller := Repository{base.New(pdb, config.Settings{})}
+	controller := Repository{base.NewRepository(pdb, config.Settings{})}
 	for i := 0; i < 6; i++ {
 		tokenID := i
 		res, err := controller.GetManufacturer(ctx, model.ManufacturerBy{TokenID: &tokenID})

@@ -79,7 +79,7 @@ func TestResolver(t *testing.T) {
 
 	settings := config.Settings{}
 
-	repo := base.New(pdb, settings)
+	repo := base.NewRepository(pdb, settings)
 	resolver := NewResolver(repo)
 	c := client.New(loader.Middleware(pdb, handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: resolver})), settings))
 

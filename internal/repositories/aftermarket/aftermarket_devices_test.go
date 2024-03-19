@@ -52,7 +52,7 @@ func TestAftermarketDeviceNodeMintMultiResponse(t *testing.T) {
 	//     |
 	//     after this
 
-	adController := Repository{Repository: base.New(pdb, config.Settings{})}
+	adController := Repository{Repository: base.NewRepository(pdb, config.Settings{})}
 	first := 2
 	after := "NA==" // 4
 	res, err := adController.GetAftermarketDevices(ctx, &first, &after, nil, nil, &model.AftermarketDevicesFilter{Owner: &aftermarketDeviceNodeMintedArgs.Owner})
@@ -89,7 +89,7 @@ func Test_GetOwnedAftermarketDevices_Pagination_PreviousPage(t *testing.T) {
 	//       ^
 	//       |
 	//       before this
-	repo := base.New(pdb, config.Settings{
+	repo := base.NewRepository(pdb, config.Settings{
 		BaseImageURL: "https://mockUrl.com/v1",
 	})
 	adController := Repository{Repository: repo}
@@ -175,7 +175,7 @@ func Test_GetAftermarketDevices_FilterByBeneficiary(t *testing.T) {
 	}
 
 	first := 10
-	adController := Repository{Repository: base.New(pdb, config.Settings{})}
+	adController := Repository{Repository: base.NewRepository(pdb, config.Settings{})}
 	beneFilterRes, err := adController.GetAftermarketDevices(ctx, &first, nil, nil, nil, &model.AftermarketDevicesFilter{Beneficiary: &beneficiary})
 	assert.NoError(t, err)
 
@@ -235,7 +235,7 @@ func Test_GetAftermarketDevices_FilterByManufacturerID(t *testing.T) {
 	}
 
 	first := 10
-	repo := base.New(pdb, config.Settings{})
+	repo := base.NewRepository(pdb, config.Settings{})
 	adController := Repository{Repository: repo}
 	actual, err := adController.GetAftermarketDevices(ctx, &first, nil, nil, nil, &model.AftermarketDevicesFilter{ManufacturerID: &manufacturerID})
 	assert.NoError(t, err)

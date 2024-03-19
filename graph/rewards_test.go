@@ -42,7 +42,7 @@ func (r *RewardsQueryTestSuite) SetupSuite() {
 		DIMORegistryAddr:    "0x4de1bcf2b7e851e31216fc07989caa902a604784",
 		DIMORegistryChainID: 80001,
 	}
-	r.repo = base.New(r.pdb, r.settings)
+	r.repo = base.NewRepository(r.pdb, r.settings)
 	r.resolver = NewResolver(r.repo)
 }
 

@@ -43,7 +43,7 @@ func (s *VehicleTestSuite) SetupSuite() {
 		VehicleNFTAddr:      vehicleAddr.Hex(),
 	}
 
-	repo := base.New(db, settings)
+	repo := base.NewRepository(db, settings)
 	resolver := NewResolver(repo)
 
 	s.consumer = services.NewContractsEventsConsumer(db, &logger, &settings)

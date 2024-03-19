@@ -47,7 +47,7 @@ func (r *RewardsRepoTestSuite) SetupSuite() {
 		DIMORegistryAddr:    "0x4de1bcf2b7e851e31216fc07989caa902a604784",
 		DIMORegistryChainID: 80001,
 	}
-	r.repo = &Repository{base.New(r.pdb, r.settings)}
+	r.repo = &Repository{base.NewRepository(r.pdb, r.settings)}
 	r.paginationHelper = helpers.PaginationHelper[RewardsCursor]{}
 
 }

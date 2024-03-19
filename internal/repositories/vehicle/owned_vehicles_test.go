@@ -43,7 +43,7 @@ func (s *OwnedVehiclesRepoTestSuite) SetupSuite() {
 		BaseImageURL:        "https://mockUrl.com/v1",
 		BaseVehicleDataURI:  "https://dimoData/vehicles/",
 	}
-	s.repo = &Repository{base.New(s.pdb, s.settings)}
+	s.repo = &Repository{base.NewRepository(s.pdb, s.settings)}
 }
 
 // TearDownTest after each test truncate tables
@@ -306,7 +306,7 @@ func Test_GetOwnedVehicles_Filters(t *testing.T) {
 	assert := assert.New(t)
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDir)
 
-	repo := Repository{base.New(pdb, config.Settings{})}
+	repo := Repository{base.NewRepository(pdb, config.Settings{})}
 	_, walletA, err := helpers.GenerateWallet()
 	assert.NoError(err)
 	_, walletB, err := helpers.GenerateWallet()

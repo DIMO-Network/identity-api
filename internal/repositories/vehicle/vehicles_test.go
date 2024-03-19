@@ -59,7 +59,7 @@ func (o *AccessibleVehiclesRepoTestSuite) SetupSuite() {
 		BaseImageURL:        "https://mockUrl.com/v1",
 		BaseVehicleDataURI:  "https://dimoData/vehicles/",
 	}
-	o.repo = &Repository{base.New(o.pdb, o.settings)}
+	o.repo = &Repository{base.NewRepository(o.pdb, o.settings)}
 }
 
 // TearDownTest after each test truncate tables

@@ -24,8 +24,8 @@ type Repository struct {
 	Settings config.Settings
 }
 
-// New creates a new base repository.
-func New(pdb db.Store, settings config.Settings) *Repository {
+// NewRepository creates a new base repository.
+func NewRepository(pdb db.Store, settings config.Settings) *Repository {
 	return &Repository{
 		PDB:      pdb,
 		Settings: settings,
@@ -34,14 +34,12 @@ func New(pdb db.Store, settings config.Settings) *Repository {
 
 // CountTrue counts the number of true values in a list of booleans.
 func CountTrue(ps ...bool) int {
-	out := 0
-
+	var out int
 	for _, p := range ps {
 		if p {
 			out++
 		}
 	}
-
 	return out
 }
 
@@ -58,12 +56,8 @@ func EncodeGlobalTokenID(prefix string, id int) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("error encoding token id: %w", err)
 	}
-	return encodeGlobalToken(prefix, buf.Bytes()), nil
-}
-
-// encodeGlobalToken encodes a global token by prefixing it with a string and encoding it to base64.
-func encodeGlobalToken(prefix string, data []byte) string {
-	return fmt.Sprintf("%s_%s", prefix, base64.StdEncoding.EncodeToString(data))
+	encodedToken := fmt.Sprintf("%s_%s", prefix, base64.StdEncoding.EncodeToString(buf.Bytes()))
+	return encodedToken, nil
 }
 
 // DecodeGlobalTokenID decodes a global token and returns the prefix and token id.
