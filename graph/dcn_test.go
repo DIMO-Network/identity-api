@@ -41,7 +41,7 @@ func TestDCNQuery(t *testing.T) {
 		DCNResolverAddr:     "0x60627326F55054Ea448e0a7BC750785bD65EF757",
 	}
 
-	repo := base.NewRepository(pdb, settings)
+	repo := base.NewRepository(pdb, settings, &logger)
 	resolver := NewResolver(repo)
 
 	_, wallet, err := test.GenerateWallet()

@@ -1,0 +1,36 @@
+# Privileges Types
+
+type Privilege {
+  id: Int!
+  """
+  The user holding the privilege.
+  """
+  user: Address!
+  """
+  When this privilege was last set for this user.
+  """
+  setAt: Time!
+  """
+  The block timestamp at which the privilege expires.
+  """
+  expiresAt: Time!
+}
+
+type PrivilegeEdge {
+  node: Privilege!
+  cursor: String!
+}
+
+"""
+The Connection type for Privileges.
+"""
+type PrivilegesConnection {
+  totalCount: Int!
+  edges: [PrivilegeEdge!]!
+  nodes: [Privilege!]!
+  pageInfo: PageInfo!
+}
+
+input PrivilegeFilterBy {
+  user: Address
+}

@@ -54,12 +54,14 @@ type AftermarketDevice struct {
 func (AftermarketDevice) IsNode()            {}
 func (this AftermarketDevice) GetID() string { return this.ID }
 
+// The AftermarketDeviceBy input is used to specify a unique aftermarket device to query.
 type AftermarketDeviceBy struct {
 	TokenID *int            `json:"tokenId,omitempty"`
 	Address *common.Address `json:"address,omitempty"`
 	Serial  *string         `json:"serial,omitempty"`
 }
 
+// The Connection type for AftermarketDevice.
 type AftermarketDeviceConnection struct {
 	TotalCount int                      `json:"totalCount"`
 	Edges      []*AftermarketDeviceEdge `json:"edges"`
@@ -73,11 +75,14 @@ type AftermarketDeviceEarnings struct {
 	AftermarketDeviceID int                 `json:"-"`
 }
 
+// An edge in a AftermarketDeviceConnection.
 type AftermarketDeviceEdge struct {
 	Cursor string             `json:"cursor"`
 	Node   *AftermarketDevice `json:"node"`
 }
 
+// The AftermarketDevicesFilter input is used to specify filtering criteria for querying aftermarket devices.
+// Aftermarket devices must match all of the specified criteria.
 type AftermarketDevicesFilter struct {
 	// Filter for aftermarket devices owned by this address.
 	Owner          *common.Address `json:"owner,omitempty"`
@@ -85,8 +90,7 @@ type AftermarketDevicesFilter struct {
 	ManufacturerID *int            `json:"manufacturerId,omitempty"`
 }
 
-// Represents a DIMO Canonical Name. Typically these are human-readable labels for
-// vehicles.
+// Represents a DIMO Canonical Name. This is a unique identifier for a vehicle.
 type Dcn struct {
 	// An opaque global identifier for this DCN.
 	ID string `json:"id"`
@@ -110,23 +114,33 @@ type Dcn struct {
 func (Dcn) IsNode()            {}
 func (this Dcn) GetID() string { return this.ID }
 
+// Input used to specify a unique DCN to query.
 type DCNBy struct {
 	Node []byte  `json:"node,omitempty"`
 	Name *string `json:"name,omitempty"`
 }
 
+// The Connection type for DCN.
 type DCNConnection struct {
-	TotalCount int        `json:"totalCount"`
-	Edges      []*DCNEdge `json:"edges"`
-	Nodes      []*Dcn     `json:"nodes"`
-	PageInfo   *PageInfo  `json:"pageInfo"`
+	// The total count of DCNs in the connection.
+	TotalCount int `json:"totalCount"`
+	// A list of edges.
+	Edges []*DCNEdge `json:"edges"`
+	// A list of nodes in the connection
+	Nodes []*Dcn `json:"nodes"`
+	// Information to aid in pagination.
+	PageInfo *PageInfo `json:"pageInfo"`
 }
 
+// An edge in a DCNConnection.
 type DCNEdge struct {
+	// A cursor for use in pagination.
 	Cursor string `json:"cursor"`
-	Node   *Dcn   `json:"node"`
+	// The item at the end of the edge.
+	Node *Dcn `json:"node"`
 }
 
+// Filter for DCN.
 type DCNFilter struct {
 	// Filter for DCN owned by this address.
 	Owner *common.Address `json:"owner,omitempty"`
@@ -231,6 +245,7 @@ type PrivilegeFilterBy struct {
 	User *common.Address `json:"user,omitempty"`
 }
 
+// The Connection type for Privileges.
 type PrivilegesConnection struct {
 	TotalCount int              `json:"totalCount"`
 	Edges      []*PrivilegeEdge `json:"edges"`
@@ -238,7 +253,10 @@ type PrivilegesConnection struct {
 	PageInfo   *PageInfo        `json:"pageInfo"`
 }
 
+// The SyntheticDevice is a software connection established to connect the vehicle to the DIMO network.
 type SyntheticDevice struct {
+	// An opaque global identifier for this syntheticDevice.
+	ID string `json:"id"`
 	// Encoded name of the device
 	Name string `json:"name"`
 	// The ERC-721 token id for the device.
@@ -249,6 +267,46 @@ type SyntheticDevice struct {
 	Address common.Address `json:"address"`
 	// The block timestamp at which this device was minted.
 	MintedAt time.Time `json:"mintedAt"`
+}
+
+func (SyntheticDevice) IsNode()            {}
+func (this SyntheticDevice) GetID() string { return this.ID }
+
+// The SyntheticDeviceBy input is used to specify a unique synthetic device to query.
+type SyntheticDeviceBy struct {
+	// The token id for the synthetic device.
+	TokenID *int `json:"tokenId,omitempty"`
+	// The Ethereum address for the synthetic device.
+	Address *common.Address `json:"address,omitempty"`
+}
+
+// The Connection type for SyntheticDevice.
+type SyntheticDeviceConnection struct {
+	// The total count of SyntheticDevices in the connection.
+	TotalCount int `json:"totalCount"`
+	// A list of edges.
+	Edges []*SyntheticDeviceEdge `json:"edges"`
+	// A list of nodes in the connection (without going through the `edges` field).
+	Nodes []*SyntheticDevice `json:"nodes"`
+	// Information to aid in pagination.
+	PageInfo *PageInfo `json:"pageInfo"`
+}
+
+// An edge in a SytheticDeviceConnection.
+type SyntheticDeviceEdge struct {
+	// A cursor for use in pagination.
+	Cursor string `json:"cursor"`
+	// The item at the end of the edge.
+	Node *SyntheticDevice `json:"node"`
+}
+
+// The SyntheticDevicesFilter input is used to specify filtering criteria for querying synthetic devices.
+// Synthetic devices must match all of the specified criteria.
+type SyntheticDevicesFilter struct {
+	// Filter for synthetic devices owned by this address.
+	Owner *common.Address `json:"owner,omitempty"`
+	// Filter for synthetic devices with this integration id.
+	IntegrationID *int `json:"integrationId,omitempty"`
 }
 
 type UserRewards struct {
@@ -290,6 +348,7 @@ type Vehicle struct {
 func (Vehicle) IsNode()            {}
 func (this Vehicle) GetID() string { return this.ID }
 
+// The Connection type for Vehicle.
 type VehicleConnection struct {
 	TotalCount int            `json:"totalCount"`
 	Edges      []*VehicleEdge `json:"edges"`
@@ -303,6 +362,7 @@ type VehicleEarnings struct {
 	VehicleID   int                 `json:"-"`
 }
 
+// An edge in a VehicleConnection.
 type VehicleEdge struct {
 	Node   *Vehicle `json:"node"`
 	Cursor string   `json:"cursor"`

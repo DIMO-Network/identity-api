@@ -18,6 +18,7 @@ import (
 	"github.com/DIMO-Network/mnemonic"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
@@ -59,7 +60,8 @@ func (o *AccessibleVehiclesRepoTestSuite) SetupSuite() {
 		BaseImageURL:        "https://mockUrl.com/v1",
 		BaseVehicleDataURI:  "https://dimoData/vehicles/",
 	}
-	o.repo = &Repository{base.NewRepository(o.pdb, o.settings)}
+	logger := zerolog.Nop()
+	o.repo = &Repository{base.NewRepository(o.pdb, o.settings, &logger)}
 }
 
 // TearDownTest after each test truncate tables

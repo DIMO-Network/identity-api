@@ -12,6 +12,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/volatiletech/null/v8"
@@ -35,7 +36,8 @@ func (s *VehiclesPrivilegesRepoTestSuite) SetupSuite() {
 		DIMORegistryAddr:    "0x4de1bcf2b7e851e31216fc07989caa902a604784",
 		DIMORegistryChainID: 80001,
 	}
-	s.repo = &Repository{base.NewRepository(s.pdb, s.settings)}
+	logger := zerolog.Nop()
+	s.repo = &Repository{base.NewRepository(s.pdb, s.settings, &logger)}
 }
 
 // TearDownTest after each test truncate tables

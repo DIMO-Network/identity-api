@@ -14,6 +14,7 @@ import (
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/volatiletech/null/v8"
@@ -37,7 +38,8 @@ func (o *DCNRepoTestSuite) SetupSuite() {
 		DIMORegistryAddr:    "0x2daeF6FF0E2B61aaBF9ADDE1aFDAfDb4f0f1E660",
 		DIMORegistryChainID: 80001,
 	}
-	o.repo = &Repository{base.NewRepository(o.pdb, o.settings)}
+	logger := zerolog.Nop()
+	o.repo = &Repository{base.NewRepository(o.pdb, o.settings, &logger)}
 }
 
 // TearDownTest after each test truncate tables

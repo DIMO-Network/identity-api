@@ -1,0 +1,132 @@
+# SyntheticDevice related types
+
+extend type Query {
+  """
+  View a particular synthetic device.
+  """
+  syntheticDevice(by: SyntheticDeviceBy!): SyntheticDevice!
+
+  """
+  List synthetic devices.
+  Ordered by token id, descending.
+  """
+  syntheticDevices(
+    """
+    Returns the first n elements from the list.
+    Mutually exclusive with `last`.
+    """
+    first: Int
+    """
+    Returns the last n elements from the list.
+    Mutually exclusive with `first`.
+    """
+    last: Int
+    """
+    A cursor for pagination. Retrieve synthetic devices after this cursor.
+    """
+    after: String
+    """
+    A cursor for pagination. Retrieve synthetic devices before this cursor.
+    """
+    before: String
+    """
+    Filter synthetic devices by the given criteria.
+    """
+    filterBy: SyntheticDevicesFilter
+  ): SyntheticDeviceConnection!
+}
+
+"""
+The SyntheticDevice is a software connection established to connect the vehicle to the DIMO network.
+"""
+type SyntheticDevice implements Node {
+  """
+  An opaque global identifier for this syntheticDevice.
+  """
+  id: ID!
+  """
+  Encoded name of the device
+  """
+  name: String!
+  """
+  The ERC-721 token id for the device.
+  """
+  tokenId: Int!
+  """
+  Type of integration for the synthetic device.
+  """
+  integrationId: Int!
+  """
+  The Ethereum address for the device.
+  """
+  address: Address!
+  """
+  The block timestamp at which this device was minted.
+  """
+  mintedAt: Time!
+}
+
+"""
+The Connection type for SyntheticDevice.
+"""
+type SyntheticDeviceConnection {
+  """
+  The total count of SyntheticDevices in the connection.
+  """
+  totalCount: Int!
+  """
+  A list of edges.
+  """
+  edges: [SyntheticDeviceEdge!]!
+  """
+  A list of nodes in the connection (without going through the `edges` field).
+  """
+  nodes: [SyntheticDevice!]!
+  """
+  Information to aid in pagination.
+  """
+  pageInfo: PageInfo!
+}
+
+"""
+An edge in a SytheticDeviceConnection.
+"""
+type SyntheticDeviceEdge {
+  """
+  A cursor for use in pagination.
+  """
+  cursor: String!
+  """
+  The item at the end of the edge.
+  """
+  node: SyntheticDevice!
+}
+
+"""
+The SyntheticDevicesFilter input is used to specify filtering criteria for querying synthetic devices.
+Synthetic devices must match all of the specified criteria.
+"""
+input SyntheticDevicesFilter {
+  """
+  Filter for synthetic devices owned by this address.
+  """
+  owner: Address
+  """
+  Filter for synthetic devices with this integration id.
+  """
+  integrationId: Int
+}
+
+"""
+The SyntheticDeviceBy input is used to specify a unique synthetic device to query.
+"""
+input SyntheticDeviceBy @oneOf {
+  """
+  The token id for the synthetic device.
+  """
+  tokenId: Int
+  """
+  The Ethereum address for the synthetic device.
+  """
+  address: Address
+}

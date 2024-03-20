@@ -8,6 +8,8 @@ import (
 
 	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/shared/db"
+	"github.com/rs/zerolog"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 	"github.com/vmihailenco/msgpack/v5"
 )
 
@@ -16,30 +18,39 @@ const (
 	MaxPageSize = 100
 )
 
-var errInvalidToken = fmt.Errorf("invalid token")
+var (
+	errInvalidToken = fmt.Errorf("invalid token")
+
+	// InternalError is a generic error message for internal errors.
+	InternalError = gqlerror.Errorf("Internal error")
+)
 
 // Repository is the base repository for all repositories.
 type Repository struct {
 	PDB      db.Store
 	Settings config.Settings
+	Log      *zerolog.Logger
 }
 
 // NewRepository creates a new base repository.
-func NewRepository(pdb db.Store, settings config.Settings) *Repository {
+func NewRepository(pdb db.Store, settings config.Settings, logger *zerolog.Logger) *Repository {
 	return &Repository{
 		PDB:      pdb,
 		Settings: settings,
+		Log:      logger,
 	}
 }
 
 // CountTrue counts the number of true values in a list of booleans.
 func CountTrue(ps ...bool) int {
-	var out int
+	out := 0
+
 	for _, p := range ps {
 		if p {
 			out++
 		}
 	}
+
 	return out
 }
 
@@ -56,8 +67,12 @@ func EncodeGlobalTokenID(prefix string, id int) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("error encoding token id: %w", err)
 	}
-	encodedToken := fmt.Sprintf("%s_%s", prefix, base64.StdEncoding.EncodeToString(buf.Bytes()))
-	return encodedToken, nil
+	return encodeGlobalToken(prefix, buf.Bytes()), nil
+}
+
+// encodeGlobalToken encodes a global token by prefixing it with a string and encoding it to base64.
+func encodeGlobalToken(prefix string, data []byte) string {
+	return fmt.Sprintf("%s_%s", prefix, base64.StdEncoding.EncodeToString(data))
 }
 
 // DecodeGlobalTokenID decodes a global token and returns the prefix and token id.

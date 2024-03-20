@@ -16,6 +16,7 @@ import (
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/mnemonic"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -46,13 +47,12 @@ func TestAftermarketDeviceNodeMintMultiResponse(t *testing.T) {
 		err := ad.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 		assert.NoError(t, err)
 	}
-
+	logger := zerolog.Nop()
 	// 6 5 4 3 2 1
 	//     ^
 	//     |
 	//     after this
-
-	adController := Repository{Repository: base.NewRepository(pdb, config.Settings{})}
+	adController := Repository{Repository: base.NewRepository(pdb, config.Settings{}, &logger)}
 	first := 2
 	after := "NA==" // 4
 	res, err := adController.GetAftermarketDevices(ctx, &first, &after, nil, nil, &model.AftermarketDevicesFilter{Owner: &aftermarketDeviceNodeMintedArgs.Owner})
@@ -84,6 +84,7 @@ func Test_GetOwnedAftermarketDevices_Pagination_PreviousPage(t *testing.T) {
 		err := adv.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 		assert.NoError(t, err)
 	}
+	logger := zerolog.Nop()
 
 	// 4 3 2 1
 	//       ^
@@ -91,7 +92,7 @@ func Test_GetOwnedAftermarketDevices_Pagination_PreviousPage(t *testing.T) {
 	//       before this
 	repo := base.NewRepository(pdb, config.Settings{
 		BaseImageURL: "https://mockUrl.com/v1",
-	})
+	}, &logger)
 	adController := Repository{Repository: repo}
 	last := 2
 	before := "MQ=="
@@ -175,7 +176,8 @@ func Test_GetAftermarketDevices_FilterByBeneficiary(t *testing.T) {
 	}
 
 	first := 10
-	adController := Repository{Repository: base.NewRepository(pdb, config.Settings{})}
+	logger := zerolog.Nop()
+	adController := Repository{Repository: base.NewRepository(pdb, config.Settings{}, &logger)}
 	beneFilterRes, err := adController.GetAftermarketDevices(ctx, &first, nil, nil, nil, &model.AftermarketDevicesFilter{Beneficiary: &beneficiary})
 	assert.NoError(t, err)
 
@@ -235,7 +237,8 @@ func Test_GetAftermarketDevices_FilterByManufacturerID(t *testing.T) {
 	}
 
 	first := 10
-	repo := base.NewRepository(pdb, config.Settings{})
+	logger := zerolog.Nop()
+	repo := base.NewRepository(pdb, config.Settings{}, &logger)
 	adController := Repository{Repository: repo}
 	actual, err := adController.GetAftermarketDevices(ctx, &first, nil, nil, nil, &model.AftermarketDevicesFilter{ManufacturerID: &manufacturerID})
 	assert.NoError(t, err)

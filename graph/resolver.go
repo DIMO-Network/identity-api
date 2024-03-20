@@ -9,6 +9,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/repositories/dcn"
 	"github.com/DIMO-Network/identity-api/internal/repositories/manufacturer"
 	"github.com/DIMO-Network/identity-api/internal/repositories/reward"
+	"github.com/DIMO-Network/identity-api/internal/repositories/synthetic"
 	"github.com/DIMO-Network/identity-api/internal/repositories/vehicle"
 	"github.com/DIMO-Network/identity-api/internal/repositories/vehicleprivilege"
 )
@@ -45,6 +46,14 @@ type ManufacturerRepository interface {
 	GetManufacturer(ctx context.Context, by model.ManufacturerBy) (*model.Manufacturer, error)
 }
 
+// SyntheticRepository interface for mocking synthetic.Repository.
+//
+//go:generate mockgen -destination=./mock_synthetic_test.go -package=graph github.com/DIMO-Network/identity-api/graph SyntheticRepository
+type SyntheticRepository interface {
+	GetSyntheticDevice(ctx context.Context, by model.SyntheticDeviceBy) (*model.SyntheticDevice, error)
+	GetSyntheticDevices(ctx context.Context, first *int, last *int, after *string, before *string, filterBy *model.SyntheticDevicesFilter) (*model.SyntheticDeviceConnection, error)
+}
+
 // VehicleRepository interface for mocking vehicle.Repository.
 //
 //go:generate mockgen -destination=./mock_vehicle_test.go -package=graph github.com/DIMO-Network/identity-api/graph VehicleRepository
@@ -59,6 +68,7 @@ type Resolver struct {
 	dcn              DCNRepository
 	manufacturer     ManufacturerRepository
 	reward           reward.Repository
+	synthetic        SyntheticRepository
 	vehicle          VehicleRepository
 	vehicleprivilege vehicleprivilege.Repository
 }
@@ -70,6 +80,7 @@ func NewResolver(baseRepo *base.Repository) *Resolver {
 		dcn:              &dcn.Repository{Repository: baseRepo},
 		manufacturer:     &manufacturer.Repository{Repository: baseRepo},
 		reward:           reward.Repository{Repository: baseRepo},
+		synthetic:        &synthetic.Repository{Repository: baseRepo},
 		vehicle:          &vehicle.Repository{Repository: baseRepo},
 		vehicleprivilege: vehicleprivilege.Repository{Repository: baseRepo},
 	}

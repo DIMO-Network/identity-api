@@ -15,6 +15,7 @@ import (
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/shared/dbtypes"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/volatiletech/null/v8"
@@ -47,7 +48,8 @@ func (r *RewardsRepoTestSuite) SetupSuite() {
 		DIMORegistryAddr:    "0x4de1bcf2b7e851e31216fc07989caa902a604784",
 		DIMORegistryChainID: 80001,
 	}
-	r.repo = &Repository{base.NewRepository(r.pdb, r.settings)}
+	logger := zerolog.Nop()
+	r.repo = &Repository{base.NewRepository(r.pdb, r.settings, &logger)}
 	r.paginationHelper = helpers.PaginationHelper[RewardsCursor]{}
 
 }
