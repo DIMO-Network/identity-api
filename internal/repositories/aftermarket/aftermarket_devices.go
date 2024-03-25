@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
@@ -110,7 +112,11 @@ func (r *Repository) GetAftermarketDevices(ctx context.Context, first *int, afte
 	nodes := make([]*gmodel.AftermarketDevice, len(all))
 	var errList gqlerror.List
 	for i, da := range all {
-		imageUrl := helpers.GetAftermarketDeviceImageUrl(r.Settings.BaseImageURL, da.ID)
+		imageUrl, err := GetAftermarketDeviceImageUrl(r.Settings.BaseImageURL, da.ID)
+		if err != nil {
+			errList = append(errList, gqlerror.Errorf("error getting aftermarket device image url: %v", err))
+			continue
+		}
 		ga, err := ToAPI(da, imageUrl)
 		if err != nil {
 			errList = append(errList, gqlerror.Errorf("error converting aftermarket device to API: %v", err))
@@ -173,7 +179,11 @@ func (r *Repository) GetAftermarketDevice(ctx context.Context, by gmodel.Afterma
 		return nil, err
 	}
 
-	imageUrl := helpers.GetAftermarketDeviceImageUrl(r.Settings.BaseImageURL, ad.ID)
+	imageUrl, err := GetAftermarketDeviceImageUrl(r.Settings.BaseImageURL, ad.ID)
+	if err != nil {
+		return nil, fmt.Errorf("faile to get image url: %w", err)
+	}
+
 	return ToAPI(ad, imageUrl)
 }
 
@@ -207,6 +217,11 @@ func ToAPI(d *models.AftermarketDevice, imageUrl string) (*gmodel.AftermarketDev
 		Name:           name,
 		Image:          imageUrl,
 	}, nil
+}
+
+func GetAftermarketDeviceImageUrl(baseURL string, tokenID int) (string, error) {
+	tokenStr := strconv.Itoa(tokenID)
+	return url.JoinPath(baseURL, "aftermarket", "device", tokenStr, "image")
 }
 
 // IDToToken converts token data to a token id.
