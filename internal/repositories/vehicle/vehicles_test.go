@@ -11,7 +11,6 @@ import (
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/config"
-	"github.com/DIMO-Network/identity-api/internal/helpers"
 	test "github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/models"
@@ -991,8 +990,10 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 		Year:         year2020,
 		MintedAt:     currTime,
 	}
-	vehicle1ImageURL := helpers.GetVehicleImageUrl(o.settings.BaseImageURL, testVehicle1.ID)
-	vehicle1DataURI := helpers.GetVehicleDataURI(o.settings.BaseVehicleDataURI, testVehicle1.ID)
+	vehicle1ImageURL, err := GetVehicleImageUrl(o.settings.BaseImageURL, testVehicle1.ID)
+	o.Require().NoError(err)
+	vehicle1DataURI, err := GetVehicleDataURI(o.settings.BaseVehicleDataURI, testVehicle1.ID)
+	o.Require().NoError(err)
 	vehicle1AsAPI, err := ToAPI(&testVehicle1, vehicle1ImageURL, vehicle1DataURI)
 	o.NoError(err)
 
@@ -1004,8 +1005,10 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 		Year:         year2022,
 		MintedAt:     currTime,
 	}
-	vehicle2ImageURL := helpers.GetVehicleImageUrl(o.settings.BaseImageURL, testVehicle2.ID)
-	vehicle2DataURI := helpers.GetVehicleDataURI(o.settings.BaseVehicleDataURI, testVehicle2.ID)
+	vehicle2ImageURL, err := GetVehicleImageUrl(o.settings.BaseImageURL, testVehicle2.ID)
+	o.Require().NoError(err)
+	vehicle2DataURI, err := GetVehicleDataURI(o.settings.BaseVehicleDataURI, testVehicle2.ID)
+	o.Require().NoError(err)
 	vehicle2AsAPI, err := ToAPI(&testVehicle2, vehicle2ImageURL, vehicle2DataURI)
 	o.NoError(err)
 
@@ -1017,8 +1020,10 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 		Year:         year2022,
 		MintedAt:     currTime,
 	}
-	vehicle3ImageURL := helpers.GetVehicleImageUrl(o.settings.BaseImageURL, testVehicle3.ID)
-	vehicle3DataURI := helpers.GetVehicleDataURI(o.settings.BaseVehicleDataURI, testVehicle3.ID)
+	vehicle3ImageURL, err := GetVehicleImageUrl(o.settings.BaseImageURL, testVehicle3.ID)
+	o.Require().NoError(err)
+	vehicle3DataURI, err := GetVehicleDataURI(o.settings.BaseVehicleDataURI, testVehicle3.ID)
+	o.Require().NoError(err)
 	vehicle3AsAPI, err := ToAPI(&testVehicle3, vehicle3ImageURL, vehicle3DataURI)
 	o.NoError(err)
 
@@ -1030,10 +1035,12 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 		Year:         year2020,
 		MintedAt:     currTime,
 	}
-	vehicle4ImageURL := helpers.GetVehicleImageUrl(o.settings.BaseImageURL, testVehicle4.ID)
-	vehicle4DataURI := helpers.GetVehicleDataURI(o.settings.BaseVehicleDataURI, testVehicle4.ID)
+	vehicle4ImageURL, err := GetVehicleImageUrl(o.settings.BaseImageURL, testVehicle4.ID)
+	o.Require().NoError(err)
+	vehicle4DataURI, err := GetVehicleDataURI(o.settings.BaseVehicleDataURI, testVehicle4.ID)
+	o.Require().NoError(err)
 	vehicle4AsAPI, err := ToAPI(&testVehicle4, vehicle4ImageURL, vehicle4DataURI)
-	o.NoError(err)
+	o.Require().NoError(err)
 
 	vehicles := []models.Vehicle{testVehicle1, testVehicle2, testVehicle3, testVehicle4}
 	first := len(vehicles)
