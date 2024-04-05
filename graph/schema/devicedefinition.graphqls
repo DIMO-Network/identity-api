@@ -4,12 +4,40 @@ extend type Query {
   """
   View a particular device definition.
   """
-  deviceDefinition(
+  devicedefinition(
     """
     criteria to search for a device definition
     """
-    by: DeviceDefinitionBy!
+    by: DevicedefinitionBy!
   ): DeviceDefinition!
+
+  """
+  List device definitions.
+  """
+  devicedefinitions(
+    """
+    The number of device definition to retrieve.
+    Mutually exclusive with `last`.
+    """
+    first: Int
+    """
+    A cursor for pagination. Retrieve device definitions after this cursor.
+    """
+    after: String
+    """
+    The number of device definitions to retrieve from the end of the list.
+    Mutually exclusive with `first`.
+    """
+    last: Int
+    """
+    A cursor for pagination. Retrieve device definitions before this cursor.
+    """
+    before: String
+    """
+    Filter the device definitions based on specific criteria.
+    """
+    filterBy: DevicedefinitionFilter
+  ): DeviceDefinitionConnection!
 }
 
 """
@@ -22,34 +50,19 @@ type DeviceDefinition implements Node {
   id: ID!
 
   """
-  Device Definition id.
+  Legacy ID for this device definition.
   """
-  deviceDefinitionId: String!
-
-  """
-  Legacy id for this device definition.
-  """
-  legacyId: String
+  ksuid: String
 
   """
   Model for this device definition.
   """
-  model: String!
+  model: String
 
   """
   Year for this device definition.
   """
-  year: Int!
-
-  """
-  Device Type for this device definition.
-  """
-  deviceType: String
-
-  """
-  Image URI for this device definition.
-  """
-  imageUri: String
+  year: Int
 
   """
   Device attributes for this device definition.
@@ -109,17 +122,32 @@ type DeviceDefinitionConnection {
 """
 Input used to specify a unique Device Definition to query.
 """
-input DeviceDefinitionBy @oneOf {
+input DevicedefinitionBy @oneOf {
+  """
+  The manufacturer for the device definition.
+  """
+  manufacturer: String
   """
   The id for the device definition.
   """
-  id: String!
+  id: String
 }
 
 """
 Filter for Device Definition.
 """
-input DeviceDefinitionFilter {
+input DevicedefinitionFilter {
+
+  """
+  The manufacturer for the device definition.
+  """
+  manufacturer: String
+
+  """
+  ID filters for the device definition that are of the given model.
+  """
+  id: String
+
   """
   Model filters for device definition that are of the given model.
   """

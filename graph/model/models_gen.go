@@ -158,18 +158,12 @@ type Definition struct {
 type DeviceDefinition struct {
 	// An opaque global identifier for this device definition.
 	ID string `json:"id"`
-	// Device Definition id.
-	DeviceDefinitionID string `json:"deviceDefinitionId"`
-	// Legacy id for this device definition.
-	LegacyID *string `json:"legacyId,omitempty"`
+	// Legacy ID for this device definition.
+	Ksuid *string `json:"ksuid,omitempty"`
 	// Model for this device definition.
-	Model string `json:"model"`
+	Model *string `json:"model,omitempty"`
 	// Year for this device definition.
-	Year int `json:"year"`
-	// Device Type for this device definition.
-	DeviceType *string `json:"deviceType,omitempty"`
-	// Image URI for this device definition.
-	ImageURI *string `json:"imageUri,omitempty"`
+	Year *int `json:"year,omitempty"`
 	// Device attributes for this device definition.
 	Attributes []*DeviceDefinitionAttribute `json:"attributes"`
 }
@@ -182,12 +176,6 @@ type DeviceDefinitionAttribute struct {
 	Name *string `json:"name,omitempty"`
 	// Value for this device definition.
 	Value *string `json:"value,omitempty"`
-}
-
-// Input used to specify a unique Device Definition to query.
-type DeviceDefinitionBy struct {
-	// The id for the device definition.
-	ID string `json:"id"`
 }
 
 // Represents a Device Definition.
@@ -210,8 +198,20 @@ type DeviceDefinitionEdge struct {
 	Node *DeviceDefinition `json:"node"`
 }
 
+// Input used to specify a unique Device Definition to query.
+type DevicedefinitionBy struct {
+	// The manufacturer for the device definition.
+	Manufacturer *string `json:"manufacturer,omitempty"`
+	// The id for the device definition.
+	ID *string `json:"id,omitempty"`
+}
+
 // Filter for Device Definition.
-type DeviceDefinitionFilter struct {
+type DevicedefinitionFilter struct {
+	// The manufacturer for the device definition.
+	Manufacturer *string `json:"manufacturer,omitempty"`
+	// ID filters for the device definition that are of the given model.
+	ID *string `json:"id,omitempty"`
 	// Model filters for device definition that are of the given model.
 	Model *string `json:"model,omitempty"`
 	// Year filters for device definition that are of the given year.

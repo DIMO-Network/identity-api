@@ -3,6 +3,8 @@ package graph
 import (
 	"context"
 
+	"github.com/DIMO-Network/identity-api/internal/repositories/devicedefinition"
+
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/repositories/aftermarket"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
@@ -68,8 +70,8 @@ type VehicleRepository interface {
 //
 //go:generate mockgen -destination=./mock_devicedefinition_test.go -package=graph github.com/DIMO-Network/identity-api/graph DeviceDefinitionRepository
 type DeviceDefinitionRepository interface {
-	GetDeviceDefinition(ctx context.Context, by model.DeviceDefinitionBy) (*model.DeviceDefinition, error)
-	GetDeviceDefinitions(ctx context.Context, tableID, first *int, after *string, last *int, before *string, filterBy *model.DeviceDefinitionFilter) (*model.DeviceDefinitionConnection, error)
+	GetDeviceDefinition(ctx context.Context, by model.DevicedefinitionBy) (*model.DeviceDefinition, error)
+	GetDeviceDefinitions(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.DevicedefinitionFilter) (*model.DeviceDefinitionConnection, error)
 }
 
 // Resolver holds the repositories for the graph resolvers.
@@ -96,8 +98,6 @@ func NewResolver(baseRepo *base.Repository) *Resolver {
 		synthetic:        &synthetic.Repository{Repository: baseRepo},
 		vehicle:          &vehicle.Repository{Repository: baseRepo},
 		vehicleprivilege: vehicleprivilege.Repository{Repository: baseRepo},
-		deviceDefinition: &devicedefinition.Repository{Repository: baseRepo,
-			TablelandApiService: tablelandApiService,
-		},
+		deviceDefinition: &devicedefinition.DeviceDefinitionRepository{Repository: baseRepo},
 	}
 }
