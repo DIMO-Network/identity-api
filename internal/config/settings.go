@@ -19,5 +19,6 @@ type Settings struct {
 	RewardsContractAddr   string      `yaml:"REWARDS_CONTRACT_ADDRESS"`
 	BaseImageURL          string      `yaml:"BASE_IMAGE_URL"`
 
-	BaseVehicleDataURI string `yaml:"BASE_VEHICLE_DATA_URI"`
+	BaseVehicleDataURI  string `yaml:"BASE_VEHICLE_DATA_URI"`
+	TablelandAPIGateway string `yaml:"TABLELAND_API_GATEWAY"`
 }

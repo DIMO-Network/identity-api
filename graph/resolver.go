@@ -2,6 +2,7 @@ package graph
 
 import (
 	"context"
+	"github.com/DIMO-Network/identity-api/internal/repositories/devicedefinition"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/repositories/aftermarket"
@@ -62,6 +63,14 @@ type VehicleRepository interface {
 	GetVehicle(ctx context.Context, id int) (*model.Vehicle, error)
 }
 
+// DeviceDefinitionRepository interface for mocking devicedefinition.Repository.
+//
+//go:generate mockgen -destination=./mock_devicedefinition_test.go -package=graph github.com/DIMO-Network/identity-api/graph DeviceDefinitionRepository
+type DeviceDefinitionRepository interface {
+	GetDeviceDefinition(ctx context.Context, by model.DevicedefinitionBy) (*model.DeviceDefinition, error)
+	GetDeviceDefinitions(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.DevicedefinitionFilter) (*model.DeviceDefinitionConnection, error)
+}
+
 // Resolver holds the repositories for the graph resolvers.
 type Resolver struct {
 	aftermarket      AftermarketDeviceRepository
@@ -71,6 +80,7 @@ type Resolver struct {
 	synthetic        SyntheticRepository
 	vehicle          VehicleRepository
 	vehicleprivilege vehicleprivilege.Repository
+	deviceDefinition DeviceDefinitionRepository
 }
 
 // NewResolver creates a new Resolver with allocated repositories.
@@ -83,5 +93,6 @@ func NewResolver(baseRepo *base.Repository) *Resolver {
 		synthetic:        &synthetic.Repository{Repository: baseRepo},
 		vehicle:          &vehicle.Repository{Repository: baseRepo},
 		vehicleprivilege: vehicleprivilege.Repository{Repository: baseRepo},
+		deviceDefinition: &devicedefinition.DeviceDefinitionRepository{Repository: baseRepo},
 	}
 }

@@ -1,0 +1,160 @@
+# DeviceDefinition related types
+
+extend type Query {
+  """
+  View a particular device definition.
+  """
+  devicedefinition(
+    """
+    criteria to search for a device definition
+    """
+    by: DevicedefinitionBy!
+  ): DeviceDefinition!
+
+  """
+  List device definitions.
+  """
+  devicedefinitions(
+    """
+    The number of device definition to retrieve.
+    Mutually exclusive with `last`.
+    """
+    first: Int
+    """
+    A cursor for pagination. Retrieve device definitions after this cursor.
+    """
+    after: String
+    """
+    The number of device definitions to retrieve from the end of the list.
+    Mutually exclusive with `first`.
+    """
+    last: Int
+    """
+    A cursor for pagination. Retrieve device definitions before this cursor.
+    """
+    before: String
+    """
+    Filter the device definitions based on specific criteria.
+    """
+    filterBy: DevicedefinitionFilter
+  ): DeviceDefinitionConnection!
+}
+
+"""
+Represents a Device Definition.
+"""
+type DeviceDefinition implements Node {
+  """
+  An opaque global identifier for this device definition.
+  """
+  id: ID!
+
+  """
+  Legacy ID for this device definition.
+  """
+  ksuid: String
+
+  """
+  Model for this device definition.
+  """
+  model: String
+
+  """
+  Year for this device definition.
+  """
+  year: Int
+
+  """
+  Device attributes for this device definition.
+  """
+  attributes: [DeviceDefinitionAttribute!]!
+}
+
+type DeviceDefinitionAttribute {
+  """
+  Name for this device definition.
+  """
+  name: String
+
+  """
+  Value for this device definition.
+  """
+  value: String
+}
+
+"""
+An edge in a Device Definition Connection.
+"""
+type DeviceDefinitionEdge {
+  """
+  A cursor for use in pagination.
+  """
+  cursor: String!
+  """
+  The item at the end of the edge.
+  """
+  node: DeviceDefinition!
+}
+
+"""
+Represents a Device Definition.
+"""
+type DeviceDefinitionConnection {
+  """
+  The total count of Device Definitions in the connection.
+  """
+  totalCount: Int!
+  """
+  A list of edges.
+  """
+  edges: [DeviceDefinitionEdge!]!
+  """
+  A list of nodes in the connection
+  """
+  nodes: [DeviceDefinition!]!
+  """
+  Information to aid in pagination.
+  """
+  pageInfo: PageInfo!
+}
+
+
+"""
+Input used to specify a unique Device Definition to query.
+"""
+input DevicedefinitionBy @oneOf {
+  """
+  The manufacturer for the device definition.
+  """
+  manufacturer: String
+  """
+  The id for the device definition.
+  """
+  id: String
+}
+
+"""
+Filter for Device Definition.
+"""
+input DevicedefinitionFilter {
+
+  """
+  The manufacturer for the device definition.
+  """
+  manufacturer: String
+
+  """
+  ID filters for the device definition that are of the given model.
+  """
+  id: String
+
+  """
+  Model filters for device definition that are of the given model.
+  """
+  model: String
+
+  """
+  Year filters for device definition that are of the given year.
+  """
+  year: Int
+}

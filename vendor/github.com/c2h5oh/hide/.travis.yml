@@ -1,0 +1,15 @@
+sudo: false
+language: go
+go:
+  - "1.8"
+  - "1.9"
+  - "1.10.x"
+  - "1.11.x"
+
+install: true
+
+git:
+  depth: 1
+
+script:
+  - go test

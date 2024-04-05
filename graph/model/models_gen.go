@@ -153,6 +153,70 @@ type Definition struct {
 	Year  *int    `json:"year,omitempty"`
 }
 
+// Represents a Device Definition.
+type DeviceDefinition struct {
+	// An opaque global identifier for this device definition.
+	ID string `json:"id"`
+	// Legacy ID for this device definition.
+	Ksuid *string `json:"ksuid,omitempty"`
+	// Model for this device definition.
+	Model *string `json:"model,omitempty"`
+	// Year for this device definition.
+	Year *int `json:"year,omitempty"`
+	// Device attributes for this device definition.
+	Attributes []*DeviceDefinitionAttribute `json:"attributes"`
+}
+
+func (DeviceDefinition) IsNode()            {}
+func (this DeviceDefinition) GetID() string { return this.ID }
+
+type DeviceDefinitionAttribute struct {
+	// Name for this device definition.
+	Name *string `json:"name,omitempty"`
+	// Value for this device definition.
+	Value *string `json:"value,omitempty"`
+}
+
+// Represents a Device Definition.
+type DeviceDefinitionConnection struct {
+	// The total count of Device Definitions in the connection.
+	TotalCount int `json:"totalCount"`
+	// A list of edges.
+	Edges []*DeviceDefinitionEdge `json:"edges"`
+	// A list of nodes in the connection
+	Nodes []*DeviceDefinition `json:"nodes"`
+	// Information to aid in pagination.
+	PageInfo *PageInfo `json:"pageInfo"`
+}
+
+// An edge in a Device Definition Connection.
+type DeviceDefinitionEdge struct {
+	// A cursor for use in pagination.
+	Cursor string `json:"cursor"`
+	// The item at the end of the edge.
+	Node *DeviceDefinition `json:"node"`
+}
+
+// Input used to specify a unique Device Definition to query.
+type DevicedefinitionBy struct {
+	// The manufacturer for the device definition.
+	Manufacturer *string `json:"manufacturer,omitempty"`
+	// The id for the device definition.
+	ID *string `json:"id,omitempty"`
+}
+
+// Filter for Device Definition.
+type DevicedefinitionFilter struct {
+	// The manufacturer for the device definition.
+	Manufacturer *string `json:"manufacturer,omitempty"`
+	// ID filters for the device definition that are of the given model.
+	ID *string `json:"id,omitempty"`
+	// Model filters for device definition that are of the given model.
+	Model *string `json:"model,omitempty"`
+	// Year filters for device definition that are of the given year.
+	Year *int `json:"year,omitempty"`
+}
+
 type Earning struct {
 	// Week reward was issued
 	Week int `json:"week"`
