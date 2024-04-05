@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/DIMO-Network/identity-api/graph"
 	"github.com/DIMO-Network/identity-api/internal/config"
