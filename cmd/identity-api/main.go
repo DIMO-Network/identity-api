@@ -6,6 +6,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/DIMO-Network/identity-api/internal/services"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -74,17 +75,17 @@ func main() {
 }
 
 func startContractEventsConsumer(ctx context.Context, logger *zerolog.Logger, settings *config.Settings, dbs db.Store) {
-	//kc := kafka.Config{
-	//	Brokers: strings.Split(settings.KafkaBrokers, ","),
-	//	Topic:   settings.ContractsEventTopic,
-	//	Group:   "identity-api",
-	//}
-	//
-	//cevConsumer := services.NewContractsEventsConsumer(dbs, logger, settings)
-	//
-	//if err := kafka.Consume(ctx, kc, cevConsumer.Process, logger); err != nil {
-	//	logger.Fatal().Err(err).Msg("Couldn't start event consumer.")
-	//}
+	kc := kafka.Config{
+		Brokers: strings.Split(settings.KafkaBrokers, ","),
+		Topic:   settings.ContractsEventTopic,
+		Group:   "identity-api",
+	}
+
+	cevConsumer := services.NewContractsEventsConsumer(dbs, logger, settings)
+
+	if err := kafka.Consume(ctx, kc, cevConsumer.Process, logger); err != nil {
+		logger.Fatal().Err(err).Msg("Couldn't start event consumer.")
+	}
 
 	logger.Info().Msg("Contract events consumer started.")
 }
