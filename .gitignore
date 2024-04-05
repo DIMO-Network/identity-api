@@ -15,7 +15,7 @@
 *.out
 
 # Dependency directories (remove the comment below to include it)
-vendor/
+# vendor/
 
 # Go workspace file
 go.work
@@ -23,3 +23,5 @@ settings.yaml
 
 .idea
 
+# Desktop Service Store (macOS)
+.DS_Store
