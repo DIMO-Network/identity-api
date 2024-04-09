@@ -124,13 +124,9 @@ Input used to specify a unique Device Definition to query.
 """
 input DevicedefinitionBy @oneOf {
   """
-  The manufacturer for the device definition.
-  """
-  manufacturer: String
-  """
   The id for the device definition.
   """
-  id: String
+  id: String!
 }
 
 """
@@ -141,7 +137,7 @@ input DevicedefinitionFilter {
   """
   The manufacturer for the device definition.
   """
-  manufacturer: String
+  manufacturer: String!
 
   """
   ID filters for the device definition that are of the given model.

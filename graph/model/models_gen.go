@@ -199,16 +199,14 @@ type DeviceDefinitionEdge struct {
 
 // Input used to specify a unique Device Definition to query.
 type DevicedefinitionBy struct {
-	// The manufacturer for the device definition.
-	Manufacturer *string `json:"manufacturer,omitempty"`
 	// The id for the device definition.
-	ID *string `json:"id,omitempty"`
+	ID string `json:"id"`
 }
 
 // Filter for Device Definition.
 type DevicedefinitionFilter struct {
 	// The manufacturer for the device definition.
-	Manufacturer *string `json:"manufacturer,omitempty"`
+	Manufacturer string `json:"manufacturer"`
 	// ID filters for the device definition that are of the given model.
 	ID *string `json:"id,omitempty"`
 	// Model filters for device definition that are of the given model.

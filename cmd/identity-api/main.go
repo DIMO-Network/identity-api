@@ -3,11 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"net/http"
-	"os"
-	"strconv"
-	"strings"
-
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -15,15 +10,16 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"
+	"net/http"
+	"os"
+	"strconv"
 
 	"github.com/DIMO-Network/identity-api/graph"
 	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/identity-api/internal/loader"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
-	"github.com/DIMO-Network/identity-api/internal/services"
 	"github.com/DIMO-Network/shared"
 	"github.com/DIMO-Network/shared/db"
-	"github.com/DIMO-Network/shared/kafka"
 )
 
 func main() {
@@ -78,19 +74,19 @@ func main() {
 }
 
 func startContractEventsConsumer(ctx context.Context, logger *zerolog.Logger, settings *config.Settings, dbs db.Store) {
-	kc := kafka.Config{
-		Brokers: strings.Split(settings.KafkaBrokers, ","),
-		Topic:   settings.ContractsEventTopic,
-		Group:   "identity-api",
-	}
-
-	cevConsumer := services.NewContractsEventsConsumer(dbs, logger, settings)
-
-	if err := kafka.Consume(ctx, kc, cevConsumer.Process, logger); err != nil {
-		logger.Fatal().Err(err).Msg("Couldn't start event consumer.")
-	}
-
-	logger.Info().Msg("Contract events consumer started.")
+	//kc := kafka.Config{
+	//	Brokers: strings.Split(settings.KafkaBrokers, ","),
+	//	Topic:   settings.ContractsEventTopic,
+	//	Group:   "identity-api",
+	//}
+	//
+	//cevConsumer := services.NewContractsEventsConsumer(dbs, logger, settings)
+	//
+	//if err := kafka.Consume(ctx, kc, cevConsumer.Process, logger); err != nil {
+	//	logger.Fatal().Err(err).Msg("Couldn't start event consumer.")
+	//}
+	//
+	//logger.Info().Msg("Contract events consumer started.")
 }
 
 func serveMonitoring(port string, logger *zerolog.Logger) *fiber.App {
