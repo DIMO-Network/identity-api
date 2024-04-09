@@ -11684,42 +11684,18 @@ func (ec *executionContext) unmarshalInputDevicedefinitionBy(ctx context.Context
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"manufacturer", "id"}
+	fieldsInOrder := [...]string{"id"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "manufacturer":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("manufacturer"))
-			directive0 := func(ctx context.Context) (interface{}, error) { return ec.unmarshalOString2ᚖstring(ctx, v) }
-			directive1 := func(ctx context.Context) (interface{}, error) {
-				if ec.directives.OneOf == nil {
-					return nil, errors.New("directive oneOf is not implemented")
-				}
-				return ec.directives.OneOf(ctx, obj, directive0)
-			}
-
-			tmp, err := directive1(ctx)
-			if err != nil {
-				return it, graphql.ErrorOnPath(ctx, err)
-			}
-			if data, ok := tmp.(*string); ok {
-				it.Manufacturer = data
-			} else if tmp == nil {
-				it.Manufacturer = nil
-			} else {
-				err := fmt.Errorf(`unexpected type %T from directive, should be *string`, tmp)
-				return it, graphql.ErrorOnPath(ctx, err)
-			}
 		case "id":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			directive0 := func(ctx context.Context) (interface{}, error) { return ec.unmarshalOString2ᚖstring(ctx, v) }
+			directive0 := func(ctx context.Context) (interface{}, error) { return ec.unmarshalNString2string(ctx, v) }
 			directive1 := func(ctx context.Context) (interface{}, error) {
 				if ec.directives.OneOf == nil {
 					return nil, errors.New("directive oneOf is not implemented")
@@ -11731,12 +11707,10 @@ func (ec *executionContext) unmarshalInputDevicedefinitionBy(ctx context.Context
 			if err != nil {
 				return it, graphql.ErrorOnPath(ctx, err)
 			}
-			if data, ok := tmp.(*string); ok {
+			if data, ok := tmp.(string); ok {
 				it.ID = data
-			} else if tmp == nil {
-				it.ID = nil
 			} else {
-				err := fmt.Errorf(`unexpected type %T from directive, should be *string`, tmp)
+				err := fmt.Errorf(`unexpected type %T from directive, should be string`, tmp)
 				return it, graphql.ErrorOnPath(ctx, err)
 			}
 		}
@@ -11763,7 +11737,7 @@ func (ec *executionContext) unmarshalInputDevicedefinitionFilter(ctx context.Con
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("manufacturer"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}

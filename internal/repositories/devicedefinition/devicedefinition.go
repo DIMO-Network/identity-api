@@ -2,25 +2,61 @@ package devicedefinition
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"math/big"
+	"time"
+
 	"net/http"
 	"net/url"
-	"path"
 	"strings"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
+	"github.com/DIMO-Network/identity-api/models"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/patrickmn/go-cache"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"golang.org/x/exp/slices"
+
+	"github.com/DIMO-Network/identity-api/internal/contracts"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 // TokenPrefix is the prefix for a global token id for Device Definition.
 const TokenPrefix = "DD"
 
+type DeviceDefinitionTablelandCountModel struct {
+	Count int `json:"count(*)"`
+}
+
+type DeviceDefinitionTablelandModel struct {
+	ID       string `json:"id"`
+	KSUID    string `json:"ksuid"`
+	Model    string `json:"model"`
+	Year     int    `json:"year"`
+	Metadata struct {
+		DeviceAttributes []struct {
+			Name  string `json:"name"`
+			Value string `json:"value"`
+		} `json:"device_attributes"`
+	} `json:"metadata"`
+}
+
+type ManufacturerCacheModel struct {
+	ID   int
+	Name string
+	Slug string
+}
+
 type DeviceDefinitionRepository struct {
 	*base.Repository
+	client *ethclient.Client
+	Cache  *cache.Cache
 }
 
 func ToAPI(v *DeviceDefinitionTablelandModel) *gmodel.DeviceDefinition {
@@ -31,35 +67,42 @@ func ToAPI(v *DeviceDefinitionTablelandModel) *gmodel.DeviceDefinition {
 	result.Year = &v.Year
 	result.Model = &v.Model
 
-	if v.Metadata.DeviceAttributes != nil && len(v.Metadata.DeviceAttributes) > 0 {
-		for _, attr := range v.Metadata.DeviceAttributes {
-			result.Attributes = append(result.Attributes, &gmodel.DeviceDefinitionAttribute{
-				Name:  &attr.Name,
-				Value: &attr.Value,
-			})
-		}
+	for _, attr := range v.Metadata.DeviceAttributes {
+		result.Attributes = append(result.Attributes, &gmodel.DeviceDefinitionAttribute{
+			Name:  &attr.Name,
+			Value: &attr.Value,
+		})
 	}
 
 	return &result
 }
 
 func (r *DeviceDefinitionRepository) GetDeviceDefinition(ctx context.Context, by gmodel.DevicedefinitionBy) (*gmodel.DeviceDefinition, error) {
-	if by.Manufacturer == nil || *by.Manufacturer == "" {
-		return nil, gqlerror.Errorf("Provide exactly one `manufacturer`.")
-	}
 
-	if by.ID == nil || *by.ID == "" {
+	if len(by.ID) == 0 {
 		return nil, gqlerror.Errorf("Provide exactly one `ID`.")
 	}
 
-	tableName := "_80001_8439"
-	statement := fmt.Sprintf("SELECT * FROM %s WHERE id = '%s'", tableName, *by.ID)
+	splitID := strings.Split(by.ID, "_")
+
+	if len(splitID) < 2 {
+		return nil, gqlerror.Errorf("The `ID` is incorrect.")
+	}
+
+	manufacturerSlug := splitID[0]
+
+	tableName, err := r.ResolveTableName(ctx, manufacturerSlug)
+	if err != nil {
+		return nil, err
+	}
+
+	statement := fmt.Sprintf("SELECT * FROM %s WHERE id = '%s'", tableName, by.ID)
 	queryParams := map[string]string{
 		"statement": statement,
 	}
 	var modelTableland []DeviceDefinitionTablelandModel
 
-	if err := r.QueryTableland(queryParams, &modelTableland); err != nil {
+	if err = r.QueryTableland(ctx, queryParams, &modelTableland); err != nil {
 		return nil, err
 	}
 
@@ -76,7 +119,7 @@ func (r *DeviceDefinitionRepository) GetDeviceDefinitions(ctx context.Context, f
 		return nil, err
 	}
 
-	if filterBy.Manufacturer == nil || *filterBy.Manufacturer == "" {
+	if len(filterBy.Manufacturer) == 0 {
 		return nil, gqlerror.Errorf("Provide exactly one `manufacturer`.")
 	}
 
@@ -96,13 +139,16 @@ func (r *DeviceDefinitionRepository) GetDeviceDefinitions(ctx context.Context, f
 		whereClause = " WHERE " + whereClause
 	}
 
-	tableName := "_80001_8439"
+	tableName, err := r.ResolveTableName(ctx, filterBy.Manufacturer)
+	if err != nil {
+		return nil, err
+	}
 
 	countParams := map[string]string{
 		"statement": fmt.Sprintf("SELECT count(*) FROM %s%s", tableName, whereClause),
 	}
 	var modelCountTableland []DeviceDefinitionTablelandCountModel
-	if err = r.QueryTableland(countParams, &modelCountTableland); err != nil {
+	if err = r.QueryTableland(ctx, countParams, &modelCountTableland); err != nil {
 		return nil, err
 	}
 
@@ -113,7 +159,7 @@ func (r *DeviceDefinitionRepository) GetDeviceDefinitions(ctx context.Context, f
 	}
 
 	var modelTableland []DeviceDefinitionTablelandModel
-	if err = r.QueryTableland(queryParams, &modelTableland); err != nil {
+	if err = r.QueryTableland(ctx, queryParams, &modelTableland); err != nil {
 		return nil, err
 	}
 
@@ -178,13 +224,43 @@ func (r *DeviceDefinitionRepository) GetDeviceDefinitions(ctx context.Context, f
 	return res, nil
 }
 
-func (r *DeviceDefinitionRepository) QueryTableland(queryParams map[string]string, result interface{}) error {
+func (r *DeviceDefinitionRepository) ResolveTableName(ctx context.Context, manufacturerSlug string) (*string, error) {
+
+	manufactures, err := r.GetManufacturers(ctx)
+	if err != nil {
+		return nil, gqlerror.Errorf("failed load manufactures: %w", err)
+	}
+
+	var manufacturer *ManufacturerCacheModel
+	for _, model := range manufactures {
+		if model.Slug == manufacturerSlug {
+			manufacturer = &model
+			break
+		}
+	}
+
+	if manufacturer == nil {
+		return nil, gqlerror.Errorf("Manufacturer %s doesn't exist.", manufacturerSlug)
+	}
+
+	contractAddress := common.HexToAddress(r.Settings.DIMORegistryAddr)
+	queryInstance, err := contracts.NewRegistry(contractAddress, r.client)
+	tableName, err := queryInstance.GetDeviceDefinitionTableName(&bind.CallOpts{Context: ctx, Pending: true}, big.NewInt(int64(manufacturer.ID)))
+
+	if err != nil {
+		return nil, gqlerror.Errorf("failed get GetDeviceDefinitionTableName: %w", err)
+	}
+
+	return &tableName, nil
+}
+
+func (r *DeviceDefinitionRepository) QueryTableland(ctx context.Context, queryParams map[string]string, result interface{}) error {
 	fullURL, err := url.Parse(r.Settings.TablelandAPIGateway)
 	if err != nil {
 		return err
 	}
 
-	fullURL.Path = path.Join(fullURL.Path, "api/v1/query")
+	fullURL = fullURL.JoinPath(fullURL.Path, "api/v1/query")
 
 	if queryParams != nil {
 		values := fullURL.Query()
@@ -194,7 +270,16 @@ func (r *DeviceDefinitionRepository) QueryTableland(queryParams map[string]strin
 		fullURL.RawQuery = values.Encode()
 	}
 
-	resp, err := http.Get(fullURL.String())
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fullURL.String(), nil)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to complete request: %w", err)
+	}
+
 	if err != nil {
 		return err
 	}
@@ -207,19 +292,31 @@ func (r *DeviceDefinitionRepository) QueryTableland(queryParams map[string]strin
 	return nil
 }
 
-type DeviceDefinitionTablelandCountModel struct {
-	Count int `json:"count(*)"`
-}
+func (r *DeviceDefinitionRepository) GetManufacturers(ctx context.Context) ([]ManufacturerCacheModel, error) {
 
-type DeviceDefinitionTablelandModel struct {
-	ID       string `json:"id"`
-	KSUID    string `json:"ksuid"`
-	Model    string `json:"model"`
-	Year     int    `json:"year"`
-	Metadata struct {
-		DeviceAttributes []struct {
-			Name  string `json:"name"`
-			Value string `json:"value,omitempty"`
-		} `json:"device_attributes"`
-	} `json:"metadata"`
+	if manufacturers, ok := r.Cache.Get("manufacturers"); ok {
+		return manufacturers.([]ManufacturerCacheModel), nil
+	}
+
+	manufacturers, err := models.Manufacturers().All(ctx, r.PDB.DBS().Reader)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, gqlerror.Errorf("could not all manufacturers")
+		}
+
+		return nil, err
+	}
+
+	var all []ManufacturerCacheModel
+	for _, manufacturer := range manufacturers {
+		all = append(all, ManufacturerCacheModel{
+			ID:   manufacturer.ID,
+			Name: manufacturer.Name,
+			Slug: helpers.SlugString(manufacturer.Name),
+		})
+	}
+
+	r.Cache.Set("manufacturers", all, time.Hour*24*7)
+
+	return all, nil
 }

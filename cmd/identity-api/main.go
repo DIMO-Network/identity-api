@@ -93,8 +93,8 @@ func startContractEventsConsumer(ctx context.Context, logger *zerolog.Logger, se
 	//if err := kafka.Consume(ctx, kc, cevConsumer.Process, logger); err != nil {
 	//	logger.Fatal().Err(err).Msg("Couldn't start event consumer.")
 	//}
-
-	logger.Info().Msg("Contract events consumer started.")
+	//
+	//logger.Info().Msg("Contract events consumer started.")
 }
 
 func serveMonitoring(port string, logger *zerolog.Logger) *fiber.App {
