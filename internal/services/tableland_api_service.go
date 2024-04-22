@@ -4,51 +4,60 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
+	"net/http"
 	"net/url"
-	"time"
 
 	"github.com/DIMO-Network/identity-api/internal/config"
-	"github.com/DIMO-Network/shared"
 	"github.com/rs/zerolog"
 )
 
 type TablelandApiService struct {
-	log        *zerolog.Logger
-	settings   *config.Settings
-	httpClient shared.HTTPClientWrapper
-	url        *url.URL
+	log      *zerolog.Logger
+	settings *config.Settings
 }
 
 func NewTablelandApiService(log *zerolog.Logger, settings *config.Settings) *TablelandApiService {
-	httpClient, _ := shared.NewHTTPClientWrapper(settings.TablelandAPIGateway, "", 10*time.Second, nil, true)
-
-	qu, _ := url.Parse(tablelandQueryPath)
-
 	return &TablelandApiService{
-		log:        log,
-		httpClient: httpClient,
-		settings:   settings,
-		url:        qu,
+		log:      log,
+		settings: settings,
 	}
 }
 
-const tablelandQueryPath = "/api/v1/query"
+func (r *TablelandApiService) Query(ctx context.Context, queryParams map[string]string, result interface{}) error {
+	fullURL, err := url.Parse(r.settings.TablelandAPIGateway)
+	if err != nil {
+		return err
+	}
 
-func (r *TablelandApiService) Query(_ context.Context, statement string, result any) error {
-	v := url.Values{}
-	v.Add("statement", statement)
-	q := v.Encode()
+	fullURL = fullURL.JoinPath(fullURL.Path, "api/v1/query")
 
-	// Copy
-	url := *r.url
-	url.RawQuery = q
+	if queryParams != nil {
+		values := fullURL.Query()
+		for key, value := range queryParams {
+			values.Set(key, value)
+		}
+		fullURL.RawQuery = values.Encode()
+	}
 
-	resp, err := r.httpClient.ExecuteRequest(url.String(), "GET", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fullURL.String(), nil)
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
 
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to complete request: %w", err)
+	}
+
+	if err != nil {
+		return err
+	}
 	defer resp.Body.Close()
 
-	return json.NewDecoder(resp.Body).Decode(result)
+	if err = json.NewDecoder(resp.Body).Decode(result); err != nil {
+		return err
+	}
+
+	return nil
 }

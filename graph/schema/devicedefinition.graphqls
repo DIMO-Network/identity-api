@@ -65,6 +65,16 @@ type DeviceDefinition implements Node {
   year: Int
 
   """
+  Device Type for this device definition.
+  """
+  deviceType: String
+
+  """
+  Image URI for this device definition.
+  """
+  imageURI: String
+
+  """
   Device attributes for this device definition.
   """
   attributes: [DeviceDefinitionAttribute!]!

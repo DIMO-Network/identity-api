@@ -164,6 +164,10 @@ type DeviceDefinition struct {
 	Model *string `json:"model,omitempty"`
 	// Year for this device definition.
 	Year *int `json:"year,omitempty"`
+	// Device Type for this device definition.
+	DeviceType *string `json:"deviceType,omitempty"`
+	// Image URI for this device definition.
+	ImageURI *string `json:"imageURI,omitempty"`
 	// Device attributes for this device definition.
 	Attributes []*DeviceDefinitionAttribute `json:"attributes"`
 }
