@@ -2,17 +2,19 @@ package graph
 
 import (
 	"context"
-	"github.com/DIMO-Network/identity-api/internal/repositories/devicedefinition"
-
+	"fmt"
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/repositories/aftermarket"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/internal/repositories/dcn"
+	"github.com/DIMO-Network/identity-api/internal/repositories/devicedefinition"
 	"github.com/DIMO-Network/identity-api/internal/repositories/manufacturer"
 	"github.com/DIMO-Network/identity-api/internal/repositories/reward"
 	"github.com/DIMO-Network/identity-api/internal/repositories/synthetic"
 	"github.com/DIMO-Network/identity-api/internal/repositories/vehicle"
 	"github.com/DIMO-Network/identity-api/internal/repositories/vehicleprivilege"
+	"github.com/DIMO-Network/identity-api/internal/services"
+	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 //go:generate go run github.com/99designs/gqlgen generate
@@ -85,6 +87,16 @@ type Resolver struct {
 
 // NewResolver creates a new Resolver with allocated repositories.
 func NewResolver(baseRepo *base.Repository) *Resolver {
+
+	ethClient, err := ethclient.Dial(baseRepo.Settings.EthereumRPCURL)
+	if err != nil {
+		fmt.Print("Failed to create Ethereum client.")
+	}
+
+	manufacturerCacheService := services.NewManufacturerCacheService(baseRepo.PDB, baseRepo.Log, &baseRepo.Settings)
+	manufacturerContractService := services.NewManufacturerContractService(baseRepo.Log, &baseRepo.Settings, ethClient)
+	tablelandApiService := services.NewTablelandApiService(baseRepo.Log, &baseRepo.Settings)
+
 	return &Resolver{
 		aftermarket:      &aftermarket.Repository{Repository: baseRepo},
 		dcn:              &dcn.Repository{Repository: baseRepo},
@@ -93,6 +105,10 @@ func NewResolver(baseRepo *base.Repository) *Resolver {
 		synthetic:        &synthetic.Repository{Repository: baseRepo},
 		vehicle:          &vehicle.Repository{Repository: baseRepo},
 		vehicleprivilege: vehicleprivilege.Repository{Repository: baseRepo},
-		deviceDefinition: &devicedefinition.DeviceDefinitionRepository{Repository: baseRepo},
+		deviceDefinition: &devicedefinition.Repository{Repository: baseRepo,
+			ManufacturerContractService: manufacturerContractService,
+			TablelandApiService:         tablelandApiService,
+			ManufacturerCacheService:    manufacturerCacheService,
+		},
 	}
 }

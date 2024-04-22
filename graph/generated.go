@@ -126,7 +126,9 @@ type ComplexityRoot struct {
 
 	DeviceDefinition struct {
 		Attributes func(childComplexity int) int
+		DeviceType func(childComplexity int) int
 		ID         func(childComplexity int) int
+		ImageURI   func(childComplexity int) int
 		Ksuid      func(childComplexity int) int
 		Model      func(childComplexity int) int
 		Year       func(childComplexity int) int
@@ -665,12 +667,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.DeviceDefinition.Attributes(childComplexity), true
 
+	case "DeviceDefinition.deviceType":
+		if e.complexity.DeviceDefinition.DeviceType == nil {
+			break
+		}
+
+		return e.complexity.DeviceDefinition.DeviceType(childComplexity), true
+
 	case "DeviceDefinition.id":
 		if e.complexity.DeviceDefinition.ID == nil {
 			break
 		}
 
 		return e.complexity.DeviceDefinition.ID(childComplexity), true
+
+	case "DeviceDefinition.imageURI":
+		if e.complexity.DeviceDefinition.ImageURI == nil {
+			break
+		}
+
+		return e.complexity.DeviceDefinition.ImageURI(childComplexity), true
 
 	case "DeviceDefinition.ksuid":
 		if e.complexity.DeviceDefinition.Ksuid == nil {
@@ -4409,6 +4425,88 @@ func (ec *executionContext) fieldContext_DeviceDefinition_year(ctx context.Conte
 	return fc, nil
 }
 
+func (ec *executionContext) _DeviceDefinition_deviceType(ctx context.Context, field graphql.CollectedField, obj *model.DeviceDefinition) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeviceDefinition_deviceType(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DeviceType, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DeviceDefinition_deviceType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeviceDefinition",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DeviceDefinition_imageURI(ctx context.Context, field graphql.CollectedField, obj *model.DeviceDefinition) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeviceDefinition_imageURI(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ImageURI, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DeviceDefinition_imageURI(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeviceDefinition",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _DeviceDefinition_attributes(ctx context.Context, field graphql.CollectedField, obj *model.DeviceDefinition) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_DeviceDefinition_attributes(ctx, field)
 	if err != nil {
@@ -4682,6 +4780,10 @@ func (ec *executionContext) fieldContext_DeviceDefinitionConnection_nodes(ctx co
 				return ec.fieldContext_DeviceDefinition_model(ctx, field)
 			case "year":
 				return ec.fieldContext_DeviceDefinition_year(ctx, field)
+			case "deviceType":
+				return ec.fieldContext_DeviceDefinition_deviceType(ctx, field)
+			case "imageURI":
+				return ec.fieldContext_DeviceDefinition_imageURI(ctx, field)
 			case "attributes":
 				return ec.fieldContext_DeviceDefinition_attributes(ctx, field)
 			}
@@ -4836,6 +4938,10 @@ func (ec *executionContext) fieldContext_DeviceDefinitionEdge_node(ctx context.C
 				return ec.fieldContext_DeviceDefinition_model(ctx, field)
 			case "year":
 				return ec.fieldContext_DeviceDefinition_year(ctx, field)
+			case "deviceType":
+				return ec.fieldContext_DeviceDefinition_deviceType(ctx, field)
+			case "imageURI":
+				return ec.fieldContext_DeviceDefinition_imageURI(ctx, field)
 			case "attributes":
 				return ec.fieldContext_DeviceDefinition_attributes(ctx, field)
 			}
@@ -7102,6 +7208,10 @@ func (ec *executionContext) fieldContext_Query_devicedefinition(ctx context.Cont
 				return ec.fieldContext_DeviceDefinition_model(ctx, field)
 			case "year":
 				return ec.fieldContext_DeviceDefinition_year(ctx, field)
+			case "deviceType":
+				return ec.fieldContext_DeviceDefinition_deviceType(ctx, field)
+			case "imageURI":
+				return ec.fieldContext_DeviceDefinition_imageURI(ctx, field)
 			case "attributes":
 				return ec.fieldContext_DeviceDefinition_attributes(ctx, field)
 			}
@@ -12620,6 +12730,10 @@ func (ec *executionContext) _DeviceDefinition(ctx context.Context, sel ast.Selec
 			out.Values[i] = ec._DeviceDefinition_model(ctx, field, obj)
 		case "year":
 			out.Values[i] = ec._DeviceDefinition_year(ctx, field, obj)
+		case "deviceType":
+			out.Values[i] = ec._DeviceDefinition_deviceType(ctx, field, obj)
+		case "imageURI":
+			out.Values[i] = ec._DeviceDefinition_imageURI(ctx, field, obj)
 		case "attributes":
 			out.Values[i] = ec._DeviceDefinition_attributes(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
