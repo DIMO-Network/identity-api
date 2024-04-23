@@ -983,13 +983,36 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 	o.NoError(err)
 
 	currTime := time.Now().UTC().Truncate(time.Second)
+
+	toyotaMfr := models.Manufacturer{
+		ID:       1,
+		Name:     "Toyota",
+		Owner:    wallet1.Bytes(),
+		MintedAt: currTime,
+	}
+
+	hondaMfr := models.Manufacturer{
+		ID:       2,
+		Name:     "Honda",
+		Owner:    wallet1.Bytes(),
+		MintedAt: currTime,
+	}
+
+	mfrs := []models.Manufacturer{toyotaMfr, hondaMfr}
+	for _, v := range mfrs {
+		if err := v.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer()); err != nil {
+			o.Require().NoError(err)
+		}
+	}
+
 	testVehicle1 := models.Vehicle{
-		ID:           1,
-		OwnerAddress: wallet1.Bytes(),
-		Make:         toyota,
-		Model:        camry,
-		Year:         year2020,
-		MintedAt:     currTime,
+		ID:             1,
+		OwnerAddress:   wallet1.Bytes(),
+		Make:           toyota,
+		Model:          camry,
+		Year:           year2020,
+		MintedAt:       currTime,
+		ManufacturerID: null.IntFrom(toyotaMfr.ID),
 	}
 	vehicle1ImageURL := helpers.GetVehicleImageUrl(o.settings.BaseImageURL, testVehicle1.ID)
 	vehicle1DataURI := helpers.GetVehicleDataURI(o.settings.BaseVehicleDataURI, testVehicle1.ID)
@@ -997,12 +1020,13 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 	o.NoError(err)
 
 	testVehicle2 := models.Vehicle{
-		ID:           2,
-		OwnerAddress: wallet1.Bytes(),
-		Make:         honda,
-		Model:        civic,
-		Year:         year2022,
-		MintedAt:     currTime,
+		ID:             2,
+		OwnerAddress:   wallet1.Bytes(),
+		Make:           honda,
+		Model:          civic,
+		Year:           year2022,
+		MintedAt:       currTime,
+		ManufacturerID: null.IntFrom(hondaMfr.ID),
 	}
 	vehicle2ImageURL := helpers.GetVehicleImageUrl(o.settings.BaseImageURL, testVehicle2.ID)
 	vehicle2DataURI := helpers.GetVehicleDataURI(o.settings.BaseVehicleDataURI, testVehicle2.ID)
@@ -1010,12 +1034,13 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 	o.NoError(err)
 
 	testVehicle3 := models.Vehicle{
-		ID:           3,
-		OwnerAddress: wallet2.Bytes(),
-		Make:         toyota,
-		Model:        rav4,
-		Year:         year2022,
-		MintedAt:     currTime,
+		ID:             3,
+		OwnerAddress:   wallet2.Bytes(),
+		Make:           toyota,
+		Model:          rav4,
+		Year:           year2022,
+		MintedAt:       currTime,
+		ManufacturerID: null.IntFrom(toyotaMfr.ID),
 	}
 	vehicle3ImageURL := helpers.GetVehicleImageUrl(o.settings.BaseImageURL, testVehicle3.ID)
 	vehicle3DataURI := helpers.GetVehicleDataURI(o.settings.BaseVehicleDataURI, testVehicle3.ID)
@@ -1023,12 +1048,13 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 	o.NoError(err)
 
 	testVehicle4 := models.Vehicle{
-		ID:           4,
-		OwnerAddress: wallet2.Bytes(),
-		Make:         honda,
-		Model:        accord,
-		Year:         year2020,
-		MintedAt:     currTime,
+		ID:             4,
+		OwnerAddress:   wallet2.Bytes(),
+		Make:           honda,
+		Model:          accord,
+		Year:           year2020,
+		MintedAt:       currTime,
+		ManufacturerID: null.IntFrom(hondaMfr.ID),
 	}
 	vehicle4ImageURL := helpers.GetVehicleImageUrl(o.settings.BaseImageURL, testVehicle4.ID)
 	vehicle4DataURI := helpers.GetVehicleDataURI(o.settings.BaseVehicleDataURI, testVehicle4.ID)
@@ -1135,7 +1161,16 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 				{Node: vehicle3AsAPI},
 			},
 		},
-
+		{
+			name: "Filter by Manufacturer id",
+			filter: &gmodel.VehiclesFilter{
+				ManufacturerID: &toyotaMfr.ID,
+			},
+			results: []*gmodel.VehicleEdge{
+				{Node: vehicle1AsAPI},
+				{Node: vehicle3AsAPI},
+			},
+		},
 		{
 			name: "Filter by Owner and Privileged same address",
 			filter: &gmodel.VehiclesFilter{
@@ -1165,6 +1200,16 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 			},
 			results: []*gmodel.VehicleEdge{
 				{Node: vehicle1AsAPI},
+				{Node: vehicle3AsAPI},
+			},
+		},
+		{
+			name: "Filter by Owner and Manufacturer id",
+			filter: &gmodel.VehiclesFilter{
+				Owner:          wallet2,
+				ManufacturerID: &toyotaMfr.ID,
+			},
+			results: []*gmodel.VehicleEdge{
 				{Node: vehicle3AsAPI},
 			},
 		},
