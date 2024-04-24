@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-const migrationsDir = "../../../migrations"
+//const xmigrationsDir = "../../../migrations"
 
 func TestGetDeviceDefinition(t *testing.T) {
 	//ctx := context.Background()

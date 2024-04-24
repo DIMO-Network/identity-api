@@ -34,6 +34,10 @@ func NewManufacturerContractService(log *zerolog.Logger,
 func (m *ManufacturerContractService) GetTableName(ctx context.Context, manufacturerID int) (*string, error) {
 	contractAddress := common.HexToAddress(m.settings.DIMORegistryAddr)
 	queryInstance, err := contracts.NewRegistry(contractAddress, m.client)
+	if err != nil {
+		return nil, gqlerror.Errorf("failed instance NewRegistry: %s", err)
+	}
+
 	tableName, err := queryInstance.GetDeviceDefinitionTableName(&bind.CallOpts{
 		Context: ctx,
 		Pending: true,

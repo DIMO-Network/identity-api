@@ -200,13 +200,13 @@ func (r *Repository) GetDeviceDefinitions(ctx context.Context, first *int, after
 
 	var errList gqlerror.List
 	var endCur, startCur *string
-	if len(all) != 0 {
-		//ec := helpers.IDToCursor(all[len(all)-1].ID)
-		//endCur = &ec
-		//
-		//sc := helpers.IDToCursor(all[0].ID)
-		//startCur = &sc
-	}
+	//if len(all) != 0 {
+	//	//ec := helpers.IDToCursor(all[len(all)-1].ID)
+	//	//endCur = &ec
+	//	//
+	//	//sc := helpers.IDToCursor(all[0].ID)
+	//	//startCur = &sc
+	//}
 
 	edges := make([]*gmodel.DeviceDefinitionEdge, len(all))
 	nodes := make([]*gmodel.DeviceDefinition, len(all))
