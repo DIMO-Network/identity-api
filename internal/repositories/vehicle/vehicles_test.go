@@ -1164,7 +1164,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 		{
 			name: "Filter by Manufacturer id",
 			filter: &gmodel.VehiclesFilter{
-				ManufacturerID: &toyotaMfr.ID,
+				ManufacturerTokenID: &toyotaMfr.ID,
 			},
 			results: []*gmodel.VehicleEdge{
 				{Node: vehicle1AsAPI},
@@ -1206,8 +1206,8 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 		{
 			name: "Filter by Owner and Manufacturer id",
 			filter: &gmodel.VehiclesFilter{
-				Owner:          wallet2,
-				ManufacturerID: &toyotaMfr.ID,
+				Owner:               wallet2,
+				ManufacturerTokenID: &toyotaMfr.ID,
 			},
 			results: []*gmodel.VehicleEdge{
 				{Node: vehicle3AsAPI},

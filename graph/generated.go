@@ -10845,7 +10845,7 @@ func (ec *executionContext) unmarshalInputVehiclesFilter(ctx context.Context, ob
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"privileged", "owner", "make", "model", "year", "manufacturerId"}
+	fieldsInOrder := [...]string{"privileged", "owner", "make", "model", "year", "manufacturerTokenId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -10897,15 +10897,15 @@ func (ec *executionContext) unmarshalInputVehiclesFilter(ctx context.Context, ob
 				return it, err
 			}
 			it.Year = data
-		case "manufacturerId":
+		case "manufacturerTokenId":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("manufacturerId"))
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("manufacturerTokenId"))
 			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.ManufacturerID = data
+			it.ManufacturerTokenID = data
 		}
 	}
 
