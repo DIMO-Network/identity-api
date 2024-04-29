@@ -181,7 +181,7 @@ func (r *Repository) GetAftermarketDevice(ctx context.Context, by gmodel.Afterma
 
 	imageUrl, err := GetAftermarketDeviceImageUrl(r.Settings.BaseImageURL, ad.ID)
 	if err != nil {
-		return nil, fmt.Errorf("faile to get image url: %w", err)
+		return nil, fmt.Errorf("failed to get image url: %w", err)
 	}
 
 	return ToAPI(ad, imageUrl)
