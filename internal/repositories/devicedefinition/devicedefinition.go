@@ -3,13 +3,12 @@ package devicedefinition
 import (
 	"context"
 	"fmt"
-	"github.com/DIMO-Network/identity-api/internal/services"
-
 	"strings"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
+	"github.com/DIMO-Network/identity-api/internal/services"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"golang.org/x/exp/slices"
 )
@@ -46,8 +45,8 @@ type Repository struct {
 func ToAPI(manufacturer string, v *DeviceDefinitionTablelandModel) *gmodel.DeviceDefinition {
 	var result = gmodel.DeviceDefinition{}
 
-	result.ID = manufacturer + "_" + v.ID
-	result.Ksuid = &v.KSUID
+	result.ID = v.ID
+	result.LegacyID = &v.KSUID
 	result.Year = &v.Year
 	result.Model = &v.Model
 	result.DeviceType = &v.DeviceType
@@ -63,7 +62,7 @@ func ToAPI(manufacturer string, v *DeviceDefinitionTablelandModel) *gmodel.Devic
 	return &result
 }
 
-func (r *Repository) GetDeviceDefinition(ctx context.Context, by gmodel.DevicedefinitionBy) (*gmodel.DeviceDefinition, error) {
+func (r *Repository) GetDeviceDefinition(ctx context.Context, by gmodel.DeviceDefinitionBy) (*gmodel.DeviceDefinition, error) {
 	if len(by.ID) == 0 {
 		return nil, gqlerror.Errorf("Provide exactly one `ID`.")
 	}
@@ -94,7 +93,7 @@ func (r *Repository) GetDeviceDefinition(ctx context.Context, by gmodel.Devicede
 
 	tableName, err := r.ManufacturerContractService.GetTableName(ctx, manufacturer.ID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error: %w", err)
 	}
 
 	statement := fmt.Sprintf("SELECT * FROM %s WHERE id = '%s'", *tableName, by.ID)
@@ -107,6 +106,8 @@ func (r *Repository) GetDeviceDefinition(ctx context.Context, by gmodel.Devicede
 		return nil, err
 	}
 
+	fmt.Print(statement)
+
 	for _, item := range modelTableland {
 		return ToAPI(manufacturerSlug, &item), nil
 	}
@@ -114,7 +115,8 @@ func (r *Repository) GetDeviceDefinition(ctx context.Context, by gmodel.Devicede
 	return nil, nil
 }
 
-func (r *Repository) GetDeviceDefinitions(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *gmodel.DevicedefinitionFilter) (*gmodel.DeviceDefinitionConnection, error) {
+func (r *Repository) GetDeviceDefinitions(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *gmodel.DeviceDefinitionFilter) (*gmodel.DeviceDefinitionConnection, error) {
+
 	limit, err := helpers.ValidateFirstLast(first, last, base.MaxPageSize)
 	if err != nil {
 		return nil, err
@@ -232,8 +234,6 @@ func (r *Repository) GetDeviceDefinitions(ctx context.Context, first *int, after
 		},
 		TotalCount: int(totalCount),
 	}
-	if errList != nil {
-		return res, errList
-	}
-	return res, nil
+
+	return res, errList
 }

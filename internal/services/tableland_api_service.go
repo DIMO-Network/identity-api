@@ -4,55 +4,44 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-
-	"net/http"
-	"net/url"
+	"time"
 
 	"github.com/DIMO-Network/identity-api/internal/config"
+	"github.com/DIMO-Network/shared"
 	"github.com/rs/zerolog"
 )
 
 type TablelandApiService struct {
-	log      *zerolog.Logger
-	settings *config.Settings
+	log        *zerolog.Logger
+	settings   *config.Settings
+	httpClient shared.HTTPClientWrapper
 }
 
 func NewTablelandApiService(log *zerolog.Logger, settings *config.Settings) *TablelandApiService {
+	httpClient, _ := shared.NewHTTPClientWrapper(settings.TablelandAPIGateway, "", 10*time.Second, nil, true)
+
 	return &TablelandApiService{
-		log:      log,
-		settings: settings,
+		log:        log,
+		httpClient: httpClient,
+		settings:   settings,
 	}
 }
 
 func (r *TablelandApiService) Query(ctx context.Context, queryParams map[string]string, result interface{}) error {
-	fullURL, err := url.Parse(r.settings.TablelandAPIGateway)
-	if err != nil {
-		return err
-	}
+	//if queryParams != nil {
+	//	values := fullURL.Query()
+	//	for key, value := range queryParams {
+	//		values.Set(key, value)
+	//	}
+	//	fullURL.RawQuery = values.Encode()
+	//}
 
-	fullURL = fullURL.JoinPath(fullURL.Path, "api/v1/query")
-
-	if queryParams != nil {
-		values := fullURL.Query()
-		for key, value := range queryParams {
-			values.Set(key, value)
-		}
-		fullURL.RawQuery = values.Encode()
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fullURL.String(), nil)
+	//req, err := r.httpClient.ExecuteRequest((ctx, http.MethodGet, fullURL.String(), nil)
+	resp, err := r.httpClient.ExecuteRequest("path", "GET", nil)
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
 
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to complete request: %w", err)
-	}
-
-	if err != nil {
-		return err
-	}
 	defer resp.Body.Close()
 
 	if err = json.NewDecoder(resp.Body).Decode(result); err != nil {

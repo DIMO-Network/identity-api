@@ -6,16 +6,30 @@ package graph
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
 )
 
-// Devicedefinition is the resolver for the devicedefinition field.
-func (r *queryResolver) Devicedefinition(ctx context.Context, by model.DevicedefinitionBy) (*model.DeviceDefinition, error) {
-	return r.deviceDefinition.GetDeviceDefinition(ctx, by)
+// DeviceDefinition is the resolver for the deviceDefinition field.
+func (r *queryResolver) DeviceDefinition(ctx context.Context, by model.DeviceDefinitionBy) (*model.DeviceDefinition, error) {
+	panic(fmt.Errorf("not implemented: DeviceDefinition - deviceDefinition"))
 }
 
-// Devicedefinitions is the resolver for the devicedefinitions field.
-func (r *queryResolver) Devicedefinitions(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.DevicedefinitionFilter) (*model.DeviceDefinitionConnection, error) {
+// DeviceDefinitions is the resolver for the deviceDefinitions field.
+func (r *queryResolver) DeviceDefinitions(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.DeviceDefinitionFilter) (*model.DeviceDefinitionConnection, error) {
+	panic(fmt.Errorf("not implemented: DeviceDefinitions - deviceDefinitions"))
+}
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *queryResolver) Devicedefinition(ctx context.Context, by model.DeviceDefinitionBy) (*model.DeviceDefinition, error) {
+	return r.deviceDefinition.GetDeviceDefinition(ctx, by)
+}
+func (r *queryResolver) Devicedefinitions(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.DeviceDefinitionFilter) (*model.DeviceDefinitionConnection, error) {
 	return r.deviceDefinition.GetDeviceDefinitions(ctx, first, after, last, before, filterBy)
 }

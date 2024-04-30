@@ -4,17 +4,17 @@ extend type Query {
   """
   View a particular device definition.
   """
-  devicedefinition(
+  deviceDefinition(
     """
     criteria to search for a device definition
     """
-    by: DevicedefinitionBy!
+    by: DeviceDefinitionBy!
   ): DeviceDefinition!
 
   """
   List device definitions.
   """
-  devicedefinitions(
+  deviceDefinitions(
     """
     The number of device definition to retrieve.
     Mutually exclusive with `last`.
@@ -36,7 +36,7 @@ extend type Query {
     """
     Filter the device definitions based on specific criteria.
     """
-    filterBy: DevicedefinitionFilter
+    filterBy: DeviceDefinitionFilter
   ): DeviceDefinitionConnection!
 }
 
@@ -52,7 +52,7 @@ type DeviceDefinition implements Node {
   """
   Legacy ID for this device definition.
   """
-  ksuid: String
+  legacyID: String
 
   """
   Model for this device definition.
@@ -72,7 +72,7 @@ type DeviceDefinition implements Node {
   """
   Image URI for this device definition.
   """
-  imageURI: String
+  imageUri: String
 
   """
   Device attributes for this device definition.
@@ -132,7 +132,7 @@ type DeviceDefinitionConnection {
 """
 Input used to specify a unique Device Definition to query.
 """
-input DevicedefinitionBy @oneOf {
+input DeviceDefinitionBy @oneOf {
   """
   The id for the device definition.
   """
@@ -142,7 +142,7 @@ input DevicedefinitionBy @oneOf {
 """
 Filter for Device Definition.
 """
-input DevicedefinitionFilter {
+input DeviceDefinitionFilter {
 
   """
   The manufacturer for the device definition.
