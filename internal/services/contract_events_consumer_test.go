@@ -756,6 +756,17 @@ func Test_HandleVehicle_Transferred_To_Zero_Event_ShouldDelete(t *testing.T) {
 	exists, err := models.VehicleExists(ctx, pdb.DBS().Reader, tkID)
 	assert.NoError(t, err)
 	assert.False(t, exists)
+
+	numPrivs, err := models.Privileges().Count(ctx, pdb.DBS().Reader)
+	assert.NoError(t, err)
+	assert.Zero(t, numPrivs)
+
+	numRewards, err := models.Rewards().Count(ctx, pdb.DBS().Reader)
+	assert.NoError(t, err)
+	assert.Zero(t, numRewards)
+
+	err = dcn.Reload(ctx, pdb.DBS().Reader.DB)
+	assert.NoError(t, err)
 }
 
 func Test_HandleVehicle_Transferred_To_Zero_Event_NoDelete_SyntheticDevice(t *testing.T) {
