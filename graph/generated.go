@@ -129,7 +129,7 @@ type ComplexityRoot struct {
 		DeviceType func(childComplexity int) int
 		ID         func(childComplexity int) int
 		ImageURI   func(childComplexity int) int
-		Ksuid      func(childComplexity int) int
+		LegacyID   func(childComplexity int) int
 		Model      func(childComplexity int) int
 		Year       func(childComplexity int) int
 	}
@@ -221,8 +221,8 @@ type ComplexityRoot struct {
 		AftermarketDevices func(childComplexity int, first *int, after *string, last *int, before *string, filterBy *model.AftermarketDevicesFilter) int
 		Dcn                func(childComplexity int, by model.DCNBy) int
 		Dcns               func(childComplexity int, first *int, after *string, last *int, before *string, filterBy *model.DCNFilter) int
-		Devicedefinition   func(childComplexity int, by model.DevicedefinitionBy) int
-		Devicedefinitions  func(childComplexity int, first *int, after *string, last *int, before *string, filterBy *model.DevicedefinitionFilter) int
+		DeviceDefinition   func(childComplexity int, by model.DeviceDefinitionBy) int
+		DeviceDefinitions  func(childComplexity int, first *int, after *string, last *int, before *string, filterBy *model.DeviceDefinitionFilter) int
 		Manufacturer       func(childComplexity int, by model.ManufacturerBy) int
 		Node               func(childComplexity int, id string) int
 		Rewards            func(childComplexity int, user common.Address) int
@@ -322,8 +322,8 @@ type QueryResolver interface {
 	AftermarketDevices(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.AftermarketDevicesFilter) (*model.AftermarketDeviceConnection, error)
 	Dcn(ctx context.Context, by model.DCNBy) (*model.Dcn, error)
 	Dcns(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.DCNFilter) (*model.DCNConnection, error)
-	Devicedefinition(ctx context.Context, by model.DevicedefinitionBy) (*model.DeviceDefinition, error)
-	Devicedefinitions(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.DevicedefinitionFilter) (*model.DeviceDefinitionConnection, error)
+	DeviceDefinition(ctx context.Context, by model.DeviceDefinitionBy) (*model.DeviceDefinition, error)
+	DeviceDefinitions(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.DeviceDefinitionFilter) (*model.DeviceDefinitionConnection, error)
 	Manufacturer(ctx context.Context, by model.ManufacturerBy) (*model.Manufacturer, error)
 	Rewards(ctx context.Context, user common.Address) (*model.UserRewards, error)
 	SyntheticDevice(ctx context.Context, by model.SyntheticDeviceBy) (*model.SyntheticDevice, error)
@@ -681,19 +681,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.DeviceDefinition.ID(childComplexity), true
 
-	case "DeviceDefinition.imageURI":
+	case "DeviceDefinition.imageUri":
 		if e.complexity.DeviceDefinition.ImageURI == nil {
 			break
 		}
 
 		return e.complexity.DeviceDefinition.ImageURI(childComplexity), true
 
-	case "DeviceDefinition.ksuid":
-		if e.complexity.DeviceDefinition.Ksuid == nil {
+	case "DeviceDefinition.legacyID":
+		if e.complexity.DeviceDefinition.LegacyID == nil {
 			break
 		}
 
-		return e.complexity.DeviceDefinition.Ksuid(childComplexity), true
+		return e.complexity.DeviceDefinition.LegacyID(childComplexity), true
 
 	case "DeviceDefinition.model":
 		if e.complexity.DeviceDefinition.Model == nil {
@@ -1089,29 +1089,29 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Dcns(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["filterBy"].(*model.DCNFilter)), true
 
-	case "Query.devicedefinition":
-		if e.complexity.Query.Devicedefinition == nil {
+	case "Query.deviceDefinition":
+		if e.complexity.Query.DeviceDefinition == nil {
 			break
 		}
 
-		args, err := ec.field_Query_devicedefinition_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_deviceDefinition_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.Devicedefinition(childComplexity, args["by"].(model.DevicedefinitionBy)), true
+		return e.complexity.Query.DeviceDefinition(childComplexity, args["by"].(model.DeviceDefinitionBy)), true
 
-	case "Query.devicedefinitions":
-		if e.complexity.Query.Devicedefinitions == nil {
+	case "Query.deviceDefinitions":
+		if e.complexity.Query.DeviceDefinitions == nil {
 			break
 		}
 
-		args, err := ec.field_Query_devicedefinitions_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_deviceDefinitions_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.Devicedefinitions(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["filterBy"].(*model.DevicedefinitionFilter)), true
+		return e.complexity.Query.DeviceDefinitions(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["filterBy"].(*model.DeviceDefinitionFilter)), true
 
 	case "Query.manufacturer":
 		if e.complexity.Query.Manufacturer == nil {
@@ -1476,8 +1476,8 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputAftermarketDevicesFilter,
 		ec.unmarshalInputDCNBy,
 		ec.unmarshalInputDCNFilter,
-		ec.unmarshalInputDevicedefinitionBy,
-		ec.unmarshalInputDevicedefinitionFilter,
+		ec.unmarshalInputDeviceDefinitionBy,
+		ec.unmarshalInputDeviceDefinitionFilter,
 		ec.unmarshalInputManufacturerBy,
 		ec.unmarshalInputPrivilegeFilterBy,
 		ec.unmarshalInputSyntheticDeviceBy,
@@ -1847,13 +1847,13 @@ func (ec *executionContext) field_Query_dcns_args(ctx context.Context, rawArgs m
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_devicedefinition_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_deviceDefinition_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.DevicedefinitionBy
+	var arg0 model.DeviceDefinitionBy
 	if tmp, ok := rawArgs["by"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("by"))
-		arg0, err = ec.unmarshalNDevicedefinitionBy2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDevicedefinitionBy(ctx, tmp)
+		arg0, err = ec.unmarshalNDeviceDefinitionBy2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeviceDefinitionBy(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1862,7 +1862,7 @@ func (ec *executionContext) field_Query_devicedefinition_args(ctx context.Contex
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_devicedefinitions_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_deviceDefinitions_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 *int
@@ -1901,10 +1901,10 @@ func (ec *executionContext) field_Query_devicedefinitions_args(ctx context.Conte
 		}
 	}
 	args["before"] = arg3
-	var arg4 *model.DevicedefinitionFilter
+	var arg4 *model.DeviceDefinitionFilter
 	if tmp, ok := rawArgs["filterBy"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filterBy"))
-		arg4, err = ec.unmarshalODevicedefinitionFilter2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDevicedefinitionFilter(ctx, tmp)
+		arg4, err = ec.unmarshalODeviceDefinitionFilter2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeviceDefinitionFilter(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -4302,8 +4302,8 @@ func (ec *executionContext) fieldContext_DeviceDefinition_id(ctx context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _DeviceDefinition_ksuid(ctx context.Context, field graphql.CollectedField, obj *model.DeviceDefinition) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DeviceDefinition_ksuid(ctx, field)
+func (ec *executionContext) _DeviceDefinition_legacyID(ctx context.Context, field graphql.CollectedField, obj *model.DeviceDefinition) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeviceDefinition_legacyID(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -4316,7 +4316,7 @@ func (ec *executionContext) _DeviceDefinition_ksuid(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Ksuid, nil
+		return obj.LegacyID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4330,7 +4330,7 @@ func (ec *executionContext) _DeviceDefinition_ksuid(ctx context.Context, field g
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DeviceDefinition_ksuid(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DeviceDefinition_legacyID(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeviceDefinition",
 		Field:      field,
@@ -4466,8 +4466,8 @@ func (ec *executionContext) fieldContext_DeviceDefinition_deviceType(ctx context
 	return fc, nil
 }
 
-func (ec *executionContext) _DeviceDefinition_imageURI(ctx context.Context, field graphql.CollectedField, obj *model.DeviceDefinition) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DeviceDefinition_imageURI(ctx, field)
+func (ec *executionContext) _DeviceDefinition_imageUri(ctx context.Context, field graphql.CollectedField, obj *model.DeviceDefinition) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeviceDefinition_imageUri(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -4494,7 +4494,7 @@ func (ec *executionContext) _DeviceDefinition_imageURI(ctx context.Context, fiel
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DeviceDefinition_imageURI(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DeviceDefinition_imageUri(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeviceDefinition",
 		Field:      field,
@@ -4774,16 +4774,16 @@ func (ec *executionContext) fieldContext_DeviceDefinitionConnection_nodes(ctx co
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_DeviceDefinition_id(ctx, field)
-			case "ksuid":
-				return ec.fieldContext_DeviceDefinition_ksuid(ctx, field)
+			case "legacyID":
+				return ec.fieldContext_DeviceDefinition_legacyID(ctx, field)
 			case "model":
 				return ec.fieldContext_DeviceDefinition_model(ctx, field)
 			case "year":
 				return ec.fieldContext_DeviceDefinition_year(ctx, field)
 			case "deviceType":
 				return ec.fieldContext_DeviceDefinition_deviceType(ctx, field)
-			case "imageURI":
-				return ec.fieldContext_DeviceDefinition_imageURI(ctx, field)
+			case "imageUri":
+				return ec.fieldContext_DeviceDefinition_imageUri(ctx, field)
 			case "attributes":
 				return ec.fieldContext_DeviceDefinition_attributes(ctx, field)
 			}
@@ -4932,16 +4932,16 @@ func (ec *executionContext) fieldContext_DeviceDefinitionEdge_node(ctx context.C
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_DeviceDefinition_id(ctx, field)
-			case "ksuid":
-				return ec.fieldContext_DeviceDefinition_ksuid(ctx, field)
+			case "legacyID":
+				return ec.fieldContext_DeviceDefinition_legacyID(ctx, field)
 			case "model":
 				return ec.fieldContext_DeviceDefinition_model(ctx, field)
 			case "year":
 				return ec.fieldContext_DeviceDefinition_year(ctx, field)
 			case "deviceType":
 				return ec.fieldContext_DeviceDefinition_deviceType(ctx, field)
-			case "imageURI":
-				return ec.fieldContext_DeviceDefinition_imageURI(ctx, field)
+			case "imageUri":
+				return ec.fieldContext_DeviceDefinition_imageUri(ctx, field)
 			case "attributes":
 				return ec.fieldContext_DeviceDefinition_attributes(ctx, field)
 			}
@@ -7161,8 +7161,8 @@ func (ec *executionContext) fieldContext_Query_dcns(ctx context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_devicedefinition(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_devicedefinition(ctx, field)
+func (ec *executionContext) _Query_deviceDefinition(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_deviceDefinition(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -7175,7 +7175,7 @@ func (ec *executionContext) _Query_devicedefinition(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Devicedefinition(rctx, fc.Args["by"].(model.DevicedefinitionBy))
+		return ec.resolvers.Query().DeviceDefinition(rctx, fc.Args["by"].(model.DeviceDefinitionBy))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7192,7 +7192,7 @@ func (ec *executionContext) _Query_devicedefinition(ctx context.Context, field g
 	return ec.marshalNDeviceDefinition2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeviceDefinition(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_devicedefinition(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_deviceDefinition(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -7202,16 +7202,16 @@ func (ec *executionContext) fieldContext_Query_devicedefinition(ctx context.Cont
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_DeviceDefinition_id(ctx, field)
-			case "ksuid":
-				return ec.fieldContext_DeviceDefinition_ksuid(ctx, field)
+			case "legacyID":
+				return ec.fieldContext_DeviceDefinition_legacyID(ctx, field)
 			case "model":
 				return ec.fieldContext_DeviceDefinition_model(ctx, field)
 			case "year":
 				return ec.fieldContext_DeviceDefinition_year(ctx, field)
 			case "deviceType":
 				return ec.fieldContext_DeviceDefinition_deviceType(ctx, field)
-			case "imageURI":
-				return ec.fieldContext_DeviceDefinition_imageURI(ctx, field)
+			case "imageUri":
+				return ec.fieldContext_DeviceDefinition_imageUri(ctx, field)
 			case "attributes":
 				return ec.fieldContext_DeviceDefinition_attributes(ctx, field)
 			}
@@ -7225,15 +7225,15 @@ func (ec *executionContext) fieldContext_Query_devicedefinition(ctx context.Cont
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_devicedefinition_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_deviceDefinition_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_devicedefinitions(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_devicedefinitions(ctx, field)
+func (ec *executionContext) _Query_deviceDefinitions(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_deviceDefinitions(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -7246,7 +7246,7 @@ func (ec *executionContext) _Query_devicedefinitions(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Devicedefinitions(rctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["filterBy"].(*model.DevicedefinitionFilter))
+		return ec.resolvers.Query().DeviceDefinitions(rctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["filterBy"].(*model.DeviceDefinitionFilter))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7263,7 +7263,7 @@ func (ec *executionContext) _Query_devicedefinitions(ctx context.Context, field 
 	return ec.marshalNDeviceDefinitionConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeviceDefinitionConnection(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_devicedefinitions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_deviceDefinitions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -7290,7 +7290,7 @@ func (ec *executionContext) fieldContext_Query_devicedefinitions(ctx context.Con
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_devicedefinitions_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_deviceDefinitions_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -11691,8 +11691,8 @@ func (ec *executionContext) unmarshalInputDCNFilter(ctx context.Context, obj int
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputDevicedefinitionBy(ctx context.Context, obj interface{}) (model.DevicedefinitionBy, error) {
-	var it model.DevicedefinitionBy
+func (ec *executionContext) unmarshalInputDeviceDefinitionBy(ctx context.Context, obj interface{}) (model.DeviceDefinitionBy, error) {
+	var it model.DeviceDefinitionBy
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -11733,8 +11733,8 @@ func (ec *executionContext) unmarshalInputDevicedefinitionBy(ctx context.Context
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputDevicedefinitionFilter(ctx context.Context, obj interface{}) (model.DevicedefinitionFilter, error) {
-	var it model.DevicedefinitionFilter
+func (ec *executionContext) unmarshalInputDeviceDefinitionFilter(ctx context.Context, obj interface{}) (model.DeviceDefinitionFilter, error) {
+	var it model.DeviceDefinitionFilter
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -12724,16 +12724,16 @@ func (ec *executionContext) _DeviceDefinition(ctx context.Context, sel ast.Selec
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "ksuid":
-			out.Values[i] = ec._DeviceDefinition_ksuid(ctx, field, obj)
+		case "legacyID":
+			out.Values[i] = ec._DeviceDefinition_legacyID(ctx, field, obj)
 		case "model":
 			out.Values[i] = ec._DeviceDefinition_model(ctx, field, obj)
 		case "year":
 			out.Values[i] = ec._DeviceDefinition_year(ctx, field, obj)
 		case "deviceType":
 			out.Values[i] = ec._DeviceDefinition_deviceType(ctx, field, obj)
-		case "imageURI":
-			out.Values[i] = ec._DeviceDefinition_imageURI(ctx, field, obj)
+		case "imageUri":
+			out.Values[i] = ec._DeviceDefinition_imageUri(ctx, field, obj)
 		case "attributes":
 			out.Values[i] = ec._DeviceDefinition_attributes(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -13626,7 +13626,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "devicedefinition":
+		case "deviceDefinition":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -13635,7 +13635,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_devicedefinition(ctx, field)
+				res = ec._Query_deviceDefinition(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -13648,7 +13648,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "devicedefinitions":
+		case "deviceDefinitions":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -13657,7 +13657,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_devicedefinitions(ctx, field)
+				res = ec._Query_deviceDefinitions(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -15284,6 +15284,11 @@ func (ec *executionContext) marshalNDeviceDefinitionAttribute2ᚖgithubᚗcomᚋ
 	return ec._DeviceDefinitionAttribute(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNDeviceDefinitionBy2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeviceDefinitionBy(ctx context.Context, v interface{}) (model.DeviceDefinitionBy, error) {
+	res, err := ec.unmarshalInputDeviceDefinitionBy(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNDeviceDefinitionConnection2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeviceDefinitionConnection(ctx context.Context, sel ast.SelectionSet, v model.DeviceDefinitionConnection) graphql.Marshaler {
 	return ec._DeviceDefinitionConnection(ctx, sel, &v)
 }
@@ -15350,11 +15355,6 @@ func (ec *executionContext) marshalNDeviceDefinitionEdge2ᚖgithubᚗcomᚋDIMO�
 		return graphql.Null
 	}
 	return ec._DeviceDefinitionEdge(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNDevicedefinitionBy2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDevicedefinitionBy(ctx context.Context, v interface{}) (model.DevicedefinitionBy, error) {
-	res, err := ec.unmarshalInputDevicedefinitionBy(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNEarning2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐEarningᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Earning) graphql.Marshaler {
@@ -16302,11 +16302,11 @@ func (ec *executionContext) marshalODefinition2ᚖgithubᚗcomᚋDIMOᚑNetwork�
 	return ec._Definition(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalODevicedefinitionFilter2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDevicedefinitionFilter(ctx context.Context, v interface{}) (*model.DevicedefinitionFilter, error) {
+func (ec *executionContext) unmarshalODeviceDefinitionFilter2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeviceDefinitionFilter(ctx context.Context, v interface{}) (*model.DeviceDefinitionFilter, error) {
 	if v == nil {
 		return nil, nil
 	}
-	res, err := ec.unmarshalInputDevicedefinitionFilter(ctx, v)
+	res, err := ec.unmarshalInputDeviceDefinitionFilter(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 

@@ -2,7 +2,7 @@ package services
 
 import (
 	"context"
-
+	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -16,29 +16,32 @@ import (
 )
 
 type ManufacturerContractService struct {
-	log      *zerolog.Logger
-	settings *config.Settings
-	client   *ethclient.Client
+	log              *zerolog.Logger
+	settings         *config.Settings
+	registryInstance *contracts.Registry
 }
 
 func NewManufacturerContractService(log *zerolog.Logger,
 	settings *config.Settings,
-	client *ethclient.Client) *ManufacturerContractService {
-	return &ManufacturerContractService{
-		log:      log,
-		settings: settings,
-		client:   client,
+	client *ethclient.Client) (*ManufacturerContractService, error) {
+
+	contractAddress := common.HexToAddress(settings.DIMORegistryAddr)
+	registryInstance, err := contracts.NewRegistry(contractAddress, client)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed instance NewRegistry: %s", err)
 	}
+
+	return &ManufacturerContractService{
+		log:              log,
+		settings:         settings,
+		registryInstance: registryInstance,
+	}, nil
 }
 
 func (m *ManufacturerContractService) GetTableName(ctx context.Context, manufacturerID int) (*string, error) {
-	contractAddress := common.HexToAddress(m.settings.DIMORegistryAddr)
-	queryInstance, err := contracts.NewRegistry(contractAddress, m.client)
-	if err != nil {
-		return nil, gqlerror.Errorf("failed instance NewRegistry: %s", err)
-	}
 
-	tableName, err := queryInstance.GetDeviceDefinitionTableName(&bind.CallOpts{
+	tableName, err := m.registryInstance.GetDeviceDefinitionTableName(&bind.CallOpts{
 		Context: ctx,
 		Pending: true,
 	}, big.NewInt(int64(manufacturerID)))

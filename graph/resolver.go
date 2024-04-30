@@ -3,6 +3,7 @@ package graph
 import (
 	"context"
 	"fmt"
+
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/repositories/aftermarket"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
@@ -69,8 +70,8 @@ type VehicleRepository interface {
 //
 //go:generate mockgen -destination=./mock_devicedefinition_test.go -package=graph github.com/DIMO-Network/identity-api/graph DeviceDefinitionRepository
 type DeviceDefinitionRepository interface {
-	GetDeviceDefinition(ctx context.Context, by model.DevicedefinitionBy) (*model.DeviceDefinition, error)
-	GetDeviceDefinitions(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.DevicedefinitionFilter) (*model.DeviceDefinitionConnection, error)
+	GetDeviceDefinition(ctx context.Context, by model.DeviceDefinitionBy) (*model.DeviceDefinition, error)
+	GetDeviceDefinitions(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.DeviceDefinitionFilter) (*model.DeviceDefinitionConnection, error)
 }
 
 // Resolver holds the repositories for the graph resolvers.
@@ -94,7 +95,10 @@ func NewResolver(baseRepo *base.Repository) *Resolver {
 	}
 
 	manufacturerCacheService := services.NewManufacturerCacheService(baseRepo.PDB, baseRepo.Log, &baseRepo.Settings)
-	manufacturerContractService := services.NewManufacturerContractService(baseRepo.Log, &baseRepo.Settings, ethClient)
+	manufacturerContractService, err := services.NewManufacturerContractService(baseRepo.Log, &baseRepo.Settings, ethClient)
+	if err != nil {
+		fmt.Print(err)
+	}
 	tablelandApiService := services.NewTablelandApiService(baseRepo.Log, &baseRepo.Settings)
 
 	return &Resolver{

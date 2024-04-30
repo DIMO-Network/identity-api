@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"database/sql"
+
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
