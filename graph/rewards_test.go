@@ -1334,3 +1334,111 @@ func (r *RewardsQueryTestSuite) Test_Query_GetUserRewards_BackPaginate_LastBefor
 	}
 	`, beneficiary.Hex(), beneficiary.Hex()), string(b))
 }
+
+func (r *RewardsQueryTestSuite) Test_Query_GetUserRewards_NullEarnings() {
+	currTime := time.Now().UTC().Truncate(time.Second)
+	_, beneficiary, err := test.GenerateWallet()
+	r.NoError(err)
+
+	r.createDependencies()
+
+	// Aftermarket Earnings
+	adEarn, ok := new(big.Int).SetString("1", 10)
+	r.True(ok)
+
+	// Streak Earnings
+	strkEarn, ok := new(big.Int).SetString("1", 10)
+	r.True(ok)
+
+	var rewards = []models.Reward{
+		{
+			IssuanceWeek:        3,
+			VehicleID:           1,
+			ConnectionStreak:    null.IntFrom(13),
+			StreakEarnings:      dbtypes.NullIntToDecimal(strkEarn),
+			AftermarketTokenID:  null.IntFrom(1),
+			AftermarketEarnings: dbtypes.NullIntToDecimal(adEarn),
+			SyntheticTokenID:    null.IntFrom(1),
+			ReceivedByAddress:   null.BytesFrom(beneficiary.Bytes()),
+			EarnedAt:            currTime,
+		},
+	}
+
+	for _, rwd := range rewards {
+		err = rwd.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
+		r.NoError(err)
+	}
+
+	query := fmt.Sprintf(`{
+		rewards(user: "%s") {
+			totalTokens
+			history(last: 2) {
+			  totalCount
+			  edges {
+				node {
+				  week
+				  beneficiary
+				  connectionStreak
+				  streakTokens
+				  aftermarketDevice {
+					id
+				  }
+				  aftermarketDeviceTokens
+				  syntheticDevice {
+					tokenId
+				  }
+				  syntheticDeviceTokens
+				  vehicle {
+					id
+					tokenId
+				  }
+				}
+			  }
+			}
+		}
+	  }`, beneficiary.Hex())
+
+	c := client.New(
+		loader.Middleware(
+			r.pdb,
+			handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: r.resolver})), r.settings,
+		),
+	)
+
+	var resp any
+	c.MustPost(query, &resp)
+	b, err := json.Marshal(resp)
+	r.NoError(err)
+	r.JSONEq(fmt.Sprintf(`
+	{
+		"rewards": {
+			"totalTokens": "2",
+			"history": {
+			  "totalCount": 1,
+			  "edges": [
+				{
+				  "node": {
+					"week": 3,
+					"beneficiary": "%s",
+					"connectionStreak": 13,
+					"streakTokens": "1",
+					"aftermarketDevice": {
+					  "id": "AD_kQE="
+					},
+					"aftermarketDeviceTokens": "1",
+					"syntheticDevice": {
+					  "tokenId": 1
+					},
+					"syntheticDeviceTokens": "0",
+					"vehicle": {
+					  "id": "V_kQE=",
+					  "tokenId": 1
+					}
+				  }
+				}
+			  ]
+			}
+		}
+	}
+	`, beneficiary.Hex()), string(b))
+}
