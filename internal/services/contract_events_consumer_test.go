@@ -767,6 +767,7 @@ func Test_HandleVehicle_Transferred_To_Zero_Event_ShouldDelete(t *testing.T) {
 
 	err = dcn.Reload(ctx, pdb.DBS().Reader.DB)
 	assert.NoError(t, err)
+	assert.False(t, dcn.VehicleID.Valid)
 }
 
 func Test_HandleVehicle_Transferred_To_Zero_Event_NoDelete_SyntheticDevice(t *testing.T) {
