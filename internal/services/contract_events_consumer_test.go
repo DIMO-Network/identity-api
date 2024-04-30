@@ -732,20 +732,30 @@ func Test_HandleVehicle_Transferred_To_Zero_Event_ShouldDelete(t *testing.T) {
 	err = privilege.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	assert.NoError(t, err)
 
+	reward := models.Reward{
+		IssuanceWeek: 1,
+		VehicleID:    tkID,
+		EarnedAt:     time.Now(),
+	}
+
+	err = reward.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err)
+
+	dcn := models.DCN{
+		Node:         common.Hash{}.Bytes(),
+		OwnerAddress: wallet.Bytes(),
+		MintedAt:     time.Now(),
+	}
+
+	err = dcn.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err)
+
 	err = contractEventConsumer.Process(ctx, &e)
 	assert.NoError(t, err)
 
-	veh, err := models.Vehicles(
-		models.VehicleWhere.ID.EQ(tkID),
-	).All(ctx, pdb.DBS().Reader.DB)
+	exists, err := models.VehicleExists(ctx, pdb.DBS().Reader, tkID)
 	assert.NoError(t, err)
-
-	assert.Len(t, veh, 0)
-
-	priv, err := models.Privileges().All(ctx, pdb.DBS().Reader.DB)
-	assert.NoError(t, err)
-
-	assert.Len(t, priv, 0)
+	assert.False(t, exists)
 }
 
 func Test_HandleVehicle_Transferred_To_Zero_Event_NoDelete_SyntheticDevice(t *testing.T) {
