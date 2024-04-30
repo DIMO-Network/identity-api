@@ -179,11 +179,6 @@ type Earning struct {
 	VehicleID           int       `json:"-"`
 }
 
-type Earnings struct {
-	EarnedTokens      *big.Int            `json:"earnedTokens"`
-	EarningsTransfers *EarningsConnection `json:"earningsTransfers"`
-}
-
 type EarningsConnection struct {
 	TotalCount int             `json:"totalCount"`
 	Edges      []*EarningsEdge `json:"edges"`
