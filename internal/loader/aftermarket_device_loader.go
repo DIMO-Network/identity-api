@@ -58,11 +58,11 @@ func (ad *AftermarketDeviceLoader) BatchGetLinkedAftermarketDeviceByVehicleID(ct
 	for i, vID := range vehicleIDs {
 		if am, ok := amByVehicleID[vID]; ok {
 			var retErr error
-			imageUrl, err := aftermarket.GetAftermarketDeviceImageUrl(ad.settings.BaseImageURL, am.ID)
+			imageURL, err := aftermarket.GetAftermarketDeviceImageURL(ad.settings.BaseImageURL, am.ID)
 			if err != nil {
 				retErr = errors.Join(retErr, fmt.Errorf("failed getting image url: %w", err))
 			}
-			obj, err := aftermarket.ToAPI(am, imageUrl)
+			obj, err := aftermarket.ToAPI(am, imageURL)
 			if err != nil {
 				retErr = errors.Join(retErr, fmt.Errorf("failed converting to API: %w", err))
 			}
@@ -99,11 +99,11 @@ func (ad *AftermarketDeviceLoader) BatchGetAftermarketDeviceByID(ctx context.Con
 	for i, adID := range aftermarketDeviceIDs {
 		var retErr error
 		if ads, ok := adByID[adID]; ok {
-			imageUrl, err := aftermarket.GetAftermarketDeviceImageUrl(ad.settings.BaseImageURL, ads.ID)
+			imageURL, err := aftermarket.GetAftermarketDeviceImageURL(ad.settings.BaseImageURL, ads.ID)
 			if err != nil {
 				retErr = errors.Join(retErr, fmt.Errorf("failed getting image url: %w", err))
 			}
-			obj, err := aftermarket.ToAPI(ads, imageUrl)
+			obj, err := aftermarket.ToAPI(ads, imageURL)
 			if err != nil {
 				retErr = errors.Join(retErr, fmt.Errorf("failed converting to API: %w", err))
 			}

@@ -42,7 +42,7 @@ func (r *Repository) createVehiclesResponse(totalCount int64, vehicles models.Ve
 	nodes := make([]*gmodel.Vehicle, len(vehicles))
 
 	for i, dv := range vehicles {
-		imageUrl, err := GetVehicleImageUrl(r.Settings.BaseImageURL, dv.ID)
+		imageUrl, err := GetVehicleImageURL(r.Settings.BaseImageURL, dv.ID)
 		if err != nil {
 			wErr := fmt.Errorf("error getting vehicle image url: %w", err)
 			errList = append(errList, gqlerror.Wrap(wErr))
@@ -176,7 +176,7 @@ func (r *Repository) GetVehicle(ctx context.Context, id int) (*gmodel.Vehicle, e
 	if err != nil {
 		return nil, err
 	}
-	imageUrl, err := GetVehicleImageUrl(r.Settings.BaseImageURL, v.ID)
+	imageUrl, err := GetVehicleImageURL(r.Settings.BaseImageURL, v.ID)
 	if err != nil {
 		return nil, fmt.Errorf("error getting vehicle image url: %w", err)
 	}
@@ -261,8 +261,8 @@ func ToAPI(v *models.Vehicle, imageUrl string, dataURI string) (*gmodel.Vehicle,
 	}, nil
 }
 
-// GetVehicleImageUrl craates a URL for the vehicle image.
-func GetVehicleImageUrl(baseURL string, tokenID int) (string, error) {
+// GetVehicleImageURL craates a URL for the vehicle image.
+func GetVehicleImageURL(baseURL string, tokenID int) (string, error) {
 	tokenStr := strconv.Itoa(tokenID)
 	return url.JoinPath(baseURL, "vehicle", tokenStr, "image")
 }
