@@ -732,20 +732,42 @@ func Test_HandleVehicle_Transferred_To_Zero_Event_ShouldDelete(t *testing.T) {
 	err = privilege.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	assert.NoError(t, err)
 
+	reward := models.Reward{
+		IssuanceWeek: 1,
+		VehicleID:    tkID,
+		EarnedAt:     time.Now(),
+	}
+
+	err = reward.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err)
+
+	dcn := models.DCN{
+		Node:         common.Hash{}.Bytes(),
+		OwnerAddress: wallet.Bytes(),
+		MintedAt:     time.Now(),
+	}
+
+	err = dcn.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err)
+
 	err = contractEventConsumer.Process(ctx, &e)
 	assert.NoError(t, err)
 
-	veh, err := models.Vehicles(
-		models.VehicleWhere.ID.EQ(tkID),
-	).All(ctx, pdb.DBS().Reader.DB)
+	exists, err := models.VehicleExists(ctx, pdb.DBS().Reader, tkID)
 	assert.NoError(t, err)
+	assert.False(t, exists)
 
-	assert.Len(t, veh, 0)
-
-	priv, err := models.Privileges().All(ctx, pdb.DBS().Reader.DB)
+	numPrivs, err := models.Privileges().Count(ctx, pdb.DBS().Reader)
 	assert.NoError(t, err)
+	assert.Zero(t, numPrivs)
 
-	assert.Len(t, priv, 0)
+	numRewards, err := models.Rewards().Count(ctx, pdb.DBS().Reader)
+	assert.NoError(t, err)
+	assert.Zero(t, numRewards)
+
+	err = dcn.Reload(ctx, pdb.DBS().Reader.DB)
+	assert.NoError(t, err)
+	assert.False(t, dcn.VehicleID.Valid)
 }
 
 func Test_HandleVehicle_Transferred_To_Zero_Event_NoDelete_SyntheticDevice(t *testing.T) {
