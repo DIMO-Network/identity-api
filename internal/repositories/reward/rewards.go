@@ -282,7 +282,8 @@ func (r *Repository) PaginateGetEarningsByUsersDevices(ctx context.Context, user
 	return userDeviceEarnings.History, nil
 }
 
-// NullDecimalToInt converts a null decimal to a big int.
+// NullDecimalToInt converts a null decimal to a non nil *big.Int.
+// If the null decimal is nil, it returns a *big.Int with value 0.
 func NullDecimalToInt(x types.NullDecimal) *big.Int {
 	if x.IsZero() {
 		return big.NewInt(0)

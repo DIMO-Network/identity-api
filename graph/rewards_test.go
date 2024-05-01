@@ -23,6 +23,7 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/volatiletech/sqlboiler/v4/types"
 )
 
 type RewardsQueryTestSuite struct {
@@ -1342,23 +1343,16 @@ func (r *RewardsQueryTestSuite) Test_Query_GetUserRewards_NullEarnings() {
 
 	r.createDependencies()
 
-	// Aftermarket Earnings
-	adEarn, ok := new(big.Int).SetString("1", 10)
-	r.True(ok)
-
-	// Streak Earnings
-	strkEarn, ok := new(big.Int).SetString("1", 10)
-	r.True(ok)
-
 	var rewards = []models.Reward{
 		{
 			IssuanceWeek:        3,
 			VehicleID:           1,
 			ConnectionStreak:    null.IntFrom(13),
-			StreakEarnings:      dbtypes.NullIntToDecimal(strkEarn),
+			StreakEarnings:      dbtypes.NullIntToDecimal(big.NewInt(1)),
 			AftermarketTokenID:  null.IntFrom(1),
-			AftermarketEarnings: dbtypes.NullIntToDecimal(adEarn),
+			AftermarketEarnings: dbtypes.NullIntToDecimal(big.NewInt(1)),
 			SyntheticTokenID:    null.IntFrom(1),
+			SyntheticEarnings:   types.NullDecimal{},
 			ReceivedByAddress:   null.BytesFrom(beneficiary.Bytes()),
 			EarnedAt:            currTime,
 		},
