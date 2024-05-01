@@ -91,7 +91,7 @@ func (r *Repository) GetDeviceDefinition(ctx context.Context, by gmodel.DeviceDe
 		return nil, gqlerror.Errorf("Manufacturer %s doesn't exist.", manufacturerSlug)
 	}
 
-	tableName, err := r.ManufacturerContractService.GetTableName(ctx, manufacturer.ID)
+	tableName, err := r.ManufacturerContractService.GetTableName(ctx, manufacturer.Name)
 	if err != nil {
 		return nil, fmt.Errorf("error: %w", err)
 	}
@@ -155,7 +155,7 @@ func (r *Repository) GetDeviceDefinitions(ctx context.Context, first *int, after
 		}
 	}
 
-	tableName, err := r.ManufacturerContractService.GetTableName(ctx, manufacturer.ID)
+	tableName, err := r.ManufacturerContractService.GetTableName(ctx, manufacturer.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -171,7 +171,7 @@ func (r *Repository) GetDeviceDefinitions(ctx context.Context, first *int, after
 	totalCount := modelCountTableland[0].Count
 
 	queryParams := map[string]string{
-		"statement": fmt.Sprintf("SELECT * FROM %s%s LIMIT %d OFFSET %d", *tableName, whereClause, limit, 1),
+		"statement": fmt.Sprintf("SELECT * FROM %s%s", *tableName, whereClause),
 	}
 
 	var modelTableland []DeviceDefinitionTablelandModel
@@ -202,22 +202,21 @@ func (r *Repository) GetDeviceDefinitions(ctx context.Context, first *int, after
 
 	var errList gqlerror.List
 	var endCur, startCur *string
-	//if len(all) != 0 {
-	//	//ec := helpers.IDToCursor(all[len(all)-1].ID)
-	//	//endCur = &ec
-	//	//
-	//	//sc := helpers.IDToCursor(all[0].ID)
-	//	//startCur = &sc
-	//}
+	if len(all) != 0 {
+		ec := helpers.StringToCursor(all[len(all)-1].ID)
+		endCur = &ec
+
+		sc := helpers.StringToCursor(all[0].ID)
+		startCur = &sc
+	}
 
 	edges := make([]*gmodel.DeviceDefinitionEdge, len(all))
 	nodes := make([]*gmodel.DeviceDefinition, len(all))
 
 	for i, dv := range all {
-
 		edges[i] = &gmodel.DeviceDefinitionEdge{
-			Node: dv,
-			//Cursor: helpers.IDToCursor(dv.ID),
+			Node:   dv,
+			Cursor: helpers.StringToCursor(dv.ID),
 		}
 
 		nodes[i] = dv
@@ -232,7 +231,7 @@ func (r *Repository) GetDeviceDefinitions(ctx context.Context, first *int, after
 			HasPreviousPage: hasPrevious,
 			StartCursor:     startCur,
 		},
-		TotalCount: int(totalCount),
+		TotalCount: totalCount,
 	}
 
 	return res, errList

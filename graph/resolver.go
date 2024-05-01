@@ -2,8 +2,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
-
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/repositories/aftermarket"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
@@ -91,13 +89,13 @@ func NewResolver(baseRepo *base.Repository) *Resolver {
 
 	ethClient, err := ethclient.Dial(baseRepo.Settings.EthereumRPCURL)
 	if err != nil {
-		fmt.Print("Failed to create Ethereum client.")
+		baseRepo.Log.Fatal().Err(err).Msg("Failed to create Ethereum client.")
 	}
 
 	manufacturerCacheService := services.NewManufacturerCacheService(baseRepo.PDB, baseRepo.Log, &baseRepo.Settings)
 	manufacturerContractService, err := services.NewManufacturerContractService(baseRepo.Log, &baseRepo.Settings, ethClient)
 	if err != nil {
-		fmt.Print(err)
+		baseRepo.Log.Fatal().Err(err)
 	}
 	tablelandApiService := services.NewTablelandApiService(baseRepo.Log, &baseRepo.Settings)
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/DIMO-Network/identity-api/internal/config"
@@ -27,17 +28,18 @@ func NewTablelandApiService(log *zerolog.Logger, settings *config.Settings) *Tab
 	}
 }
 
-func (r *TablelandApiService) Query(ctx context.Context, queryParams map[string]string, result interface{}) error {
-	//if queryParams != nil {
-	//	values := fullURL.Query()
-	//	for key, value := range queryParams {
-	//		values.Set(key, value)
-	//	}
-	//	fullURL.RawQuery = values.Encode()
-	//}
+func (r *TablelandApiService) Query(_ context.Context, queryParams map[string]string, result interface{}) error {
 
-	//req, err := r.httpClient.ExecuteRequest((ctx, http.MethodGet, fullURL.String(), nil)
-	resp, err := r.httpClient.ExecuteRequest("path", "GET", nil)
+	var queryString string = "api/v1/query?"
+	if len(queryParams) > 0 {
+		queryParamsList := make([]string, 0, len(queryParams))
+		for key, value := range queryParams {
+			queryParamsList = append(queryParamsList, key+"="+value)
+		}
+		queryString += strings.Join(queryParamsList, "&")
+	}
+
+	resp, err := r.httpClient.ExecuteRequest(queryString, "GET", nil)
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}

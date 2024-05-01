@@ -3,8 +3,6 @@ package services
 import (
 	"context"
 	"fmt"
-	"math/big"
-
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/ethclient"
 
@@ -39,12 +37,21 @@ func NewManufacturerContractService(log *zerolog.Logger,
 	}, nil
 }
 
-func (m *ManufacturerContractService) GetTableName(ctx context.Context, manufacturerID int) (*string, error) {
+func (m *ManufacturerContractService) GetTableName(ctx context.Context, manufacturerName string) (*string, error) {
+
+	manufacturerID, err := m.registryInstance.GetManufacturerIdByName(&bind.CallOpts{
+		Context: ctx,
+		Pending: true,
+	}, manufacturerName)
+
+	if err != nil {
+		return nil, gqlerror.Errorf("failed get GetManufacturerIdByName: %s", err)
+	}
 
 	tableName, err := m.registryInstance.GetDeviceDefinitionTableName(&bind.CallOpts{
 		Context: ctx,
 		Pending: true,
-	}, big.NewInt(int64(manufacturerID)))
+	}, manufacturerID)
 
 	if err != nil {
 		return nil, gqlerror.Errorf("failed get GetDeviceDefinitionTableName: %s", err)

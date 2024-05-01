@@ -75,3 +75,11 @@ func (o *ManufacturerCacheServiceTestSuite) Test_Manufacturer_All_Success() {
 	o.NoError(err)
 	o.Len(all, len(manufacturers))
 }
+
+func (o *ManufacturerCacheServiceTestSuite) Test_Manufacturer_Empty() {
+	cache := NewManufacturerCacheService(o.pdb, &o.logger, &o.settings)
+
+	all, err := cache.GetAllManufacturers(o.ctx)
+	o.NoError(err)
+	o.Len(all, 0)
+}
