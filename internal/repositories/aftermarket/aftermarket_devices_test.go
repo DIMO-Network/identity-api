@@ -312,7 +312,7 @@ func Test_GetAftermarketDeviceImageUrl(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		url, err := GetAftermarketDeviceImageUrl(tc.baseURL, tc.tokenID)
+		url, err := GetAftermarketDeviceImageURL(tc.baseURL, tc.tokenID)
 		require.NoError(t, err)
 		require.Equal(t, tc.expectedURL, url)
 	}

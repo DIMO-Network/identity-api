@@ -48,7 +48,7 @@ func (v *VehicleLoader) BatchGetVehicleByID(ctx context.Context, vehicleIDs []in
 	for i, k := range vehicleIDs {
 		if veh, ok := vehicleByID[k]; ok {
 			var retErr error
-			imageUrl, err := vehicle.GetVehicleImageUrl(v.settings.BaseImageURL, veh.ID)
+			imageURL, err := vehicle.GetVehicleImageURL(v.settings.BaseImageURL, veh.ID)
 			if err != nil {
 				retErr = errors.Join(retErr, fmt.Errorf("error getting vehicle image url: %w", err))
 			}
@@ -56,7 +56,7 @@ func (v *VehicleLoader) BatchGetVehicleByID(ctx context.Context, vehicleIDs []in
 			if err != nil {
 				retErr = errors.Join(retErr, fmt.Errorf("error getting vehicle data uri: %w", err))
 			}
-			obj, err := vehicle.ToAPI(veh, imageUrl, dataURI)
+			obj, err := vehicle.ToAPI(veh, imageURL, dataURI)
 			if err != nil {
 				retErr = errors.Join(retErr, fmt.Errorf("error converting vehicle to API: %w", err))
 			}
