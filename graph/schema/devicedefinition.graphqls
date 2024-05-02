@@ -50,6 +50,11 @@ type DeviceDefinition implements Node {
   id: ID!
 
   """
+  Device Definition ID for this device definition.
+  """
+  deviceDefinitionID: String
+
+  """
   Legacy ID for this device definition.
   """
   legacyID: String

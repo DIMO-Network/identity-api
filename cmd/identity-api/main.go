@@ -3,11 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
-
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/DIMO-Network/identity-api/internal/services"
+	"github.com/DIMO-Network/shared/kafka"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"

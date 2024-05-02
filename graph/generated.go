@@ -126,13 +126,14 @@ type ComplexityRoot struct {
 	}
 
 	DeviceDefinition struct {
-		Attributes func(childComplexity int) int
-		DeviceType func(childComplexity int) int
-		ID         func(childComplexity int) int
-		ImageURI   func(childComplexity int) int
-		LegacyID   func(childComplexity int) int
-		Model      func(childComplexity int) int
-		Year       func(childComplexity int) int
+		Attributes         func(childComplexity int) int
+		DeviceDefinitionID func(childComplexity int) int
+		DeviceType         func(childComplexity int) int
+		ID                 func(childComplexity int) int
+		ImageURI           func(childComplexity int) int
+		LegacyID           func(childComplexity int) int
+		Model              func(childComplexity int) int
+		Year               func(childComplexity int) int
 	}
 
 	DeviceDefinitionAttribute struct {
@@ -666,6 +667,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.DeviceDefinition.Attributes(childComplexity), true
+
+	case "DeviceDefinition.deviceDefinitionID":
+		if e.complexity.DeviceDefinition.DeviceDefinitionID == nil {
+			break
+		}
+
+		return e.complexity.DeviceDefinition.DeviceDefinitionID(childComplexity), true
 
 	case "DeviceDefinition.deviceType":
 		if e.complexity.DeviceDefinition.DeviceType == nil {
@@ -4356,6 +4364,47 @@ func (ec *executionContext) fieldContext_DeviceDefinition_id(ctx context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _DeviceDefinition_deviceDefinitionID(ctx context.Context, field graphql.CollectedField, obj *model.DeviceDefinition) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeviceDefinition_deviceDefinitionID(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DeviceDefinitionID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DeviceDefinition_deviceDefinitionID(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeviceDefinition",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _DeviceDefinition_legacyID(ctx context.Context, field graphql.CollectedField, obj *model.DeviceDefinition) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_DeviceDefinition_legacyID(ctx, field)
 	if err != nil {
@@ -4828,6 +4877,8 @@ func (ec *executionContext) fieldContext_DeviceDefinitionConnection_nodes(ctx co
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_DeviceDefinition_id(ctx, field)
+			case "deviceDefinitionID":
+				return ec.fieldContext_DeviceDefinition_deviceDefinitionID(ctx, field)
 			case "legacyID":
 				return ec.fieldContext_DeviceDefinition_legacyID(ctx, field)
 			case "model":
@@ -4986,6 +5037,8 @@ func (ec *executionContext) fieldContext_DeviceDefinitionEdge_node(ctx context.C
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_DeviceDefinition_id(ctx, field)
+			case "deviceDefinitionID":
+				return ec.fieldContext_DeviceDefinition_deviceDefinitionID(ctx, field)
 			case "legacyID":
 				return ec.fieldContext_DeviceDefinition_legacyID(ctx, field)
 			case "model":
@@ -7255,6 +7308,8 @@ func (ec *executionContext) fieldContext_Query_deviceDefinition(ctx context.Cont
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_DeviceDefinition_id(ctx, field)
+			case "deviceDefinitionID":
+				return ec.fieldContext_DeviceDefinition_deviceDefinitionID(ctx, field)
 			case "legacyID":
 				return ec.fieldContext_DeviceDefinition_legacyID(ctx, field)
 			case "model":
@@ -12806,6 +12861,8 @@ func (ec *executionContext) _DeviceDefinition(ctx context.Context, sel ast.Selec
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "deviceDefinitionID":
+			out.Values[i] = ec._DeviceDefinition_deviceDefinitionID(ctx, field, obj)
 		case "legacyID":
 			out.Values[i] = ec._DeviceDefinition_legacyID(ctx, field, obj)
 		case "model":
