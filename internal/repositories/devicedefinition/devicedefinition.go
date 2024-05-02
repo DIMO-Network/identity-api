@@ -21,6 +21,7 @@ type DeviceDefinitionTablelandCountModel struct {
 }
 
 type DeviceDefinitionTablelandModel struct {
+	Index      int    `json:"index"`
 	ID         string `json:"id"`
 	KSUID      string `json:"ksuid"`
 	Model      string `json:"model"`
@@ -42,10 +43,16 @@ type Repository struct {
 	ManufacturerCacheService    *services.ManufacturerCacheService
 }
 
-func ToAPI(manufacturer string, v *DeviceDefinitionTablelandModel) *gmodel.DeviceDefinition {
+func ToAPI(v *DeviceDefinitionTablelandModel) (*gmodel.DeviceDefinition, error) {
 	var result = gmodel.DeviceDefinition{}
 
-	result.ID = v.ID
+	globalID, err := base.EncodeGlobalTokenID(TokenPrefix, v.Index)
+	if err != nil {
+		return nil, fmt.Errorf("error encoding device definition id: %w", err)
+	}
+
+	result.ID = globalID
+	result.DeviceDefinitionID = &v.ID
 	result.LegacyID = &v.KSUID
 	result.Year = &v.Year
 	result.Model = &v.Model
@@ -59,7 +66,7 @@ func ToAPI(manufacturer string, v *DeviceDefinitionTablelandModel) *gmodel.Devic
 		})
 	}
 
-	return &result
+	return &result, nil
 }
 
 func (r *Repository) GetDeviceDefinition(ctx context.Context, by gmodel.DeviceDefinitionBy) (*gmodel.DeviceDefinition, error) {
@@ -81,7 +88,7 @@ func (r *Repository) GetDeviceDefinition(ctx context.Context, by gmodel.DeviceDe
 
 	var manufacturer *services.ManufacturerCacheModel
 	for _, model := range manufactures {
-		if model.Slug == manufacturerSlug {
+		if strings.EqualFold(model.Slug, manufacturerSlug) {
 			manufacturer = &model
 			break
 		}
@@ -96,7 +103,7 @@ func (r *Repository) GetDeviceDefinition(ctx context.Context, by gmodel.DeviceDe
 		return nil, fmt.Errorf("error: %w", err)
 	}
 
-	statement := fmt.Sprintf("SELECT * FROM %s WHERE id = '%s'", *tableName, by.ID)
+	statement := fmt.Sprintf("SELECT * FROM %s WHERE id = '%s'", *tableName, strings.ToLower(by.ID))
 	queryParams := map[string]string{
 		"statement": statement,
 	}
@@ -108,8 +115,10 @@ func (r *Repository) GetDeviceDefinition(ctx context.Context, by gmodel.DeviceDe
 
 	fmt.Print(statement)
 
+	var cont = 1
 	for _, item := range modelTableland {
-		return ToAPI(manufacturerSlug, &item), nil
+		item.Index = cont
+		return ToAPI(&item)
 	}
 
 	return nil, nil
@@ -149,7 +158,7 @@ func (r *Repository) GetDeviceDefinitions(ctx context.Context, first *int, after
 
 	var manufacturer *services.ManufacturerCacheModel
 	for _, model := range manufactures {
-		if model.Slug == filterBy.Manufacturer {
+		if strings.EqualFold(model.Slug, filterBy.Manufacturer) {
 			manufacturer = &model
 			break
 		}
@@ -174,14 +183,13 @@ func (r *Repository) GetDeviceDefinitions(ctx context.Context, first *int, after
 		"statement": fmt.Sprintf("SELECT * FROM %s%s", *tableName, whereClause),
 	}
 
-	var modelTableland []DeviceDefinitionTablelandModel
-	if err = r.TablelandApiService.Query(ctx, queryParams, &modelTableland); err != nil {
+	var all []DeviceDefinitionTablelandModel
+	if err = r.TablelandApiService.Query(ctx, queryParams, &all); err != nil {
 		return nil, err
 	}
 
-	var all []*gmodel.DeviceDefinition
-	for _, item := range modelTableland {
-		all = append(all, ToAPI(filterBy.Manufacturer, &item))
+	for i, model := range all {
+		model.Index = i
 	}
 
 	// We assume that cursors come from real elements.
@@ -203,10 +211,10 @@ func (r *Repository) GetDeviceDefinitions(ctx context.Context, first *int, after
 	var errList gqlerror.List
 	var endCur, startCur *string
 	if len(all) != 0 {
-		ec := helpers.StringToCursor(all[len(all)-1].ID)
+		ec := helpers.IDToCursor(all[len(all)-1].Index)
 		endCur = &ec
 
-		sc := helpers.StringToCursor(all[0].ID)
+		sc := helpers.IDToCursor(all[0].Index)
 		startCur = &sc
 	}
 
@@ -214,12 +222,18 @@ func (r *Repository) GetDeviceDefinitions(ctx context.Context, first *int, after
 	nodes := make([]*gmodel.DeviceDefinition, len(all))
 
 	for i, dv := range all {
-		edges[i] = &gmodel.DeviceDefinitionEdge{
-			Node:   dv,
-			Cursor: helpers.StringToCursor(dv.ID),
+		gv, err := ToAPI(&dv)
+		if err != nil {
+			errList = append(errList, gqlerror.Wrap(err))
+			continue
 		}
 
-		nodes[i] = dv
+		edges[i] = &gmodel.DeviceDefinitionEdge{
+			Node:   gv,
+			Cursor: helpers.IDToCursor(dv.Index),
+		}
+
+		nodes[i] = gv
 	}
 
 	res := &gmodel.DeviceDefinitionConnection{
@@ -234,5 +248,9 @@ func (r *Repository) GetDeviceDefinitions(ctx context.Context, first *int, after
 		TotalCount: totalCount,
 	}
 
-	return res, errList
+	if errList != nil {
+		return res, errList
+	}
+
+	return res, nil
 }

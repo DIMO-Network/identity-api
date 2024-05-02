@@ -157,6 +157,8 @@ type Definition struct {
 type DeviceDefinition struct {
 	// An opaque global identifier for this device definition.
 	ID string `json:"id"`
+	// Device Definition ID for this device definition.
+	DeviceDefinitionID *string `json:"deviceDefinitionID,omitempty"`
 	// Legacy ID for this device definition.
 	LegacyID *string `json:"legacyID,omitempty"`
 	// Model for this device definition.
