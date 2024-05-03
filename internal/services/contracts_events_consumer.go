@@ -11,13 +11,12 @@ import (
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared"
 	"github.com/DIMO-Network/shared/db"
-	"github.com/ericlagergren/decimal"
+	"github.com/DIMO-Network/shared/dbtypes"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/goccy/go-json"
 	"github.com/rs/zerolog"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
-	"github.com/volatiletech/sqlboiler/v4/types"
 )
 
 type ContractsEventsConsumer struct {
@@ -567,15 +566,14 @@ func (c *ContractsEventsConsumer) handleTokensTransferredForDevice(ctx context.C
 
 	if common.HexToAddress(c.settings.AftermarketDeviceAddr) == args.DeviceNftProxy {
 		reward.AftermarketTokenID = null.IntFrom(int(args.DeviceNode.Int64()))
-		reward.AftermarketEarnings = types.NewNullDecimal(new(decimal.Big).SetBigMantScale(args.Amount, 0))
-
+		reward.AftermarketEarnings = dbtypes.IntToDecimal(args.Amount)
 		return reward.Upsert(ctx, c.dbs.DBS().Writer, true,
 			[]string{cols.IssuanceWeek, cols.VehicleID},
 			boil.Whitelist(cols.AftermarketEarnings, cols.AftermarketTokenID),
 			boil.Infer())
 	} else if common.HexToAddress(c.settings.SyntheticDeviceAddr) == args.DeviceNftProxy {
 		reward.SyntheticTokenID = null.IntFrom(int(args.DeviceNode.Int64()))
-		reward.SyntheticEarnings = types.NewNullDecimal(new(decimal.Big).SetBigMantScale(args.Amount, 0))
+		reward.SyntheticEarnings = dbtypes.IntToDecimal(args.Amount)
 
 		return reward.Upsert(ctx, c.dbs.DBS().Writer, true,
 			[]string{cols.IssuanceWeek, cols.VehicleID},
@@ -596,7 +594,7 @@ func (c *ContractsEventsConsumer) handleTokensTransferredForConnectionStreak(ctx
 		IssuanceWeek:     int(args.Week.Int64()),
 		VehicleID:        int(args.VehicleNodeID.Int64()),
 		ConnectionStreak: null.IntFrom(int(args.ConnectionStreak.Int64())),
-		StreakEarnings:   types.NewNullDecimal(new(decimal.Big).SetBigMantScale(args.Amount, 0)),
+		StreakEarnings:   dbtypes.IntToDecimal(args.Amount),
 	}
 
 	cols := models.RewardColumns

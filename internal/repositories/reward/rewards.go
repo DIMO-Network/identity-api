@@ -3,7 +3,6 @@ package reward
 import (
 	"context"
 	"fmt"
-	"math/big"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
@@ -26,26 +25,22 @@ type RewardsCursor struct {
 }
 
 type EarningsSummary struct {
-	TokenSum   types.NullDecimal `boil:"token_sum"`
-	TotalCount int               `boil:"total_count"`
+	TokenSum   types.Decimal `boil:"token_sum"`
+	TotalCount int           `boil:"total_count"`
 }
 
 var rewardsCursorColumns = "(" + models.RewardColumns.IssuanceWeek + ", " + models.RewardColumns.VehicleID + ")"
 
 func RewardToAPI(reward models.Reward) gmodel.Earning {
-	stEarn := NullDecimalToInt(reward.StreakEarnings)
-	adEarn := NullDecimalToInt(reward.AftermarketEarnings)
-	syEarn := NullDecimalToInt(reward.SyntheticEarnings)
-
 	return gmodel.Earning{
 		Week:                    reward.IssuanceWeek,
 		Beneficiary:             common.BytesToAddress(*reward.ReceivedByAddress.Ptr()),
 		ConnectionStreak:        reward.ConnectionStreak.Ptr(),
-		StreakTokens:            stEarn,
+		StreakTokens:            reward.StreakEarnings.Int(nil),
 		AftermarketDeviceID:     reward.AftermarketTokenID.Ptr(),
-		AftermarketDeviceTokens: adEarn,
+		AftermarketDeviceTokens: reward.AftermarketEarnings.Int(nil),
 		SyntheticDeviceID:       reward.SyntheticTokenID.Ptr(),
-		SyntheticDeviceTokens:   syEarn,
+		SyntheticDeviceTokens:   reward.SyntheticEarnings.Int(nil),
 		SentAt:                  reward.EarnedAt,
 		VehicleID:               reward.VehicleID,
 	}
@@ -153,7 +148,7 @@ func (r *Repository) GetEarningsSummary(ctx context.Context, conditions []qm.Que
 	queryMods := []qm.QueryMod{
 		qm.Select(
 			fmt.Sprintf(
-				"sum(COALESCE(%s, 0) + COALESCE(%s, 0) + COALESCE(%s, 0)) as token_sum",
+				"COALESCE(sum(%s + %s + %s), 0) as token_sum",
 				models.RewardColumns.StreakEarnings, models.RewardColumns.AftermarketEarnings, models.RewardColumns.SyntheticEarnings,
 			),
 			"count(*) as total_count",
@@ -180,7 +175,7 @@ func (r *Repository) GetEarningsByVehicleID(ctx context.Context, tokenID int) (*
 	}
 
 	return &gmodel.VehicleEarnings{
-		TotalTokens: NullDecimalToInt(summary.TokenSum),
+		TotalTokens: summary.TokenSum.Int(nil),
 		History:     earningsConn,
 		VehicleID:   tokenID,
 	}, nil
@@ -217,7 +212,7 @@ func (r *Repository) GetEarningsByAfterMarketDeviceID(ctx context.Context, token
 	}
 
 	return &gmodel.AftermarketDeviceEarnings{
-		TotalTokens:         NullDecimalToInt(stats.TokenSum),
+		TotalTokens:         stats.TokenSum.Int(nil),
 		History:             earningsConn,
 		AftermarketDeviceID: tokenID,
 	}, nil
@@ -255,7 +250,7 @@ func (r *Repository) GetEarningsByUserAddress(ctx context.Context, user common.A
 	}
 
 	return &gmodel.UserRewards{
-		TotalTokens: NullDecimalToInt(summary.TokenSum),
+		TotalTokens: summary.TokenSum.Int(nil),
 		History:     earningsConn,
 		User:        user,
 	}, nil
@@ -280,13 +275,4 @@ func (r *Repository) PaginateGetEarningsByUsersDevices(ctx context.Context, user
 	userDeviceEarnings.History.Nodes = afd.Nodes
 	userDeviceEarnings.History.PageInfo = afd.PageInfo
 	return userDeviceEarnings.History, nil
-}
-
-// NullDecimalToInt converts a null decimal to a non nil *big.Int.
-// If the null decimal is nil, it returns a *big.Int with value 0.
-func NullDecimalToInt(x types.NullDecimal) *big.Int {
-	if x.IsZero() {
-		return big.NewInt(0)
-	}
-	return x.Int(nil)
 }
