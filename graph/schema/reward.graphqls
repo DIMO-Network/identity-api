@@ -12,11 +12,6 @@ extend type Query {
   ): UserRewards
 }
 
-type Earnings {
-  earnedTokens: BigInt!
-  earningsTransfers(first: Int): EarningsConnection!
-}
-
 type Earning {
   """
   Week reward was issued

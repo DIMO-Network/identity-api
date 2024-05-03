@@ -25,16 +25,16 @@ import (
 
 // Reward is an object representing the database table.
 type Reward struct {
-	IssuanceWeek        int               `boil:"issuance_week" json:"issuance_week" toml:"issuance_week" yaml:"issuance_week"`
-	VehicleID           int               `boil:"vehicle_id" json:"vehicle_id" toml:"vehicle_id" yaml:"vehicle_id"`
-	ConnectionStreak    null.Int          `boil:"connection_streak" json:"connection_streak,omitempty" toml:"connection_streak" yaml:"connection_streak,omitempty"`
-	StreakEarnings      types.NullDecimal `boil:"streak_earnings" json:"streak_earnings,omitempty" toml:"streak_earnings" yaml:"streak_earnings,omitempty"`
-	AftermarketTokenID  null.Int          `boil:"aftermarket_token_id" json:"aftermarket_token_id,omitempty" toml:"aftermarket_token_id" yaml:"aftermarket_token_id,omitempty"`
-	AftermarketEarnings types.NullDecimal `boil:"aftermarket_earnings" json:"aftermarket_earnings,omitempty" toml:"aftermarket_earnings" yaml:"aftermarket_earnings,omitempty"`
-	SyntheticTokenID    null.Int          `boil:"synthetic_token_id" json:"synthetic_token_id,omitempty" toml:"synthetic_token_id" yaml:"synthetic_token_id,omitempty"`
-	SyntheticEarnings   types.NullDecimal `boil:"synthetic_earnings" json:"synthetic_earnings,omitempty" toml:"synthetic_earnings" yaml:"synthetic_earnings,omitempty"`
-	ReceivedByAddress   null.Bytes        `boil:"received_by_address" json:"received_by_address,omitempty" toml:"received_by_address" yaml:"received_by_address,omitempty"`
-	EarnedAt            time.Time         `boil:"earned_at" json:"earned_at" toml:"earned_at" yaml:"earned_at"`
+	IssuanceWeek        int           `boil:"issuance_week" json:"issuance_week" toml:"issuance_week" yaml:"issuance_week"`
+	VehicleID           int           `boil:"vehicle_id" json:"vehicle_id" toml:"vehicle_id" yaml:"vehicle_id"`
+	ConnectionStreak    null.Int      `boil:"connection_streak" json:"connection_streak,omitempty" toml:"connection_streak" yaml:"connection_streak,omitempty"`
+	StreakEarnings      types.Decimal `boil:"streak_earnings" json:"streak_earnings" toml:"streak_earnings" yaml:"streak_earnings"`
+	AftermarketTokenID  null.Int      `boil:"aftermarket_token_id" json:"aftermarket_token_id,omitempty" toml:"aftermarket_token_id" yaml:"aftermarket_token_id,omitempty"`
+	AftermarketEarnings types.Decimal `boil:"aftermarket_earnings" json:"aftermarket_earnings" toml:"aftermarket_earnings" yaml:"aftermarket_earnings"`
+	SyntheticTokenID    null.Int      `boil:"synthetic_token_id" json:"synthetic_token_id,omitempty" toml:"synthetic_token_id" yaml:"synthetic_token_id,omitempty"`
+	SyntheticEarnings   types.Decimal `boil:"synthetic_earnings" json:"synthetic_earnings" toml:"synthetic_earnings" yaml:"synthetic_earnings"`
+	ReceivedByAddress   null.Bytes    `boil:"received_by_address" json:"received_by_address,omitempty" toml:"received_by_address" yaml:"received_by_address,omitempty"`
+	EarnedAt            time.Time     `boil:"earned_at" json:"earned_at" toml:"earned_at" yaml:"earned_at"`
 
 	R *rewardR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L rewardL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -90,30 +90,25 @@ var RewardTableColumns = struct {
 
 // Generated where
 
-type whereHelpertypes_NullDecimal struct{ field string }
+type whereHelpertypes_Decimal struct{ field string }
 
-func (w whereHelpertypes_NullDecimal) EQ(x types.NullDecimal) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, false, x)
+func (w whereHelpertypes_Decimal) EQ(x types.Decimal) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.EQ, x)
 }
-func (w whereHelpertypes_NullDecimal) NEQ(x types.NullDecimal) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, true, x)
+func (w whereHelpertypes_Decimal) NEQ(x types.Decimal) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.NEQ, x)
 }
-func (w whereHelpertypes_NullDecimal) LT(x types.NullDecimal) qm.QueryMod {
+func (w whereHelpertypes_Decimal) LT(x types.Decimal) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.LT, x)
 }
-func (w whereHelpertypes_NullDecimal) LTE(x types.NullDecimal) qm.QueryMod {
+func (w whereHelpertypes_Decimal) LTE(x types.Decimal) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.LTE, x)
 }
-func (w whereHelpertypes_NullDecimal) GT(x types.NullDecimal) qm.QueryMod {
+func (w whereHelpertypes_Decimal) GT(x types.Decimal) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.GT, x)
 }
-func (w whereHelpertypes_NullDecimal) GTE(x types.NullDecimal) qm.QueryMod {
+func (w whereHelpertypes_Decimal) GTE(x types.Decimal) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.GTE, x)
-}
-
-func (w whereHelpertypes_NullDecimal) IsNull() qm.QueryMod { return qmhelper.WhereIsNull(w.field) }
-func (w whereHelpertypes_NullDecimal) IsNotNull() qm.QueryMod {
-	return qmhelper.WhereIsNotNull(w.field)
 }
 
 type whereHelpernull_Bytes struct{ field string }
@@ -144,22 +139,22 @@ var RewardWhere = struct {
 	IssuanceWeek        whereHelperint
 	VehicleID           whereHelperint
 	ConnectionStreak    whereHelpernull_Int
-	StreakEarnings      whereHelpertypes_NullDecimal
+	StreakEarnings      whereHelpertypes_Decimal
 	AftermarketTokenID  whereHelpernull_Int
-	AftermarketEarnings whereHelpertypes_NullDecimal
+	AftermarketEarnings whereHelpertypes_Decimal
 	SyntheticTokenID    whereHelpernull_Int
-	SyntheticEarnings   whereHelpertypes_NullDecimal
+	SyntheticEarnings   whereHelpertypes_Decimal
 	ReceivedByAddress   whereHelpernull_Bytes
 	EarnedAt            whereHelpertime_Time
 }{
 	IssuanceWeek:        whereHelperint{field: "\"identity_api\".\"rewards\".\"issuance_week\""},
 	VehicleID:           whereHelperint{field: "\"identity_api\".\"rewards\".\"vehicle_id\""},
 	ConnectionStreak:    whereHelpernull_Int{field: "\"identity_api\".\"rewards\".\"connection_streak\""},
-	StreakEarnings:      whereHelpertypes_NullDecimal{field: "\"identity_api\".\"rewards\".\"streak_earnings\""},
+	StreakEarnings:      whereHelpertypes_Decimal{field: "\"identity_api\".\"rewards\".\"streak_earnings\""},
 	AftermarketTokenID:  whereHelpernull_Int{field: "\"identity_api\".\"rewards\".\"aftermarket_token_id\""},
-	AftermarketEarnings: whereHelpertypes_NullDecimal{field: "\"identity_api\".\"rewards\".\"aftermarket_earnings\""},
+	AftermarketEarnings: whereHelpertypes_Decimal{field: "\"identity_api\".\"rewards\".\"aftermarket_earnings\""},
 	SyntheticTokenID:    whereHelpernull_Int{field: "\"identity_api\".\"rewards\".\"synthetic_token_id\""},
-	SyntheticEarnings:   whereHelpertypes_NullDecimal{field: "\"identity_api\".\"rewards\".\"synthetic_earnings\""},
+	SyntheticEarnings:   whereHelpertypes_Decimal{field: "\"identity_api\".\"rewards\".\"synthetic_earnings\""},
 	ReceivedByAddress:   whereHelpernull_Bytes{field: "\"identity_api\".\"rewards\".\"received_by_address\""},
 	EarnedAt:            whereHelpertime_Time{field: "\"identity_api\".\"rewards\".\"earned_at\""},
 }
