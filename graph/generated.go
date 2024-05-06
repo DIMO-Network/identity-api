@@ -165,11 +165,6 @@ type ComplexityRoot struct {
 		Week                    func(childComplexity int) int
 	}
 
-	Earnings struct {
-		EarnedTokens      func(childComplexity int) int
-		EarningsTransfers func(childComplexity int, first *int) int
-	}
-
 	EarningsConnection struct {
 		Edges      func(childComplexity int) int
 		Nodes      func(childComplexity int) int
@@ -842,25 +837,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Earning.Week(childComplexity), true
-
-	case "Earnings.earnedTokens":
-		if e.complexity.Earnings.EarnedTokens == nil {
-			break
-		}
-
-		return e.complexity.Earnings.EarnedTokens(childComplexity), true
-
-	case "Earnings.earningsTransfers":
-		if e.complexity.Earnings.EarningsTransfers == nil {
-			break
-		}
-
-		args, err := ec.field_Earnings_earningsTransfers_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Earnings.EarningsTransfers(childComplexity, args["first"].(*int)), true
 
 	case "EarningsConnection.edges":
 		if e.complexity.EarningsConnection.Edges == nil {
@@ -1639,21 +1615,6 @@ func (ec *executionContext) field_AftermarketDeviceEarnings_history_args(ctx con
 		}
 	}
 	args["before"] = arg3
-	return args, nil
-}
-
-func (ec *executionContext) field_Earnings_earningsTransfers_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 *int
-	if tmp, ok := rawArgs["first"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
-		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["first"] = arg0
 	return args, nil
 }
 
@@ -5504,115 +5465,6 @@ func (ec *executionContext) fieldContext_Earning_sentAt(ctx context.Context, fie
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Time does not have child fields")
 		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Earnings_earnedTokens(ctx context.Context, field graphql.CollectedField, obj *model.Earnings) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Earnings_earnedTokens(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.EarnedTokens, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*big.Int)
-	fc.Result = res
-	return ec.marshalNBigInt2ᚖmathᚋbigᚐInt(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Earnings_earnedTokens(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Earnings",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type BigInt does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Earnings_earningsTransfers(ctx context.Context, field graphql.CollectedField, obj *model.Earnings) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Earnings_earningsTransfers(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.EarningsTransfers, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.EarningsConnection)
-	fc.Result = res
-	return ec.marshalNEarningsConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐEarningsConnection(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Earnings_earningsTransfers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Earnings",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "totalCount":
-				return ec.fieldContext_EarningsConnection_totalCount(ctx, field)
-			case "edges":
-				return ec.fieldContext_EarningsConnection_edges(ctx, field)
-			case "nodes":
-				return ec.fieldContext_EarningsConnection_nodes(ctx, field)
-			case "pageInfo":
-				return ec.fieldContext_EarningsConnection_pageInfo(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type EarningsConnection", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Earnings_earningsTransfers_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
 	}
 	return fc, nil
 }
@@ -13096,50 +12948,6 @@ func (ec *executionContext) _Earning(ctx context.Context, sel ast.SelectionSet, 
 			out.Values[i] = ec._Earning_sentAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var earningsImplementors = []string{"Earnings"}
-
-func (ec *executionContext) _Earnings(ctx context.Context, sel ast.SelectionSet, obj *model.Earnings) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, earningsImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Earnings")
-		case "earnedTokens":
-			out.Values[i] = ec._Earnings_earnedTokens(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "earningsTransfers":
-			out.Values[i] = ec._Earnings_earningsTransfers(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))

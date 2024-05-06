@@ -26,31 +26,34 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/types"
 )
 
-const migrationsDirRelPath = "../../migrations"
-const aftermarketDeviceAddr = "0xcf9af64522162da85164a714c23a7705e6e466b3"
-const syntheticDeviceAddr = "0x85226A67FF1b3Ec6cb033162f7df5038a6C3bAB2"
-const rewardContractAddr = "0x375885164266d48C48abbbb439Be98864Ae62bBE"
+const (
+	migrationsDirRelPath  = "../../migrations"
+	aftermarketDeviceAddr = "0xcf9af64522162da85164a714c23a7705e6e466b3"
+	syntheticDeviceAddr   = "0x85226A67FF1b3Ec6cb033162f7df5038a6C3bAB2"
+	rewardContractAddr    = "0x375885164266d48C48abbbb439Be98864Ae62bBE"
+)
 
-var mintedAt = time.Now()
-
-var cloudEvent = shared.CloudEvent[json.RawMessage]{
-	ID:          "2SiTVhP3WBhfQQnnnpeBdMR7BSY",
-	Source:      "chain/80001",
-	SpecVersion: "1.0",
-	Subject:     "0x4de1bcf2b7e851e31216fc07989caa902a604784",
-	Time:        mintedAt,
-	Type:        "zone.dimo.contract.event",
-}
-
-var contractEventData = ContractEventData{
-	ChainID:         80001,
-	Contract:        common.HexToAddress("0x4de1bcf2b7e851e31216fc07989caa902a604784"),
-	TransactionHash: common.HexToHash("0x811a85e24d0129a2018c9a6668652db63d73bc6d1c76f21b07da2162c6bfea7d"),
-	EventSignature:  common.HexToHash("0xd624fd4c3311e1803d230d97ce71fd60c4f658c30a31fbe08edcb211fd90f63f"),
-	Block: Block{
-		Time: mintedAt,
-	},
-}
+var (
+	zeroDecimal = types.NewDecimal(decimal.New(0, 0))
+	mintedAt    = time.Now()
+	cloudEvent  = shared.CloudEvent[json.RawMessage]{
+		ID:          "2SiTVhP3WBhfQQnnnpeBdMR7BSY",
+		Source:      "chain/80001",
+		SpecVersion: "1.0",
+		Subject:     "0x4de1bcf2b7e851e31216fc07989caa902a604784",
+		Time:        mintedAt,
+		Type:        "zone.dimo.contract.event",
+	}
+	contractEventData = ContractEventData{
+		ChainID:         80001,
+		Contract:        common.HexToAddress("0x4de1bcf2b7e851e31216fc07989caa902a604784"),
+		TransactionHash: common.HexToHash("0x811a85e24d0129a2018c9a6668652db63d73bc6d1c76f21b07da2162c6bfea7d"),
+		EventSignature:  common.HexToHash("0xd624fd4c3311e1803d230d97ce71fd60c4f658c30a31fbe08edcb211fd90f63f"),
+		Block: Block{
+			Time: mintedAt,
+		},
+	}
+)
 
 // prepareEvent turns ContractEventData (the block time, number, etc) and the event arguments (from, to, tokenId, etc)
 // into a shared.CloudEvent[json.RawMessage] like the processor expects.
@@ -732,20 +735,42 @@ func Test_HandleVehicle_Transferred_To_Zero_Event_ShouldDelete(t *testing.T) {
 	err = privilege.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	assert.NoError(t, err)
 
+	reward := models.Reward{
+		IssuanceWeek: 1,
+		VehicleID:    tkID,
+		EarnedAt:     time.Now(),
+	}
+
+	err = reward.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err)
+
+	dcn := models.DCN{
+		Node:         common.Hash{}.Bytes(),
+		OwnerAddress: wallet.Bytes(),
+		MintedAt:     time.Now(),
+	}
+
+	err = dcn.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err)
+
 	err = contractEventConsumer.Process(ctx, &e)
 	assert.NoError(t, err)
 
-	veh, err := models.Vehicles(
-		models.VehicleWhere.ID.EQ(tkID),
-	).All(ctx, pdb.DBS().Reader.DB)
+	exists, err := models.VehicleExists(ctx, pdb.DBS().Reader, tkID)
 	assert.NoError(t, err)
+	assert.False(t, exists)
 
-	assert.Len(t, veh, 0)
-
-	priv, err := models.Privileges().All(ctx, pdb.DBS().Reader.DB)
+	numPrivs, err := models.Privileges().Count(ctx, pdb.DBS().Reader)
 	assert.NoError(t, err)
+	assert.Zero(t, numPrivs)
 
-	assert.Len(t, priv, 0)
+	numRewards, err := models.Rewards().Count(ctx, pdb.DBS().Reader)
+	assert.NoError(t, err)
+	assert.Zero(t, numRewards)
+
+	err = dcn.Reload(ctx, pdb.DBS().Reader.DB)
+	assert.NoError(t, err)
+	assert.False(t, dcn.VehicleID.Valid)
 }
 
 func Test_HandleVehicle_Transferred_To_Zero_Event_NoDelete_SyntheticDevice(t *testing.T) {
@@ -966,11 +991,11 @@ func Test_Handle_TokensTransferred_ForDevice_AftermarketDevice_Event(t *testing.
 			ReceivedByAddress:   null.BytesFrom(user.Bytes()),
 			EarnedAt:            mintedTime,
 			AftermarketTokenID:  null.IntFrom(afterMktID),
-			AftermarketEarnings: types.NewNullDecimal(decimal.New(amt.Int64(), 0)),
+			AftermarketEarnings: types.NewDecimal(decimal.New(amt.Int64(), 0)),
 			ConnectionStreak:    null.Int{},
 			SyntheticTokenID:    null.Int{},
-			SyntheticEarnings:   types.NullDecimal{},
-			StreakEarnings:      types.NullDecimal{},
+			SyntheticEarnings:   zeroDecimal,
+			StreakEarnings:      zeroDecimal,
 		})
 	}
 }
@@ -1042,11 +1067,11 @@ func Test_Handle_TokensTransferred_ForDevice_SyntheticDevice_Event(t *testing.T)
 			ReceivedByAddress:   null.BytesFrom(user.Bytes()),
 			EarnedAt:            mintedTime,
 			AftermarketTokenID:  null.Int{},
-			AftermarketEarnings: types.NullDecimal{},
+			AftermarketEarnings: zeroDecimal,
 			ConnectionStreak:    null.Int{},
-			StreakEarnings:      types.NullDecimal{},
+			StreakEarnings:      zeroDecimal,
 			SyntheticTokenID:    null.IntFrom(synthID),
-			SyntheticEarnings:   types.NewNullDecimal(decimal.New(amt.Int64(), 0)),
+			SyntheticEarnings:   types.NewDecimal(decimal.New(amt.Int64(), 0)),
 		})
 	}
 }
@@ -1137,11 +1162,11 @@ func Test_Handle_TokensTransferred_ForDevice_UpdateSynthetic_WhenAftermarketExis
 			ReceivedByAddress:   null.BytesFrom(user.Bytes()),
 			EarnedAt:            mintedTime,
 			AftermarketTokenID:  null.IntFrom(afterMktID),
-			AftermarketEarnings: types.NewNullDecimal(decimal.New(payloads[0].amount.Int64(), 0)),
+			AftermarketEarnings: types.NewDecimal(decimal.New(payloads[0].amount.Int64(), 0)),
 			SyntheticTokenID:    null.IntFrom(synthID),
-			SyntheticEarnings:   types.NewNullDecimal(decimal.New(payloads[1].amount.Int64(), 0)),
+			SyntheticEarnings:   types.NewDecimal(decimal.New(payloads[1].amount.Int64(), 0)),
 			ConnectionStreak:    null.Int{},
-			StreakEarnings:      types.NullDecimal{},
+			StreakEarnings:      zeroDecimal,
 		})
 	}
 }
@@ -1226,18 +1251,19 @@ func Test_Handle_TokensTransferred_ForDevice_UpdateAftermarket_WhenSyntheticExis
 	assert.Len(t, reward, 1)
 
 	if len(reward) > 0 {
-		assert.Equal(t, reward[0], &models.Reward{
+		assert.Equal(t, &models.Reward{
 			IssuanceWeek:        1,
 			VehicleID:           int(vID.Int64()),
 			ReceivedByAddress:   null.BytesFrom(user.Bytes()),
 			EarnedAt:            mintedTime,
 			AftermarketTokenID:  null.IntFrom(afterMktID),
-			AftermarketEarnings: types.NewNullDecimal(decimal.New(payloads[1].amount.Int64(), 0)),
+			AftermarketEarnings: types.NewDecimal(decimal.New(payloads[1].amount.Int64(), 0)),
 			SyntheticTokenID:    null.IntFrom(synthID),
-			SyntheticEarnings:   types.NewNullDecimal(decimal.New(payloads[0].amount.Int64(), 0)),
+			SyntheticEarnings:   types.NewDecimal(decimal.New(payloads[0].amount.Int64(), 0)),
 			ConnectionStreak:    null.Int{},
-			StreakEarnings:      types.NullDecimal{},
-		})
+			StreakEarnings:      zeroDecimal,
+		},
+			reward[0])
 	}
 }
 
@@ -1350,11 +1376,11 @@ func Test_Handle_TokensTransferredForConnectionStreak_Event(t *testing.T) {
 			ReceivedByAddress:   null.BytesFrom(user.Bytes()),
 			EarnedAt:            mintedTime,
 			AftermarketTokenID:  null.IntFrom(afterMktID),
-			AftermarketEarnings: types.NewNullDecimal(decimal.New(payloads[1].amount.Int64(), 0)),
+			AftermarketEarnings: types.NewDecimal(decimal.New(payloads[1].amount.Int64(), 0)),
 			SyntheticTokenID:    null.IntFrom(synthID),
-			SyntheticEarnings:   types.NewNullDecimal(decimal.New(payloads[0].amount.Int64(), 0)),
+			SyntheticEarnings:   types.NewDecimal(decimal.New(payloads[0].amount.Int64(), 0)),
 			ConnectionStreak:    null.IntFrom(int(payloads[2].connectionStreak.Int64())),
-			StreakEarnings:      types.NewNullDecimal(decimal.New(payloads[2].amount.Int64(), 0)),
+			StreakEarnings:      types.NewDecimal(decimal.New(payloads[2].amount.Int64(), 0)),
 		}, reward[0])
 	}
 }
