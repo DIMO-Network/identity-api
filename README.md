@@ -1,19 +1,25 @@
 # identity-api
 
-Run `make` to see some helpful sub-commands:
+Run `make help` to see some helpful sub-commands:
 
 ```
-% make
+% make help
 
 Specify a subcommand:
 
+  lint                 Run linter.
+  test                 Run all package tests.
+  clean                Remove previous builds.
   run                  Run the app.
-  migrate              Run unapplied database migrations.
+  migrate              Run database migrations.
   sql                  Create a new SQL migration file. Use the NAME variable to set the name: "make sql NAME=dcn_table".
-  boil                 Regenerate SQLBoiler models.
-  gql                  Regenerate gqlgen code.
-  lint                 Run golangci-lint linters.
-  tools                Install the correct version of tools used by this project (golangci-lint, goose, sqlboiler, gqlgen).
+  boil                 Generate SQLBoiler models.
+  gql                  Generate gqlgen code.
+  tools-golangci-lint  Install golangci-lint dependency.
+  tools-gqlgen         Install gqlgen dependency.
+  tools-goose          Install goose dependency.
+  tools-sqlboiler      Install sqlboiler dependency.
+  tools                Install all tool dependencies.
 ```
 
 ```mermaid
