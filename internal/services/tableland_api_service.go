@@ -29,7 +29,6 @@ func NewTablelandApiService(log *zerolog.Logger, settings *config.Settings) *Tab
 }
 
 func (r *TablelandApiService) Query(_ context.Context, queryParams map[string]string, result interface{}) error {
-
 	var queryString string = "api/v1/query?"
 	if len(queryParams) > 0 {
 		queryParamsList := make([]string, 0, len(queryParams))
