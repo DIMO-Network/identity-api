@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
@@ -110,8 +112,12 @@ func (r *Repository) GetAftermarketDevices(ctx context.Context, first *int, afte
 	nodes := make([]*gmodel.AftermarketDevice, len(all))
 	var errList gqlerror.List
 	for i, da := range all {
-		imageUrl := helpers.GetAftermarketDeviceImageUrl(r.Settings.BaseImageURL, da.ID)
-		ga, err := ToAPI(da, imageUrl)
+		imageURL, err := GetAftermarketDeviceImageURL(r.Settings.BaseImageURL, da.ID)
+		if err != nil {
+			errList = append(errList, gqlerror.Errorf("error getting aftermarket device image url: %v", err))
+			continue
+		}
+		ga, err := ToAPI(da, imageURL)
 		if err != nil {
 			errList = append(errList, gqlerror.Errorf("error converting aftermarket device to API: %v", err))
 			continue
@@ -173,8 +179,12 @@ func (r *Repository) GetAftermarketDevice(ctx context.Context, by gmodel.Afterma
 		return nil, err
 	}
 
-	imageUrl := helpers.GetAftermarketDeviceImageUrl(r.Settings.BaseImageURL, ad.ID)
-	return ToAPI(ad, imageUrl)
+	imageURL, err := GetAftermarketDeviceImageURL(r.Settings.BaseImageURL, ad.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get image url: %w", err)
+	}
+
+	return ToAPI(ad, imageURL)
 }
 
 type aftermarketDevicePrimaryKey struct {
@@ -182,7 +192,7 @@ type aftermarketDevicePrimaryKey struct {
 }
 
 // ToAPI converts a vehicle to a corresponding API vehicle.
-func ToAPI(d *models.AftermarketDevice, imageUrl string) (*gmodel.AftermarketDevice, error) {
+func ToAPI(d *models.AftermarketDevice, imageURL string) (*gmodel.AftermarketDevice, error) {
 	globalID, err := base.EncodeGlobalTokenID(TokenPrefix, d.ID)
 	if err != nil {
 		return nil, fmt.Errorf("error encoding vehicle id: %w", err)
@@ -205,8 +215,13 @@ func ToAPI(d *models.AftermarketDevice, imageUrl string) (*gmodel.AftermarketDev
 		ClaimedAt:      d.ClaimedAt.Ptr(),
 		ManufacturerID: d.ManufacturerID.Ptr(),
 		Name:           name,
-		Image:          imageUrl,
+		Image:          imageURL,
 	}, nil
+}
+
+func GetAftermarketDeviceImageURL(baseURL string, tokenID int) (string, error) {
+	tokenStr := strconv.Itoa(tokenID)
+	return url.JoinPath(baseURL, "aftermarket", "device", tokenStr, "image")
 }
 
 // IDToToken converts token data to a token id.

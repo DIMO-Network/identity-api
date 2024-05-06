@@ -558,7 +558,7 @@ func TestHandle_SyntheticDeviceNodeBurnedEvent_Success(t *testing.T) {
 	assert.Empty(t, sds)
 }
 
-func TestHandle_DefinitionUriAttribute_Event_Success(t *testing.T) {
+func TestHandle_DefinitionURIAttribute_Event_Success(t *testing.T) {
 	ctx := context.Background()
 	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
 	contractEventData.EventName = string(VehicleAttributeSet)
@@ -599,19 +599,19 @@ func TestHandle_DefinitionUriAttribute_Event_Success(t *testing.T) {
 	err = sd.Insert(ctx, pdb.DBS().Writer.DB, boil.Infer())
 	assert.NoError(t, err)
 
-	mockDefUri := "http://someurl.com/someid"
+	mockDefURI := "http://someurl.com/someid"
 	// http client mock
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 	respJSON := fmt.Sprintf(`{ "type": { "make":"%s", "model":"%s", "year":%d }}`, "Toyota", "Camry", 2020)
 
-	httpmock.RegisterResponder(http.MethodGet, mockDefUri, httpmock.NewStringResponder(200, respJSON))
+	httpmock.RegisterResponder(http.MethodGet, mockDefURI, httpmock.NewStringResponder(200, respJSON))
 
 	tkID := big.NewInt(1)
 	eventData := VehicleAttributeSetData{
 		TokenID:   tkID,
 		Attribute: "DefinitionURI",
-		Info:      mockDefUri,
+		Info:      mockDefURI,
 	}
 	settings := config.Settings{
 		DIMORegistryAddr:    contractEventData.Contract.String(),

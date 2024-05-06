@@ -18,6 +18,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
@@ -268,5 +269,51 @@ func Test_GetAftermarketDevices_FilterByManufacturerID(t *testing.T) {
 		assert.Exactly(t, e.id, actual.Edges[i].Node.ID)
 		assert.Exactly(t, e.manufacturerID, actual.Edges[i].Node.ManufacturerID)
 		assert.Exactly(t, e.owner, actual.Edges[i].Node.Owner)
+	}
+}
+
+func Test_GetAftermarketDeviceImageUrl(t *testing.T) {
+	testCases := []struct {
+		name        string
+		baseURL     string
+		tokenID     int
+		expectedURL string
+	}{
+		{
+			name:        "valid url",
+			baseURL:     "https://mockUrl.com/v1",
+			tokenID:     42,
+			expectedURL: "https://mockUrl.com/v1/aftermarket/device/42/image",
+		},
+		{
+			name:        "empty url",
+			baseURL:     "",
+			tokenID:     42,
+			expectedURL: "aftermarket/device/42/image",
+		},
+		{
+			name:        "leading slash",
+			baseURL:     "/v1",
+			tokenID:     42,
+			expectedURL: "/v1/aftermarket/device/42/image",
+		},
+		{
+			name:        "escaped base url",
+			baseURL:     "<div>",
+			tokenID:     42,
+			expectedURL: "%3Cdiv%3E/aftermarket/device/42/image",
+		},
+		{
+			name:        "trailing slash",
+			baseURL:     "https://mockUrl.com/v1/",
+			tokenID:     42,
+			expectedURL: "https://mockUrl.com/v1/aftermarket/device/42/image",
+		},
+	}
+
+	for _, tc := range testCases {
+		url, err := GetAftermarketDeviceImageURL(tc.baseURL, tc.tokenID)
+		require.NoError(t, err)
+		require.Equal(t, tc.expectedURL, url)
 	}
 }
