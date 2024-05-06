@@ -81,13 +81,13 @@ func (r *Repository) GetDeviceDefinition(ctx context.Context, by gmodel.DeviceDe
 
 	manufacturerSlug := splitID[0]
 
-	manufactures, err := r.ManufacturerCacheService.GetAllManufacturers(ctx)
+	manufacturers, err := r.ManufacturerCacheService.GetAllManufacturers(ctx)
 	if err != nil {
 		return nil, gqlerror.Errorf("failed load manufactures: %s", err)
 	}
 
 	var manufacturer *services.ManufacturerCacheModel
-	for _, model := range manufactures {
+	for _, model := range manufacturers {
 		if strings.EqualFold(model.Slug, manufacturerSlug) {
 			manufacturer = &model
 			break
@@ -151,13 +151,13 @@ func (r *Repository) GetDeviceDefinitions(ctx context.Context, first *int, after
 		whereClause = " WHERE " + whereClause
 	}
 
-	manufactures, err := r.ManufacturerCacheService.GetAllManufacturers(ctx)
+	manufacturers, err := r.ManufacturerCacheService.GetAllManufacturers(ctx)
 	if err != nil {
 		return nil, gqlerror.Errorf("failed load manufactures: %s", err)
 	}
 
 	var manufacturer *services.ManufacturerCacheModel
-	for _, model := range manufactures {
+	for _, model := range manufacturers {
 		if strings.EqualFold(model.Slug, filterBy.Manufacturer) {
 			manufacturer = &model
 			break
