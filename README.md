@@ -1,7 +1,5 @@
 # identity-api
 
-Makefile temporarily offline :)
-
 Run `make` to see some helpful sub-commands:
 
 ```
@@ -15,6 +13,7 @@ Specify a subcommand:
   boil                 Regenerate SQLBoiler models.
   gql                  Regenerate gqlgen code.
   lint                 Run golangci-lint linters.
+  tools                Install the correct version of tools used by this project (golangci-lint, goose, sqlboiler, gqlgen).
 ```
 
 ```mermaid
@@ -37,7 +36,20 @@ flowchart TD
 ## Migrations
 
 Add a migrations:
-`$ goose -dir migrations create <migration_name> sql`
+`make tools-goose` Installs the correct version of goose.
+`make sql NAME=dcn_table` creates a new migration file.
+
+## Generate GraphQL
+
+`make tools-gqlgen` Installs the correct version of gqlgen.
+`make gql` Regenerates the gqlgen code.
+
+## Generate SQLBoiler
+
+`docker-compose up -d db` Starts a Postgres database.
+`make tools-boil` Installs the correct version of sqlboiler.
+`make migrate` Runs unapplied database migrations.
+`make boil` Regenerates the SQLBoiler models.
 
 ## License
 
