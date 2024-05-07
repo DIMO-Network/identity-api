@@ -18,6 +18,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/introspection"
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/graph/types"
+	"github.com/ericlagergren/decimal"
 	"github.com/ethereum/go-ethereum/common"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -2934,9 +2935,9 @@ func (ec *executionContext) _AftermarketDeviceEarnings_totalTokens(ctx context.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*big.Int)
+	res := resTmp.(*decimal.Big)
 	fc.Result = res
-	return ec.marshalNBigInt2ᚖmathᚋbigᚐInt(ctx, field.Selections, res)
+	return ec.marshalNBigDecimal2ᚖgithubᚗcomᚋericlagergrenᚋdecimalᚐBig(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AftermarketDeviceEarnings_totalTokens(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2946,7 +2947,7 @@ func (ec *executionContext) fieldContext_AftermarketDeviceEarnings_totalTokens(c
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type BigInt does not have child fields")
+			return nil, errors.New("field of type BigDecimal does not have child fields")
 		},
 	}
 	return fc, nil
@@ -4145,9 +4146,9 @@ func (ec *executionContext) _Earning_streakTokens(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*big.Int)
+	res := resTmp.(*decimal.Big)
 	fc.Result = res
-	return ec.marshalNBigInt2ᚖmathᚋbigᚐInt(ctx, field.Selections, res)
+	return ec.marshalNBigDecimal2ᚖgithubᚗcomᚋericlagergrenᚋdecimalᚐBig(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Earning_streakTokens(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4157,7 +4158,7 @@ func (ec *executionContext) fieldContext_Earning_streakTokens(ctx context.Contex
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type BigInt does not have child fields")
+			return nil, errors.New("field of type BigDecimal does not have child fields")
 		},
 	}
 	return fc, nil
@@ -4262,9 +4263,9 @@ func (ec *executionContext) _Earning_aftermarketDeviceTokens(ctx context.Context
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*big.Int)
+	res := resTmp.(*decimal.Big)
 	fc.Result = res
-	return ec.marshalNBigInt2ᚖmathᚋbigᚐInt(ctx, field.Selections, res)
+	return ec.marshalNBigDecimal2ᚖgithubᚗcomᚋericlagergrenᚋdecimalᚐBig(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Earning_aftermarketDeviceTokens(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4274,7 +4275,7 @@ func (ec *executionContext) fieldContext_Earning_aftermarketDeviceTokens(ctx con
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type BigInt does not have child fields")
+			return nil, errors.New("field of type BigDecimal does not have child fields")
 		},
 	}
 	return fc, nil
@@ -4361,9 +4362,9 @@ func (ec *executionContext) _Earning_syntheticDeviceTokens(ctx context.Context, 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*big.Int)
+	res := resTmp.(*decimal.Big)
 	fc.Result = res
-	return ec.marshalNBigInt2ᚖmathᚋbigᚐInt(ctx, field.Selections, res)
+	return ec.marshalNBigDecimal2ᚖgithubᚗcomᚋericlagergrenᚋdecimalᚐBig(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Earning_syntheticDeviceTokens(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4373,7 +4374,7 @@ func (ec *executionContext) fieldContext_Earning_syntheticDeviceTokens(ctx conte
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type BigInt does not have child fields")
+			return nil, errors.New("field of type BigDecimal does not have child fields")
 		},
 	}
 	return fc, nil
@@ -7229,9 +7230,9 @@ func (ec *executionContext) _UserRewards_totalTokens(ctx context.Context, field 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*big.Int)
+	res := resTmp.(*decimal.Big)
 	fc.Result = res
-	return ec.marshalNBigInt2ᚖmathᚋbigᚐInt(ctx, field.Selections, res)
+	return ec.marshalNBigDecimal2ᚖgithubᚗcomᚋericlagergrenᚋdecimalᚐBig(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UserRewards_totalTokens(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7241,7 +7242,7 @@ func (ec *executionContext) fieldContext_UserRewards_totalTokens(ctx context.Con
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type BigInt does not have child fields")
+			return nil, errors.New("field of type BigDecimal does not have child fields")
 		},
 	}
 	return fc, nil
@@ -8273,9 +8274,9 @@ func (ec *executionContext) _VehicleEarnings_totalTokens(ctx context.Context, fi
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*big.Int)
+	res := resTmp.(*decimal.Big)
 	fc.Result = res
-	return ec.marshalNBigInt2ᚖmathᚋbigᚐInt(ctx, field.Selections, res)
+	return ec.marshalNBigDecimal2ᚖgithubᚗcomᚋericlagergrenᚋdecimalᚐBig(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_VehicleEarnings_totalTokens(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8285,7 +8286,7 @@ func (ec *executionContext) fieldContext_VehicleEarnings_totalTokens(ctx context
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type BigInt does not have child fields")
+			return nil, errors.New("field of type BigDecimal does not have child fields")
 		},
 	}
 	return fc, nil
@@ -13393,6 +13394,27 @@ func (ec *executionContext) marshalNAftermarketDeviceEdge2ᚖgithubᚗcomᚋDIMO
 		return graphql.Null
 	}
 	return ec._AftermarketDeviceEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNBigDecimal2ᚖgithubᚗcomᚋericlagergrenᚋdecimalᚐBig(ctx context.Context, v interface{}) (*decimal.Big, error) {
+	res, err := types.UnmarshalBigDecimal(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNBigDecimal2ᚖgithubᚗcomᚋericlagergrenᚋdecimalᚐBig(ctx context.Context, sel ast.SelectionSet, v *decimal.Big) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	res := types.MarshalBigDecimal(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
 }
 
 func (ec *executionContext) unmarshalNBigInt2ᚖmathᚋbigᚐInt(ctx context.Context, v interface{}) (*big.Int, error) {
