@@ -15,7 +15,7 @@ An integer of arbitrary precision, decimal-encoded. Typically a uint256.
 scalar BigInt
 
 """
-A floating-point number
+BigDecimal decimal floating-point number, per the General Decimal Arithmetic specification.
 """
 scalar BigDecimal
 

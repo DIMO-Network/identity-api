@@ -16,7 +16,9 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-var weiVal = decimal.WithContext(decimal.Context{Precision: 20}).SetMantScale(1, -18)
+// weiPerEther is the number of wei in an ether.
+// negative scale results in 10^18.
+var weiPerEther = decimal.New(1, -18)
 
 type Repository struct {
 	*base.Repository
@@ -286,5 +288,5 @@ func (r *Repository) PaginateGetEarningsByUsersDevices(ctx context.Context, user
 
 // divide by 10^18 to get token value.
 func weiToToken(wei types.Decimal) *decimal.Big {
-	return new(decimal.Big).Quo(wei.Big, weiVal)
+	return new(decimal.Big).Quo(wei.Big, weiPerEther)
 }
