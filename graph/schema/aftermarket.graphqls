@@ -125,7 +125,7 @@ type AftermarketDeviceEdge {
 }
 
 type AftermarketDeviceEarnings {
-  totalTokens: BigInt!
+  totalTokens: BigDecimal!
   history(
     first: Int
     after: String

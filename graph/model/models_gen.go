@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/ericlagergren/decimal"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -70,7 +71,7 @@ type AftermarketDeviceConnection struct {
 }
 
 type AftermarketDeviceEarnings struct {
-	TotalTokens         *big.Int            `json:"totalTokens"`
+	TotalTokens         *decimal.Big        `json:"totalTokens"`
 	History             *EarningsConnection `json:"history"`
 	AftermarketDeviceID int                 `json:"-"`
 }
@@ -161,15 +162,15 @@ type Earning struct {
 	// Consecutive period of which vehicle was connected
 	ConnectionStreak *int `json:"connectionStreak,omitempty"`
 	// Tokens earned for connection period
-	StreakTokens *big.Int `json:"streakTokens"`
+	StreakTokens *decimal.Big `json:"streakTokens"`
 	// AftermarketDevice connected to vehicle
 	AftermarketDevice *AftermarketDevice `json:"aftermarketDevice,omitempty"`
 	// Tokens earned by aftermarketDevice
-	AftermarketDeviceTokens *big.Int `json:"aftermarketDeviceTokens"`
+	AftermarketDeviceTokens *decimal.Big `json:"aftermarketDeviceTokens"`
 	// SyntheticDevice connected to vehicle
 	SyntheticDevice *SyntheticDevice `json:"syntheticDevice,omitempty"`
 	// Tokens earned by SyntheticDevice
-	SyntheticDeviceTokens *big.Int `json:"syntheticDeviceTokens"`
+	SyntheticDeviceTokens *decimal.Big `json:"syntheticDeviceTokens"`
 	// Vehicle reward is assigned to
 	Vehicle *Vehicle `json:"vehicle,omitempty"`
 	// When the token was earned
@@ -305,7 +306,7 @@ type SyntheticDevicesFilter struct {
 }
 
 type UserRewards struct {
-	TotalTokens *big.Int            `json:"totalTokens"`
+	TotalTokens *decimal.Big        `json:"totalTokens"`
 	History     *EarningsConnection `json:"history"`
 	User        common.Address      `json:"-"`
 }
@@ -352,7 +353,7 @@ type VehicleConnection struct {
 }
 
 type VehicleEarnings struct {
-	TotalTokens *big.Int            `json:"totalTokens"`
+	TotalTokens *decimal.Big        `json:"totalTokens"`
 	History     *EarningsConnection `json:"history"`
 	VehicleID   int                 `json:"-"`
 }

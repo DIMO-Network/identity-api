@@ -206,7 +206,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate() {
 		"vehicle": {
 		  "id": "V_kQE=",
 		  "earnings": {
-			"totalTokens": "177441154036585529047",
+			"totalTokens": "177.44",
 			"history": {
 			  "totalCount": 1,
 			  "edges": [
@@ -216,12 +216,12 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate() {
 					"week": 2,
 					"beneficiary": "%s",
 					"connectionStreak": 20,
-					"streakTokens": "59147051345528509684",
+					"streakTokens": "59.15",
 					"aftermarketDevice": {
 					  "id": "AD_kQE=",
 					  "tokenId": 1
 					},
-					"aftermarketDeviceTokens": "59147051345528509681",
+					"aftermarketDeviceTokens": "59.15",
 					"syntheticDevice": {
 					  "tokenId": 1,
 					  "integrationId": 2
@@ -230,7 +230,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate() {
 					  "id": "V_kQE=",
 					  "tokenId": 1
 					},
-					"syntheticDeviceTokens": "59147051345528509682",
+					"syntheticDeviceTokens": "59.15",
 					"sentAt": "%s"
 				  }
 				}
@@ -382,7 +382,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate_Firs
 		"vehicle": {
 			"id": "V_kQE=",
 			"earnings": {
-			"totalTokens": "532323462109756587141",
+			"totalTokens": "532.32",
 			"history": {
 				"totalCount": 3,
 				"edges": [
@@ -392,12 +392,12 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate_Firs
 						"week": 3,
 						"beneficiary": "%s",
 						"connectionStreak": 13,
-						"streakTokens": "59147051345528509684",
+						"streakTokens": "59.15",
 						"aftermarketDevice": {
 							"id": "AD_kQE=",
 							"tokenId": 1
 						},
-						"aftermarketDeviceTokens": "59147051345528509681",
+						"aftermarketDeviceTokens": "59.15",
 						"syntheticDevice": {
 							"tokenId": 1,
 							"integrationId": 2
@@ -406,7 +406,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate_Firs
 							"id": "V_kQE=",
 							"tokenId": 1
 						},
-						"syntheticDeviceTokens": "59147051345528509682",
+						"syntheticDeviceTokens": "59.15",
 						"sentAt": "%s"
 						}
 					},
@@ -416,12 +416,12 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate_Firs
 						"week": 2,
 						"beneficiary": "%s",
 						"connectionStreak": 12,
-						"streakTokens": "59147051345528509684",
+						"streakTokens": "59.15",
 						"aftermarketDevice": {
 							"id": "AD_kQE=",
 							"tokenId": 1
 						},
-						"aftermarketDeviceTokens": "59147051345528509681",
+						"aftermarketDeviceTokens": "59.15",
 						"syntheticDevice": {
 							"tokenId": 1,
 							"integrationId": 2
@@ -430,7 +430,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate_Firs
 							"id": "V_kQE=",
 							"tokenId": 1
 						},
-						"syntheticDeviceTokens": "59147051345528509682",
+						"syntheticDeviceTokens": "59.15",
 						"sentAt": "%s"
 						}
 					}
@@ -587,7 +587,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 		"vehicle": {
 			"id": "V_kQE=",
 			"earnings": {
-			"totalTokens": "532323462109756587141",
+			"totalTokens": "532.32",
 			"history": {
 				"totalCount": 3,
 				"edges": [
@@ -597,12 +597,12 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 						"week": 3,
 						"beneficiary": "%s",
 						"connectionStreak": 13,
-						"streakTokens": "59147051345528509684",
+						"streakTokens": "59.15",
 						"aftermarketDevice": {
 							"id": "AD_kQE=",
 							"tokenId": 1
 						},
-						"aftermarketDeviceTokens": "59147051345528509681",
+						"aftermarketDeviceTokens": "59.15",
 						"syntheticDevice": {
 							"tokenId": 1,
 							"integrationId": 2
@@ -611,7 +611,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 							"id": "V_kQE=",
 							"tokenId": 1
 						},
-						"syntheticDeviceTokens": "59147051345528509682",
+						"syntheticDeviceTokens": "59.15",
 						"sentAt": "%s"
 						}
 					},
@@ -621,12 +621,12 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 						"week": 2,
 						"beneficiary": "%s",
 						"connectionStreak": 12,
-						"streakTokens": "59147051345528509684",
+						"streakTokens": "59.15",
 						"aftermarketDevice": {
 							"id": "AD_kQE=",
 							"tokenId": 1
 						},
-						"aftermarketDeviceTokens": "59147051345528509681",
+						"aftermarketDeviceTokens": "59.15",
 						"syntheticDevice": {
 							"tokenId": 1,
 							"integrationId": 2
@@ -635,7 +635,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 							"id": "V_kQE=",
 							"tokenId": 1
 						},
-						"syntheticDeviceTokens": "59147051345528509682",
+						"syntheticDeviceTokens": "59.15",
 						"sentAt": "%s"
 						}
 					}
@@ -792,7 +792,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 		"vehicle": {
 			"id": "V_kQE=",
 			"earnings": {
-			"totalTokens": "532323462109756587141",
+			"totalTokens": "532.32",
 			"history": {
 				"totalCount": 3,
 				"edges": [
@@ -802,12 +802,12 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 						"week": 4,
 						"beneficiary": "%s",
 						"connectionStreak": 14,
-						"streakTokens": "59147051345528509684",
+						"streakTokens": "59.15",
 						"aftermarketDevice": {
 							"id": "AD_kQE=",
 							"tokenId": 1
 						},
-						"aftermarketDeviceTokens": "59147051345528509681",
+						"aftermarketDeviceTokens": "59.15",
 						"syntheticDevice": {
 							"tokenId": 1,
 							"integrationId": 2
@@ -816,7 +816,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 							"id": "V_kQE=",
 							"tokenId": 1
 						},
-						"syntheticDeviceTokens": "59147051345528509682",
+						"syntheticDeviceTokens": "59.15",
 						"sentAt": "%s"
 						}
 					},
@@ -826,12 +826,12 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 						"week": 3,
 						"beneficiary": "%s",
 						"connectionStreak": 13,
-						"streakTokens": "59147051345528509684",
+						"streakTokens": "59.15",
 						"aftermarketDevice": {
 							"id": "AD_kQE=",
 							"tokenId": 1
 						},
-						"aftermarketDeviceTokens": "59147051345528509681",
+						"aftermarketDeviceTokens": "59.15",
 						"syntheticDevice": {
 							"tokenId": 1,
 							"integrationId": 2
@@ -840,7 +840,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 							"id": "V_kQE=",
 							"tokenId": 1
 						},
-						"syntheticDeviceTokens": "59147051345528509682",
+						"syntheticDeviceTokens": "59.15",
 						"sentAt": "%s"
 						}
 					}
@@ -961,7 +961,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetAftermarketDeviceEarnings_FwdPagin
 						"id": "AD_kQE=",
 						"tokenId": 1,
 						"earnings": {
-							"totalTokens": "177441154036585529047",
+							"totalTokens": "177.44",
 							"history": {
 								"totalCount": 1,
 								"pageInfo": {
@@ -1104,7 +1104,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetUserRewards_FwdPaginate() {
 	r.JSONEq(fmt.Sprintf(`
 	{
 		"rewards": {
-			"totalTokens": "532323462109756587141",
+			"totalTokens": "532.32",
 			"history": {
 			  "totalCount": 3,
 			  "edges": [
@@ -1113,15 +1113,15 @@ func (r *RewardsQueryTestSuite) Test_Query_GetUserRewards_FwdPaginate() {
 					"week": 4,
 					"beneficiary": "%s",
 					"connectionStreak": 14,
-					"streakTokens": "59147051345528509684",
+					"streakTokens": "59.15",
 					"aftermarketDevice": {
 					  "id": "AD_kQE="
 					},
-					"aftermarketDeviceTokens": "59147051345528509681",
+					"aftermarketDeviceTokens": "59.15",
 					"syntheticDevice": {
 					  "tokenId": 1
 					},
-					"syntheticDeviceTokens": "59147051345528509682",
+					"syntheticDeviceTokens": "59.15",
 					"vehicle": {
 					  "id": "V_kQE=",
 					  "tokenId": 1
@@ -1134,15 +1134,15 @@ func (r *RewardsQueryTestSuite) Test_Query_GetUserRewards_FwdPaginate() {
 					"week": 3,
 					"beneficiary": "%s",
 					"connectionStreak": 13,
-					"streakTokens": "59147051345528509684",
+					"streakTokens": "59.15",
 					"aftermarketDevice": {
 					  "id": "AD_kQE="
 					},
-					"aftermarketDeviceTokens": "59147051345528509681",
+					"aftermarketDeviceTokens": "59.15",
 					"syntheticDevice": {
 					  "tokenId": 1
 					},
-					"syntheticDeviceTokens": "59147051345528509682",
+					"syntheticDeviceTokens": "59.15",
 					"vehicle": {
 					  "id": "V_kQE=",
 					  "tokenId": 1
@@ -1277,7 +1277,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetUserRewards_BackPaginate_LastBefor
 	r.JSONEq(fmt.Sprintf(`
 	{
 		"rewards": {
-			"totalTokens": "532323462109756587141",
+			"totalTokens": "532.32",
 			"history": {
 			  "totalCount": 3,
 			  "edges": [
@@ -1286,15 +1286,15 @@ func (r *RewardsQueryTestSuite) Test_Query_GetUserRewards_BackPaginate_LastBefor
 					"week": 3,
 					"beneficiary": "%s",
 					"connectionStreak": 13,
-					"streakTokens": "59147051345528509684",
+					"streakTokens": "59.15",
 					"aftermarketDevice": {
 					  "id": "AD_kQE="
 					},
-					"aftermarketDeviceTokens": "59147051345528509681",
+					"aftermarketDeviceTokens": "59.15",
 					"syntheticDevice": {
 					  "tokenId": 1
 					},
-					"syntheticDeviceTokens": "59147051345528509682",
+					"syntheticDeviceTokens": "59.15",
 					"vehicle": {
 					  "id": "V_kQE=",
 					  "tokenId": 1
@@ -1307,15 +1307,15 @@ func (r *RewardsQueryTestSuite) Test_Query_GetUserRewards_BackPaginate_LastBefor
 					"week": 2,
 					"beneficiary": "%s",
 					"connectionStreak": 12,
-					"streakTokens": "59147051345528509684",
+					"streakTokens": "59.15",
 					"aftermarketDevice": {
 					  "id": "AD_kQE="
 					},
-					"aftermarketDeviceTokens": "59147051345528509681",
+					"aftermarketDeviceTokens": "59.15",
 					"syntheticDevice": {
 					  "tokenId": 1
 					},
-					"syntheticDeviceTokens": "59147051345528509682",
+					"syntheticDeviceTokens": "59.15",
 					"vehicle": {
 					  "id": "V_kQE=",
 					  "tokenId": 1
@@ -1348,9 +1348,9 @@ func (r *RewardsQueryTestSuite) Test_Query_GetUserRewards_NullEarnings() {
 			IssuanceWeek:        3,
 			VehicleID:           1,
 			ConnectionStreak:    null.IntFrom(13),
-			StreakEarnings:      dbtypes.IntToDecimal(big.NewInt(1)),
+			StreakEarnings:      dbtypes.IntToDecimal(big.NewInt(1e18)),
 			AftermarketTokenID:  null.IntFrom(1),
-			AftermarketEarnings: dbtypes.IntToDecimal(big.NewInt(1)),
+			AftermarketEarnings: dbtypes.IntToDecimal(big.NewInt(1e18)),
 			SyntheticTokenID:    null.IntFrom(1),
 			SyntheticEarnings:   types.Decimal{},
 			ReceivedByAddress:   null.BytesFrom(beneficiary.Bytes()),
@@ -1406,7 +1406,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetUserRewards_NullEarnings() {
 	r.JSONEq(fmt.Sprintf(`
 	{
 		"rewards": {
-			"totalTokens": "2",
+			"totalTokens": "2.00",
 			"history": {
 			  "totalCount": 1,
 			  "edges": [
@@ -1415,15 +1415,15 @@ func (r *RewardsQueryTestSuite) Test_Query_GetUserRewards_NullEarnings() {
 					"week": 3,
 					"beneficiary": "%s",
 					"connectionStreak": 13,
-					"streakTokens": "1",
+					"streakTokens": "1.00",
 					"aftermarketDevice": {
 					  "id": "AD_kQE="
 					},
-					"aftermarketDeviceTokens": "1",
+					"aftermarketDeviceTokens": "1.00",
 					"syntheticDevice": {
 					  "tokenId": 1
 					},
-					"syntheticDeviceTokens": "0",
+					"syntheticDeviceTokens": "0.00",
 					"vehicle": {
 					  "id": "V_kQE=",
 					  "tokenId": 1
