@@ -86,7 +86,7 @@ type Vehicle implements Node {
   """
   The manufacturer of this vehicle.
   """
-  manufacturer: Manufacturer
+  manufacturer: Manufacturer!
   """
   The Ethereum address of the owner of this vehicle.
   """

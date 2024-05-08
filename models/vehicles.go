@@ -31,7 +31,7 @@ type Vehicle struct {
 	Year           null.Int    `boil:"year" json:"year,omitempty" toml:"year" yaml:"year,omitempty"`
 	MintedAt       time.Time   `boil:"minted_at" json:"minted_at" toml:"minted_at" yaml:"minted_at"`
 	DefinitionURI  null.String `boil:"definition_uri" json:"definition_uri,omitempty" toml:"definition_uri" yaml:"definition_uri,omitempty"`
-	ManufacturerID null.Int    `boil:"manufacturer_id" json:"manufacturer_id,omitempty" toml:"manufacturer_id" yaml:"manufacturer_id,omitempty"`
+	ManufacturerID int         `boil:"manufacturer_id" json:"manufacturer_id" toml:"manufacturer_id" yaml:"manufacturer_id"`
 
 	R *vehicleR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L vehicleL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -87,7 +87,7 @@ var VehicleWhere = struct {
 	Year           whereHelpernull_Int
 	MintedAt       whereHelpertime_Time
 	DefinitionURI  whereHelpernull_String
-	ManufacturerID whereHelpernull_Int
+	ManufacturerID whereHelperint
 }{
 	ID:             whereHelperint{field: "\"identity_api\".\"vehicles\".\"id\""},
 	OwnerAddress:   whereHelper__byte{field: "\"identity_api\".\"vehicles\".\"owner_address\""},
@@ -96,7 +96,7 @@ var VehicleWhere = struct {
 	Year:           whereHelpernull_Int{field: "\"identity_api\".\"vehicles\".\"year\""},
 	MintedAt:       whereHelpertime_Time{field: "\"identity_api\".\"vehicles\".\"minted_at\""},
 	DefinitionURI:  whereHelpernull_String{field: "\"identity_api\".\"vehicles\".\"definition_uri\""},
-	ManufacturerID: whereHelpernull_Int{field: "\"identity_api\".\"vehicles\".\"manufacturer_id\""},
+	ManufacturerID: whereHelperint{field: "\"identity_api\".\"vehicles\".\"manufacturer_id\""},
 }
 
 // VehicleRels is where relationship names are stored.
@@ -178,8 +178,8 @@ type vehicleL struct{}
 
 var (
 	vehicleAllColumns            = []string{"id", "owner_address", "make", "model", "year", "minted_at", "definition_uri", "manufacturer_id"}
-	vehicleColumnsWithoutDefault = []string{"id", "owner_address", "minted_at"}
-	vehicleColumnsWithDefault    = []string{"make", "model", "year", "definition_uri", "manufacturer_id"}
+	vehicleColumnsWithoutDefault = []string{"id", "owner_address", "minted_at", "manufacturer_id"}
+	vehicleColumnsWithDefault    = []string{"make", "model", "year", "definition_uri"}
 	vehiclePrimaryKeyColumns     = []string{"id"}
 	vehicleGeneratedColumns      = []string{}
 )
@@ -600,9 +600,7 @@ func (vehicleL) LoadManufacturer(ctx context.Context, e boil.ContextExecutor, si
 		if object.R == nil {
 			object.R = &vehicleR{}
 		}
-		if !queries.IsNil(object.ManufacturerID) {
-			args[object.ManufacturerID] = struct{}{}
-		}
+		args[object.ManufacturerID] = struct{}{}
 
 	} else {
 		for _, obj := range slice {
@@ -610,9 +608,7 @@ func (vehicleL) LoadManufacturer(ctx context.Context, e boil.ContextExecutor, si
 				obj.R = &vehicleR{}
 			}
 
-			if !queries.IsNil(obj.ManufacturerID) {
-				args[obj.ManufacturerID] = struct{}{}
-			}
+			args[obj.ManufacturerID] = struct{}{}
 
 		}
 	}
@@ -677,7 +673,7 @@ func (vehicleL) LoadManufacturer(ctx context.Context, e boil.ContextExecutor, si
 
 	for _, local := range slice {
 		for _, foreign := range resultSlice {
-			if queries.Equal(local.ManufacturerID, foreign.ID) {
+			if local.ManufacturerID == foreign.ID {
 				local.R.Manufacturer = foreign
 				if foreign.R == nil {
 					foreign.R = &manufacturerR{}
@@ -1287,7 +1283,7 @@ func (o *Vehicle) SetManufacturer(ctx context.Context, exec boil.ContextExecutor
 		return errors.Wrap(err, "failed to update local table")
 	}
 
-	queries.Assign(&o.ManufacturerID, related.ID)
+	o.ManufacturerID = related.ID
 	if o.R == nil {
 		o.R = &vehicleR{
 			Manufacturer: related,
@@ -1304,39 +1300,6 @@ func (o *Vehicle) SetManufacturer(ctx context.Context, exec boil.ContextExecutor
 		related.R.Vehicles = append(related.R.Vehicles, o)
 	}
 
-	return nil
-}
-
-// RemoveManufacturer relationship.
-// Sets o.R.Manufacturer to nil.
-// Removes o from all passed in related items' relationships struct.
-func (o *Vehicle) RemoveManufacturer(ctx context.Context, exec boil.ContextExecutor, related *Manufacturer) error {
-	var err error
-
-	queries.SetScanner(&o.ManufacturerID, nil)
-	if _, err = o.Update(ctx, exec, boil.Whitelist("manufacturer_id")); err != nil {
-		return errors.Wrap(err, "failed to update local table")
-	}
-
-	if o.R != nil {
-		o.R.Manufacturer = nil
-	}
-	if related == nil || related.R == nil {
-		return nil
-	}
-
-	for i, ri := range related.R.Vehicles {
-		if queries.Equal(o.ManufacturerID, ri.ManufacturerID) {
-			continue
-		}
-
-		ln := len(related.R.Vehicles)
-		if ln > 1 && i < ln-1 {
-			related.R.Vehicles[i] = related.R.Vehicles[ln-1]
-		}
-		related.R.Vehicles = related.R.Vehicles[:ln-1]
-		break
-	}
 	return nil
 }
 

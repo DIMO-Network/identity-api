@@ -687,7 +687,7 @@ func (manufacturerL) LoadVehicles(ctx context.Context, e boil.ContextExecutor, s
 
 	for _, foreign := range resultSlice {
 		for _, local := range slice {
-			if queries.Equal(local.ID, foreign.ManufacturerID) {
+			if local.ID == foreign.ManufacturerID {
 				local.R.Vehicles = append(local.R.Vehicles, foreign)
 				if foreign.R == nil {
 					foreign.R = &vehicleR{}
@@ -836,7 +836,7 @@ func (o *Manufacturer) AddVehicles(ctx context.Context, exec boil.ContextExecuto
 	var err error
 	for _, rel := range related {
 		if insert {
-			queries.Assign(&rel.ManufacturerID, o.ID)
+			rel.ManufacturerID = o.ID
 			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
 				return errors.Wrap(err, "failed to insert into foreign table")
 			}
@@ -857,7 +857,7 @@ func (o *Manufacturer) AddVehicles(ctx context.Context, exec boil.ContextExecuto
 				return errors.Wrap(err, "failed to update foreign table")
 			}
 
-			queries.Assign(&rel.ManufacturerID, o.ID)
+			rel.ManufacturerID = o.ID
 		}
 	}
 
@@ -878,80 +878,6 @@ func (o *Manufacturer) AddVehicles(ctx context.Context, exec boil.ContextExecuto
 			rel.R.Manufacturer = o
 		}
 	}
-	return nil
-}
-
-// SetVehicles removes all previously related items of the
-// manufacturer replacing them completely with the passed
-// in related items, optionally inserting them as new records.
-// Sets o.R.Manufacturer's Vehicles accordingly.
-// Replaces o.R.Vehicles with related.
-// Sets related.R.Manufacturer's Vehicles accordingly.
-func (o *Manufacturer) SetVehicles(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Vehicle) error {
-	query := "update \"identity_api\".\"vehicles\" set \"manufacturer_id\" = null where \"manufacturer_id\" = $1"
-	values := []interface{}{o.ID}
-	if boil.IsDebug(ctx) {
-		writer := boil.DebugWriterFrom(ctx)
-		fmt.Fprintln(writer, query)
-		fmt.Fprintln(writer, values)
-	}
-	_, err := exec.ExecContext(ctx, query, values...)
-	if err != nil {
-		return errors.Wrap(err, "failed to remove relationships before set")
-	}
-
-	if o.R != nil {
-		for _, rel := range o.R.Vehicles {
-			queries.SetScanner(&rel.ManufacturerID, nil)
-			if rel.R == nil {
-				continue
-			}
-
-			rel.R.Manufacturer = nil
-		}
-		o.R.Vehicles = nil
-	}
-
-	return o.AddVehicles(ctx, exec, insert, related...)
-}
-
-// RemoveVehicles relationships from objects passed in.
-// Removes related items from R.Vehicles (uses pointer comparison, removal does not keep order)
-// Sets related.R.Manufacturer.
-func (o *Manufacturer) RemoveVehicles(ctx context.Context, exec boil.ContextExecutor, related ...*Vehicle) error {
-	if len(related) == 0 {
-		return nil
-	}
-
-	var err error
-	for _, rel := range related {
-		queries.SetScanner(&rel.ManufacturerID, nil)
-		if rel.R != nil {
-			rel.R.Manufacturer = nil
-		}
-		if _, err = rel.Update(ctx, exec, boil.Whitelist("manufacturer_id")); err != nil {
-			return err
-		}
-	}
-	if o.R == nil {
-		return nil
-	}
-
-	for _, rel := range related {
-		for i, ri := range o.R.Vehicles {
-			if rel != ri {
-				continue
-			}
-
-			ln := len(o.R.Vehicles)
-			if ln > 1 && i < ln-1 {
-				o.R.Vehicles[i] = o.R.Vehicles[ln-1]
-			}
-			o.R.Vehicles = o.R.Vehicles[:ln-1]
-			break
-		}
-	}
-
 	return nil
 }
 

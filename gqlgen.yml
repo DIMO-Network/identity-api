@@ -132,7 +132,7 @@ models:
         resolver: true
     extraFields:
       ManufacturerID:
-        type: "*int"
+        type: "int"
   VehicleEarnings:
     fields:
       history:

@@ -69,13 +69,21 @@ func TestRewardsQueryTestSuite(t *testing.T) {
 }
 
 func (r *RewardsQueryTestSuite) createDependencies() {
+	var mfr = models.Manufacturer{
+		ID:       43,
+		Owner:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Name:     "Ford",
+		MintedAt: time.Now(),
+	}
+
 	var vehicle = models.Vehicle{
-		ID:           1,
-		OwnerAddress: common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
-		Make:         null.StringFrom("Ford"),
-		Model:        null.StringFrom("Bronco"),
-		Year:         null.IntFrom(2022),
-		MintedAt:     time.Now(),
+		ID:             1,
+		ManufacturerID: 43,
+		OwnerAddress:   common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Make:           null.StringFrom("Ford"),
+		Model:          null.StringFrom("Bronco"),
+		Year:           null.IntFrom(2022),
+		MintedAt:       time.Now(),
 	}
 
 	var aftermarketDevice = models.AftermarketDevice{
@@ -97,7 +105,10 @@ func (r *RewardsQueryTestSuite) createDependencies() {
 		MintedAt:      time.Now(),
 	}
 
-	err := vehicle.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
+	err := mfr.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
+	r.NoError(err)
+
+	err = vehicle.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
 	r.NoError(err)
 
 	err = aftermarketDevice.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())

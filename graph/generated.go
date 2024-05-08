@@ -7421,11 +7421,14 @@ func (ec *executionContext) _Vehicle_manufacturer(ctx context.Context, field gra
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.Manufacturer)
 	fc.Result = res
-	return ec.marshalOManufacturer2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐManufacturer(ctx, field.Selections, res)
+	return ec.marshalNManufacturer2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐManufacturer(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Vehicle_manufacturer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -12509,6 +12512,9 @@ func (ec *executionContext) _Vehicle(ctx context.Context, sel ast.SelectionSet, 
 					}
 				}()
 				res = ec._Vehicle_manufacturer(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 

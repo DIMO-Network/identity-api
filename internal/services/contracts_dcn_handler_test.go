@@ -14,6 +14,7 @@ import (
 	"github.com/DIMO-Network/shared/db"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -174,9 +175,21 @@ func (o *DCNConsumerTestSuite) Test_DCN_VehicleIDChanged_Consume_Success() {
 		VehicleID: big.NewInt(int64(vehicleID)),
 	}
 
+	m := models.Manufacturer{
+		ID:       131,
+		Name:     "Toyota",
+		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		MintedAt: time.Now(),
+	}
+
+	if err := m.Insert(context.Background(), o.pdb.DBS().Writer, boil.Infer()); err != nil {
+		assert.NoError(o.T(), err)
+	}
+
 	veh := models.Vehicle{
-		ID:           vehicleID,
-		OwnerAddress: owner2.Bytes(),
+		ManufacturerID: 131,
+		ID:             vehicleID,
+		OwnerAddress:   owner2.Bytes(),
 	}
 	err = veh.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer())
 	o.NoError(err)

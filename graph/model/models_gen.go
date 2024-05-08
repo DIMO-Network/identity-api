@@ -316,7 +316,7 @@ type Vehicle struct {
 	// The ERC-721 token id for the vehicle.
 	TokenID int `json:"tokenId"`
 	// The manufacturer of this vehicle.
-	Manufacturer *Manufacturer `json:"manufacturer,omitempty"`
+	Manufacturer *Manufacturer `json:"manufacturer"`
 	// The Ethereum address of the owner of this vehicle.
 	Owner common.Address `json:"owner"`
 	// The block timestamp at which this vehicle was minted.
@@ -337,7 +337,7 @@ type Vehicle struct {
 	Image          string           `json:"image"`
 	Earnings       *VehicleEarnings `json:"earnings,omitempty"`
 	DataURI        string           `json:"dataUri"`
-	ManufacturerID *int             `json:"-"`
+	ManufacturerID int              `json:"-"`
 }
 
 func (Vehicle) IsNode()            {}

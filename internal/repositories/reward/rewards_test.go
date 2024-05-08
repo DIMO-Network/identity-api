@@ -73,6 +73,15 @@ func TestRewardsRepoTestSuite(t *testing.T) {
 }
 
 func (r *RewardsRepoTestSuite) createDependentRecords() {
+	var mfr = models.Manufacturer{
+		ID:       43,
+		Owner:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Name:     "Ford",
+		MintedAt: time.Now(),
+	}
+	err := mfr.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
+	r.NoError(err)
+
 	payloads := []struct {
 		AD  models.AftermarketDevice
 		SD  models.SyntheticDevice
@@ -81,12 +90,13 @@ func (r *RewardsRepoTestSuite) createDependentRecords() {
 	}{
 		{
 			Veh: models.Vehicle{
-				ID:           11,
-				OwnerAddress: common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
-				Make:         null.StringFrom("Ford"),
-				Model:        null.StringFrom("Bronco"),
-				Year:         null.IntFrom(2022),
-				MintedAt:     time.Now(),
+				ID:             11,
+				ManufacturerID: 43,
+				OwnerAddress:   common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+				Make:           null.StringFrom("Ford"),
+				Model:          null.StringFrom("Bronco"),
+				Year:           null.IntFrom(2022),
+				MintedAt:       time.Now(),
 			},
 			AD: models.AftermarketDevice{
 				ID:          1,
@@ -1546,8 +1556,9 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByUserAddress_MultipleVehicle_Fwd
 	totalEarned := big.NewInt(0)
 
 	veh := models.Vehicle{ // create a brand new vehicle here
-		ID:           5,
-		OwnerAddress: owner.Bytes(),
+		ManufacturerID: 43,
+		ID:             5,
+		OwnerAddress:   owner.Bytes(),
 	}
 	err = veh.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
 	r.NoError(err)
