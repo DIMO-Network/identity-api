@@ -13,7 +13,7 @@ import (
 
 // Manufacturer is the resolver for the manufacturer field.
 func (r *aftermarketDeviceResolver) Manufacturer(ctx context.Context, obj *model.AftermarketDevice) (*model.Manufacturer, error) {
-	return loader.GetManufacturerID(ctx, *obj.ManufacturerID)
+	return loader.GetManufacturerID(ctx, obj.ManufacturerID)
 }
 
 // Vehicle is the resolver for the vehicle field.

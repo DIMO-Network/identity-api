@@ -82,6 +82,15 @@ func (r *RewardsRepoTestSuite) createDependentRecords() {
 	err := mfr.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
 	r.NoError(err)
 
+	var mfr2 = models.Manufacturer{
+		ID:       137,
+		Owner:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDff"),
+		Name:     "AutoPi",
+		MintedAt: time.Now(),
+	}
+	err = mfr2.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
+	r.NoError(err)
+
 	payloads := []struct {
 		AD  models.AftermarketDevice
 		SD  models.SyntheticDevice
@@ -99,14 +108,15 @@ func (r *RewardsRepoTestSuite) createDependentRecords() {
 				MintedAt:       time.Now(),
 			},
 			AD: models.AftermarketDevice{
-				ID:          1,
-				Address:     common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf5").Bytes(),
-				Owner:       common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4").Bytes(),
-				Serial:      null.StringFrom("aftermarketDeviceSerial-1"),
-				Imei:        null.StringFrom("aftermarketDeviceIMEI-1"),
-				MintedAt:    time.Now(),
-				VehicleID:   null.IntFrom(11),
-				Beneficiary: common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+				ManufacturerID: 137,
+				ID:             1,
+				Address:        common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf5").Bytes(),
+				Owner:          common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4").Bytes(),
+				Serial:         null.StringFrom("aftermarketDeviceSerial-1"),
+				Imei:           null.StringFrom("aftermarketDeviceIMEI-1"),
+				MintedAt:       time.Now(),
+				VehicleID:      null.IntFrom(11),
+				Beneficiary:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 			},
 			SD: models.SyntheticDevice{
 				ID:            1,
@@ -948,10 +958,11 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_FwdPagination
 	totalEarned := big.NewInt(0)
 
 	aft := models.AftermarketDevice{
-		ID:          111,
-		Address:     beneficiary.Bytes(),
-		Beneficiary: beneficiary.Bytes(),
-		Owner:       beneficiary.Bytes(),
+		ID:             111,
+		ManufacturerID: 137,
+		Address:        beneficiary.Bytes(),
+		Beneficiary:    beneficiary.Bytes(),
+		Owner:          beneficiary.Bytes(),
 	}
 	err = aft.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
 	r.NoError(err)
@@ -1055,19 +1066,10 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_FwdPagination
 
 	totalEarned := big.NewInt(0)
 
-	aft := models.AftermarketDevice{
-		ID:          111,
-		Address:     beneficiary.Bytes(),
-		Beneficiary: beneficiary.Bytes(),
-		Owner:       beneficiary.Bytes(),
-	}
-	err = aft.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
-	r.NoError(err)
-
 	rw, err := r.createRewardsRecords(3, createRewardsRecordsInput{
 		beneficiary:         *beneficiary,
 		dateTime:            currTime,
-		afterMarketDeviceID: 111,
+		afterMarketDeviceID: 1,
 	})
 	r.NoError(err)
 
@@ -1097,7 +1099,7 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_FwdPagination
 
 	first := 2
 	after := "kgML"
-	aftID := 111
+	aftID := 1
 
 	rwrd, err := r.repo.GetEarningsByAfterMarketDeviceID(r.ctx, aftID)
 	r.NoError(err)
@@ -1166,10 +1168,11 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_BackPaginatio
 	totalEarned := big.NewInt(0)
 
 	aft := models.AftermarketDevice{
-		ID:          111,
-		Address:     beneficiary.Bytes(),
-		Beneficiary: beneficiary.Bytes(),
-		Owner:       beneficiary.Bytes(),
+		ID:             111,
+		ManufacturerID: 137,
+		Address:        beneficiary.Bytes(),
+		Beneficiary:    beneficiary.Bytes(),
+		Owner:          beneficiary.Bytes(),
 	}
 	err = aft.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
 	r.NoError(err)
@@ -1259,10 +1262,11 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_BackPaginatio
 	totalEarned := big.NewInt(0)
 
 	aft := models.AftermarketDevice{
-		ID:          111,
-		Address:     beneficiary.Bytes(),
-		Beneficiary: beneficiary.Bytes(),
-		Owner:       beneficiary.Bytes(),
+		ID:             111,
+		ManufacturerID: 137,
+		Address:        beneficiary.Bytes(),
+		Beneficiary:    beneficiary.Bytes(),
+		Owner:          beneficiary.Bytes(),
 	}
 	err = aft.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
 	r.NoError(err)

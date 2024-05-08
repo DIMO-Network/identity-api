@@ -52,7 +52,7 @@ func (r *Repository) GetAftermarketDevices(ctx context.Context, first *int, afte
 			where = append(where, models.AftermarketDeviceWhere.Beneficiary.EQ(filterBy.Beneficiary.Bytes()))
 		}
 		if filterBy.ManufacturerID != nil {
-			where = append(where, models.AftermarketDeviceWhere.ManufacturerID.EQ(null.IntFrom(*filterBy.ManufacturerID)))
+			where = append(where, models.AftermarketDeviceWhere.ManufacturerID.EQ(*filterBy.ManufacturerID))
 		}
 	}
 
@@ -213,7 +213,7 @@ func ToAPI(d *models.AftermarketDevice, imageURL string) (*gmodel.AftermarketDev
 		VehicleID:      d.VehicleID.Ptr(),
 		MintedAt:       d.MintedAt,
 		ClaimedAt:      d.ClaimedAt.Ptr(),
-		ManufacturerID: d.ManufacturerID.Ptr(),
+		ManufacturerID: d.ManufacturerID,
 		Name:           name,
 		Image:          imageURL,
 	}, nil

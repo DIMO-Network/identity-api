@@ -574,7 +574,7 @@ func (manufacturerL) LoadAftermarketDevices(ctx context.Context, e boil.ContextE
 
 	for _, foreign := range resultSlice {
 		for _, local := range slice {
-			if queries.Equal(local.ID, foreign.ManufacturerID) {
+			if local.ID == foreign.ManufacturerID {
 				local.R.AftermarketDevices = append(local.R.AftermarketDevices, foreign)
 				if foreign.R == nil {
 					foreign.R = &aftermarketDeviceR{}
@@ -709,7 +709,7 @@ func (o *Manufacturer) AddAftermarketDevices(ctx context.Context, exec boil.Cont
 	var err error
 	for _, rel := range related {
 		if insert {
-			queries.Assign(&rel.ManufacturerID, o.ID)
+			rel.ManufacturerID = o.ID
 			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
 				return errors.Wrap(err, "failed to insert into foreign table")
 			}
@@ -730,7 +730,7 @@ func (o *Manufacturer) AddAftermarketDevices(ctx context.Context, exec boil.Cont
 				return errors.Wrap(err, "failed to update foreign table")
 			}
 
-			queries.Assign(&rel.ManufacturerID, o.ID)
+			rel.ManufacturerID = o.ID
 		}
 	}
 
@@ -751,80 +751,6 @@ func (o *Manufacturer) AddAftermarketDevices(ctx context.Context, exec boil.Cont
 			rel.R.Manufacturer = o
 		}
 	}
-	return nil
-}
-
-// SetAftermarketDevices removes all previously related items of the
-// manufacturer replacing them completely with the passed
-// in related items, optionally inserting them as new records.
-// Sets o.R.Manufacturer's AftermarketDevices accordingly.
-// Replaces o.R.AftermarketDevices with related.
-// Sets related.R.Manufacturer's AftermarketDevices accordingly.
-func (o *Manufacturer) SetAftermarketDevices(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*AftermarketDevice) error {
-	query := "update \"identity_api\".\"aftermarket_devices\" set \"manufacturer_id\" = null where \"manufacturer_id\" = $1"
-	values := []interface{}{o.ID}
-	if boil.IsDebug(ctx) {
-		writer := boil.DebugWriterFrom(ctx)
-		fmt.Fprintln(writer, query)
-		fmt.Fprintln(writer, values)
-	}
-	_, err := exec.ExecContext(ctx, query, values...)
-	if err != nil {
-		return errors.Wrap(err, "failed to remove relationships before set")
-	}
-
-	if o.R != nil {
-		for _, rel := range o.R.AftermarketDevices {
-			queries.SetScanner(&rel.ManufacturerID, nil)
-			if rel.R == nil {
-				continue
-			}
-
-			rel.R.Manufacturer = nil
-		}
-		o.R.AftermarketDevices = nil
-	}
-
-	return o.AddAftermarketDevices(ctx, exec, insert, related...)
-}
-
-// RemoveAftermarketDevices relationships from objects passed in.
-// Removes related items from R.AftermarketDevices (uses pointer comparison, removal does not keep order)
-// Sets related.R.Manufacturer.
-func (o *Manufacturer) RemoveAftermarketDevices(ctx context.Context, exec boil.ContextExecutor, related ...*AftermarketDevice) error {
-	if len(related) == 0 {
-		return nil
-	}
-
-	var err error
-	for _, rel := range related {
-		queries.SetScanner(&rel.ManufacturerID, nil)
-		if rel.R != nil {
-			rel.R.Manufacturer = nil
-		}
-		if _, err = rel.Update(ctx, exec, boil.Whitelist("manufacturer_id")); err != nil {
-			return err
-		}
-	}
-	if o.R == nil {
-		return nil
-	}
-
-	for _, rel := range related {
-		for i, ri := range o.R.AftermarketDevices {
-			if rel != ri {
-				continue
-			}
-
-			ln := len(o.R.AftermarketDevices)
-			if ln > 1 && i < ln-1 {
-				o.R.AftermarketDevices[i] = o.R.AftermarketDevices[ln-1]
-			}
-			o.R.AftermarketDevices = o.R.AftermarketDevices[:ln-1]
-			break
-		}
-	}
-
 	return nil
 }
 

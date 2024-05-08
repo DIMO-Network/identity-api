@@ -221,7 +221,7 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceMintedEvent(ctx context
 		Owner:          args.Owner.Bytes(),
 		MintedAt:       e.Block.Time,
 		Beneficiary:    args.Owner.Bytes(),
-		ManufacturerID: null.IntFrom(int(args.ManufacturerID.Int64())),
+		ManufacturerID: int(args.ManufacturerID.Int64()),
 	}
 
 	cols := models.AftermarketDeviceColumns

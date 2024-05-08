@@ -22,30 +22,39 @@ import (
 )
 
 var aftermarketDevice = models.AftermarketDevice{
-	ID:          1,
-	Address:     common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf5").Bytes(),
-	Owner:       common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4").Bytes(),
-	Serial:      null.StringFrom("aftermarketDeviceSerial-1"),
-	Imei:        null.StringFrom("aftermarketDeviceIMEI-1"),
-	MintedAt:    time.Now(),
-	VehicleID:   null.IntFrom(11),
-	Beneficiary: common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+	ID:             1,
+	ManufacturerID: 137,
+	Address:        common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf5").Bytes(),
+	Owner:          common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4").Bytes(),
+	Serial:         null.StringFrom("aftermarketDeviceSerial-1"),
+	Imei:           null.StringFrom("aftermarketDeviceIMEI-1"),
+	MintedAt:       time.Now(),
+	VehicleID:      null.IntFrom(11),
+	Beneficiary:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 }
 
 var ad2 = models.AftermarketDevice{
-	ID:          100,
-	Address:     common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf5").Bytes(),
-	Owner:       common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4").Bytes(),
-	Serial:      null.StringFrom("aftermarketDeviceSerial-1"),
-	Imei:        null.StringFrom("aftermarketDeviceIMEI-1"),
-	MintedAt:    time.Now(),
-	Beneficiary: common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+	ID:             100,
+	ManufacturerID: 137,
+	Address:        common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf5").Bytes(),
+	Owner:          common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4").Bytes(),
+	Serial:         null.StringFrom("aftermarketDeviceSerial-1"),
+	Imei:           null.StringFrom("aftermarketDeviceIMEI-1"),
+	MintedAt:       time.Now(),
+	Beneficiary:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 }
 
-var testMfr = models.Manufacturer{
+var fordMfr = models.Manufacturer{
 	ID:       41,
 	Owner:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 	Name:     "Ford",
+	MintedAt: time.Now(),
+}
+
+var apMfr = models.Manufacturer{
+	ID:       137,
+	Owner:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDff"),
+	Name:     "AutoPi",
 	MintedAt: time.Now(),
 }
 
@@ -74,7 +83,10 @@ func TestResolver(t *testing.T) {
 	ctx := context.Background()
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDir)
 
-	err := testMfr.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	err := fordMfr.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	assert.NoError(err)
+
+	err = apMfr.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	assert.NoError(err)
 
 	err = testVehicle.Insert(ctx, pdb.DBS().Writer, boil.Infer())

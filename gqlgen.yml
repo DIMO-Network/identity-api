@@ -115,7 +115,7 @@ models:
       VehicleID:
         type: "*int"
       ManufacturerID:
-        type: "*int"
+        type: "int"
   Vehicle:
     fields:
       manufacturer:
