@@ -23,7 +23,7 @@ func (r *queryResolver) Vehicles(ctx context.Context, first *int, after *string,
 
 // Manufacturer is the resolver for the manufacturer field.
 func (r *vehicleResolver) Manufacturer(ctx context.Context, obj *model.Vehicle) (*model.Manufacturer, error) {
-	return loader.GetManufacturerID(ctx, *obj.ManufacturerID)
+	return loader.GetManufacturerID(ctx, obj.ManufacturerID)
 }
 
 // AftermarketDevice is the resolver for the aftermarketDevice field.

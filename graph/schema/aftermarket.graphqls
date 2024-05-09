@@ -31,7 +31,7 @@ type AftermarketDevice implements Node {
   """
   The manufacturer of this aftermarket device.
   """
-  manufacturer: Manufacturer
+  manufacturer: Manufacturer!
   """
   The Ethereum address for the device.
   """

@@ -32,7 +32,7 @@ type AftermarketDevice struct {
 	MintedAt       time.Time   `boil:"minted_at" json:"minted_at" toml:"minted_at" yaml:"minted_at"`
 	VehicleID      null.Int    `boil:"vehicle_id" json:"vehicle_id,omitempty" toml:"vehicle_id" yaml:"vehicle_id,omitempty"`
 	Beneficiary    []byte      `boil:"beneficiary" json:"beneficiary" toml:"beneficiary" yaml:"beneficiary"`
-	ManufacturerID null.Int    `boil:"manufacturer_id" json:"manufacturer_id,omitempty" toml:"manufacturer_id" yaml:"manufacturer_id,omitempty"`
+	ManufacturerID int         `boil:"manufacturer_id" json:"manufacturer_id" toml:"manufacturer_id" yaml:"manufacturer_id"`
 	ClaimedAt      null.Time   `boil:"claimed_at" json:"claimed_at,omitempty" toml:"claimed_at" yaml:"claimed_at,omitempty"`
 	DevEui         null.String `boil:"dev_eui" json:"dev_eui,omitempty" toml:"dev_eui" yaml:"dev_eui,omitempty"`
 
@@ -268,7 +268,7 @@ var AftermarketDeviceWhere = struct {
 	MintedAt       whereHelpertime_Time
 	VehicleID      whereHelpernull_Int
 	Beneficiary    whereHelper__byte
-	ManufacturerID whereHelpernull_Int
+	ManufacturerID whereHelperint
 	ClaimedAt      whereHelpernull_Time
 	DevEui         whereHelpernull_String
 }{
@@ -280,7 +280,7 @@ var AftermarketDeviceWhere = struct {
 	MintedAt:       whereHelpertime_Time{field: "\"identity_api\".\"aftermarket_devices\".\"minted_at\""},
 	VehicleID:      whereHelpernull_Int{field: "\"identity_api\".\"aftermarket_devices\".\"vehicle_id\""},
 	Beneficiary:    whereHelper__byte{field: "\"identity_api\".\"aftermarket_devices\".\"beneficiary\""},
-	ManufacturerID: whereHelpernull_Int{field: "\"identity_api\".\"aftermarket_devices\".\"manufacturer_id\""},
+	ManufacturerID: whereHelperint{field: "\"identity_api\".\"aftermarket_devices\".\"manufacturer_id\""},
 	ClaimedAt:      whereHelpernull_Time{field: "\"identity_api\".\"aftermarket_devices\".\"claimed_at\""},
 	DevEui:         whereHelpernull_String{field: "\"identity_api\".\"aftermarket_devices\".\"dev_eui\""},
 }
@@ -334,8 +334,8 @@ type aftermarketDeviceL struct{}
 
 var (
 	aftermarketDeviceAllColumns            = []string{"id", "address", "owner", "serial", "imei", "minted_at", "vehicle_id", "beneficiary", "manufacturer_id", "claimed_at", "dev_eui"}
-	aftermarketDeviceColumnsWithoutDefault = []string{"id", "address", "owner", "minted_at", "beneficiary"}
-	aftermarketDeviceColumnsWithDefault    = []string{"serial", "imei", "vehicle_id", "manufacturer_id", "claimed_at", "dev_eui"}
+	aftermarketDeviceColumnsWithoutDefault = []string{"id", "address", "owner", "minted_at", "beneficiary", "manufacturer_id"}
+	aftermarketDeviceColumnsWithDefault    = []string{"serial", "imei", "vehicle_id", "claimed_at", "dev_eui"}
 	aftermarketDevicePrimaryKeyColumns     = []string{"id"}
 	aftermarketDeviceGeneratedColumns      = []string{}
 )
@@ -714,9 +714,7 @@ func (aftermarketDeviceL) LoadManufacturer(ctx context.Context, e boil.ContextEx
 		if object.R == nil {
 			object.R = &aftermarketDeviceR{}
 		}
-		if !queries.IsNil(object.ManufacturerID) {
-			args[object.ManufacturerID] = struct{}{}
-		}
+		args[object.ManufacturerID] = struct{}{}
 
 	} else {
 		for _, obj := range slice {
@@ -724,9 +722,7 @@ func (aftermarketDeviceL) LoadManufacturer(ctx context.Context, e boil.ContextEx
 				obj.R = &aftermarketDeviceR{}
 			}
 
-			if !queries.IsNil(obj.ManufacturerID) {
-				args[obj.ManufacturerID] = struct{}{}
-			}
+			args[obj.ManufacturerID] = struct{}{}
 
 		}
 	}
@@ -791,7 +787,7 @@ func (aftermarketDeviceL) LoadManufacturer(ctx context.Context, e boil.ContextEx
 
 	for _, local := range slice {
 		for _, foreign := range resultSlice {
-			if queries.Equal(local.ManufacturerID, foreign.ID) {
+			if local.ManufacturerID == foreign.ID {
 				local.R.Manufacturer = foreign
 				if foreign.R == nil {
 					foreign.R = &manufacturerR{}
@@ -1069,7 +1065,7 @@ func (o *AftermarketDevice) SetManufacturer(ctx context.Context, exec boil.Conte
 		return errors.Wrap(err, "failed to update local table")
 	}
 
-	queries.Assign(&o.ManufacturerID, related.ID)
+	o.ManufacturerID = related.ID
 	if o.R == nil {
 		o.R = &aftermarketDeviceR{
 			Manufacturer: related,
@@ -1086,39 +1082,6 @@ func (o *AftermarketDevice) SetManufacturer(ctx context.Context, exec boil.Conte
 		related.R.AftermarketDevices = append(related.R.AftermarketDevices, o)
 	}
 
-	return nil
-}
-
-// RemoveManufacturer relationship.
-// Sets o.R.Manufacturer to nil.
-// Removes o from all passed in related items' relationships struct.
-func (o *AftermarketDevice) RemoveManufacturer(ctx context.Context, exec boil.ContextExecutor, related *Manufacturer) error {
-	var err error
-
-	queries.SetScanner(&o.ManufacturerID, nil)
-	if _, err = o.Update(ctx, exec, boil.Whitelist("manufacturer_id")); err != nil {
-		return errors.Wrap(err, "failed to update local table")
-	}
-
-	if o.R != nil {
-		o.R.Manufacturer = nil
-	}
-	if related == nil || related.R == nil {
-		return nil
-	}
-
-	for i, ri := range related.R.AftermarketDevices {
-		if queries.Equal(o.ManufacturerID, ri.ManufacturerID) {
-			continue
-		}
-
-		ln := len(related.R.AftermarketDevices)
-		if ln > 1 && i < ln-1 {
-			related.R.AftermarketDevices[i] = related.R.AftermarketDevices[ln-1]
-		}
-		related.R.AftermarketDevices = related.R.AftermarketDevices[:ln-1]
-		break
-	}
 	return nil
 }
 

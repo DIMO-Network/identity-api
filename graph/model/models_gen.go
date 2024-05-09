@@ -21,7 +21,7 @@ type AftermarketDevice struct {
 	// The ERC-721 token id for the device.
 	TokenID int `json:"tokenId"`
 	// The manufacturer of this aftermarket device.
-	Manufacturer *Manufacturer `json:"manufacturer,omitempty"`
+	Manufacturer *Manufacturer `json:"manufacturer"`
 	// The Ethereum address for the device.
 	Address common.Address `json:"address"`
 	// The Ethereum address of the owner of the device.
@@ -48,7 +48,7 @@ type AftermarketDevice struct {
 	Image string `json:"image"`
 	// The earnings attached to the aftermarket device
 	Earnings       *AftermarketDeviceEarnings `json:"earnings,omitempty"`
-	ManufacturerID *int                       `json:"-"`
+	ManufacturerID int                        `json:"-"`
 	VehicleID      *int                       `json:"-"`
 }
 
@@ -317,7 +317,7 @@ type Vehicle struct {
 	// The ERC-721 token id for the vehicle.
 	TokenID int `json:"tokenId"`
 	// The manufacturer of this vehicle.
-	Manufacturer *Manufacturer `json:"manufacturer,omitempty"`
+	Manufacturer *Manufacturer `json:"manufacturer"`
 	// The Ethereum address of the owner of this vehicle.
 	Owner common.Address `json:"owner"`
 	// The block timestamp at which this vehicle was minted.
@@ -338,7 +338,7 @@ type Vehicle struct {
 	Image          string           `json:"image"`
 	Earnings       *VehicleEarnings `json:"earnings,omitempty"`
 	DataURI        string           `json:"dataUri"`
-	ManufacturerID *int             `json:"-"`
+	ManufacturerID int              `json:"-"`
 }
 
 func (Vehicle) IsNode()            {}

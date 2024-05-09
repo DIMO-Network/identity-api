@@ -12,7 +12,9 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/volatiletech/null/v8"
@@ -65,14 +67,26 @@ func (s *VehiclesPrivilegesRepoTestSuite) Test_GetVehiclePrivileges_Success() {
 
 	currTime := time.Now().UTC().Truncate(time.Second)
 
+	m := models.Manufacturer{
+		ID:       131,
+		Name:     "Toyota",
+		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		MintedAt: time.Now(),
+	}
+
+	if err := m.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer()); err != nil {
+		assert.NoError(s.T(), err)
+	}
+
 	vehicles := []models.Vehicle{
 		{
-			ID:           1,
-			OwnerAddress: wallet.Bytes(),
-			Make:         null.StringFrom("Toyota"),
-			Model:        null.StringFrom("Camry"),
-			Year:         null.IntFrom(2020),
-			MintedAt:     currTime,
+			ID:             1,
+			ManufacturerID: 131,
+			OwnerAddress:   wallet.Bytes(),
+			Make:           null.StringFrom("Toyota"),
+			Model:          null.StringFrom("Camry"),
+			Year:           null.IntFrom(2020),
+			MintedAt:       currTime,
 		},
 	}
 
@@ -147,22 +161,35 @@ func (s *VehiclesPrivilegesRepoTestSuite) Test_Privileges_NoExpiredPrivilege_Pag
 
 	currTime := time.Now().UTC().Truncate(time.Second)
 
+	m := models.Manufacturer{
+		ID:       131,
+		Name:     "Toyota",
+		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		MintedAt: time.Now(),
+	}
+
+	if err := m.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer()); err != nil {
+		assert.NoError(s.T(), err)
+	}
+
 	vehicles := []models.Vehicle{
 		{
-			ID:           1,
-			OwnerAddress: wallet.Bytes(),
-			Make:         null.StringFrom("Toyota"),
-			Model:        null.StringFrom("Camry"),
-			Year:         null.IntFrom(2020),
-			MintedAt:     currTime,
+			ID:             1,
+			ManufacturerID: 131,
+			OwnerAddress:   wallet.Bytes(),
+			Make:           null.StringFrom("Toyota"),
+			Model:          null.StringFrom("Camry"),
+			Year:           null.IntFrom(2020),
+			MintedAt:       currTime,
 		},
 		{
-			ID:           2,
-			OwnerAddress: wallet.Bytes(),
-			Make:         null.StringFrom("Toyota"),
-			Model:        null.StringFrom("Camry"),
-			Year:         null.IntFrom(2021),
-			MintedAt:     currTime,
+			ID:             2,
+			ManufacturerID: 131,
+			OwnerAddress:   wallet.Bytes(),
+			Make:           null.StringFrom("Toyota"),
+			Model:          null.StringFrom("Camry"),
+			Year:           null.IntFrom(2021),
+			MintedAt:       currTime,
 		},
 	}
 
@@ -246,22 +273,35 @@ func (s *VehiclesPrivilegesRepoTestSuite) Test_Privileges_Pagination_Success() {
 
 	currTime := time.Now().UTC().Truncate(time.Second)
 
+	m := models.Manufacturer{
+		ID:       131,
+		Name:     "Toyota",
+		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		MintedAt: time.Now(),
+	}
+
+	if err := m.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer()); err != nil {
+		assert.NoError(s.T(), err)
+	}
+
 	vehicles := []models.Vehicle{
 		{
-			ID:           1,
-			OwnerAddress: wallet.Bytes(),
-			Make:         null.StringFrom("Toyota"),
-			Model:        null.StringFrom("Camry"),
-			Year:         null.IntFrom(2020),
-			MintedAt:     currTime,
+			ID:             1,
+			ManufacturerID: 131,
+			OwnerAddress:   wallet.Bytes(),
+			Make:           null.StringFrom("Toyota"),
+			Model:          null.StringFrom("Camry"),
+			Year:           null.IntFrom(2020),
+			MintedAt:       currTime,
 		},
 		{
-			ID:           2,
-			OwnerAddress: wallet.Bytes(),
-			Make:         null.StringFrom("Toyota"),
-			Model:        null.StringFrom("Camry"),
-			Year:         null.IntFrom(2021),
-			MintedAt:     currTime,
+			ID:             2,
+			ManufacturerID: 131,
+			OwnerAddress:   wallet.Bytes(),
+			Make:           null.StringFrom("Toyota"),
+			Model:          null.StringFrom("Camry"),
+			Year:           null.IntFrom(2021),
+			MintedAt:       currTime,
 		},
 	}
 

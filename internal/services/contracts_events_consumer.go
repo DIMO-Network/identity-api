@@ -194,7 +194,7 @@ func (c *ContractsEventsConsumer) handleVehicleNodeMintedEvent(ctx context.Conte
 		ID:             int(args.TokenID.Int64()),
 		OwnerAddress:   args.Owner.Bytes(),
 		MintedAt:       e.Block.Time,
-		ManufacturerID: null.IntFrom(int(args.ManufacturerNode.Int64())),
+		ManufacturerID: int(args.ManufacturerNode.Int64()),
 	}
 
 	cols := models.VehicleColumns
@@ -221,7 +221,7 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceMintedEvent(ctx context
 		Owner:          args.Owner.Bytes(),
 		MintedAt:       e.Block.Time,
 		Beneficiary:    args.Owner.Bytes(),
-		ManufacturerID: null.IntFrom(int(args.ManufacturerID.Int64())),
+		ManufacturerID: int(args.ManufacturerID.Int64()),
 	}
 
 	cols := models.AftermarketDeviceColumns

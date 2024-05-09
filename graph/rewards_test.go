@@ -69,24 +69,40 @@ func TestRewardsQueryTestSuite(t *testing.T) {
 }
 
 func (r *RewardsQueryTestSuite) createDependencies() {
+	var mfr = models.Manufacturer{
+		ID:       43,
+		Owner:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Name:     "Ford",
+		MintedAt: time.Now(),
+	}
+
+	var mfr2 = models.Manufacturer{
+		ID:       137,
+		Owner:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDff"),
+		Name:     "AutoPi",
+		MintedAt: time.Now(),
+	}
+
 	var vehicle = models.Vehicle{
-		ID:           1,
-		OwnerAddress: common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
-		Make:         null.StringFrom("Ford"),
-		Model:        null.StringFrom("Bronco"),
-		Year:         null.IntFrom(2022),
-		MintedAt:     time.Now(),
+		ID:             1,
+		ManufacturerID: 43,
+		OwnerAddress:   common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Make:           null.StringFrom("Ford"),
+		Model:          null.StringFrom("Bronco"),
+		Year:           null.IntFrom(2022),
+		MintedAt:       time.Now(),
 	}
 
 	var aftermarketDevice = models.AftermarketDevice{
-		ID:          1,
-		Address:     common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf5").Bytes(),
-		Owner:       common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4").Bytes(),
-		Serial:      null.StringFrom("aftermarketDeviceSerial-1"),
-		Imei:        null.StringFrom("aftermarketDeviceIMEI-1"),
-		MintedAt:    time.Now(),
-		VehicleID:   null.IntFrom(1),
-		Beneficiary: common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		ID:             1,
+		ManufacturerID: 137,
+		Address:        common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf5").Bytes(),
+		Owner:          common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4").Bytes(),
+		Serial:         null.StringFrom("aftermarketDeviceSerial-1"),
+		Imei:           null.StringFrom("aftermarketDeviceIMEI-1"),
+		MintedAt:       time.Now(),
+		VehicleID:      null.IntFrom(1),
+		Beneficiary:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 	}
 
 	var syntheticDevice = models.SyntheticDevice{
@@ -97,7 +113,13 @@ func (r *RewardsQueryTestSuite) createDependencies() {
 		MintedAt:      time.Now(),
 	}
 
-	err := vehicle.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
+	err := mfr.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
+	r.NoError(err)
+
+	err = mfr2.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
+	r.NoError(err)
+
+	err = vehicle.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
 	r.NoError(err)
 
 	err = aftermarketDevice.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
