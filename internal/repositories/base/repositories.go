@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/DIMO-Network/identity-api/internal/config"
@@ -27,18 +28,25 @@ var (
 
 // Repository is the base repository for all repositories.
 type Repository struct {
-	PDB      db.Store
-	Settings config.Settings
-	Log      *zerolog.Logger
+	PDB          db.Store
+	Settings     config.Settings
+	Log          *zerolog.Logger
+	BaseImageURI *url.URL
 }
 
 // NewRepository creates a new base repository.
-func NewRepository(pdb db.Store, settings config.Settings, logger *zerolog.Logger) *Repository {
-	return &Repository{
-		PDB:      pdb,
-		Settings: settings,
-		Log:      logger,
+func NewRepository(pdb db.Store, settings config.Settings, logger *zerolog.Logger) (*Repository, error) {
+	baseImageURI, err := url.ParseRequestURI(settings.BaseImageURL)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't parse base image URL %q: %w", settings.BaseImageURL, err)
 	}
+
+	return &Repository{
+		PDB:          pdb,
+		Settings:     settings,
+		Log:          logger,
+		BaseImageURI: baseImageURI,
+	}, nil
 }
 
 // CountTrue counts the number of true values in a list of booleans.

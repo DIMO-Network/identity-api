@@ -55,7 +55,10 @@ func main() {
 	startContractEventsConsumer(ctx, &logger, &settings, dbs)
 
 	repoLogger := logger.With().Str("component", "repository").Logger()
-	baseRepo := base.NewRepository(dbs, settings, &repoLogger)
+	baseRepo, err := base.NewRepository(dbs, settings, &repoLogger)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Failed to construct repositories.")
+	}
 
 	cfg := graph.Config{Resolvers: graph.NewResolver(baseRepo)}
 	cfg.Directives.OneOf = func(ctx context.Context, _ any, next graphql.Resolver) (any, error) {

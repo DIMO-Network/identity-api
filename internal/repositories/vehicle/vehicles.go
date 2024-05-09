@@ -48,13 +48,7 @@ func (r *Repository) createVehiclesResponse(totalCount int64, vehicles models.Ve
 			imageURI = dv.ImageURI.String
 		} else {
 			// If the vehicle has no image, we need to return the default.
-			var err error
-			imageURI, err = GetLegacyVehicleImageURL(r.Settings.BaseImageURL, dv.ID)
-			wErr := fmt.Errorf("error getting vehicle image URL: %w", err)
-			if err != nil {
-				errList = append(errList, gqlerror.Wrap(wErr))
-				continue
-			}
+			imageURI = r.GetLegacyVehicleImageURL(dv.ID)
 		}
 
 		dataURI, err := GetVehicleDataURI(r.Settings.BaseVehicleDataURI, dv.ID)
@@ -181,15 +175,16 @@ func (r *Repository) GetVehicles(ctx context.Context, first *int, after *string,
 	return r.createVehiclesResponse(totalCount, all, hasNext, hasPrevious)
 }
 
+func (r *Repository) GetLegacyVehicleImageURL(tokenID int) string {
+	return r.BaseImageURI.JoinPath("vehicle", strconv.Itoa(tokenID), "image").String()
+}
+
 func (r *Repository) GetVehicle(ctx context.Context, id int) (*gmodel.Vehicle, error) {
 	v, err := models.FindVehicle(ctx, r.PDB.DBS().Reader, id)
 	if err != nil {
 		return nil, err
 	}
-	imageURL, err := GetLegacyVehicleImageURL(r.Settings.BaseImageURL, v.ID)
-	if err != nil {
-		return nil, fmt.Errorf("error getting vehicle image url: %w", err)
-	}
+	imageURL := r.GetLegacyVehicleImageURL(v.ID)
 	dataURI, err := GetVehicleDataURI(r.Settings.BaseVehicleDataURI, v.ID)
 	if err != nil {
 		return nil, fmt.Errorf("error getting vehicle data uri: %w", err)
@@ -269,12 +264,6 @@ func ToAPI(v *models.Vehicle, imageURI string, dataURI string) (*gmodel.Vehicle,
 		ImageURI:       imageURI,
 		DataURI:        dataURI,
 	}, nil
-}
-
-// GetLegacyVehicleImageURL craates a URL for the vehicle image.
-func GetLegacyVehicleImageURL(baseURL string, tokenID int) (string, error) {
-	tokenStr := strconv.Itoa(tokenID)
-	return url.JoinPath(baseURL, "vehicle", tokenStr, "image")
 }
 
 func GetVehicleDataURI(baseURL string, tokenID int) (string, error) {
