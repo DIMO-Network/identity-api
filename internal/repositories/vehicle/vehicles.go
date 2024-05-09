@@ -42,24 +42,29 @@ func (r *Repository) createVehiclesResponse(totalCount int64, vehicles models.Ve
 	nodes := make([]*gmodel.Vehicle, len(vehicles))
 
 	for i, dv := range vehicles {
-		// If the vehicle has no image, we need to return the default.
-		var imageURI null.String
-		if vehicles[i].ImageURI == null.NewString("", false) {
-			image, err := GetVehicleImageURL(r.Settings.BaseImageURL, dv.ID)
+		var imageURI string
+
+		if dv.ImageURI.Valid {
+			imageURI = dv.ImageURI.String
+		} else {
+			// If the vehicle has no image, we need to return the default.
+			var err error
+			imageURI, err = GetLegacyVehicleImageURL(r.Settings.BaseImageURL, dv.ID)
+			wErr := fmt.Errorf("error getting vehicle image URL: %w", err)
 			if err != nil {
-				wErr := fmt.Errorf("error getting vehicle image url: %w", err)
 				errList = append(errList, gqlerror.Wrap(wErr))
 				continue
 			}
-			imageURI = null.StringFrom(image)
 		}
+
 		dataURI, err := GetVehicleDataURI(r.Settings.BaseVehicleDataURI, dv.ID)
 		if err != nil {
 			wErr := fmt.Errorf("error getting vehicle data uri: %w", err)
 			errList = append(errList, gqlerror.Wrap(wErr))
 			continue
 		}
-		gv, err := ToAPI(dv, imageURL, dataURI)
+
+		gv, err := ToAPI(dv, imageURI, dataURI)
 		if err != nil {
 			wErr := fmt.Errorf("error converting vehicle to API: %w", err)
 			errList = append(errList, gqlerror.Wrap(wErr))
@@ -181,7 +186,7 @@ func (r *Repository) GetVehicle(ctx context.Context, id int) (*gmodel.Vehicle, e
 	if err != nil {
 		return nil, err
 	}
-	imageURL, err := GetVehicleImageURL(r.Settings.BaseImageURL, v.ID)
+	imageURL, err := GetLegacyVehicleImageURL(r.Settings.BaseImageURL, v.ID)
 	if err != nil {
 		return nil, fmt.Errorf("error getting vehicle image url: %w", err)
 	}
@@ -266,8 +271,8 @@ func ToAPI(v *models.Vehicle, imageURI string, dataURI string) (*gmodel.Vehicle,
 	}, nil
 }
 
-// GetVehicleImageURL craates a URL for the vehicle image.
-func GetVehicleImageURL(baseURL string, tokenID int) (string, error) {
+// GetLegacyVehicleImageURL craates a URL for the vehicle image.
+func GetLegacyVehicleImageURL(baseURL string, tokenID int) (string, error) {
 	tokenStr := strconv.Itoa(tokenID)
 	return url.JoinPath(baseURL, "vehicle", tokenStr, "image")
 }
