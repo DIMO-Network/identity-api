@@ -30,6 +30,7 @@ type Vehicle struct {
 	Model          null.String `boil:"model" json:"model,omitempty" toml:"model" yaml:"model,omitempty"`
 	Year           null.Int    `boil:"year" json:"year,omitempty" toml:"year" yaml:"year,omitempty"`
 	MintedAt       time.Time   `boil:"minted_at" json:"minted_at" toml:"minted_at" yaml:"minted_at"`
+	ImageURI       null.String `boil:"image_uri" json:"image_uri,omitempty" toml:"image_uri" yaml:"image_uri,omitempty"`
 	DefinitionURI  null.String `boil:"definition_uri" json:"definition_uri,omitempty" toml:"definition_uri" yaml:"definition_uri,omitempty"`
 	ManufacturerID int         `boil:"manufacturer_id" json:"manufacturer_id" toml:"manufacturer_id" yaml:"manufacturer_id"`
 
@@ -44,6 +45,7 @@ var VehicleColumns = struct {
 	Model          string
 	Year           string
 	MintedAt       string
+	ImageURI	   string
 	DefinitionURI  string
 	ManufacturerID string
 }{
@@ -53,6 +55,7 @@ var VehicleColumns = struct {
 	Model:          "model",
 	Year:           "year",
 	MintedAt:       "minted_at",
+	ImageURI:	   	"image_uri",
 	DefinitionURI:  "definition_uri",
 	ManufacturerID: "manufacturer_id",
 }
@@ -64,6 +67,7 @@ var VehicleTableColumns = struct {
 	Model          string
 	Year           string
 	MintedAt       string
+	ImageURI	   string
 	DefinitionURI  string
 	ManufacturerID string
 }{
@@ -73,6 +77,7 @@ var VehicleTableColumns = struct {
 	Model:          "vehicles.model",
 	Year:           "vehicles.year",
 	MintedAt:       "vehicles.minted_at",
+	ImageURI:	   	"vehicles.image_uri",
 	DefinitionURI:  "vehicles.definition_uri",
 	ManufacturerID: "vehicles.manufacturer_id",
 }
@@ -177,9 +182,9 @@ func (r *vehicleR) GetSyntheticDevices() SyntheticDeviceSlice {
 type vehicleL struct{}
 
 var (
-	vehicleAllColumns            = []string{"id", "owner_address", "make", "model", "year", "minted_at", "definition_uri", "manufacturer_id"}
+	vehicleAllColumns            = []string{"id", "owner_address", "make", "model", "year", "minted_at", "image_uri", "definition_uri", "manufacturer_id"}
 	vehicleColumnsWithoutDefault = []string{"id", "owner_address", "minted_at", "manufacturer_id"}
-	vehicleColumnsWithDefault    = []string{"make", "model", "year", "definition_uri"}
+	vehicleColumnsWithDefault    = []string{"make", "model", "year", "image_uri", "definition_uri"}
 	vehiclePrimaryKeyColumns     = []string{"id"}
 	vehicleGeneratedColumns      = []string{}
 )

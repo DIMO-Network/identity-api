@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -267,6 +268,14 @@ func (c *ContractsEventsConsumer) handleVehicleAttributeSetEvent(ctx context.Con
 			return err
 		}
 		return nil
+	case "ImageURI":
+		imageURI := null.StringFrom(args.Info)
+		veh.ImageURI, err := url.ParseRequestURI(imageURI.String)
+		if err != nil {
+			return fmt.Errorf("couldn't parse image URI string %q: %w", args.Info, err)
+		}
+		_, err = veh.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.VehicleColumns.ImageURI))
+		return err
 	case "DefinitionURI":
 		res, err := c.httpClient.Get(args.Info)
 		if err != nil {

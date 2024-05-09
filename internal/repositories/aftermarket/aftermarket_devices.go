@@ -191,7 +191,7 @@ type aftermarketDevicePrimaryKey struct {
 	TokenID int
 }
 
-// ToAPI converts a vehicle to a corresponding API vehicle.
+// ToAPI converts a aftermarket device to a corresponding API aftermarket device.
 func ToAPI(d *models.AftermarketDevice, imageURL string) (*gmodel.AftermarketDevice, error) {
 	globalID, err := base.EncodeGlobalTokenID(TokenPrefix, d.ID)
 	if err != nil {
