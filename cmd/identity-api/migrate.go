@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 
 	"github.com/DIMO-Network/identity-api/internal/config"
@@ -33,7 +34,7 @@ func migrateDatabase(logger zerolog.Logger, settings *config.Settings, command s
 		logger.Fatal().Err(err).Msg("could not create schema")
 	}
 	goose.SetTableName("identity_api.migrations")
-	if err := goose.Run(command, db, "migrations"); err != nil {
+	if err := goose.RunContext(context.Background(), command, db, "migrations"); err != nil {
 		logger.Fatal().Msgf("failed to apply go code migrations: %v\n", err)
 	}
 	// if we add any code migrations import _ "github.com/DIMO-Network/devices-api/migrations" // migrations won't work without this
