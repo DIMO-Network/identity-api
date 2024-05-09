@@ -42,13 +42,24 @@ func (r *Repository) createVehiclesResponse(totalCount int64, vehicles models.Ve
 	nodes := make([]*gmodel.Vehicle, len(vehicles))
 
 	for i, dv := range vehicles {
+		// If the vehicle has no image, we need to return the default.
+		var imageURI null.String
+		if vehicles[i].ImageURI == null.NewString("", false) {
+			image, err := GetVehicleImageURL(r.Settings.BaseImageURL, dv.ID)
+			if err != nil {
+				wErr := fmt.Errorf("error getting vehicle image url: %w", err)
+				errList = append(errList, gqlerror.Wrap(wErr))
+				continue
+			}
+			imageURI = null.StringFrom(image)
+		}
 		dataURI, err := GetVehicleDataURI(r.Settings.BaseVehicleDataURI, dv.ID)
 		if err != nil {
 			wErr := fmt.Errorf("error getting vehicle data uri: %w", err)
 			errList = append(errList, gqlerror.Wrap(wErr))
 			continue
 		}
-		gv, err := ToAPI(dv, dataURI)
+		gv, err := ToAPI(dv, imageURL, dataURI)
 		if err != nil {
 			wErr := fmt.Errorf("error converting vehicle to API: %w", err)
 			errList = append(errList, gqlerror.Wrap(wErr))
@@ -228,7 +239,7 @@ func queryModsFromFilters(filter *gmodel.VehiclesFilter) []qm.QueryMod {
 }
 
 // ToAPI converts a vehicle to a corresponding graphql model.
-func ToAPI(v *models.Vehicle, dataURI string) (*gmodel.Vehicle, error) {
+func ToAPI(v *models.Vehicle, imageURI string, dataURI string) (*gmodel.Vehicle, error) {
 	nameList := mnemonic.FromInt32WithObfuscation(int32(v.ID))
 	name := strings.Join(nameList, " ")
 
@@ -250,7 +261,7 @@ func ToAPI(v *models.Vehicle, dataURI string) (*gmodel.Vehicle, error) {
 		},
 		ManufacturerID: v.ManufacturerID,
 		Name:           name,
-		Image:          v.ImageURI.Ptr(),
+		ImageURI:       imageURI,
 		DataURI:        dataURI,
 	}, nil
 }
