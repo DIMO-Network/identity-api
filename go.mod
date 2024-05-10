@@ -112,6 +112,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/sosodev/duration v1.3.0 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
+	github.com/testcontainers/testcontainers-go/modules/postgres v0.31.0
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
 	github.com/urfave/cli/v2 v2.27.2 // indirect
