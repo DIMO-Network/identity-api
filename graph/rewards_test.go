@@ -20,7 +20,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/suite"
-	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/types"
@@ -30,7 +30,7 @@ type RewardsQueryTestSuite struct {
 	suite.Suite
 	ctx       context.Context
 	pdb       db.Store
-	container testcontainers.Container
+	container *postgres.PostgresContainer
 	settings  config.Settings
 	resolver  *Resolver
 	repo      *base.Repository
@@ -51,7 +51,7 @@ func (r *RewardsQueryTestSuite) SetupSuite() {
 
 // TearDownTest after each test truncate tables
 func (r *RewardsQueryTestSuite) TearDownTest() {
-	test.TruncateTables(r.pdb.DBS().Writer.DB, r.T())
+	r.Require().NoError(r.container.Restore(r.ctx))
 }
 
 // TearDownSuite cleanup at end by terminating container

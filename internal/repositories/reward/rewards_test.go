@@ -18,7 +18,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/suite"
-	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -29,7 +29,7 @@ type RewardsRepoTestSuite struct {
 	suite.Suite
 	ctx              context.Context
 	pdb              db.Store
-	container        testcontainers.Container
+	container        *postgres.PostgresContainer
 	repo             *Repository
 	settings         config.Settings
 	paginationHelper helpers.PaginationHelper[RewardsCursor]
@@ -57,7 +57,7 @@ func (r *RewardsRepoTestSuite) SetupSuite() {
 
 // TearDownTest after each test truncate tables
 func (r *RewardsRepoTestSuite) TearDownTest() {
-	helpers.TruncateTables(r.pdb.DBS().Writer.DB, r.T())
+	r.Require().NoError(r.container.Restore(r.ctx))
 }
 
 // TearDownSuite cleanup at end by terminating container
