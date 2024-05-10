@@ -1085,7 +1085,7 @@ func Test_HandleVehicle_Transferred_To_Zero_Event_NoDelete_AfterMarketDevice(t *
 	assert.Equal(t, vehicle.OwnerAddress, veh[0].OwnerAddress)
 }
 
-func getCommonEntities(ctx context.Context, vehicleID, aftermarketDeviceID, syntheticDeviceID int, owner, beneficiary common.Address) (models.Manufacturer, models.Manufacturer, models.Vehicle, models.AftermarketDevice, models.SyntheticDevice) {
+func getCommonEntities(_ context.Context, vehicleID, aftermarketDeviceID, syntheticDeviceID int, owner, beneficiary common.Address) (models.Manufacturer, models.Manufacturer, models.Vehicle, models.AftermarketDevice, models.SyntheticDevice) {
 	mfr := models.Manufacturer{
 		ID:       130,
 		Name:     "Tesla",
