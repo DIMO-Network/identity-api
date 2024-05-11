@@ -2,11 +2,12 @@ package services
 
 import (
 	"context"
-	"github.com/DIMO-Network/identity-api/internal/helpers"
+	"time"
+
 	"github.com/DIMO-Network/identity-api/models"
+	"github.com/DIMO-Network/shared"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/patrickmn/go-cache"
-	"time"
 
 	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/rs/zerolog"
@@ -53,7 +54,7 @@ func (m *ManufacturerCacheService) GetAllManufacturers(ctx context.Context) ([]M
 		all = append(all, ManufacturerCacheModel{
 			ID:   manufacturer.ID,
 			Name: manufacturer.Name,
-			Slug: helpers.SlugString(manufacturer.Name),
+			Slug: shared.SlugString(manufacturer.Name),
 		})
 	}
 
