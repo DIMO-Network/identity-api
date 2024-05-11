@@ -52,10 +52,10 @@ func ToAPI(v *DeviceDefinitionTablelandModel) (*gmodel.DeviceDefinition, error) 
 	}
 
 	result.ID = globalID
-	result.DeviceDefinitionID = &v.ID
+	result.DeviceDefinitionID = v.ID
 	result.LegacyID = &v.KSUID
-	result.Year = &v.Year
-	result.Model = &v.Model
+	result.Year = v.Year
+	result.Model = v.Model
 	result.DeviceType = &v.DeviceType
 	result.ImageURI = &v.ImageURI
 
