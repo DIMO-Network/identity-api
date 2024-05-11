@@ -100,6 +100,7 @@ func TestHandleAftermarketDeviceAttributeSetEvent(t *testing.T) {
 		ID:    137,
 		Name:  "AutoPi",
 		Owner: common.FromHex("0xaba3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Slug:  "autopi",
 	}
 
 	err := mfr.Insert(ctx, pdb.DBS().Writer, boil.Infer())
@@ -157,6 +158,7 @@ func TestHandleAftermarketDevicePairedEvent(t *testing.T) {
 		Name:     "Tesla",
 		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		MintedAt: time.Now(),
+		Slug:     "tesla",
 	}
 
 	err := m.Insert(ctx, pdb.DBS().Writer, boil.Infer())
@@ -178,6 +180,7 @@ func TestHandleAftermarketDevicePairedEvent(t *testing.T) {
 		ID:    137,
 		Name:  "AutoPi",
 		Owner: common.FromHex("0xaba3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Slug:  "autopi",
 	}
 
 	err = mfr.Insert(ctx, pdb.DBS().Writer, boil.Infer())
@@ -231,6 +234,7 @@ func TestHandleAftermarketDeviceUnPairedEvent(t *testing.T) {
 		Name:     "Toyota",
 		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		MintedAt: time.Now(),
+		Slug:     "toyota",
 	}
 
 	if err := m.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
@@ -253,6 +257,7 @@ func TestHandleAftermarketDeviceUnPairedEvent(t *testing.T) {
 		ID:    137,
 		Name:  "AutoPi",
 		Owner: common.FromHex("0xaba3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Slug:  "autopi",
 	}
 
 	err = mfr.Insert(ctx, pdb.DBS().Writer, boil.Infer())
@@ -358,6 +363,7 @@ func TestHandleAftermarketDeviceTransferredEventExistingTokenID(t *testing.T) {
 		Name:     "Tesla",
 		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		MintedAt: time.Now(),
+		Slug:     "tesla",
 	}
 
 	err := m.Insert(ctx, pdb.DBS().Writer, boil.Infer())
@@ -375,6 +381,7 @@ func TestHandleAftermarketDeviceTransferredEventExistingTokenID(t *testing.T) {
 		ID:    137,
 		Name:  "AutoPi",
 		Owner: common.FromHex("0xaba3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Slug:  "autopi",
 	}
 
 	err = mfr.Insert(ctx, pdb.DBS().Writer, boil.Infer())
@@ -432,6 +439,7 @@ func TestHandleBeneficiarySetEvent(t *testing.T) {
 		Owner:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDff"),
 		Name:     "AutoPi",
 		MintedAt: time.Now(),
+		Slug:     "autopi",
 	}
 	err := mfr2.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err)
@@ -486,6 +494,7 @@ func TestHandleClearBeneficiaryEvent(t *testing.T) {
 		Owner:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDff"),
 		Name:     "AutoPi",
 		MintedAt: time.Now(),
+		Slug:     "autopi",
 	}
 	err := mfr2.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err)
@@ -549,6 +558,7 @@ func TestHandle_SyntheticDeviceNodeMintedEvent_Success(t *testing.T) {
 		Name:     "Toyota",
 		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		MintedAt: time.Now(),
+		Slug:     "toyota",
 	}
 
 	if err := m.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
@@ -605,6 +615,7 @@ func TestHandle_SyntheticDeviceNodeBurnedEvent_Success(t *testing.T) {
 		Name:     "Toyota",
 		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		MintedAt: time.Now(),
+		Slug:     "toyota",
 	}
 
 	if err := m.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
@@ -689,6 +700,7 @@ func TestHandle_DefinitionURIAttribute_Event_Success(t *testing.T) {
 		Name:     "Toyota",
 		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		MintedAt: time.Now(),
+		Slug:     "toyota",
 	}
 
 	if err := m.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
@@ -784,6 +796,7 @@ func Test_HandleVehicle_Transferred_Event(t *testing.T) {
 		Name:     "Toyota",
 		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		MintedAt: time.Now(),
+		Slug:     "toyota",
 	}
 
 	if err := m.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
@@ -850,6 +863,7 @@ func Test_HandleVehicle_Transferred_To_Zero_Event_ShouldDelete(t *testing.T) {
 		Name:     "Toyota",
 		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		MintedAt: time.Now(),
+		Slug:     "toyota",
 	}
 
 	if err := m.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
@@ -954,6 +968,7 @@ func Test_HandleVehicle_Transferred_To_Zero_Event_NoDelete_SyntheticDevice(t *te
 		Name:     "Toyota",
 		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		MintedAt: time.Now(),
+		Slug:     "toyota",
 	}
 
 	if err := m.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
@@ -1028,6 +1043,7 @@ func Test_HandleVehicle_Transferred_To_Zero_Event_NoDelete_AfterMarketDevice(t *
 		Name:     "Toyota",
 		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		MintedAt: time.Now(),
+		Slug:     "toyota",
 	}
 
 	if err := m.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
@@ -1055,6 +1071,7 @@ func Test_HandleVehicle_Transferred_To_Zero_Event_NoDelete_AfterMarketDevice(t *
 		Name:     "AutoPi",
 		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDff"),
 		MintedAt: time.Now(),
+		Slug:     "autopi",
 	}
 
 	if err := m2.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
@@ -1091,6 +1108,7 @@ func getCommonEntities(_ context.Context, vehicleID, aftermarketDeviceID, synthe
 		Name:     "Tesla",
 		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		MintedAt: time.Now(),
+		Slug:     "tesla",
 	}
 
 	adMfr := models.Manufacturer{
@@ -1098,6 +1116,7 @@ func getCommonEntities(_ context.Context, vehicleID, aftermarketDeviceID, synthe
 		Name:     "AutoPi",
 		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDff"),
 		MintedAt: time.Now(),
+		Slug:     "autopi",
 	}
 
 	veh := models.Vehicle{
@@ -1634,6 +1653,7 @@ func TestHandle_SyntheticDevice_NodeBurnet_RewardsNulled_Success(t *testing.T) {
 		Name:     "Toyota",
 		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		MintedAt: time.Now(),
+		Slug:     "toyota",
 	}
 
 	if err := m.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
@@ -1727,6 +1747,7 @@ func TestHandleAftermarketDeviceAddressResetEvent(t *testing.T) {
 		ID:    137,
 		Name:  "AutoPi",
 		Owner: common.FromHex("0xaba3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Slug:  "autopi",
 	}
 	err := mfr.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	assert.NoError(t, err)

@@ -53,6 +53,7 @@ func TestDCNQuery(t *testing.T) {
 		Name:     "Toyota",
 		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		MintedAt: time.Now(),
+		Slug:     "toyota",
 	}
 
 	if err := m.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {

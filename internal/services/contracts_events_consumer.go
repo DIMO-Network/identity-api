@@ -198,6 +198,7 @@ func (c *ContractsEventsConsumer) handleManufacturerNodeMintedEvent(ctx context.
 		Name:     args.Name,
 		Owner:    args.Owner.Bytes(),
 		MintedAt: e.Block.Time,
+		Slug:     shared.SlugString(args.Name), // Better hope uniqueness is never a problem!
 	}
 
 	return mfr.Upsert(ctx, c.dbs.DBS().Writer, false, []string{models.ManufacturerColumns.ID}, boil.None(), boil.Infer())

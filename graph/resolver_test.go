@@ -49,6 +49,7 @@ var fordMfr = models.Manufacturer{
 	Owner:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 	Name:     "Ford",
 	MintedAt: time.Now(),
+	Slug:     "ford",
 }
 
 var apMfr = models.Manufacturer{
@@ -56,6 +57,7 @@ var apMfr = models.Manufacturer{
 	Owner:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDff"),
 	Name:     "AutoPi",
 	MintedAt: time.Now(),
+	Slug:     "autopi",
 }
 
 var testVehicle = models.Vehicle{

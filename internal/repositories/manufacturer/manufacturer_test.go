@@ -30,6 +30,7 @@ func TestGetManufacturer(t *testing.T) {
 			Name:     manufacturers[i],
 			Owner:    common.FromHex("3232323232323232323232323232323232323232"),
 			MintedAt: time.Now(),
+			Slug:     manufacturers[i],
 		}
 
 		err := m.Insert(ctx, pdb.DBS().Writer, boil.Infer())
