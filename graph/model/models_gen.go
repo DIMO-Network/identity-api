@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/ericlagergren/decimal"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -20,7 +21,7 @@ type AftermarketDevice struct {
 	// The ERC-721 token id for the device.
 	TokenID int `json:"tokenId"`
 	// The manufacturer of this aftermarket device.
-	Manufacturer *Manufacturer `json:"manufacturer,omitempty"`
+	Manufacturer *Manufacturer `json:"manufacturer"`
 	// The Ethereum address for the device.
 	Address common.Address `json:"address"`
 	// The Ethereum address of the owner of the device.
@@ -47,7 +48,7 @@ type AftermarketDevice struct {
 	Image string `json:"image"`
 	// The earnings attached to the aftermarket device
 	Earnings       *AftermarketDeviceEarnings `json:"earnings,omitempty"`
-	ManufacturerID *int                       `json:"-"`
+	ManufacturerID int                        `json:"-"`
 	VehicleID      *int                       `json:"-"`
 }
 
@@ -70,7 +71,7 @@ type AftermarketDeviceConnection struct {
 }
 
 type AftermarketDeviceEarnings struct {
-	TotalTokens         *big.Int            `json:"totalTokens"`
+	TotalTokens         *decimal.Big        `json:"totalTokens"`
 	History             *EarningsConnection `json:"history"`
 	AftermarketDeviceID int                 `json:"-"`
 }
@@ -229,15 +230,15 @@ type Earning struct {
 	// Consecutive period of which vehicle was connected
 	ConnectionStreak *int `json:"connectionStreak,omitempty"`
 	// Tokens earned for connection period
-	StreakTokens *big.Int `json:"streakTokens"`
+	StreakTokens *decimal.Big `json:"streakTokens"`
 	// AftermarketDevice connected to vehicle
 	AftermarketDevice *AftermarketDevice `json:"aftermarketDevice,omitempty"`
 	// Tokens earned by aftermarketDevice
-	AftermarketDeviceTokens *big.Int `json:"aftermarketDeviceTokens"`
+	AftermarketDeviceTokens *decimal.Big `json:"aftermarketDeviceTokens"`
 	// SyntheticDevice connected to vehicle
 	SyntheticDevice *SyntheticDevice `json:"syntheticDevice,omitempty"`
 	// Tokens earned by SyntheticDevice
-	SyntheticDeviceTokens *big.Int `json:"syntheticDeviceTokens"`
+	SyntheticDeviceTokens *decimal.Big `json:"syntheticDeviceTokens"`
 	// Vehicle reward is assigned to
 	Vehicle *Vehicle `json:"vehicle,omitempty"`
 	// When the token was earned
@@ -268,6 +269,8 @@ type Manufacturer struct {
 	Name string `json:"name"`
 	// The Ethereum address of the owner of this manufacturer.
 	Owner common.Address `json:"owner"`
+	// Id of the Tableland table holding the manufacturer's device definitions.
+	TableID *int `json:"tableId,omitempty"`
 	// The block timestamp at which this manufacturer was minted.
 	MintedAt time.Time `json:"mintedAt"`
 	// A Relay-style connection listing any aftermarket devices associated with manufacturer.
@@ -314,6 +317,10 @@ type PrivilegesConnection struct {
 	Edges      []*PrivilegeEdge `json:"edges"`
 	Nodes      []*Privilege     `json:"nodes"`
 	PageInfo   *PageInfo        `json:"pageInfo"`
+}
+
+// The root query type for the GraphQL schema.
+type Query struct {
 }
 
 // The SyntheticDevice is a software connection established to connect the vehicle to the DIMO network.
@@ -373,7 +380,7 @@ type SyntheticDevicesFilter struct {
 }
 
 type UserRewards struct {
-	TotalTokens *big.Int            `json:"totalTokens"`
+	TotalTokens *decimal.Big        `json:"totalTokens"`
 	History     *EarningsConnection `json:"history"`
 	User        common.Address      `json:"-"`
 }
@@ -384,7 +391,7 @@ type Vehicle struct {
 	// The ERC-721 token id for the vehicle.
 	TokenID int `json:"tokenId"`
 	// The manufacturer of this vehicle.
-	Manufacturer *Manufacturer `json:"manufacturer,omitempty"`
+	Manufacturer *Manufacturer `json:"manufacturer"`
 	// The Ethereum address of the owner of this vehicle.
 	Owner common.Address `json:"owner"`
 	// The block timestamp at which this vehicle was minted.
@@ -405,7 +412,7 @@ type Vehicle struct {
 	Image          string           `json:"image"`
 	Earnings       *VehicleEarnings `json:"earnings,omitempty"`
 	DataURI        string           `json:"dataUri"`
-	ManufacturerID *int             `json:"-"`
+	ManufacturerID int              `json:"-"`
 }
 
 func (Vehicle) IsNode()            {}
@@ -420,7 +427,7 @@ type VehicleConnection struct {
 }
 
 type VehicleEarnings struct {
-	TotalTokens *big.Int            `json:"totalTokens"`
+	TotalTokens *decimal.Big        `json:"totalTokens"`
 	History     *EarningsConnection `json:"history"`
 	VehicleID   int                 `json:"-"`
 }

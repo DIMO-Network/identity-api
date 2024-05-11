@@ -30,6 +30,10 @@ type Manufacturer implements Node {
   """
   owner: Address!
   """
+  Id of the Tableland table holding the manufacturer's device definitions.
+  """
+  tableId: Int
+  """
   The block timestamp at which this manufacturer was minted.
   """
   mintedAt: Time!

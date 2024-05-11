@@ -2,10 +2,11 @@ package loader
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/config"
-	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/repositories/aftermarket"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
@@ -56,11 +57,18 @@ func (ad *AftermarketDeviceLoader) BatchGetLinkedAftermarketDeviceByVehicleID(ct
 
 	for i, vID := range vehicleIDs {
 		if am, ok := amByVehicleID[vID]; ok {
-			imageUrl := helpers.GetAftermarketDeviceImageUrl(ad.settings.BaseImageURL, am.ID)
-			obj, err := aftermarket.ToAPI(am, imageUrl)
+			var retErr error
+			imageURL, err := aftermarket.GetAftermarketDeviceImageURL(ad.settings.BaseImageURL, am.ID)
+			if err != nil {
+				retErr = errors.Join(retErr, fmt.Errorf("failed getting image url: %w", err))
+			}
+			obj, err := aftermarket.ToAPI(am, imageURL)
+			if err != nil {
+				retErr = errors.Join(retErr, fmt.Errorf("failed converting to API: %w", err))
+			}
 			results[i] = &dataloader.Result[*model.AftermarketDevice]{
 				Data:  obj,
-				Error: err,
+				Error: retErr,
 			}
 		} else {
 			results[i] = &dataloader.Result[*model.AftermarketDevice]{}
@@ -89,12 +97,19 @@ func (ad *AftermarketDeviceLoader) BatchGetAftermarketDeviceByID(ctx context.Con
 	}
 
 	for i, adID := range aftermarketDeviceIDs {
+		var retErr error
 		if ads, ok := adByID[adID]; ok {
-			imageUrl := helpers.GetAftermarketDeviceImageUrl(ad.settings.BaseImageURL, ads.ID)
-			obj, err := aftermarket.ToAPI(ads, imageUrl)
+			imageURL, err := aftermarket.GetAftermarketDeviceImageURL(ad.settings.BaseImageURL, ads.ID)
+			if err != nil {
+				retErr = errors.Join(retErr, fmt.Errorf("failed getting image url: %w", err))
+			}
+			obj, err := aftermarket.ToAPI(ads, imageURL)
+			if err != nil {
+				retErr = errors.Join(retErr, fmt.Errorf("failed converting to API: %w", err))
+			}
 			results[i] = &dataloader.Result[*model.AftermarketDevice]{
 				Data:  obj,
-				Error: err,
+				Error: retErr,
 			}
 		} else {
 			results[i] = &dataloader.Result[*model.AftermarketDevice]{}

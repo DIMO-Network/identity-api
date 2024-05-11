@@ -8,12 +8,17 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/models"
+	"github.com/ericlagergren/decimal"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"github.com/volatiletech/sqlboiler/v4/types"
 	"golang.org/x/exp/slices"
 )
+
+// weiPerEther is the number of wei in an ether.
+// negative scale results in 10^18.
+var weiPerEther = decimal.New(1, -18)
 
 type Repository struct {
 	*base.Repository
@@ -32,15 +37,19 @@ type EarningsSummary struct {
 var rewardsCursorColumns = "(" + models.RewardColumns.IssuanceWeek + ", " + models.RewardColumns.VehicleID + ")"
 
 func RewardToAPI(reward models.Reward) gmodel.Earning {
+	strkEarn := weiToToken(reward.StreakEarnings)
+	aftrmrktEarn := weiToToken(reward.AftermarketEarnings)
+	synthEarn := weiToToken(reward.SyntheticEarnings)
+
 	return gmodel.Earning{
 		Week:                    reward.IssuanceWeek,
 		Beneficiary:             common.BytesToAddress(*reward.ReceivedByAddress.Ptr()),
 		ConnectionStreak:        reward.ConnectionStreak.Ptr(),
-		StreakTokens:            reward.StreakEarnings.Int(nil),
+		StreakTokens:            strkEarn,
 		AftermarketDeviceID:     reward.AftermarketTokenID.Ptr(),
-		AftermarketDeviceTokens: reward.AftermarketEarnings.Int(nil),
+		AftermarketDeviceTokens: aftrmrktEarn,
 		SyntheticDeviceID:       reward.SyntheticTokenID.Ptr(),
-		SyntheticDeviceTokens:   reward.SyntheticEarnings.Int(nil),
+		SyntheticDeviceTokens:   synthEarn,
 		SentAt:                  reward.EarnedAt,
 		VehicleID:               reward.VehicleID,
 	}
@@ -175,7 +184,7 @@ func (r *Repository) GetEarningsByVehicleID(ctx context.Context, tokenID int) (*
 	}
 
 	return &gmodel.VehicleEarnings{
-		TotalTokens: summary.TokenSum.Int(nil),
+		TotalTokens: weiToToken(summary.TokenSum),
 		History:     earningsConn,
 		VehicleID:   tokenID,
 	}, nil
@@ -212,7 +221,7 @@ func (r *Repository) GetEarningsByAfterMarketDeviceID(ctx context.Context, token
 	}
 
 	return &gmodel.AftermarketDeviceEarnings{
-		TotalTokens:         stats.TokenSum.Int(nil),
+		TotalTokens:         weiToToken(stats.TokenSum),
 		History:             earningsConn,
 		AftermarketDeviceID: tokenID,
 	}, nil
@@ -250,7 +259,7 @@ func (r *Repository) GetEarningsByUserAddress(ctx context.Context, user common.A
 	}
 
 	return &gmodel.UserRewards{
-		TotalTokens: summary.TokenSum.Int(nil),
+		TotalTokens: weiToToken(summary.TokenSum),
 		History:     earningsConn,
 		User:        user,
 	}, nil
@@ -275,4 +284,9 @@ func (r *Repository) PaginateGetEarningsByUsersDevices(ctx context.Context, user
 	userDeviceEarnings.History.Nodes = afd.Nodes
 	userDeviceEarnings.History.PageInfo = afd.PageInfo
 	return userDeviceEarnings.History, nil
+}
+
+// divide by 10^18 to get token value.
+func weiToToken(wei types.Decimal) *decimal.Big {
+	return new(decimal.Big).Quo(wei.Big, weiPerEther)
 }

@@ -150,3 +150,14 @@ type AftermarketDeviceAddressResetData struct {
 	TokenId                  *big.Int
 	AftermarketDeviceAddress common.Address
 }
+
+type ManufacturerTableSetData struct {
+	ManufacturerId *big.Int
+	TableId        *big.Int
+}
+
+type DeviceDefinitionTableCreatedData struct {
+	TableOwner     common.Address
+	ManufacturerId *big.Int
+	TableId        *big.Int
+}

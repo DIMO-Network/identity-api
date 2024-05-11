@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/ericlagergren/decimal"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 )
@@ -69,6 +70,26 @@ func UnmarshalBigInt(v any) (*big.Int, error) {
 	x, ok := new(big.Int).SetString(s, 10)
 	if !ok {
 		return nil, errors.New("not a valid decimal integer")
+	}
+
+	return x, nil
+}
+
+func MarshalBigDecimal(x *decimal.Big) graphql.Marshaler {
+	return graphql.WriterFunc(func(w io.Writer) {
+		_, _ = fmt.Fprintf(w, `"%.2f"`, x)
+	})
+}
+
+func UnmarshalBigDecimal(v any) (*decimal.Big, error) {
+	s, ok := v.(string)
+	if !ok {
+		return nil, fmt.Errorf("type %T not a string", v)
+	}
+
+	x, ok := new(decimal.Big).SetString(s)
+	if !ok {
+		return nil, errors.New("not a valid decimal number")
 	}
 
 	return x, nil

@@ -15,8 +15,9 @@ import (
 	"github.com/DIMO-Network/shared/db"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
@@ -25,7 +26,7 @@ type DCNRepoTestSuite struct {
 	suite.Suite
 	ctx       context.Context
 	pdb       db.Store
-	container testcontainers.Container
+	container *postgres.PostgresContainer
 	repo      *Repository
 	settings  config.Settings
 }
@@ -44,7 +45,7 @@ func (o *DCNRepoTestSuite) SetupSuite() {
 
 // TearDownTest after each test truncate tables
 func (s *DCNRepoTestSuite) TearDownTest() {
-	test.TruncateTables(s.pdb.DBS().Writer.DB, s.T())
+	s.Require().NoError(s.container.Restore(s.ctx))
 }
 
 // TearDownSuite cleanup at end by terminating container
@@ -77,9 +78,20 @@ func (o *DCNRepoTestSuite) Test_GetDCNByNode_Success() {
 	params := model.DCNBy{
 		Node: node,
 	}
+
+	var mfr = models.Manufacturer{
+		ID:       43,
+		Owner:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Name:     "Ford",
+		MintedAt: time.Now(),
+	}
+	err = mfr.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer())
+	o.NoError(err)
+
 	veh := models.Vehicle{
-		ID:           1,
-		OwnerAddress: wallet2.Bytes(),
+		ManufacturerID: 43,
+		ID:             1,
+		OwnerAddress:   wallet2.Bytes(),
 	}
 	err = veh.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer())
 	o.NoError(err)
@@ -113,9 +125,20 @@ func (o *DCNRepoTestSuite) Test_GetDCNByName_Success() {
 	params := model.DCNBy{
 		Name: &dcnName,
 	}
+
+	var mfr = models.Manufacturer{
+		ID:       43,
+		Owner:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Name:     "Ford",
+		MintedAt: time.Now(),
+	}
+	err = mfr.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer())
+	o.NoError(err)
+
 	veh := models.Vehicle{
-		ID:           1,
-		OwnerAddress: wallet2.Bytes(),
+		ManufacturerID: 43,
+		ID:             1,
+		OwnerAddress:   wallet2.Bytes(),
 	}
 	err = veh.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer())
 	o.NoError(err)
@@ -171,10 +194,22 @@ func (o *DCNRepoTestSuite) Test_GetDCNs() {
 		},
 	}
 
+	m := models.Manufacturer{
+		ID:       131,
+		Name:     "Toyota",
+		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		MintedAt: time.Now(),
+	}
+
+	if err := m.Insert(context.Background(), o.pdb.DBS().Writer, boil.Infer()); err != nil {
+		assert.NoError(o.T(), err)
+	}
+
 	for _, d := range data {
 		veh := models.Vehicle{
-			ID:           d.VehicleID,
-			OwnerAddress: d.Owner.Bytes(),
+			ManufacturerID: 131,
+			ID:             d.VehicleID,
+			OwnerAddress:   d.Owner.Bytes(),
 		}
 		err = veh.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer())
 		o.NoError(err)
