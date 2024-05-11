@@ -14,21 +14,20 @@ require (
 	github.com/gofiber/fiber/v2 v2.52.4
 	github.com/graph-gophers/dataloader/v7 v7.1.0
 	github.com/jarcoal/httpmock v1.3.1
-	github.com/patrickmn/go-cache v2.1.0+incompatible
-	github.com/pkg/errors v0.9.1
-	github.com/pressly/goose/v3 v3.15.1
-	github.com/prometheus/client_golang v1.17.0
-	github.com/rs/zerolog v1.31.0
-	github.com/stretchr/testify v1.8.4
-	github.com/testcontainers/testcontainers-go v0.25.0
-	github.com/vektah/gqlparser/v2 v2.5.10
-	github.com/vmihailenco/msgpack/v5 v5.4.0
+	github.com/pkg/errors v0.9.1 // indirect
+	github.com/pressly/goose/v3 v3.20.0
+	github.com/prometheus/client_golang v1.19.1
+	github.com/rs/zerolog v1.32.0
+	github.com/stretchr/testify v1.9.0
+	github.com/testcontainers/testcontainers-go v0.31.0
+	github.com/vektah/gqlparser/v2 v2.5.11
+	github.com/vmihailenco/msgpack/v5 v5.4.1
 	github.com/volatiletech/null/v8 v8.1.2
 	github.com/volatiletech/sqlboiler/v4 v4.16.2
 	github.com/volatiletech/strmangle v0.0.6
 	go.uber.org/mock v0.4.0
-	golang.org/x/exp v0.0.0-20240404231335-c0f41cb1a7a0
-	golang.org/x/text v0.14.0
+	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842
+	golang.org/x/text v0.15.0 // indirect
 )
 
 require (

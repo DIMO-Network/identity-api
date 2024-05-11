@@ -2,7 +2,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/repositories/aftermarket"
@@ -15,7 +14,6 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/repositories/vehicle"
 	"github.com/DIMO-Network/identity-api/internal/repositories/vehicleprivilege"
 	"github.com/DIMO-Network/identity-api/internal/services"
-	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 //go:generate go run github.com/99designs/gqlgen generate
@@ -71,7 +69,7 @@ type VehicleRepository interface {
 //go:generate mockgen -destination=./mock_devicedefinition_test.go -package=graph github.com/DIMO-Network/identity-api/graph DeviceDefinitionRepository
 type DeviceDefinitionRepository interface {
 	GetDeviceDefinition(ctx context.Context, by model.DeviceDefinitionBy) (*model.DeviceDefinition, error)
-	GetDeviceDefinitions(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.DeviceDefinitionFilter) (*model.DeviceDefinitionConnection, error)
+	GetDeviceDefinitions(ctx context.Context, tableID, first *int, after *string, last *int, before *string, filterBy *model.DeviceDefinitionFilter) (*model.DeviceDefinitionConnection, error)
 }
 
 // Resolver holds the repositories for the graph resolvers.
@@ -88,17 +86,6 @@ type Resolver struct {
 
 // NewResolver creates a new Resolver with allocated repositories.
 func NewResolver(baseRepo *base.Repository) *Resolver {
-
-	ethClient, err := ethclient.Dial(baseRepo.Settings.EthereumRPCURL)
-	if err != nil {
-		fmt.Print("Failed to create Ethereum client.")
-	}
-
-	manufacturerCacheService := services.NewManufacturerCacheService(baseRepo.PDB, baseRepo.Log, &baseRepo.Settings)
-	manufacturerContractService, err := services.NewManufacturerContractService(baseRepo.Log, &baseRepo.Settings, ethClient)
-	if err != nil {
-		fmt.Print(err)
-	}
 	tablelandApiService := services.NewTablelandApiService(baseRepo.Log, &baseRepo.Settings)
 
 	return &Resolver{
@@ -110,9 +97,7 @@ func NewResolver(baseRepo *base.Repository) *Resolver {
 		vehicle:          &vehicle.Repository{Repository: baseRepo},
 		vehicleprivilege: vehicleprivilege.Repository{Repository: baseRepo},
 		deviceDefinition: &devicedefinition.Repository{Repository: baseRepo,
-			ManufacturerContractService: manufacturerContractService,
-			TablelandApiService:         tablelandApiService,
-			ManufacturerCacheService:    manufacturerCacheService,
+			TablelandApiService: tablelandApiService,
 		},
 	}
 }

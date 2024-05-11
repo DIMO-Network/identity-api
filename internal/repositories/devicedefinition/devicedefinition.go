@@ -2,13 +2,17 @@ package devicedefinition
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
+	"github.com/DIMO-Network/identity-api/graph/model"
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/internal/services"
+	"github.com/DIMO-Network/identity-api/models"
+	"github.com/doug-martin/goqu/v9"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"golang.org/x/exp/slices"
 )
@@ -38,9 +42,7 @@ type DeviceDefinitionTablelandModel struct {
 
 type Repository struct {
 	*base.Repository
-	ManufacturerContractService *services.ManufacturerContractService
-	TablelandApiService         *services.TablelandApiService
-	ManufacturerCacheService    *services.ManufacturerCacheService
+	TablelandApiService *services.TablelandApiService
 }
 
 func ToAPI(v *DeviceDefinitionTablelandModel) (*gmodel.DeviceDefinition, error) {
@@ -71,120 +73,97 @@ func ToAPI(v *DeviceDefinitionTablelandModel) (*gmodel.DeviceDefinition, error) 
 
 func (r *Repository) GetDeviceDefinition(ctx context.Context, by gmodel.DeviceDefinitionBy) (*gmodel.DeviceDefinition, error) {
 	if len(by.ID) == 0 {
-		return nil, gqlerror.Errorf("Provide exactly one `ID`.")
+		return nil, gqlerror.Errorf("Provide an `id`.")
 	}
-	splitID := strings.Split(by.ID, "_")
 
-	if len(splitID) < 2 {
+	mfrSlug, _, found := strings.Cut(by.ID, "_")
+	if !found {
 		return nil, gqlerror.Errorf("The `ID` is incorrect.")
 	}
 
-	manufacturerSlug := splitID[0]
-
-	manufactures, err := r.ManufacturerCacheService.GetAllManufacturers(ctx)
+	mfr, err := models.Manufacturers(models.ManufacturerWhere.Slug.EQ(mfrSlug)).One(ctx, r.PDB.DBS().Reader)
 	if err != nil {
-		return nil, gqlerror.Errorf("failed load manufactures: %s", err)
-	}
-
-	var manufacturer *services.ManufacturerCacheModel
-	for _, model := range manufactures {
-		if strings.EqualFold(model.Slug, manufacturerSlug) {
-			manufacturer = &model
-			break
-		}
-	}
-
-	if manufacturer == nil {
-		return nil, gqlerror.Errorf("Manufacturer %s doesn't exist.", manufacturerSlug)
-	}
-
-	tableName, err := r.ManufacturerContractService.GetTableName(ctx, manufacturer.ID)
-	if err != nil {
-		return nil, fmt.Errorf("error: %w", err)
-	}
-
-	statement := fmt.Sprintf("SELECT * FROM %s WHERE id = '%s'", *tableName, strings.ToLower(by.ID))
-	queryParams := map[string]string{
-		"statement": statement,
-	}
-	var modelTableland []DeviceDefinitionTablelandModel
-
-	if err = r.TablelandApiService.Query(ctx, queryParams, &modelTableland); err != nil {
 		return nil, err
 	}
 
-	fmt.Print(statement)
-
-	var cont = 1
-	for _, item := range modelTableland {
-		item.Index = cont
-		return ToAPI(&item)
+	if !mfr.TableID.Valid {
+		return nil, fmt.Errorf("manufacturer %d does not have a device definition table", mfr.ID)
 	}
 
-	return nil, nil
+	table := fmt.Sprintf("_%d_%d", r.Settings.DIMORegistryChainID, mfr.TableID.Int)
+
+	sql, _, err := goqu.Dialect("sqlite3").From(table).Where(goqu.Ex{"id": by.ID}).ToSQL()
+	if err != nil {
+		return nil, err
+	}
+
+	var modelTableland []DeviceDefinitionTablelandModel
+
+	if err = r.TablelandApiService.Query(ctx, sql, &modelTableland); err != nil {
+		return nil, err
+	}
+
+	if len(modelTableland) == 0 {
+		return nil, errors.New("no device definition found with that id")
+	}
+
+	return ToAPI(&modelTableland[0])
 }
 
-func (r *Repository) GetDeviceDefinitions(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *gmodel.DeviceDefinitionFilter) (*gmodel.DeviceDefinitionConnection, error) {
-
+func (r *Repository) GetDeviceDefinitions(ctx context.Context, tableID, first *int, after *string, last *int, before *string, filterBy *model.DeviceDefinitionFilter) (*gmodel.DeviceDefinitionConnection, error) {
 	limit, err := helpers.ValidateFirstLast(first, last, base.MaxPageSize)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(filterBy.Manufacturer) == 0 {
+	if tableID == nil {
 		return nil, gqlerror.Errorf("Provide exactly one `manufacturer`.")
 	}
 
-	var conditions []string
-	if filterBy.Year != nil && (*filterBy.Year > 1980 && *filterBy.Year < 2999) {
-		conditions = append(conditions, fmt.Sprintf("year = %d", *filterBy.Year))
-	}
-	if filterBy.Model != nil && len(*filterBy.Model) > 0 {
-		conditions = append(conditions, fmt.Sprintf("model = '%s'", *filterBy.Model))
-	}
-	if filterBy.ID != nil && len(*filterBy.ID) > 0 {
-		conditions = append(conditions, fmt.Sprintf("id = '%s'", *filterBy.ID))
-	}
-
-	whereClause := strings.Join(conditions, " AND ")
-	if whereClause != "" {
-		whereClause = " WHERE " + whereClause
-	}
-
-	manufactures, err := r.ManufacturerCacheService.GetAllManufacturers(ctx)
-	if err != nil {
-		return nil, gqlerror.Errorf("failed load manufactures: %s", err)
-	}
-
-	var manufacturer *services.ManufacturerCacheModel
-	for _, model := range manufactures {
-		if strings.EqualFold(model.Slug, filterBy.Manufacturer) {
-			manufacturer = &model
-			break
-		}
-	}
-
-	tableName, err := r.ManufacturerContractService.GetTableName(ctx, manufacturer.ID)
+	mfr, err := models.Manufacturers(models.ManufacturerWhere.Slug.EQ(filterBy.Manufacturer)).One(ctx, r.PDB.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}
 
-	countParams := map[string]string{
-		"statement": fmt.Sprintf("SELECT count(*) FROM %s%s", *tableName, whereClause),
+	if !mfr.TableID.Valid {
+		return nil, fmt.Errorf("manufacturer %d does not have a device definition table", mfr.ID)
 	}
+
+	table := fmt.Sprintf("_%d_%d", r.Settings.DIMORegistryChainID, mfr.TableID.Int)
+
+	sqlBuild := goqu.Dialect("sqlite3").From(table)
+
+	if filterBy.Year != nil {
+		sqlBuild = sqlBuild.Where(goqu.Ex{"year": *filterBy.Year})
+	}
+
+	if filterBy.Model != nil {
+		sqlBuild = sqlBuild.Where(goqu.Ex{"model": *filterBy.Model})
+	}
+
+	countSQL, _, err := sqlBuild.Select(goqu.COUNT("*")).ToSQL()
+	if err != nil {
+		return nil, fmt.Errorf("error constructing count SQL: %w", err)
+	}
+
 	var modelCountTableland []DeviceDefinitionTablelandCountModel
-	if err = r.TablelandApiService.Query(ctx, countParams, &modelCountTableland); err != nil {
+	if err = r.TablelandApiService.Query(ctx, countSQL, &modelCountTableland); err != nil {
 		return nil, err
+	}
+
+	if len(modelCountTableland) == 0 {
+		return nil, errors.New("error from Tableland")
 	}
 
 	totalCount := modelCountTableland[0].Count
 
-	queryParams := map[string]string{
-		"statement": fmt.Sprintf("SELECT * FROM %s%s LIMIT %d OFFSET %d", *tableName, whereClause, limit, 1),
+	allSQL, _, err := sqlBuild.Order(goqu.I("id").Asc()).ToSQL()
+	if err != nil {
+		return nil, fmt.Errorf("error constructing selection SQL: %w", err)
 	}
 
 	var all []DeviceDefinitionTablelandModel
-	if err = r.TablelandApiService.Query(ctx, queryParams, &all); err != nil {
+	if err = r.TablelandApiService.Query(ctx, allSQL, &all); err != nil {
 		return nil, err
 	}
 

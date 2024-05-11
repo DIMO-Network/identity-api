@@ -14,6 +14,3 @@ import (
 func (r *queryResolver) DeviceDefinition(ctx context.Context, by model.DeviceDefinitionBy) (*model.DeviceDefinition, error) {
 	return r.deviceDefinition.GetDeviceDefinition(ctx, by)
 }
-func (r *queryResolver) Devicedefinitions(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.DeviceDefinitionFilter) (*model.DeviceDefinitionConnection, error) {
-	return r.deviceDefinition.GetDeviceDefinitions(ctx, first, after, last, before, filterBy)
-}

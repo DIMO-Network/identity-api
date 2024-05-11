@@ -10,34 +10,6 @@ extend type Query {
     """
     by: DeviceDefinitionBy!
   ): DeviceDefinition!
-
-  """
-  List device definitions.
-  """
-  deviceDefinitions(
-    """
-    The number of device definition to retrieve.
-    Mutually exclusive with `last`.
-    """
-    first: Int
-    """
-    A cursor for pagination. Retrieve device definitions after this cursor.
-    """
-    after: String
-    """
-    The number of device definitions to retrieve from the end of the list.
-    Mutually exclusive with `first`.
-    """
-    last: Int
-    """
-    A cursor for pagination. Retrieve device definitions before this cursor.
-    """
-    before: String
-    """
-    Filter the device definitions based on specific criteria.
-    """
-    filterBy: DeviceDefinitionFilter
-  ): DeviceDefinitionConnection!
 }
 
 """
