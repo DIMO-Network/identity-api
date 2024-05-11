@@ -99,6 +99,8 @@ models:
     fields:
       aftermarketDevices:
         resolver: true
+      deviceDefinitions:
+        resolver: true
   DCN:
     fields:
       vehicle:

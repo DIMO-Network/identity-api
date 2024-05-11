@@ -275,6 +275,8 @@ type Manufacturer struct {
 	MintedAt time.Time `json:"mintedAt"`
 	// A Relay-style connection listing any aftermarket devices associated with manufacturer.
 	AftermarketDevices *AftermarketDeviceConnection `json:"aftermarketDevices"`
+	// List device definitions under this manufacturer.
+	DeviceDefinitions *DeviceDefinitionConnection `json:"deviceDefinitions"`
 }
 
 func (Manufacturer) IsNode()            {}

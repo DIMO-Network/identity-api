@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
+	"net/url"
 	"time"
 
 	"github.com/DIMO-Network/identity-api/internal/config"
@@ -16,38 +16,39 @@ type TablelandApiService struct {
 	log        *zerolog.Logger
 	settings   *config.Settings
 	httpClient shared.HTTPClientWrapper
+	url        *url.URL
 }
 
 func NewTablelandApiService(log *zerolog.Logger, settings *config.Settings) *TablelandApiService {
 	httpClient, _ := shared.NewHTTPClientWrapper(settings.TablelandAPIGateway, "", 10*time.Second, nil, true)
 
+	qu, _ := url.Parse(tablelandQueryPath)
+
 	return &TablelandApiService{
 		log:        log,
 		httpClient: httpClient,
 		settings:   settings,
+		url:        qu,
 	}
 }
 
-func (r *TablelandApiService) Query(_ context.Context, queryParams map[string]string, result interface{}) error {
-	var queryString string = "api/v1/query?"
-	if len(queryParams) > 0 {
-		queryParamsList := make([]string, 0, len(queryParams))
-		for key, value := range queryParams {
-			queryParamsList = append(queryParamsList, key+"="+value)
-		}
-		queryString += strings.Join(queryParamsList, "&")
-	}
+const tablelandQueryPath = "api/v1/query"
 
-	resp, err := r.httpClient.ExecuteRequest(queryString, "GET", nil)
+func (r *TablelandApiService) Query(_ context.Context, statement string, result any) error {
+	v := url.Values{}
+	v.Add("statement", statement)
+	q := v.Encode()
+
+	// Copy
+	url := *r.url
+	url.RawQuery = q
+
+	resp, err := r.httpClient.ExecuteRequest(url.String(), "GET", nil)
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
 
 	defer resp.Body.Close()
 
-	if err = json.NewDecoder(resp.Body).Decode(result); err != nil {
-		return err
-	}
-
-	return nil
+	return json.NewDecoder(resp.Body).Decode(result)
 }
