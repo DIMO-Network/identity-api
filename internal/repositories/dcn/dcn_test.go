@@ -84,6 +84,7 @@ func (o *DCNRepoTestSuite) Test_GetDCNByNode_Success() {
 		Owner:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		Name:     "Ford",
 		MintedAt: time.Now(),
+		Slug:     "ford",
 	}
 	err = mfr.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer())
 	o.NoError(err)
@@ -131,6 +132,7 @@ func (o *DCNRepoTestSuite) Test_GetDCNByName_Success() {
 		Owner:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		Name:     "Ford",
 		MintedAt: time.Now(),
+		Slug:     "ford",
 	}
 	err = mfr.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer())
 	o.NoError(err)
@@ -199,6 +201,7 @@ func (o *DCNRepoTestSuite) Test_GetDCNs() {
 		Name:     "Toyota",
 		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		MintedAt: time.Now(),
+		Slug:     "toyota",
 	}
 
 	if err := m.Insert(context.Background(), o.pdb.DBS().Writer, boil.Infer()); err != nil {

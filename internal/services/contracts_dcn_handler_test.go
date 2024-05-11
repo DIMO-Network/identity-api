@@ -181,6 +181,7 @@ func (o *DCNConsumerTestSuite) Test_DCN_VehicleIDChanged_Consume_Success() {
 		Name:     "Toyota",
 		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		MintedAt: time.Now(),
+		Slug:     "toyota",
 	}
 
 	if err := m.Insert(context.Background(), o.pdb.DBS().Writer, boil.Infer()); err != nil {

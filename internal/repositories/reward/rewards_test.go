@@ -80,6 +80,7 @@ func (r *RewardsRepoTestSuite) createDependentRecords() {
 		Owner:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		Name:     "Ford",
 		MintedAt: time.Now(),
+		Slug:     "ford",
 	}
 	err := mfr.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
 	r.NoError(err)
@@ -89,6 +90,7 @@ func (r *RewardsRepoTestSuite) createDependentRecords() {
 		Owner:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDff"),
 		Name:     "AutoPi",
 		MintedAt: time.Now(),
+		Slug:     "autopi",
 	}
 	err = mfr2.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
 	r.NoError(err)

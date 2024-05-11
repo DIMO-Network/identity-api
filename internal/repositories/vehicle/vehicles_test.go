@@ -100,6 +100,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Success() {
 		Name:     "Toyota",
 		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		MintedAt: time.Now(),
+		Slug:     "toyota",
 	}
 
 	if err := m.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer()); err != nil {
@@ -219,6 +220,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination(
 		Name:     "Toyota",
 		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		MintedAt: time.Now(),
+		Slug:     "toyota",
 	}
 
 	if err := m.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer()); err != nil {
@@ -304,6 +306,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 		Name:     "Toyota",
 		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		MintedAt: time.Now(),
+		Slug:     "toyota",
 	}
 
 	if err := m.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer()); err != nil {
@@ -393,6 +396,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_OwnedByUser
 		Name:     "Toyota",
 		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		MintedAt: time.Now(),
+		Slug:     "toyota",
 	}
 
 	if err := m.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer()); err != nil {
@@ -1126,6 +1130,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 		Name:     "Toyota",
 		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		MintedAt: time.Now(),
+		Slug:     "toyota",
 	}
 
 	if err := m.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer()); err != nil {
@@ -1137,6 +1142,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 		Name:     "Honda",
 		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDff"),
 		MintedAt: time.Now(),
+		Slug:     "honda",
 	}
 
 	if err := m2.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer()); err != nil {

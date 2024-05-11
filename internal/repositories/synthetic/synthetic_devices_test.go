@@ -114,12 +114,14 @@ func (s *SyntheticTestSuite) SetupSuite() {
 		ID:    131,
 		Name:  "Toyota",
 		Owner: vehicle1Owner.Bytes(),
+		Slug:  "toyota",
 	}
 
 	s.honda = models.Manufacturer{
 		ID:    48,
 		Name:  "Honda",
 		Owner: vehicle2Owner.Bytes(),
+		Slug:  "honda",
 	}
 
 	s.vehicle1 = models.Vehicle{

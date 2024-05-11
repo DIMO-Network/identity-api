@@ -80,6 +80,7 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Success() {
 		Name:     "Toyota",
 		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		MintedAt: time.Now(),
+		Slug:     "toyota",
 	}
 
 	if err := m.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer()); err != nil {
@@ -193,6 +194,7 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination() {
 		Name:     "Toyota",
 		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		MintedAt: time.Now(),
+		Slug:     "toyota",
 	}
 
 	if err := m.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer()); err != nil {
@@ -273,6 +275,7 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination_NextPage()
 		Name:     "Toyota",
 		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		MintedAt: time.Now(),
+		Slug:     "toyota",
 	}
 
 	if err := m.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer()); err != nil {
@@ -387,6 +390,7 @@ func Test_GetOwnedVehicles_Filters(t *testing.T) {
 		Name:     "Toyota",
 		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		MintedAt: time.Now(),
+		Slug:     "toyota",
 	}
 
 	if err := m.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
