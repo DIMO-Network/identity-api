@@ -14,7 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/suite"
-	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
@@ -22,7 +22,7 @@ type ManufacturerCacheServiceTestSuite struct {
 	suite.Suite
 	ctx       context.Context
 	pdb       db.Store
-	container testcontainers.Container
+	container *postgres.PostgresContainer
 	settings  config.Settings
 	logger    zerolog.Logger
 }
@@ -38,7 +38,7 @@ func (o *ManufacturerCacheServiceTestSuite) SetupSuite() {
 
 // TearDownTest after each test truncate tables
 func (s *ManufacturerCacheServiceTestSuite) TearDownTest() {
-	test.TruncateTables(s.pdb.DBS().Writer.DB, s.T())
+	s.Require().NoError(s.container.Restore(s.ctx))
 }
 
 // TearDownSuite cleanup at end by terminating container
