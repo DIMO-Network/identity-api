@@ -41,6 +41,7 @@ func TestAftermarketDeviceNodeMintMultiResponse(t *testing.T) {
 		Owner:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDff"),
 		Name:     "AutoPi",
 		MintedAt: time.Now(),
+		Slug:     "autopi",
 	}
 	err := mfr2.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err)
@@ -84,6 +85,7 @@ func Test_GetOwnedAftermarketDevices_Pagination_PreviousPage(t *testing.T) {
 		ID:    137,
 		Name:  "AutoPi",
 		Owner: common.FromHex("0xaba3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Slug:  "autopi",
 	}
 	err := mfr.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	assert.NoError(t, err)
@@ -173,6 +175,7 @@ func Test_GetAftermarketDevices_FilterByBeneficiary(t *testing.T) {
 		Owner:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDff"),
 		Name:     "AutoPi",
 		MintedAt: time.Now(),
+		Slug:     "autopi",
 	}
 	err := mfr2.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err)
@@ -237,12 +240,14 @@ func Test_GetAftermarketDevices_FilterByManufacturerID(t *testing.T) {
 			Owner:    common.HexToAddress("1").Bytes(),
 			MintedAt: time.Now(),
 			Name:     "Toyota",
+			Slug:     "toyota",
 		},
 		{
 			ID:       2,
 			Owner:    common.HexToAddress("2").Bytes(),
 			MintedAt: time.Now(),
 			Name:     "Honda",
+			Slug:     "honda",
 		},
 	}
 	for _, m := range mnfs {

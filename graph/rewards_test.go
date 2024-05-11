@@ -74,6 +74,7 @@ func (r *RewardsQueryTestSuite) createDependencies() {
 		Owner:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		Name:     "Ford",
 		MintedAt: time.Now(),
+		Slug:     "ford",
 	}
 
 	var mfr2 = models.Manufacturer{
@@ -81,6 +82,7 @@ func (r *RewardsQueryTestSuite) createDependencies() {
 		Owner:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDff"),
 		Name:     "AutoPi",
 		MintedAt: time.Now(),
+		Slug:     "autopi",
 	}
 
 	var vehicle = models.Vehicle{
