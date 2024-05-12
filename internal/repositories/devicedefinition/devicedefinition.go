@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/DIMO-Network/identity-api/graph/model"
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
@@ -30,8 +29,8 @@ type DeviceDefinitionTablelandModel struct {
 	KSUID      string `json:"ksuid"`
 	Model      string `json:"model"`
 	Year       int    `json:"year"`
-	DeviceType string `json:"devicetype"`
-	ImageURI   string `json:"imageuri"`
+	DeviceType string `json:"deviceType"`
+	ImageURI   string `json:"imageURI"`
 	Metadata   struct {
 		DeviceAttributes []struct {
 			Name  string `json:"name"`
@@ -110,7 +109,7 @@ func (r *Repository) GetDeviceDefinition(ctx context.Context, by gmodel.DeviceDe
 	return ToAPI(&modelTableland[0])
 }
 
-func (r *Repository) GetDeviceDefinitions(ctx context.Context, tableID, first *int, after *string, last *int, before *string, filterBy *model.DeviceDefinitionFilter) (*gmodel.DeviceDefinitionConnection, error) {
+func (r *Repository) GetDeviceDefinitions(ctx context.Context, tableID, first *int, after *string, last *int, before *string, filterBy *gmodel.DeviceDefinitionFilter) (*gmodel.DeviceDefinitionConnection, error) {
 	limit, err := helpers.ValidateFirstLast(first, last, base.MaxPageSize)
 	if err != nil {
 		return nil, err
