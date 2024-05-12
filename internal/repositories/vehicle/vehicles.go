@@ -42,24 +42,27 @@ func (r *Repository) createVehiclesResponse(totalCount int64, vehicles models.Ve
 	nodes := make([]*gmodel.Vehicle, len(vehicles))
 
 	for i, dv := range vehicles {
-		// If the vehicle has no image, we need to return the default.
-		var imageURI null.String
-		if vehicles[i].ImageURI == null.NewString("", false) {
-			image, err := GetVehicleImageURL(r.Settings.BaseImageURL, dv.ID)
+		var imageURI string
+
+		if dv.ImageURI.Valid {
+			imageURI = dv.ImageURI.String
+		} else {
+			var err error
+			imageURI, err = DefaultImageURI(r.Settings.BaseImageURL, dv.ID)
 			if err != nil {
 				wErr := fmt.Errorf("error getting vehicle image url: %w", err)
 				errList = append(errList, gqlerror.Wrap(wErr))
 				continue
 			}
-			imageURI = null.StringFrom(image)
 		}
+
 		dataURI, err := GetVehicleDataURI(r.Settings.BaseVehicleDataURI, dv.ID)
 		if err != nil {
 			wErr := fmt.Errorf("error getting vehicle data uri: %w", err)
 			errList = append(errList, gqlerror.Wrap(wErr))
 			continue
 		}
-		gv, err := ToAPI(dv, imageURL, dataURI)
+		gv, err := ToAPI(dv, imageURI, dataURI)
 		if err != nil {
 			wErr := fmt.Errorf("error converting vehicle to API: %w", err)
 			errList = append(errList, gqlerror.Wrap(wErr))
@@ -181,15 +184,25 @@ func (r *Repository) GetVehicle(ctx context.Context, id int) (*gmodel.Vehicle, e
 	if err != nil {
 		return nil, err
 	}
-	imageURL, err := GetVehicleImageURL(r.Settings.BaseImageURL, v.ID)
-	if err != nil {
-		return nil, fmt.Errorf("error getting vehicle image url: %w", err)
+	var imageURI string
+
+	if v.ImageURI.Valid {
+		imageURI = v.ImageURI.String
+	} else {
+		var err error
+		imageURI, err = DefaultImageURI(r.Settings.BaseImageURL, v.ID)
+		if err != nil {
+			wErr := fmt.Errorf("error getting vehicle image url: %w", err)
+			return nil, gqlerror.Wrap(wErr)
+		}
 	}
+
 	dataURI, err := GetVehicleDataURI(r.Settings.BaseVehicleDataURI, v.ID)
 	if err != nil {
 		return nil, fmt.Errorf("error getting vehicle data uri: %w", err)
 	}
-	return ToAPI(v, imageURL, dataURI)
+
+	return ToAPI(v, imageURI, dataURI)
 }
 
 // queryModsFromFilters returns a slice of query mods from the given filters.
@@ -266,8 +279,8 @@ func ToAPI(v *models.Vehicle, imageURI string, dataURI string) (*gmodel.Vehicle,
 	}, nil
 }
 
-// GetVehicleImageURL craates a URL for the vehicle image.
-func GetVehicleImageURL(baseURL string, tokenID int) (string, error) {
+// DefaultImageURI craates a URL for the vehicle image.
+func DefaultImageURI(baseURL string, tokenID int) (string, error) {
 	tokenStr := strconv.Itoa(tokenID)
 	return url.JoinPath(baseURL, "vehicle", tokenStr, "image")
 }

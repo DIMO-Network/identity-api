@@ -319,11 +319,11 @@ func (c *ContractsEventsConsumer) handleVehicleAttributeSetEvent(ctx context.Con
 		}
 		return nil
 	case "ImageURI":
-		imageURI := null.StringFrom(args.Info)
-		veh.ImageURI, err := url.ParseRequestURI(imageURI.String)
+		_, err := url.ParseRequestURI(args.Info)
 		if err != nil {
 			return fmt.Errorf("couldn't parse image URI string %q: %w", args.Info, err)
 		}
+		veh.ImageURI = null.StringFrom(args.Info)
 		_, err = veh.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.VehicleColumns.ImageURI))
 		return err
 	case "DefinitionURI":

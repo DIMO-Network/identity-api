@@ -48,7 +48,7 @@ func (v *VehicleLoader) BatchGetVehicleByID(ctx context.Context, vehicleIDs []in
 	for i, k := range vehicleIDs {
 		if veh, ok := vehicleByID[k]; ok {
 			var retErr error
-			imageURL, err := vehicle.GetVehicleImageURL(v.settings.BaseImageURL, veh.ID)
+			imageURL, err := vehicle.DefaultImageURI(v.settings.BaseImageURL, veh.ID)
 			if err != nil {
 				retErr = errors.Join(retErr, fmt.Errorf("error getting vehicle image url: %w", err))
 			}

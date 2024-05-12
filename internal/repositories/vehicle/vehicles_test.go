@@ -1159,7 +1159,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 		Year:           year2020,
 		MintedAt:       currTime,
 	}
-	vehicle1ImageURL, err := GetVehicleImageURL(o.settings.BaseImageURL, testVehicle1.ID)
+	vehicle1ImageURL, err := DefaultImageURI(o.settings.BaseImageURL, testVehicle1.ID)
 	o.Require().NoError(err)
 	vehicle1DataURI, err := GetVehicleDataURI(o.settings.BaseVehicleDataURI, testVehicle1.ID)
 	o.Require().NoError(err)
@@ -1175,7 +1175,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 		Year:           year2022,
 		MintedAt:       currTime,
 	}
-	vehicle2ImageURL, err := GetVehicleImageURL(o.settings.BaseImageURL, testVehicle2.ID)
+	vehicle2ImageURL, err := DefaultImageURI(o.settings.BaseImageURL, testVehicle2.ID)
 	o.Require().NoError(err)
 	vehicle2DataURI, err := GetVehicleDataURI(o.settings.BaseVehicleDataURI, testVehicle2.ID)
 	o.Require().NoError(err)
@@ -1191,7 +1191,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 		Year:           year2022,
 		MintedAt:       currTime,
 	}
-	vehicle3ImageURL, err := GetVehicleImageURL(o.settings.BaseImageURL, testVehicle3.ID)
+	vehicle3ImageURL, err := DefaultImageURI(o.settings.BaseImageURL, testVehicle3.ID)
 	o.Require().NoError(err)
 	vehicle3DataURI, err := GetVehicleDataURI(o.settings.BaseVehicleDataURI, testVehicle3.ID)
 	o.Require().NoError(err)
@@ -1207,7 +1207,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 		Year:           year2020,
 		MintedAt:       currTime,
 	}
-	vehicle4ImageURL, err := GetVehicleImageURL(o.settings.BaseImageURL, testVehicle4.ID)
+	vehicle4ImageURL, err := DefaultImageURI(o.settings.BaseImageURL, testVehicle4.ID)
 	o.Require().NoError(err)
 	vehicle4DataURI, err := GetVehicleDataURI(o.settings.BaseVehicleDataURI, testVehicle4.ID)
 	o.Require().NoError(err)
