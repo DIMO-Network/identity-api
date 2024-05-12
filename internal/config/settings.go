@@ -4,6 +4,7 @@ import "github.com/DIMO-Network/shared/db"
 
 // Settings contains the application config
 type Settings struct {
+	LogLevel              string      `yaml:"LOG_LEVEL"`
 	DB                    db.Settings `yaml:"DB"`
 	Port                  int         `yaml:"PORT"`
 	MonPort               int         `yaml:"MON_PORT"`

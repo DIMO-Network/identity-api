@@ -35,6 +35,13 @@ func main() {
 		logger.Fatal().Err(err).Msg("Couldn't load settings.")
 	}
 
+	zl, err := zerolog.ParseLevel(settings.LogLevel)
+	if err != nil {
+		logger.Fatal().Err(err).Msgf("Error parsing log level from %q.", settings.LogLevel)
+	}
+
+	logger = logger.Level(zl)
+
 	logger.Info().Msgf("Loaded configuration. Addresses: Registry %s, Vehicle %s, Aftermarket Device %s.", settings.DIMORegistryAddr, settings.VehicleNFTAddr, settings.AftermarketDeviceAddr)
 
 	if len(os.Args) > 1 && os.Args[1] == "migrate" {
