@@ -56,16 +56,16 @@ func (mr *MockDeviceDefinitionRepositoryMockRecorder) GetDeviceDefinition(arg0, 
 }
 
 // GetDeviceDefinitions mocks base method.
-func (m *MockDeviceDefinitionRepository) GetDeviceDefinitions(arg0 context.Context, arg1 *int, arg2 *string, arg3 *int, arg4 *string, arg5 *model.DeviceDefinitionFilter) (*model.DeviceDefinitionConnection, error) {
+func (m *MockDeviceDefinitionRepository) GetDeviceDefinitions(arg0 context.Context, arg1, arg2 *int, arg3 *string, arg4 *int, arg5 *string, arg6 *model.DeviceDefinitionFilter) (*model.DeviceDefinitionConnection, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetDeviceDefinitions", arg0, arg1, arg2, arg3, arg4, arg5)
+	ret := m.ctrl.Call(m, "GetDeviceDefinitions", arg0, arg1, arg2, arg3, arg4, arg5, arg6)
 	ret0, _ := ret[0].(*model.DeviceDefinitionConnection)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetDeviceDefinitions indicates an expected call of GetDeviceDefinitions.
-func (mr *MockDeviceDefinitionRepositoryMockRecorder) GetDeviceDefinitions(arg0, arg1, arg2, arg3, arg4, arg5 any) *gomock.Call {
+func (mr *MockDeviceDefinitionRepositoryMockRecorder) GetDeviceDefinitions(arg0, arg1, arg2, arg3, arg4, arg5, arg6 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDeviceDefinitions", reflect.TypeOf((*MockDeviceDefinitionRepository)(nil).GetDeviceDefinitions), arg0, arg1, arg2, arg3, arg4, arg5)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDeviceDefinitions", reflect.TypeOf((*MockDeviceDefinitionRepository)(nil).GetDeviceDefinitions), arg0, arg1, arg2, arg3, arg4, arg5, arg6)
 }

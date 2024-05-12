@@ -11704,27 +11704,13 @@ func (ec *executionContext) unmarshalInputDeviceDefinitionFilter(ctx context.Con
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"manufacturer", "id", "model", "year"}
+	fieldsInOrder := [...]string{"model", "year"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "manufacturer":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("manufacturer"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Manufacturer = data
-		case "id":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ID = data
 		case "model":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("model"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)

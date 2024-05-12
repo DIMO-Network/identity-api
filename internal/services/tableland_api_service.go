@@ -32,7 +32,7 @@ func NewTablelandApiService(log *zerolog.Logger, settings *config.Settings) *Tab
 	}
 }
 
-const tablelandQueryPath = "api/v1/query"
+const tablelandQueryPath = "/api/v1/query"
 
 func (r *TablelandApiService) Query(_ context.Context, statement string, result any) error {
 	v := url.Values{}

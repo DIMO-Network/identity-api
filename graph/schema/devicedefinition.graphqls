@@ -120,17 +120,6 @@ input DeviceDefinitionBy @oneOf {
 Filter for Device Definition.
 """
 input DeviceDefinitionFilter {
-
-  """
-  The manufacturer for the device definition.
-  """
-  manufacturer: String!
-
-  """
-  ID filters for the device definition that are of the given model.
-  """
-  id: String
-
   """
   Model filters for device definition that are of the given model.
   """

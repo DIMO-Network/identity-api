@@ -113,28 +113,21 @@ func (r *Repository) GetDeviceDefinitions(ctx context.Context, tableID, first *i
 	}
 
 	if tableID == nil {
-		return nil, gqlerror.Errorf("Provide exactly one `manufacturer`.")
+		return nil, gqlerror.Errorf("Manufacturer does not have a device definitions table.")
 	}
 
-	mfr, err := models.Manufacturers(models.ManufacturerWhere.Slug.EQ(filterBy.Manufacturer)).One(ctx, r.PDB.DBS().Reader)
-	if err != nil {
-		return nil, err
-	}
-
-	if !mfr.TableID.Valid {
-		return nil, fmt.Errorf("manufacturer %d does not have a device definition table", mfr.ID)
-	}
-
-	table := fmt.Sprintf("_%d_%d", r.Settings.DIMORegistryChainID, mfr.TableID.Int)
+	table := fmt.Sprintf("_%d_%d", r.Settings.DIMORegistryChainID, *tableID)
 
 	sqlBuild := dialect.From(table)
 
-	if filterBy.Year != nil {
-		sqlBuild = sqlBuild.Where(goqu.Ex{"year": *filterBy.Year})
-	}
+	if filterBy != nil {
+		if filterBy.Year != nil {
+			sqlBuild = sqlBuild.Where(goqu.Ex{"year": *filterBy.Year})
+		}
 
-	if filterBy.Model != nil {
-		sqlBuild = sqlBuild.Where(goqu.Ex{"model": *filterBy.Model})
+		if filterBy.Model != nil {
+			sqlBuild = sqlBuild.Where(goqu.Ex{"model": *filterBy.Model})
+		}
 	}
 
 	countSQL, _, err := sqlBuild.Select(goqu.COUNT("*")).ToSQL()
