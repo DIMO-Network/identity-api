@@ -2,6 +2,7 @@ package devicedefinition
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"strings"
@@ -16,6 +17,8 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+var dialect = goqu.Dialect("sqlite3")
+
 // TokenPrefix is the prefix for a global token id for Device Definition.
 const TokenPrefix = "DD"
 
@@ -24,7 +27,6 @@ type DeviceDefinitionTablelandCountModel struct {
 }
 
 type DeviceDefinitionTablelandModel struct {
-	Index      int    `json:"index"`
 	ID         string `json:"id"`
 	KSUID      string `json:"ksuid"`
 	Model      string `json:"model"`
@@ -45,20 +47,15 @@ type Repository struct {
 }
 
 func ToAPI(v *DeviceDefinitionTablelandModel) (*gmodel.DeviceDefinition, error) {
-	var result = gmodel.DeviceDefinition{}
-
-	globalID, err := base.EncodeGlobalTokenID(TokenPrefix, v.Index)
-	if err != nil {
-		return nil, fmt.Errorf("error encoding device definition id: %w", err)
+	var result = gmodel.DeviceDefinition{
+		ID:                 definitionIDToGlobalID(v.ID),
+		DeviceDefinitionID: v.ID,
+		LegacyID:           &v.KSUID,
+		Year:               v.Year,
+		Model:              v.Model,
+		DeviceType:         &v.DeviceType,
+		ImageURI:           &v.ImageURI,
 	}
-
-	result.ID = globalID
-	result.DeviceDefinitionID = v.ID
-	result.LegacyID = &v.KSUID
-	result.Year = v.Year
-	result.Model = v.Model
-	result.DeviceType = &v.DeviceType
-	result.ImageURI = &v.ImageURI
 
 	for _, attr := range v.Metadata.DeviceAttributes {
 		result.Attributes = append(result.Attributes, &gmodel.DeviceDefinitionAttribute{
@@ -91,7 +88,7 @@ func (r *Repository) GetDeviceDefinition(ctx context.Context, by gmodel.DeviceDe
 
 	table := fmt.Sprintf("_%d_%d", r.Settings.DIMORegistryChainID, mfr.TableID.Int)
 
-	sql, _, err := goqu.Dialect("sqlite3").From(table).Where(goqu.Ex{"id": by.ID}).ToSQL()
+	sql, _, err := dialect.From(table).Where(goqu.Ex{"id": by.ID}).ToSQL()
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +127,7 @@ func (r *Repository) GetDeviceDefinitions(ctx context.Context, tableID, first *i
 
 	table := fmt.Sprintf("_%d_%d", r.Settings.DIMORegistryChainID, mfr.TableID.Int)
 
-	sqlBuild := goqu.Dialect("sqlite3").From(table)
+	sqlBuild := dialect.From(table)
 
 	if filterBy.Year != nil {
 		sqlBuild = sqlBuild.Where(goqu.Ex{"year": *filterBy.Year})
@@ -156,7 +153,30 @@ func (r *Repository) GetDeviceDefinitions(ctx context.Context, tableID, first *i
 
 	totalCount := modelCountTableland[0].Count
 
-	allSQL, _, err := sqlBuild.Order(goqu.I("id").Asc()).ToSQL()
+	if after != nil {
+		afterID, err := cursorToDefinitionID(*after)
+		if err != nil {
+			return nil, err
+		}
+
+		sqlBuild = sqlBuild.Where(goqu.C("id").Gt(afterID))
+	}
+
+	if before != nil {
+		beforeID, err := cursorToDefinitionID(*before)
+		if err != nil {
+			return nil, err
+		}
+
+		sqlBuild = sqlBuild.Where(goqu.C("id").Lt(beforeID))
+	}
+
+	orderBy := goqu.C("id").Asc()
+	if last != nil {
+		orderBy = goqu.C("id").Desc()
+	}
+
+	allSQL, _, err := sqlBuild.Limit(uint(limit) + 1).Order(orderBy).ToSQL()
 	if err != nil {
 		return nil, fmt.Errorf("error constructing selection SQL: %w", err)
 	}
@@ -164,10 +184,6 @@ func (r *Repository) GetDeviceDefinitions(ctx context.Context, tableID, first *i
 	var all []DeviceDefinitionTablelandModel
 	if err = r.TablelandApiService.Query(ctx, allSQL, &all); err != nil {
 		return nil, err
-	}
-
-	for i, model := range all {
-		model.Index = i
 	}
 
 	// We assume that cursors come from real elements.
@@ -189,10 +205,10 @@ func (r *Repository) GetDeviceDefinitions(ctx context.Context, tableID, first *i
 	var errList gqlerror.List
 	var endCur, startCur *string
 	if len(all) != 0 {
-		ec := helpers.IDToCursor(all[len(all)-1].Index)
+		ec := definitionIDToCursor(all[len(all)-1].ID)
 		endCur = &ec
 
-		sc := helpers.IDToCursor(all[0].Index)
+		sc := definitionIDToCursor(all[0].ID)
 		startCur = &sc
 	}
 
@@ -208,7 +224,7 @@ func (r *Repository) GetDeviceDefinitions(ctx context.Context, tableID, first *i
 
 		edges[i] = &gmodel.DeviceDefinitionEdge{
 			Node:   gv,
-			Cursor: helpers.IDToCursor(dv.Index),
+			Cursor: definitionIDToCursor(dv.ID),
 		}
 
 		nodes[i] = gv
@@ -231,4 +247,21 @@ func (r *Repository) GetDeviceDefinitions(ctx context.Context, tableID, first *i
 	}
 
 	return res, nil
+}
+
+func definitionIDToCursor(id string) string {
+	return base64.StdEncoding.EncodeToString([]byte(id))
+}
+
+func cursorToDefinitionID(cur string) (string, error) {
+	b, err := base64.StdEncoding.DecodeString(cur)
+	if err != nil {
+		return "", err
+	}
+
+	return string(b), nil
+}
+
+func definitionIDToGlobalID(id string) string {
+	return fmt.Sprintf("%s_%s", TokenPrefix, base64.StdEncoding.EncodeToString([]byte(id)))
 }
