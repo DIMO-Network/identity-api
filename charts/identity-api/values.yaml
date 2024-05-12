@@ -24,6 +24,7 @@ cronJob:
   enabled: false
   schedule: 0 0 * * 0
 env:
+  LOG_LEVEL: info
   DB_PORT: 5432
   DB_NAME: identity_api
   PORT: 8080
