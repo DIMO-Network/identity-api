@@ -20,5 +20,4 @@ type Settings struct {
 	BaseImageURL          string      `yaml:"BASE_IMAGE_URL"`
 	BaseVehicleDataURI    string      `yaml:"BASE_VEHICLE_DATA_URI"`
 	TablelandAPIGateway   string      `yaml:"TABLELAND_API_GATEWAY"`
-	EthereumRPCURL        string      `yaml:"ETHEREUM_RPC_URL"`
 }
