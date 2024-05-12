@@ -341,7 +341,7 @@ type Vehicle struct {
 	// Encoded name of the device
 	Name string `json:"name"`
 	// The Image Url of he vehicle
-	ImageURI          string           `json:"imageUri"`
+	ImageURI       string           `json:"imageUri"`
 	Earnings       *VehicleEarnings `json:"earnings,omitempty"`
 	DataURI        string           `json:"dataUri"`
 	ManufacturerID int              `json:"-"`
