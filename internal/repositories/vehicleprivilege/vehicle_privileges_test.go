@@ -16,7 +16,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
@@ -25,7 +25,7 @@ type VehiclesPrivilegesRepoTestSuite struct {
 	suite.Suite
 	ctx       context.Context
 	pdb       db.Store
-	container testcontainers.Container
+	container *postgres.PostgresContainer
 	repo      *Repository
 	settings  config.Settings
 }
@@ -44,7 +44,7 @@ func (s *VehiclesPrivilegesRepoTestSuite) SetupSuite() {
 
 // TearDownTest after each test truncate tables
 func (s *VehiclesPrivilegesRepoTestSuite) TearDownTest() {
-	helpers.TruncateTables(s.pdb.DBS().Writer.DB, s.T())
+	s.Require().NoError(s.container.Restore(s.ctx))
 }
 
 // TearDownSuite cleanup at end by terminating container
@@ -72,6 +72,7 @@ func (s *VehiclesPrivilegesRepoTestSuite) Test_GetVehiclePrivileges_Success() {
 		Name:     "Toyota",
 		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		MintedAt: time.Now(),
+		Slug:     "toyota",
 	}
 
 	if err := m.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer()); err != nil {
@@ -166,6 +167,7 @@ func (s *VehiclesPrivilegesRepoTestSuite) Test_Privileges_NoExpiredPrivilege_Pag
 		Name:     "Toyota",
 		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		MintedAt: time.Now(),
+		Slug:     "toyota",
 	}
 
 	if err := m.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer()); err != nil {
@@ -278,6 +280,7 @@ func (s *VehiclesPrivilegesRepoTestSuite) Test_Privileges_Pagination_Success() {
 		Name:     "Toyota",
 		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		MintedAt: time.Now(),
+		Slug:     "toyota",
 	}
 
 	if err := m.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer()); err != nil {

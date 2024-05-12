@@ -32,26 +32,41 @@ type EventName string
 var zeroAddress common.Address
 
 const (
-	Transfer                             EventName = "Transfer"
-	VehicleAttributeSet                  EventName = "VehicleAttributeSet"
-	ManufacturerNodeMinted               EventName = "ManufacturerNodeMinted"
-	AftermarketDeviceAttributeSet        EventName = "AftermarketDeviceAttributeSet"
-	PrivilegeSet                         EventName = "PrivilegeSet"
-	AftermarketDeviceClaimed             EventName = "AftermarketDeviceClaimed"
-	AftermarketDevicePaired              EventName = "AftermarketDevicePaired"
-	AftermarketDeviceUnpaired            EventName = "AftermarketDeviceUnpaired"
-	BeneficiarySetEvent                  EventName = "BeneficiarySet"
-	VehicleNodeMinted                    EventName = "VehicleNodeMinted"
-	AftermarketDeviceNodeMinted          EventName = "AftermarketDeviceNodeMinted"
-	SyntheticDeviceNodeMinted            EventName = "SyntheticDeviceNodeMinted"
-	SyntheticDeviceNodeBurned            EventName = "SyntheticDeviceNodeBurned"
-	NewNode                              EventName = "NewNode"
-	NewExpiration                        EventName = "NewExpiration"
-	NameChanged                          EventName = "NameChanged"
-	VehicleIdChanged                     EventName = "VehicleIdChanged"
+	// All NFTs.
+	Transfer            EventName = "Transfer"
+	PrivilegeSet        EventName = "PrivilegeSet"
+	BeneficiarySetEvent EventName = "BeneficiarySet"
+
+	// Manufacturers.
+	ManufacturerNodeMinted       EventName = "ManufacturerNodeMinted"
+	DeviceDefinitionTableCreated EventName = "DeviceDefinitionTableCreated"
+	ManufacturerTableSet         EventName = "ManufacturerTableSet"
+
+	// Aftermarket devices.
+	AftermarketDeviceNodeMinted   EventName = "AftermarketDeviceNodeMinted"
+	AftermarketDeviceAttributeSet EventName = "AftermarketDeviceAttributeSet"
+	AftermarketDeviceClaimed      EventName = "AftermarketDeviceClaimed"
+	AftermarketDevicePaired       EventName = "AftermarketDevicePaired"
+	AftermarketDeviceUnpaired     EventName = "AftermarketDeviceUnpaired"
+	AftermarketDeviceAddressReset EventName = "AftermarketDeviceAddressReset"
+
+	// Vehicles.
+	VehicleNodeMinted   EventName = "VehicleNodeMinted"
+	VehicleAttributeSet EventName = "VehicleAttributeSet"
+
+	// Synthetic devices.
+	SyntheticDeviceNodeMinted EventName = "SyntheticDeviceNodeMinted"
+	SyntheticDeviceNodeBurned EventName = "SyntheticDeviceNodeBurned"
+
+	// DCNs.
+	NewNode          EventName = "NewNode"
+	NewExpiration    EventName = "NewExpiration"
+	NameChanged      EventName = "NameChanged"
+	VehicleIdChanged EventName = "VehicleIdChanged"
+
+	// Rewards.
 	TokensTransferredForDevice           EventName = "TokensTransferredForDevice"
 	TokensTransferredForConnectionStreak EventName = "TokensTransferredForConnectionStreak"
-	AftermarketDeviceAddressReset        EventName = "AftermarketDeviceAddressReset"
 )
 
 func (r EventName) String() string {
@@ -102,6 +117,10 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 		switch eventName {
 		case ManufacturerNodeMinted:
 			return c.handleManufacturerNodeMintedEvent(ctx, &data)
+		case DeviceDefinitionTableCreated:
+			return c.handleDeviceDefinitionTableCreated(ctx, &data)
+		case ManufacturerTableSet:
+			return c.handleManufacturerTableSet(ctx, &data)
 
 		case VehicleNodeMinted:
 			return c.handleVehicleNodeMintedEvent(ctx, &data)
@@ -180,9 +199,40 @@ func (c *ContractsEventsConsumer) handleManufacturerNodeMintedEvent(ctx context.
 		Name:     args.Name,
 		Owner:    args.Owner.Bytes(),
 		MintedAt: e.Block.Time,
+		Slug:     shared.SlugString(args.Name), // Better hope uniqueness is never a problem!
 	}
 
 	return mfr.Upsert(ctx, c.dbs.DBS().Writer, false, []string{models.ManufacturerColumns.ID}, boil.None(), boil.Infer())
+}
+
+func (c *ContractsEventsConsumer) handleDeviceDefinitionTableCreated(ctx context.Context, e *ContractEventData) error {
+	var args DeviceDefinitionTableCreatedData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	mfr := models.Manufacturer{
+		ID:      int(args.ManufacturerId.Int64()),
+		TableID: null.IntFrom(int(args.TableId.Int64())),
+	}
+
+	_, err := mfr.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.ManufacturerColumns.TableID))
+	return err
+}
+
+func (c *ContractsEventsConsumer) handleManufacturerTableSet(ctx context.Context, e *ContractEventData) error {
+	var args ManufacturerTableSetData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	mfr := models.Manufacturer{
+		ID:      int(args.ManufacturerId.Int64()),
+		TableID: null.IntFrom(int(args.TableId.Int64())),
+	}
+
+	_, err := mfr.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.ManufacturerColumns.TableID))
+	return err
 }
 
 func (c *ContractsEventsConsumer) handleVehicleNodeMintedEvent(ctx context.Context, e *ContractEventData) error {

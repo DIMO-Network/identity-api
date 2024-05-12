@@ -18,7 +18,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
@@ -65,7 +65,7 @@ func Test_SyntheticDeviceToAPI(t *testing.T) {
 type SyntheticTestSuite struct {
 	suite.Suite
 	pdb       db.Store
-	container testcontainers.Container
+	container *postgres.PostgresContainer
 	repo      *Repository
 	settings  config.Settings
 
@@ -114,12 +114,14 @@ func (s *SyntheticTestSuite) SetupSuite() {
 		ID:    131,
 		Name:  "Toyota",
 		Owner: vehicle1Owner.Bytes(),
+		Slug:  "toyota",
 	}
 
 	s.honda = models.Manufacturer{
 		ID:    48,
 		Name:  "Honda",
 		Owner: vehicle2Owner.Bytes(),
+		Slug:  "honda",
 	}
 
 	s.vehicle1 = models.Vehicle{
@@ -170,7 +172,7 @@ func (s *SyntheticTestSuite) SetupSuite() {
 
 // TearDownTest after each test truncate tables.
 func (s *SyntheticTestSuite) TearDownTest() {
-	helpers.TruncateTables(s.pdb.DBS().Writer.DB, s.T())
+	s.Require().NoError(s.container.Restore(context.TODO()))
 }
 
 // TearDownSuite cleanup at end by terminating container.

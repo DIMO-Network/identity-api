@@ -201,6 +201,8 @@ type Manufacturer struct {
 	Name string `json:"name"`
 	// The Ethereum address of the owner of this manufacturer.
 	Owner common.Address `json:"owner"`
+	// Id of the Tableland table holding the manufacturer's device definitions.
+	TableID *int `json:"tableId,omitempty"`
 	// The block timestamp at which this manufacturer was minted.
 	MintedAt time.Time `json:"mintedAt"`
 	// A Relay-style connection listing any aftermarket devices associated with manufacturer.
@@ -247,6 +249,10 @@ type PrivilegesConnection struct {
 	Edges      []*PrivilegeEdge `json:"edges"`
 	Nodes      []*Privilege     `json:"nodes"`
 	PageInfo   *PageInfo        `json:"pageInfo"`
+}
+
+// The root query type for the GraphQL schema.
+type Query struct {
 }
 
 // The SyntheticDevice is a software connection established to connect the vehicle to the DIMO network.

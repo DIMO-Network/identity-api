@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -27,6 +28,8 @@ type Manufacturer struct {
 	Name     string    `boil:"name" json:"name" toml:"name" yaml:"name"`
 	Owner    []byte    `boil:"owner" json:"owner" toml:"owner" yaml:"owner"`
 	MintedAt time.Time `boil:"minted_at" json:"minted_at" toml:"minted_at" yaml:"minted_at"`
+	TableID  null.Int  `boil:"table_id" json:"table_id,omitempty" toml:"table_id" yaml:"table_id,omitempty"`
+	Slug     string    `boil:"slug" json:"slug" toml:"slug" yaml:"slug"`
 
 	R *manufacturerR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L manufacturerL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -37,11 +40,15 @@ var ManufacturerColumns = struct {
 	Name     string
 	Owner    string
 	MintedAt string
+	TableID  string
+	Slug     string
 }{
 	ID:       "id",
 	Name:     "name",
 	Owner:    "owner",
 	MintedAt: "minted_at",
+	TableID:  "table_id",
+	Slug:     "slug",
 }
 
 var ManufacturerTableColumns = struct {
@@ -49,11 +56,15 @@ var ManufacturerTableColumns = struct {
 	Name     string
 	Owner    string
 	MintedAt string
+	TableID  string
+	Slug     string
 }{
 	ID:       "manufacturers.id",
 	Name:     "manufacturers.name",
 	Owner:    "manufacturers.owner",
 	MintedAt: "manufacturers.minted_at",
+	TableID:  "manufacturers.table_id",
+	Slug:     "manufacturers.slug",
 }
 
 // Generated where
@@ -90,11 +101,15 @@ var ManufacturerWhere = struct {
 	Name     whereHelperstring
 	Owner    whereHelper__byte
 	MintedAt whereHelpertime_Time
+	TableID  whereHelpernull_Int
+	Slug     whereHelperstring
 }{
 	ID:       whereHelperint{field: "\"identity_api\".\"manufacturers\".\"id\""},
 	Name:     whereHelperstring{field: "\"identity_api\".\"manufacturers\".\"name\""},
 	Owner:    whereHelper__byte{field: "\"identity_api\".\"manufacturers\".\"owner\""},
 	MintedAt: whereHelpertime_Time{field: "\"identity_api\".\"manufacturers\".\"minted_at\""},
+	TableID:  whereHelpernull_Int{field: "\"identity_api\".\"manufacturers\".\"table_id\""},
+	Slug:     whereHelperstring{field: "\"identity_api\".\"manufacturers\".\"slug\""},
 }
 
 // ManufacturerRels is where relationship names are stored.
@@ -135,9 +150,9 @@ func (r *manufacturerR) GetVehicles() VehicleSlice {
 type manufacturerL struct{}
 
 var (
-	manufacturerAllColumns            = []string{"id", "name", "owner", "minted_at"}
-	manufacturerColumnsWithoutDefault = []string{"id", "name", "owner", "minted_at"}
-	manufacturerColumnsWithDefault    = []string{}
+	manufacturerAllColumns            = []string{"id", "name", "owner", "minted_at", "table_id", "slug"}
+	manufacturerColumnsWithoutDefault = []string{"id", "name", "owner", "minted_at", "slug"}
+	manufacturerColumnsWithDefault    = []string{"table_id"}
 	manufacturerPrimaryKeyColumns     = []string{"id"}
 	manufacturerGeneratedColumns      = []string{}
 )

@@ -18,7 +18,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/suite"
-	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -29,7 +29,7 @@ type RewardsRepoTestSuite struct {
 	suite.Suite
 	ctx              context.Context
 	pdb              db.Store
-	container        testcontainers.Container
+	container        *postgres.PostgresContainer
 	repo             *Repository
 	settings         config.Settings
 	paginationHelper helpers.PaginationHelper[RewardsCursor]
@@ -57,7 +57,7 @@ func (r *RewardsRepoTestSuite) SetupSuite() {
 
 // TearDownTest after each test truncate tables
 func (r *RewardsRepoTestSuite) TearDownTest() {
-	helpers.TruncateTables(r.pdb.DBS().Writer.DB, r.T())
+	r.Require().NoError(r.container.Restore(r.ctx))
 }
 
 // TearDownSuite cleanup at end by terminating container
@@ -80,6 +80,7 @@ func (r *RewardsRepoTestSuite) createDependentRecords() {
 		Owner:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		Name:     "Ford",
 		MintedAt: time.Now(),
+		Slug:     "ford",
 	}
 	err := mfr.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
 	r.NoError(err)
@@ -89,6 +90,7 @@ func (r *RewardsRepoTestSuite) createDependentRecords() {
 		Owner:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDff"),
 		Name:     "AutoPi",
 		MintedAt: time.Now(),
+		Slug:     "autopi",
 	}
 	err = mfr2.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
 	r.NoError(err)

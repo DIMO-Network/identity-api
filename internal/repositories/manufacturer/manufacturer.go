@@ -36,6 +36,7 @@ func ToAPI(m *models.Manufacturer) (*gmodel.Manufacturer, error) {
 		ID:       globalID,
 		TokenID:  m.ID,
 		Owner:    common.BytesToAddress(m.Owner),
+		TableID:  m.TableID.Ptr(),
 		MintedAt: m.MintedAt,
 		Name:     m.Name,
 	}, nil

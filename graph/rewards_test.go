@@ -20,7 +20,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/suite"
-	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/types"
@@ -30,7 +30,7 @@ type RewardsQueryTestSuite struct {
 	suite.Suite
 	ctx       context.Context
 	pdb       db.Store
-	container testcontainers.Container
+	container *postgres.PostgresContainer
 	settings  config.Settings
 	resolver  *Resolver
 	repo      *base.Repository
@@ -51,7 +51,7 @@ func (r *RewardsQueryTestSuite) SetupSuite() {
 
 // TearDownTest after each test truncate tables
 func (r *RewardsQueryTestSuite) TearDownTest() {
-	test.TruncateTables(r.pdb.DBS().Writer.DB, r.T())
+	r.Require().NoError(r.container.Restore(r.ctx))
 }
 
 // TearDownSuite cleanup at end by terminating container
@@ -74,6 +74,7 @@ func (r *RewardsQueryTestSuite) createDependencies() {
 		Owner:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		Name:     "Ford",
 		MintedAt: time.Now(),
+		Slug:     "ford",
 	}
 
 	var mfr2 = models.Manufacturer{
@@ -81,6 +82,7 @@ func (r *RewardsQueryTestSuite) createDependencies() {
 		Owner:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDff"),
 		Name:     "AutoPi",
 		MintedAt: time.Now(),
+		Slug:     "autopi",
 	}
 
 	var vehicle = models.Vehicle{

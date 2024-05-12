@@ -16,7 +16,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
@@ -25,7 +25,7 @@ type DCNConsumerTestSuite struct {
 	suite.Suite
 	ctx       context.Context
 	pdb       db.Store
-	container testcontainers.Container
+	container *postgres.PostgresContainer
 	settings  config.Settings
 	logger    zerolog.Logger
 }
@@ -45,7 +45,8 @@ func (o *DCNConsumerTestSuite) SetupSuite() {
 
 // TearDownTest after each test truncate tables
 func (s *DCNConsumerTestSuite) TearDownTest() {
-	test.TruncateTables(s.pdb.DBS().Writer.DB, s.T())
+	err := s.container.Restore(s.ctx)
+	s.Require().NoError(err)
 }
 
 // TearDownSuite cleanup at end by terminating container
@@ -180,6 +181,7 @@ func (o *DCNConsumerTestSuite) Test_DCN_VehicleIDChanged_Consume_Success() {
 		Name:     "Toyota",
 		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		MintedAt: time.Now(),
+		Slug:     "toyota",
 	}
 
 	if err := m.Insert(context.Background(), o.pdb.DBS().Writer, boil.Infer()); err != nil {

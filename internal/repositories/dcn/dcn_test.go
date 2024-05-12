@@ -17,7 +17,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
@@ -26,7 +26,7 @@ type DCNRepoTestSuite struct {
 	suite.Suite
 	ctx       context.Context
 	pdb       db.Store
-	container testcontainers.Container
+	container *postgres.PostgresContainer
 	repo      *Repository
 	settings  config.Settings
 }
@@ -45,7 +45,7 @@ func (o *DCNRepoTestSuite) SetupSuite() {
 
 // TearDownTest after each test truncate tables
 func (s *DCNRepoTestSuite) TearDownTest() {
-	test.TruncateTables(s.pdb.DBS().Writer.DB, s.T())
+	s.Require().NoError(s.container.Restore(s.ctx))
 }
 
 // TearDownSuite cleanup at end by terminating container
@@ -84,6 +84,7 @@ func (o *DCNRepoTestSuite) Test_GetDCNByNode_Success() {
 		Owner:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		Name:     "Ford",
 		MintedAt: time.Now(),
+		Slug:     "ford",
 	}
 	err = mfr.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer())
 	o.NoError(err)
@@ -131,6 +132,7 @@ func (o *DCNRepoTestSuite) Test_GetDCNByName_Success() {
 		Owner:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		Name:     "Ford",
 		MintedAt: time.Now(),
+		Slug:     "ford",
 	}
 	err = mfr.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer())
 	o.NoError(err)
@@ -199,6 +201,7 @@ func (o *DCNRepoTestSuite) Test_GetDCNs() {
 		Name:     "Toyota",
 		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		MintedAt: time.Now(),
+		Slug:     "toyota",
 	}
 
 	if err := m.Insert(context.Background(), o.pdb.DBS().Writer, boil.Infer()); err != nil {
