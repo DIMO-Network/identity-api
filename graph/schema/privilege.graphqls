@@ -1,13 +1,16 @@
 # Privileges Types
 
 type Privilege {
+  """
+  The id of the privilege.
+  """
   id: Int!
   """
   The user holding the privilege.
   """
   user: Address!
   """
-  When this privilege was last set for this user.
+  The block timestamp at which this privilege was last set.
   """
   setAt: Time!
   """
@@ -33,4 +36,5 @@ type PrivilegesConnection {
 
 input PrivilegeFilterBy {
   user: Address
+  privilegeId: Int
 }

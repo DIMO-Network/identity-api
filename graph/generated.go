@@ -10600,7 +10600,7 @@ func (ec *executionContext) unmarshalInputPrivilegeFilterBy(ctx context.Context,
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"user"}
+	fieldsInOrder := [...]string{"user", "privilegeId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -10614,6 +10614,13 @@ func (ec *executionContext) unmarshalInputPrivilegeFilterBy(ctx context.Context,
 				return it, err
 			}
 			it.User = data
+		case "privilegeId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("privilegeId"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PrivilegeID = data
 		}
 	}
 
