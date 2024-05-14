@@ -291,10 +291,11 @@ type PageInfo struct {
 }
 
 type Privilege struct {
+	// The id of the privilege.
 	ID int `json:"id"`
 	// The user holding the privilege.
 	User common.Address `json:"user"`
-	// When this privilege was last set for this user.
+	// The block timestamp at which this privilege was last set.
 	SetAt time.Time `json:"setAt"`
 	// The block timestamp at which the privilege expires.
 	ExpiresAt time.Time `json:"expiresAt"`
@@ -306,7 +307,8 @@ type PrivilegeEdge struct {
 }
 
 type PrivilegeFilterBy struct {
-	User *common.Address `json:"user,omitempty"`
+	User        *common.Address `json:"user,omitempty"`
+	PrivilegeID *int            `json:"privilegeId,omitempty"`
 }
 
 // The Connection type for Privileges.

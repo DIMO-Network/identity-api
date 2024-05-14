@@ -98,8 +98,13 @@ func (p *Repository) GetPrivilegesForVehicle(ctx context.Context, tokenID int, f
 		models.PrivilegeWhere.ExpiresAt.GTE(time.Now()),
 	}
 
-	if filterBy != nil && filterBy.User != nil {
-		queryMods = append(queryMods, models.PrivilegeWhere.UserAddress.EQ(filterBy.User.Bytes()))
+	if filterBy != nil {
+		if filterBy.User != nil {
+			queryMods = append(queryMods, models.PrivilegeWhere.UserAddress.EQ(filterBy.User.Bytes()))
+		}
+		if filterBy.PrivilegeID != nil {
+			queryMods = append(queryMods, models.PrivilegeWhere.PrivilegeID.EQ(*filterBy.PrivilegeID))
+		}
 	}
 
 	totalCount, err := models.Privileges(queryMods...).Count(ctx, p.PDB.DBS().Reader)
