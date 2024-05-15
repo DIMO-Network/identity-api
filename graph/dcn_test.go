@@ -67,7 +67,6 @@ func TestDCNQuery(t *testing.T) {
 		Make:           null.StringFrom("Toyota"),
 		Model:          null.StringFrom("Corolla"),
 		Year:           null.IntFrom(2000),
-		DefinitionURI:  null.StringFrom("mockUri"),
 	}
 	err = veh.Insert(ctx, pdb.DBS().Writer.DB, boil.Infer())
 	assert.NoError(err)
