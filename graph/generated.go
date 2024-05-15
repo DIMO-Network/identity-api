@@ -233,7 +233,7 @@ type ComplexityRoot struct {
 		Definition        func(childComplexity int) int
 		Earnings          func(childComplexity int) int
 		ID                func(childComplexity int) int
-		Image             func(childComplexity int) int
+		ImageURI          func(childComplexity int) int
 		Manufacturer      func(childComplexity int) int
 		MintedAt          func(childComplexity int) int
 		Name              func(childComplexity int) int
@@ -1167,12 +1167,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Vehicle.ID(childComplexity), true
 
-	case "Vehicle.image":
-		if e.complexity.Vehicle.Image == nil {
+	case "Vehicle.imageUri":
+		if e.complexity.Vehicle.ImageURI == nil {
 			break
 		}
 
-		return e.complexity.Vehicle.Image(childComplexity), true
+		return e.complexity.Vehicle.ImageURI(childComplexity), true
 
 	case "Vehicle.manufacturer":
 		if e.complexity.Vehicle.Manufacturer == nil {
@@ -2506,8 +2506,8 @@ func (ec *executionContext) fieldContext_AftermarketDevice_vehicle(_ context.Con
 				return ec.fieldContext_Vehicle_dcn(ctx, field)
 			case "name":
 				return ec.fieldContext_Vehicle_name(ctx, field)
-			case "image":
-				return ec.fieldContext_Vehicle_image(ctx, field)
+			case "imageUri":
+				return ec.fieldContext_Vehicle_imageUri(ctx, field)
 			case "earnings":
 				return ec.fieldContext_Vehicle_earnings(ctx, field)
 			case "dataUri":
@@ -3511,8 +3511,8 @@ func (ec *executionContext) fieldContext_DCN_vehicle(_ context.Context, field gr
 				return ec.fieldContext_Vehicle_dcn(ctx, field)
 			case "name":
 				return ec.fieldContext_Vehicle_name(ctx, field)
-			case "image":
-				return ec.fieldContext_Vehicle_image(ctx, field)
+			case "imageUri":
+				return ec.fieldContext_Vehicle_imageUri(ctx, field)
 			case "earnings":
 				return ec.fieldContext_Vehicle_earnings(ctx, field)
 			case "dataUri":
@@ -4451,8 +4451,8 @@ func (ec *executionContext) fieldContext_Earning_vehicle(_ context.Context, fiel
 				return ec.fieldContext_Vehicle_dcn(ctx, field)
 			case "name":
 				return ec.fieldContext_Vehicle_name(ctx, field)
-			case "image":
-				return ec.fieldContext_Vehicle_image(ctx, field)
+			case "imageUri":
+				return ec.fieldContext_Vehicle_imageUri(ctx, field)
 			case "earnings":
 				return ec.fieldContext_Vehicle_earnings(ctx, field)
 			case "dataUri":
@@ -6470,8 +6470,8 @@ func (ec *executionContext) fieldContext_Query_vehicle(ctx context.Context, fiel
 				return ec.fieldContext_Vehicle_dcn(ctx, field)
 			case "name":
 				return ec.fieldContext_Vehicle_name(ctx, field)
-			case "image":
-				return ec.fieldContext_Vehicle_image(ctx, field)
+			case "imageUri":
+				return ec.fieldContext_Vehicle_imageUri(ctx, field)
 			case "earnings":
 				return ec.fieldContext_Vehicle_earnings(ctx, field)
 			case "dataUri":
@@ -7952,8 +7952,8 @@ func (ec *executionContext) fieldContext_Vehicle_name(_ context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _Vehicle_image(ctx context.Context, field graphql.CollectedField, obj *model.Vehicle) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Vehicle_image(ctx, field)
+func (ec *executionContext) _Vehicle_imageUri(ctx context.Context, field graphql.CollectedField, obj *model.Vehicle) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Vehicle_imageUri(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -7966,7 +7966,7 @@ func (ec *executionContext) _Vehicle_image(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Image, nil
+		return obj.ImageURI, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7983,7 +7983,7 @@ func (ec *executionContext) _Vehicle_image(ctx context.Context, field graphql.Co
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Vehicle_image(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Vehicle_imageUri(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Vehicle",
 		Field:      field,
@@ -8242,8 +8242,8 @@ func (ec *executionContext) fieldContext_VehicleConnection_nodes(_ context.Conte
 				return ec.fieldContext_Vehicle_dcn(ctx, field)
 			case "name":
 				return ec.fieldContext_Vehicle_name(ctx, field)
-			case "image":
-				return ec.fieldContext_Vehicle_image(ctx, field)
+			case "imageUri":
+				return ec.fieldContext_Vehicle_imageUri(ctx, field)
 			case "earnings":
 				return ec.fieldContext_Vehicle_earnings(ctx, field)
 			case "dataUri":
@@ -8479,8 +8479,8 @@ func (ec *executionContext) fieldContext_VehicleEdge_node(_ context.Context, fie
 				return ec.fieldContext_Vehicle_dcn(ctx, field)
 			case "name":
 				return ec.fieldContext_Vehicle_name(ctx, field)
-			case "image":
-				return ec.fieldContext_Vehicle_image(ctx, field)
+			case "imageUri":
+				return ec.fieldContext_Vehicle_imageUri(ctx, field)
 			case "earnings":
 				return ec.fieldContext_Vehicle_earnings(ctx, field)
 			case "dataUri":
@@ -12719,8 +12719,8 @@ func (ec *executionContext) _Vehicle(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "image":
-			out.Values[i] = ec._Vehicle_image(ctx, field, obj)
+		case "imageUri":
+			out.Values[i] = ec._Vehicle_imageUri(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
