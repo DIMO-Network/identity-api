@@ -2,6 +2,7 @@ package vehicle
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"net/url"
 	"strconv"
@@ -174,6 +175,9 @@ func (r *Repository) GetVehicles(ctx context.Context, first *int, after *string,
 func (r *Repository) GetVehicle(ctx context.Context, id int) (*gmodel.Vehicle, error) {
 	v, err := models.FindVehicle(ctx, r.PDB.DBS().Reader, id)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("no vehicle with token id %d", id)
+		}
 		return nil, err
 	}
 	imageURL, err := GetVehicleImageURL(r.Settings.BaseImageURL, v.ID)
