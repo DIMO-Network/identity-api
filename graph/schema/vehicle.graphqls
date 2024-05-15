@@ -124,7 +124,7 @@ type Vehicle implements Node {
   """
   name: String!
   """
-  The Image Url of he vehicle
+  A URI containing an image for the vehicle.
   """
   imageUri: String!
 
