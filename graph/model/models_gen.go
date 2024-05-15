@@ -148,7 +148,7 @@ type DCNFilter struct {
 }
 
 type Definition struct {
-	URI   *string `json:"uri,omitempty"`
+	ID    *string `json:"id,omitempty"`
 	Make  *string `json:"make,omitempty"`
 	Model *string `json:"model,omitempty"`
 	Year  *int    `json:"year,omitempty"`

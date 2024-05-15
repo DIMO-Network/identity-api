@@ -271,7 +271,7 @@ func ToAPI(v *models.Vehicle, imageURI string, dataURI string) (*gmodel.Vehicle,
 		Owner:    common.BytesToAddress(v.OwnerAddress),
 		MintedAt: v.MintedAt,
 		Definition: &gmodel.Definition{
-			URI:   v.DefinitionURI.Ptr(),
+			ID:    v.DeviceDefinitionID.Ptr(),
 			Make:  v.Make.Ptr(),
 			Model: v.Model.Ptr(),
 			Year:  v.Year.Ptr(),

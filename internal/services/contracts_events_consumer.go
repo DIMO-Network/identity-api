@@ -355,31 +355,6 @@ func (c *ContractsEventsConsumer) handleVehicleAttributeSetEvent(ctx context.Con
 		veh.ImageURI = null.StringFrom(args.Info)
 		_, err = veh.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.VehicleColumns.ImageURI))
 		return err
-	case "DefinitionURI":
-		res, err := c.httpClient.Get(args.Info)
-		if err != nil {
-			return err
-		}
-		defer res.Body.Close()
-
-		if res.StatusCode != http.StatusOK {
-			return fmt.Errorf("device definition URI returned status code %d", res.StatusCode)
-		}
-
-		var ddf DeviceDefinition
-		if err := json.NewDecoder(res.Body).Decode(&ddf); err != nil {
-			return fmt.Errorf("couldn't parse device definition response: %w", err)
-		}
-
-		veh.Make = null.StringFrom(ddf.Type.Make)
-		veh.Model = null.StringFrom(ddf.Type.Model)
-		veh.Year = null.IntFrom(ddf.Type.Year)
-		veh.DefinitionURI = null.StringFrom(args.Info)
-
-		cols := models.VehicleColumns
-		_, err = veh.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(cols.DefinitionURI, cols.Make, cols.Model, cols.Year))
-
-		return err
 	default:
 		return fmt.Errorf("unrecognized vehicle attribute %q", args.Attribute)
 	}

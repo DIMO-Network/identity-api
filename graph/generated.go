@@ -119,9 +119,9 @@ type ComplexityRoot struct {
 	}
 
 	Definition struct {
+		ID    func(childComplexity int) int
 		Make  func(childComplexity int) int
 		Model func(childComplexity int) int
-		URI   func(childComplexity int) int
 		Year  func(childComplexity int) int
 	}
 
@@ -599,6 +599,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.DCNEdge.Node(childComplexity), true
 
+	case "Definition.id":
+		if e.complexity.Definition.ID == nil {
+			break
+		}
+
+		return e.complexity.Definition.ID(childComplexity), true
+
 	case "Definition.make":
 		if e.complexity.Definition.Make == nil {
 			break
@@ -612,13 +619,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Definition.Model(childComplexity), true
-
-	case "Definition.uri":
-		if e.complexity.Definition.URI == nil {
-			break
-		}
-
-		return e.complexity.Definition.URI(childComplexity), true
 
 	case "Definition.year":
 		if e.complexity.Definition.Year == nil {
@@ -3852,8 +3852,8 @@ func (ec *executionContext) fieldContext_DCNEdge_node(_ context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _Definition_uri(ctx context.Context, field graphql.CollectedField, obj *model.Definition) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Definition_uri(ctx, field)
+func (ec *executionContext) _Definition_id(ctx context.Context, field graphql.CollectedField, obj *model.Definition) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Definition_id(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -3866,7 +3866,7 @@ func (ec *executionContext) _Definition_uri(ctx context.Context, field graphql.C
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.URI, nil
+		return obj.ID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3880,7 +3880,7 @@ func (ec *executionContext) _Definition_uri(ctx context.Context, field graphql.C
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Definition_uri(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Definition_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Definition",
 		Field:      field,
@@ -7850,8 +7850,8 @@ func (ec *executionContext) fieldContext_Vehicle_definition(_ context.Context, f
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "uri":
-				return ec.fieldContext_Definition_uri(ctx, field)
+			case "id":
+				return ec.fieldContext_Definition_id(ctx, field)
 			case "make":
 				return ec.fieldContext_Definition_make(ctx, field)
 			case "model":
@@ -11460,8 +11460,8 @@ func (ec *executionContext) _Definition(ctx context.Context, sel ast.SelectionSe
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Definition")
-		case "uri":
-			out.Values[i] = ec._Definition_uri(ctx, field, obj)
+		case "id":
+			out.Values[i] = ec._Definition_id(ctx, field, obj)
 		case "make":
 			out.Values[i] = ec._Definition_make(ctx, field, obj)
 		case "model":

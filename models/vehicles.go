@@ -30,7 +30,6 @@ type Vehicle struct {
 	Model              null.String `boil:"model" json:"model,omitempty" toml:"model" yaml:"model,omitempty"`
 	Year               null.Int    `boil:"year" json:"year,omitempty" toml:"year" yaml:"year,omitempty"`
 	MintedAt           time.Time   `boil:"minted_at" json:"minted_at" toml:"minted_at" yaml:"minted_at"`
-	DefinitionURI      null.String `boil:"definition_uri" json:"definition_uri,omitempty" toml:"definition_uri" yaml:"definition_uri,omitempty"`
 	ManufacturerID     int         `boil:"manufacturer_id" json:"manufacturer_id" toml:"manufacturer_id" yaml:"manufacturer_id"`
 	ImageURI           null.String `boil:"image_uri" json:"image_uri,omitempty" toml:"image_uri" yaml:"image_uri,omitempty"`
 	DeviceDefinitionID null.String `boil:"device_definition_id" json:"device_definition_id,omitempty" toml:"device_definition_id" yaml:"device_definition_id,omitempty"`
@@ -46,7 +45,6 @@ var VehicleColumns = struct {
 	Model              string
 	Year               string
 	MintedAt           string
-	DefinitionURI      string
 	ManufacturerID     string
 	ImageURI           string
 	DeviceDefinitionID string
@@ -57,7 +55,6 @@ var VehicleColumns = struct {
 	Model:              "model",
 	Year:               "year",
 	MintedAt:           "minted_at",
-	DefinitionURI:      "definition_uri",
 	ManufacturerID:     "manufacturer_id",
 	ImageURI:           "image_uri",
 	DeviceDefinitionID: "device_definition_id",
@@ -70,7 +67,6 @@ var VehicleTableColumns = struct {
 	Model              string
 	Year               string
 	MintedAt           string
-	DefinitionURI      string
 	ManufacturerID     string
 	ImageURI           string
 	DeviceDefinitionID string
@@ -81,7 +77,6 @@ var VehicleTableColumns = struct {
 	Model:              "vehicles.model",
 	Year:               "vehicles.year",
 	MintedAt:           "vehicles.minted_at",
-	DefinitionURI:      "vehicles.definition_uri",
 	ManufacturerID:     "vehicles.manufacturer_id",
 	ImageURI:           "vehicles.image_uri",
 	DeviceDefinitionID: "vehicles.device_definition_id",
@@ -96,7 +91,6 @@ var VehicleWhere = struct {
 	Model              whereHelpernull_String
 	Year               whereHelpernull_Int
 	MintedAt           whereHelpertime_Time
-	DefinitionURI      whereHelpernull_String
 	ManufacturerID     whereHelperint
 	ImageURI           whereHelpernull_String
 	DeviceDefinitionID whereHelpernull_String
@@ -107,7 +101,6 @@ var VehicleWhere = struct {
 	Model:              whereHelpernull_String{field: "\"identity_api\".\"vehicles\".\"model\""},
 	Year:               whereHelpernull_Int{field: "\"identity_api\".\"vehicles\".\"year\""},
 	MintedAt:           whereHelpertime_Time{field: "\"identity_api\".\"vehicles\".\"minted_at\""},
-	DefinitionURI:      whereHelpernull_String{field: "\"identity_api\".\"vehicles\".\"definition_uri\""},
 	ManufacturerID:     whereHelperint{field: "\"identity_api\".\"vehicles\".\"manufacturer_id\""},
 	ImageURI:           whereHelpernull_String{field: "\"identity_api\".\"vehicles\".\"image_uri\""},
 	DeviceDefinitionID: whereHelpernull_String{field: "\"identity_api\".\"vehicles\".\"device_definition_id\""},
@@ -191,9 +184,9 @@ func (r *vehicleR) GetSyntheticDevices() SyntheticDeviceSlice {
 type vehicleL struct{}
 
 var (
-	vehicleAllColumns            = []string{"id", "owner_address", "make", "model", "year", "minted_at", "definition_uri", "manufacturer_id", "image_uri", "device_definition_id"}
+	vehicleAllColumns            = []string{"id", "owner_address", "make", "model", "year", "minted_at", "manufacturer_id", "image_uri", "device_definition_id"}
 	vehicleColumnsWithoutDefault = []string{"id", "owner_address", "minted_at", "manufacturer_id"}
-	vehicleColumnsWithDefault    = []string{"make", "model", "year", "definition_uri", "image_uri", "device_definition_id"}
+	vehicleColumnsWithDefault    = []string{"make", "model", "year", "image_uri", "device_definition_id"}
 	vehiclePrimaryKeyColumns     = []string{"id"}
 	vehicleGeneratedColumns      = []string{}
 )
