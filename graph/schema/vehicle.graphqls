@@ -127,6 +127,7 @@ type Vehicle implements Node {
   A URI containing an image for the vehicle.
   """
   imageUri: String!
+  image: String! @deprecated(reason: "Use `imageUri` instead.")
 
   earnings: VehicleEarnings
 
