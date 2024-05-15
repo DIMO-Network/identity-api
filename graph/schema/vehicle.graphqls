@@ -135,7 +135,7 @@ type Vehicle implements Node {
 }
 
 type Definition {
-  uri: String
+  id: String
   make: String
   model: String
   year: Int

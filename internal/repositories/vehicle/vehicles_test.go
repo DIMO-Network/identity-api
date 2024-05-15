@@ -90,11 +90,6 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Success() {
 	_, wallet2, err := test.GenerateWallet()
 	o.NoError(err)
 
-	ddfURL := []string{
-		"http://some-url.com",
-		"http://some-url-2.com",
-	}
-
 	m := models.Manufacturer{
 		ID:       131,
 		Name:     "Toyota",
@@ -117,7 +112,6 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Success() {
 			Model:          camry,
 			Year:           year2020,
 			MintedAt:       currTime,
-			DefinitionURI:  null.StringFrom(ddfURL[0]),
 		},
 		{
 			ID:             2,
@@ -127,7 +121,6 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Success() {
 			Model:          camry,
 			Year:           year2022,
 			MintedAt:       currTime,
-			DefinitionURI:  null.StringFrom(ddfURL[1]),
 		},
 	}
 
@@ -169,7 +162,6 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Success() {
 				Owner:          common.BytesToAddress(wallet.Bytes()),
 				MintedAt:       vehicles[1].MintedAt,
 				Definition: &gmodel.Definition{
-					URI:   &ddfURL[1],
 					Make:  &vehicles[1].Make.String,
 					Model: &vehicles[1].Model.String,
 					Year:  &vehicles[1].Year.Int,
@@ -188,7 +180,6 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Success() {
 				Owner:          common.BytesToAddress(wallet.Bytes()),
 				MintedAt:       vehicles[0].MintedAt,
 				Definition: &gmodel.Definition{
-					URI:   &ddfURL[0],
 					Make:  &vehicles[0].Make.String,
 					Model: &vehicles[0].Model.String,
 					Year:  &vehicles[0].Year.Int,
@@ -212,11 +203,6 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination(
 	_, wallet, err := test.GenerateWallet()
 	o.NoError(err)
 
-	ddfURL := []string{
-		"http://some-url.com",
-		"http://some-url-2.com",
-	}
-
 	m := models.Manufacturer{
 		ID:       131,
 		Name:     "Toyota",
@@ -239,7 +225,6 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination(
 			Model:          camry,
 			Year:           year2020,
 			MintedAt:       currTime,
-			DefinitionURI:  null.StringFrom(ddfURL[0]),
 		},
 		{
 			ID:             2,
@@ -249,7 +234,6 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination(
 			Model:          camry,
 			Year:           year2022,
 			MintedAt:       currTime,
-			DefinitionURI:  null.StringFrom(ddfURL[1]),
 		},
 	}
 
@@ -275,7 +259,6 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination(
 				Owner:          common.BytesToAddress(wallet.Bytes()),
 				MintedAt:       vehicles[1].MintedAt,
 				Definition: &gmodel.Definition{
-					URI:   &ddfURL[1],
 					Make:  &vehicles[1].Make.String,
 					Model: &vehicles[1].Model.String,
 					Year:  &vehicles[1].Year.Int,
@@ -299,11 +282,6 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 	_, wallet, err := test.GenerateWallet()
 	o.NoError(err)
 
-	ddfURL := []string{
-		"http://some-url.com",
-		"http://some-url-2.com",
-	}
-
 	m := models.Manufacturer{
 		ID:       131,
 		Name:     "Toyota",
@@ -326,7 +304,6 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 			Model:          camry,
 			Year:           year2020,
 			MintedAt:       currTime,
-			DefinitionURI:  null.StringFrom(ddfURL[0]),
 		},
 		{
 			ID:             2,
@@ -336,7 +313,6 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 			Model:          camry,
 			Year:           year2022,
 			MintedAt:       currTime,
-			DefinitionURI:  null.StringFrom(ddfURL[1]),
 		},
 	}
 
@@ -363,7 +339,6 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 				Owner:          common.BytesToAddress(wallet.Bytes()),
 				MintedAt:       vehicles[0].MintedAt,
 				Definition: &gmodel.Definition{
-					URI:   &ddfURL[0],
 					Make:  &vehicles[0].Make.String,
 					Model: &vehicles[0].Model.String,
 					Year:  &vehicles[0].Year.Int,
@@ -390,11 +365,6 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_OwnedByUser
 	_, wallet2, err := test.GenerateWallet()
 	o.NoError(err)
 
-	ddfURL := []string{
-		"http://some-url.com",
-		"http://some-url-2.com",
-	}
-
 	m := models.Manufacturer{
 		ID:       131,
 		Name:     "Toyota",
@@ -417,7 +387,6 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_OwnedByUser
 			Model:          camry,
 			Year:           year2020,
 			MintedAt:       currTime,
-			DefinitionURI:  null.StringFrom(ddfURL[0]),
 		},
 		{
 			ID:             2,
@@ -427,7 +396,6 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_OwnedByUser
 			Model:          camry,
 			Year:           year2022,
 			MintedAt:       currTime,
-			DefinitionURI:  null.StringFrom(ddfURL[1]),
 		},
 	}
 
@@ -469,7 +437,6 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_OwnedByUser
 				ManufacturerID: 131,
 				MintedAt:       vehicles[1].MintedAt,
 				Definition: &gmodel.Definition{
-					URI:   &ddfURL[1],
 					Make:  &vehicles[1].Make.String,
 					Model: &vehicles[1].Model.String,
 					Year:  &vehicles[1].Year.Int,
@@ -488,7 +455,6 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_OwnedByUser
 				Owner:          common.BytesToAddress(wallet.Bytes()),
 				MintedAt:       vehicles[0].MintedAt,
 				Definition: &gmodel.Definition{
-					URI:   &ddfURL[0],
 					Make:  &vehicles[0].Make.String,
 					Model: &vehicles[0].Model.String,
 					Year:  &vehicles[0].Year.Int,
@@ -515,11 +481,6 @@ func (o *AccessibleVehiclesRepoTestSuite) TestVehiclesMultiplePrivsOnOne() {
 	_, wallet2, err := test.GenerateWallet()
 	o.NoError(err)
 
-	ddfURL := []string{
-		"http://some-url.com",
-		"http://some-url-2.com",
-	}
-
 	m := models.Manufacturer{
 		ID:       131,
 		Name:     "Toyota",
@@ -541,7 +502,6 @@ func (o *AccessibleVehiclesRepoTestSuite) TestVehiclesMultiplePrivsOnOne() {
 			Model:          camry,
 			Year:           year2020,
 			MintedAt:       currTime,
-			DefinitionURI:  null.StringFrom(ddfURL[0]),
 		},
 		{
 			ID:             2,
@@ -551,7 +511,6 @@ func (o *AccessibleVehiclesRepoTestSuite) TestVehiclesMultiplePrivsOnOne() {
 			Model:          camry,
 			Year:           year2022,
 			MintedAt:       currTime,
-			DefinitionURI:  null.StringFrom(ddfURL[1]),
 		},
 	}
 
@@ -600,7 +559,6 @@ func (o *AccessibleVehiclesRepoTestSuite) TestVehiclesMultiplePrivsOnOne() {
 				Owner:          common.BytesToAddress(wallet2.Bytes()),
 				MintedAt:       vehicles[1].MintedAt,
 				Definition: &gmodel.Definition{
-					URI:   &ddfURL[1],
 					Make:  &vehicles[1].Make.String,
 					Model: &vehicles[1].Model.String,
 					Year:  &vehicles[1].Year.Int,
@@ -619,7 +577,6 @@ func (o *AccessibleVehiclesRepoTestSuite) TestVehiclesMultiplePrivsOnOne() {
 				Owner:          common.BytesToAddress(wallet.Bytes()),
 				MintedAt:       vehicles[0].MintedAt,
 				Definition: &gmodel.Definition{
-					URI:   &ddfURL[0],
 					Make:  &vehicles[0].Make.String,
 					Model: &vehicles[0].Model.String,
 					Year:  &vehicles[0].Year.Int,
@@ -727,7 +684,6 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 				Privileges:        nil,
 				SyntheticDevice:   nil,
 				Definition: &gmodel.Definition{
-					URI:   nil,
 					Make:  &vehicles[2].Make.String,
 					Model: &vehicles[2].Model.String,
 					Year:  &vehicles[2].Year.Int,
@@ -749,7 +705,6 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 				Privileges:        nil,
 				SyntheticDevice:   nil,
 				Definition: &gmodel.Definition{
-					URI:   nil,
 					Make:  &vehicles[1].Make.String,
 					Model: &vehicles[1].Model.String,
 					Year:  &vehicles[1].Year.Int,
@@ -862,7 +817,6 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 				Privileges:        nil,
 				SyntheticDevice:   nil,
 				Definition: &gmodel.Definition{
-					URI:   nil,
 					Make:  &vehicles[1].Make.String,
 					Model: &vehicles[1].Model.String,
 					Year:  &vehicles[1].Year.Int,
@@ -966,7 +920,6 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 				Owner:          common.BytesToAddress(wallet.Bytes()),
 				MintedAt:       vehicles[1].MintedAt,
 				Definition: &gmodel.Definition{
-					URI:   nil,
 					Make:  &vehicles[1].Make.String,
 					Model: &vehicles[1].Model.String,
 					Year:  &vehicles[1].Year.Int,
@@ -985,7 +938,6 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 				MintedAt:       vehicles[0].MintedAt,
 				ManufacturerID: 131,
 				Definition: &gmodel.Definition{
-					URI:   nil,
 					Make:  &vehicles[0].Make.String,
 					Model: &vehicles[0].Model.String,
 					Year:  &vehicles[0].Year.Int,
@@ -1092,7 +1044,6 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 				Privileges:        nil,
 				SyntheticDevice:   nil,
 				Definition: &gmodel.Definition{
-					URI:   nil,
 					Make:  &vehicles[3].Make.String,
 					Model: &vehicles[3].Model.String,
 					Year:  &vehicles[3].Year.Int,
@@ -1114,7 +1065,6 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 				Privileges:        nil,
 				SyntheticDevice:   nil,
 				Definition: &gmodel.Definition{
-					URI:   nil,
 					Make:  &vehicles[2].Make.String,
 					Model: &vehicles[2].Model.String,
 					Year:  &vehicles[2].Year.Int,
