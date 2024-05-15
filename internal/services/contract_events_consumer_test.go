@@ -2,9 +2,7 @@ package services
 
 import (
 	"context"
-	"fmt"
 	"math/big"
-	"net/http"
 	"os"
 	"testing"
 	"time"
@@ -16,7 +14,6 @@ import (
 	"github.com/ericlagergren/decimal"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/goccy/go-json"
-	"github.com/jarcoal/httpmock"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -679,93 +676,6 @@ func TestHandle_SyntheticDeviceNodeBurnedEvent_Success(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Empty(t, sds)
-}
-
-func TestHandle_DefinitionURIAttribute_Event_Success(t *testing.T) {
-	ctx := context.Background()
-	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
-	contractEventData.EventName = string(VehicleAttributeSet)
-	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
-
-	_, wallet, err := helpers.GenerateWallet()
-	assert.NoError(t, err)
-
-	_, wallet2, err := helpers.GenerateWallet()
-	assert.NoError(t, err)
-
-	currTime := time.Now().UTC().Truncate(time.Second)
-
-	m := models.Manufacturer{
-		ID:       131,
-		Name:     "Toyota",
-		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
-		MintedAt: time.Now(),
-		Slug:     "toyota",
-	}
-
-	if err := m.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
-		assert.NoError(t, err)
-	}
-
-	v := models.Vehicle{
-		ID:             1,
-		ManufacturerID: 131,
-		OwnerAddress:   wallet.Bytes(),
-		Make:           null.StringFrom("Toyota"),
-		Model:          null.StringFrom("Camry"),
-		Year:           null.IntFrom(2020),
-		MintedAt:       currTime,
-	}
-
-	if err := v.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
-		assert.NoError(t, err)
-	}
-
-	sd := models.SyntheticDevice{
-		ID:            1,
-		IntegrationID: 2,
-		VehicleID:     1,
-		DeviceAddress: wallet2.Bytes(),
-		MintedAt:      currTime,
-	}
-
-	err = sd.Insert(ctx, pdb.DBS().Writer.DB, boil.Infer())
-	assert.NoError(t, err)
-
-	mockDefURI := "http://someurl.com/someid"
-	// http client mock
-	httpmock.Activate()
-	defer httpmock.DeactivateAndReset()
-	respJSON := fmt.Sprintf(`{ "type": { "make":"%s", "model":"%s", "year":%d }}`, "Toyota", "Camry", 2020)
-
-	httpmock.RegisterResponder(http.MethodGet, mockDefURI, httpmock.NewStringResponder(200, respJSON))
-
-	tkID := big.NewInt(1)
-	eventData := VehicleAttributeSetData{
-		TokenID:   tkID,
-		Attribute: "DefinitionURI",
-		Info:      mockDefURI,
-	}
-	settings := config.Settings{
-		DIMORegistryAddr:    contractEventData.Contract.String(),
-		DIMORegistryChainID: contractEventData.ChainID,
-	}
-
-	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
-	e := prepareEvent(t, contractEventData, eventData)
-
-	err = contractEventConsumer.Process(ctx, &e)
-	assert.NoError(t, err)
-
-	vhs, err := models.Vehicles(
-		models.VehicleWhere.ID.EQ(int(tkID.Int64())),
-	).All(ctx, pdb.DBS().Reader)
-	assert.NoError(t, err)
-
-	assert.Len(t, vhs, 1)
-	assert.Equal(t, "Toyota", *vhs[0].Make.Ptr())
-	assert.Equal(t, "Camry", *vhs[0].Model.Ptr())
-	assert.Equal(t, 2020, vhs[0].Year.Int)
 }
 
 func Test_HandleVehicle_Transferred_Event(t *testing.T) {

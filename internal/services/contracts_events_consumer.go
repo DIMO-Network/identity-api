@@ -51,8 +51,9 @@ const (
 	AftermarketDeviceAddressReset EventName = "AftermarketDeviceAddressReset"
 
 	// Vehicles.
-	VehicleNodeMinted   EventName = "VehicleNodeMinted"
-	VehicleAttributeSet EventName = "VehicleAttributeSet"
+	VehicleNodeMinted                     EventName = "VehicleNodeMinted"
+	VehicleAttributeSet                   EventName = "VehicleAttributeSet"
+	VehicleNodeMintedWithDeviceDefinition EventName = "VehicleNodeMintedWithDeviceDefinition"
 
 	// Synthetic devices.
 	SyntheticDeviceNodeMinted EventName = "SyntheticDeviceNodeMinted"
@@ -124,6 +125,8 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 
 		case VehicleNodeMinted:
 			return c.handleVehicleNodeMintedEvent(ctx, &data)
+		case VehicleNodeMintedWithDeviceDefinition:
+			return c.handleVehicleNodeMintedWithDeviceDefinitionEvent(ctx, &data)
 		case VehicleAttributeSet:
 			return c.handleVehicleAttributeSetEvent(ctx, &data)
 
@@ -260,6 +263,32 @@ func (c *ContractsEventsConsumer) handleVehicleNodeMintedEvent(ctx context.Conte
 	)
 }
 
+func (c *ContractsEventsConsumer) handleVehicleNodeMintedWithDeviceDefinitionEvent(ctx context.Context, e *ContractEventData) error {
+	var args VehicleNodeMintedWithDeviceDefinitionData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	v := models.Vehicle{
+		ID:                 int(args.VehicleId.Int64()),
+		OwnerAddress:       args.Owner.Bytes(),
+		DeviceDefinitionID: null.StringFrom(args.DeviceDefinitionID),
+		MintedAt:           e.Block.Time,
+		ManufacturerID:     int(args.ManufacturerId.Int64()),
+	}
+
+	cols := models.VehicleColumns
+
+	return v.Upsert(
+		ctx,
+		c.dbs.DBS().Writer,
+		false,
+		[]string{cols.ID},
+		boil.None(),
+		boil.Whitelist(cols.ID, cols.OwnerAddress, cols.MintedAt, cols.ManufacturerID, cols.DeviceDefinitionID),
+	)
+}
+
 func (c *ContractsEventsConsumer) handleAftermarketDeviceMintedEvent(ctx context.Context, e *ContractEventData) error {
 	var args AftermarketDeviceNodeMintedData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
@@ -325,31 +354,6 @@ func (c *ContractsEventsConsumer) handleVehicleAttributeSetEvent(ctx context.Con
 		}
 		veh.ImageURI = null.StringFrom(args.Info)
 		_, err = veh.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.VehicleColumns.ImageURI))
-		return err
-	case "DefinitionURI":
-		res, err := c.httpClient.Get(args.Info)
-		if err != nil {
-			return err
-		}
-		defer res.Body.Close()
-
-		if res.StatusCode != http.StatusOK {
-			return fmt.Errorf("device definition URI returned status code %d", res.StatusCode)
-		}
-
-		var ddf DeviceDefinition
-		if err := json.NewDecoder(res.Body).Decode(&ddf); err != nil {
-			return fmt.Errorf("couldn't parse device definition response: %w", err)
-		}
-
-		veh.Make = null.StringFrom(ddf.Type.Make)
-		veh.Model = null.StringFrom(ddf.Type.Model)
-		veh.Year = null.IntFrom(ddf.Type.Year)
-		veh.DefinitionURI = null.StringFrom(args.Info)
-
-		cols := models.VehicleColumns
-		_, err = veh.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(cols.DefinitionURI, cols.Make, cols.Model, cols.Year))
-
 		return err
 	default:
 		return fmt.Errorf("unrecognized vehicle attribute %q", args.Attribute)
