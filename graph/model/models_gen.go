@@ -408,8 +408,8 @@ type Vehicle struct {
 	Dcn        *Dcn        `json:"dcn,omitempty"`
 	// Encoded name of the device
 	Name string `json:"name"`
-	// The Image Url of he vehicle
-	Image          string           `json:"image"`
+	// A URI containing an image for the vehicle.
+	ImageURI       string           `json:"imageUri"`
 	Earnings       *VehicleEarnings `json:"earnings,omitempty"`
 	DataURI        string           `json:"dataUri"`
 	ManufacturerID int              `json:"-"`
