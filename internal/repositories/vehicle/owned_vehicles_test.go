@@ -335,7 +335,7 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination_NextPage()
 				MintedAt:   vehicles[0].MintedAt,
 				Privileges: nil,
 				ImageURI:   "https://mockUrl.com/v1/vehicle/1/image",
-				Image:      "https://mockUrl.com/v1/vehicle/2/image",
+				Image:      "https://mockUrl.com/v1/vehicle/1/image",
 				DataURI:    "https://dimoData/vehicles/1",
 			},
 			Cursor: "MQ==",
