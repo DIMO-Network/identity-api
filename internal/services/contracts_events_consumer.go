@@ -51,8 +51,9 @@ const (
 	AftermarketDeviceAddressReset EventName = "AftermarketDeviceAddressReset"
 
 	// Vehicles.
-	VehicleNodeMinted   EventName = "VehicleNodeMinted"
-	VehicleAttributeSet EventName = "VehicleAttributeSet"
+	VehicleNodeMinted                     EventName = "VehicleNodeMinted"
+	VehicleAttributeSet                   EventName = "VehicleAttributeSet"
+	VehicleNodeMintedWithDeviceDefinition EventName = "VehicleNodeMintedWithDeviceDefinition"
 
 	// Synthetic devices.
 	SyntheticDeviceNodeMinted EventName = "SyntheticDeviceNodeMinted"
@@ -124,6 +125,8 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 
 		case VehicleNodeMinted:
 			return c.handleVehicleNodeMintedEvent(ctx, &data)
+		case VehicleNodeMintedWithDeviceDefinition:
+			return c.handleVehicleNodeMintedWithDeviceDefinitionEvent(ctx, &data)
 		case VehicleAttributeSet:
 			return c.handleVehicleAttributeSetEvent(ctx, &data)
 
@@ -257,6 +260,32 @@ func (c *ContractsEventsConsumer) handleVehicleNodeMintedEvent(ctx context.Conte
 		[]string{cols.ID},
 		boil.None(),
 		boil.Whitelist(cols.ID, cols.OwnerAddress, cols.MintedAt, cols.ManufacturerID),
+	)
+}
+
+func (c *ContractsEventsConsumer) handleVehicleNodeMintedWithDeviceDefinitionEvent(ctx context.Context, e *ContractEventData) error {
+	var args VehicleNodeMintedWithDeviceDefinitionData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	v := models.Vehicle{
+		ID:                 int(args.VehicleId.Int64()),
+		OwnerAddress:       args.Owner.Bytes(),
+		DeviceDefinitionID: null.StringFrom(args.DeviceDefinitionID),
+		MintedAt:           e.Block.Time,
+		ManufacturerID:     int(args.ManufacturerId.Int64()),
+	}
+
+	cols := models.VehicleColumns
+
+	return v.Upsert(
+		ctx,
+		c.dbs.DBS().Writer,
+		false,
+		[]string{cols.ID},
+		boil.None(),
+		boil.Whitelist(cols.ID, cols.OwnerAddress, cols.MintedAt, cols.ManufacturerID, cols.DeviceDefinitionID),
 	)
 }
 

@@ -44,6 +44,13 @@ type VehicleNodeMintedData struct {
 	Owner            common.Address
 }
 
+type VehicleNodeMintedWithDeviceDefinitionData struct {
+	ManufacturerId     *big.Int
+	VehicleId          *big.Int
+	Owner              common.Address
+	DeviceDefinitionID string
+}
+
 type ManufacturerNodeMintedData struct {
 	Name    string
 	TokenID *big.Int
