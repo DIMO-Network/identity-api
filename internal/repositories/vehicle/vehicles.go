@@ -279,6 +279,7 @@ func ToAPI(v *models.Vehicle, imageURI string, dataURI string) (*gmodel.Vehicle,
 		ManufacturerID: v.ManufacturerID,
 		Name:           name,
 		ImageURI:       imageURI,
+		Image:          imageURI,
 		DataURI:        dataURI,
 	}, nil
 }
