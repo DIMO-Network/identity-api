@@ -155,6 +155,5 @@ require (
 
 require (
 	github.com/doug-martin/goqu/v9 v9.19.0
-	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.31.0
 )

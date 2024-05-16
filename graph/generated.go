@@ -4286,7 +4286,7 @@ func (ec *executionContext) _DeviceDefinition_id(ctx context.Context, field grap
 	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DeviceDefinition_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DeviceDefinition_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeviceDefinition",
 		Field:      field,
@@ -4327,7 +4327,7 @@ func (ec *executionContext) _DeviceDefinition_deviceDefinitionID(ctx context.Con
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DeviceDefinition_deviceDefinitionID(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DeviceDefinition_deviceDefinitionID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeviceDefinition",
 		Field:      field,
@@ -4368,7 +4368,7 @@ func (ec *executionContext) _DeviceDefinition_legacyID(ctx context.Context, fiel
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DeviceDefinition_legacyID(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DeviceDefinition_legacyID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeviceDefinition",
 		Field:      field,
@@ -4409,7 +4409,7 @@ func (ec *executionContext) _DeviceDefinition_model(ctx context.Context, field g
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DeviceDefinition_model(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DeviceDefinition_model(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeviceDefinition",
 		Field:      field,
@@ -4450,7 +4450,7 @@ func (ec *executionContext) _DeviceDefinition_year(ctx context.Context, field gr
 	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DeviceDefinition_year(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DeviceDefinition_year(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeviceDefinition",
 		Field:      field,
@@ -4491,7 +4491,7 @@ func (ec *executionContext) _DeviceDefinition_deviceType(ctx context.Context, fi
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DeviceDefinition_deviceType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DeviceDefinition_deviceType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeviceDefinition",
 		Field:      field,
@@ -4532,7 +4532,7 @@ func (ec *executionContext) _DeviceDefinition_imageUri(ctx context.Context, fiel
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DeviceDefinition_imageUri(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DeviceDefinition_imageUri(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeviceDefinition",
 		Field:      field,
@@ -4576,7 +4576,7 @@ func (ec *executionContext) _DeviceDefinition_attributes(ctx context.Context, fi
 	return ec.marshalNDeviceDefinitionAttribute2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeviceDefinitionAttributeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DeviceDefinition_attributes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DeviceDefinition_attributes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeviceDefinition",
 		Field:      field,
@@ -4623,7 +4623,7 @@ func (ec *executionContext) _DeviceDefinitionAttribute_name(ctx context.Context,
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DeviceDefinitionAttribute_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DeviceDefinitionAttribute_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeviceDefinitionAttribute",
 		Field:      field,
@@ -4664,7 +4664,7 @@ func (ec *executionContext) _DeviceDefinitionAttribute_value(ctx context.Context
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DeviceDefinitionAttribute_value(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DeviceDefinitionAttribute_value(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeviceDefinitionAttribute",
 		Field:      field,
@@ -4708,7 +4708,7 @@ func (ec *executionContext) _DeviceDefinitionConnection_totalCount(ctx context.C
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DeviceDefinitionConnection_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DeviceDefinitionConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeviceDefinitionConnection",
 		Field:      field,
@@ -4752,7 +4752,7 @@ func (ec *executionContext) _DeviceDefinitionConnection_edges(ctx context.Contex
 	return ec.marshalNDeviceDefinitionEdge2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeviceDefinitionEdgeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DeviceDefinitionConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DeviceDefinitionConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeviceDefinitionConnection",
 		Field:      field,
@@ -4802,7 +4802,7 @@ func (ec *executionContext) _DeviceDefinitionConnection_nodes(ctx context.Contex
 	return ec.marshalNDeviceDefinition2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeviceDefinitionᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DeviceDefinitionConnection_nodes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DeviceDefinitionConnection_nodes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeviceDefinitionConnection",
 		Field:      field,
@@ -4864,7 +4864,7 @@ func (ec *executionContext) _DeviceDefinitionConnection_pageInfo(ctx context.Con
 	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DeviceDefinitionConnection_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DeviceDefinitionConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeviceDefinitionConnection",
 		Field:      field,
@@ -4918,7 +4918,7 @@ func (ec *executionContext) _DeviceDefinitionEdge_cursor(ctx context.Context, fi
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DeviceDefinitionEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DeviceDefinitionEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeviceDefinitionEdge",
 		Field:      field,
@@ -4962,7 +4962,7 @@ func (ec *executionContext) _DeviceDefinitionEdge_node(ctx context.Context, fiel
 	return ec.marshalNDeviceDefinition2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeviceDefinition(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DeviceDefinitionEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DeviceDefinitionEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeviceDefinitionEdge",
 		Field:      field,
@@ -11727,8 +11727,6 @@ func (ec *executionContext) unmarshalInputDeviceDefinitionBy(ctx context.Context
 		}
 		switch k {
 		case "id":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
 			directive0 := func(ctx context.Context) (interface{}, error) { return ec.unmarshalNString2string(ctx, v) }
 			directive1 := func(ctx context.Context) (interface{}, error) {
@@ -11769,8 +11767,6 @@ func (ec *executionContext) unmarshalInputDeviceDefinitionFilter(ctx context.Con
 		}
 		switch k {
 		case "manufacturer":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("manufacturer"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -11778,8 +11774,6 @@ func (ec *executionContext) unmarshalInputDeviceDefinitionFilter(ctx context.Con
 			}
 			it.Manufacturer = data
 		case "id":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -11787,8 +11781,6 @@ func (ec *executionContext) unmarshalInputDeviceDefinitionFilter(ctx context.Con
 			}
 			it.ID = data
 		case "model":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("model"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -11796,8 +11788,6 @@ func (ec *executionContext) unmarshalInputDeviceDefinitionFilter(ctx context.Con
 			}
 			it.Model = data
 		case "year":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("year"))
 			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
@@ -15294,20 +15284,11 @@ func (ec *executionContext) marshalNDeviceDefinitionAttribute2ᚖgithubᚗcomᚋ
 	return ec._DeviceDefinitionAttribute(ctx, sel, v)
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 69fbcc1 (Fix comment)
 func (ec *executionContext) unmarshalNDeviceDefinitionBy2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeviceDefinitionBy(ctx context.Context, v interface{}) (model.DeviceDefinitionBy, error) {
 	res, err := ec.unmarshalInputDeviceDefinitionBy(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-<<<<<<< HEAD
-=======
->>>>>>> 36a3920 (Resolve Device Definition from tableland)
-=======
->>>>>>> 69fbcc1 (Fix comment)
 func (ec *executionContext) marshalNDeviceDefinitionConnection2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeviceDefinitionConnection(ctx context.Context, sel ast.SelectionSet, v model.DeviceDefinitionConnection) graphql.Marshaler {
 	return ec._DeviceDefinitionConnection(ctx, sel, &v)
 }
