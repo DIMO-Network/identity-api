@@ -13,7 +13,7 @@ require (
 	github.com/goccy/go-json v0.10.2
 	github.com/gofiber/fiber/v2 v2.52.4
 	github.com/graph-gophers/dataloader/v7 v7.1.0
-	github.com/jarcoal/httpmock v1.3.1
+	github.com/jarcoal/httpmock v1.3.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pressly/goose/v3 v3.20.0
 	github.com/prometheus/client_golang v1.19.1
