@@ -154,6 +154,74 @@ type Definition struct {
 	Year  *int    `json:"year,omitempty"`
 }
 
+// Represents a Device Definition.
+type DeviceDefinition struct {
+	// An opaque global identifier for this device definition.
+	ID string `json:"id"`
+	// Device Definition ID for this device definition.
+	DeviceDefinitionID *string `json:"deviceDefinitionID,omitempty"`
+	// Legacy ID for this device definition.
+	LegacyID *string `json:"legacyID,omitempty"`
+	// Model for this device definition.
+	Model *string `json:"model,omitempty"`
+	// Year for this device definition.
+	Year *int `json:"year,omitempty"`
+	// Device Type for this device definition.
+	DeviceType *string `json:"deviceType,omitempty"`
+	// Image URI for this device definition.
+	ImageURI *string `json:"imageUri,omitempty"`
+	// Device attributes for this device definition.
+	Attributes []*DeviceDefinitionAttribute `json:"attributes"`
+}
+
+func (DeviceDefinition) IsNode()            {}
+func (this DeviceDefinition) GetID() string { return this.ID }
+
+type DeviceDefinitionAttribute struct {
+	// Name for this device definition.
+	Name *string `json:"name,omitempty"`
+	// Value for this device definition.
+	Value *string `json:"value,omitempty"`
+}
+
+// Input used to specify a unique Device Definition to query.
+type DeviceDefinitionBy struct {
+	// The id for the device definition.
+	ID string `json:"id"`
+}
+
+// Represents a Device Definition.
+type DeviceDefinitionConnection struct {
+	// The total count of Device Definitions in the connection.
+	TotalCount int `json:"totalCount"`
+	// A list of edges.
+	Edges []*DeviceDefinitionEdge `json:"edges"`
+	// A list of nodes in the connection
+	Nodes []*DeviceDefinition `json:"nodes"`
+	// Information to aid in pagination.
+	PageInfo *PageInfo `json:"pageInfo"`
+}
+
+// An edge in a Device Definition Connection.
+type DeviceDefinitionEdge struct {
+	// A cursor for use in pagination.
+	Cursor string `json:"cursor"`
+	// The item at the end of the edge.
+	Node *DeviceDefinition `json:"node"`
+}
+
+// Filter for Device Definition.
+type DeviceDefinitionFilter struct {
+	// The manufacturer for the device definition.
+	Manufacturer string `json:"manufacturer"`
+	// ID filters for the device definition that are of the given model.
+	ID *string `json:"id,omitempty"`
+	// Model filters for device definition that are of the given model.
+	Model *string `json:"model,omitempty"`
+	// Year filters for device definition that are of the given year.
+	Year *int `json:"year,omitempty"`
+}
+
 type Earning struct {
 	// Week reward was issued
 	Week int `json:"week"`
@@ -207,6 +275,8 @@ type Manufacturer struct {
 	MintedAt time.Time `json:"mintedAt"`
 	// A Relay-style connection listing any aftermarket devices associated with manufacturer.
 	AftermarketDevices *AftermarketDeviceConnection `json:"aftermarketDevices"`
+	// List device definitions under this manufacturer.
+	DeviceDefinitions *DeviceDefinitionConnection `json:"deviceDefinitions"`
 }
 
 func (Manufacturer) IsNode()            {}
