@@ -18,7 +18,7 @@ env:
   REWARDS_CONTRACT_ADDRESS: '0x8129f3cd3eba82136caf5ab87e2321c958da5b63'
   BASE_IMAGE_URL: https://devices-api.dimo.zone/v1
   BASE_VEHICLE_DATA_URI: https://device-data-api.dimo.zone/v2/vehicles/
-  TABLELAND_API_GATEWAY: https://tableland.network
+  TABLELAND_API_GATEWAY: https://tableland.network/
 ingress:
   enabled: true
   className: nginx
