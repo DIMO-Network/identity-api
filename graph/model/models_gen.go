@@ -168,21 +168,10 @@ type DeviceDefinition struct {
 	Year *int `json:"year,omitempty"`
 	// Device Type for this device definition.
 	DeviceType *string `json:"deviceType,omitempty"`
-	// Image URI for this device definition.
-	ImageURI *string `json:"imageURI,omitempty"`
-	// Device attributes for this device definition.
-	Attributes []*DeviceDefinitionAttribute `json:"attributes"`
 }
 
 func (DeviceDefinition) IsNode()            {}
 func (this DeviceDefinition) GetID() string { return this.ID }
-
-type DeviceDefinitionAttribute struct {
-	// Name for this device definition.
-	Name *string `json:"name,omitempty"`
-	// Value for this device definition.
-	Value *string `json:"value,omitempty"`
-}
 
 // Input used to specify a unique Device Definition to query.
 type DeviceDefinitionBy struct {

@@ -59,14 +59,6 @@ func ToAPI(v *DeviceDefinitionTablelandModel) (*gmodel.DeviceDefinition, error) 
 	result.Year = &v.Year
 	result.Model = &v.Model
 	result.DeviceType = &v.DeviceType
-	result.ImageURI = &v.ImageURI
-
-	for _, attr := range v.Metadata.DeviceAttributes {
-		result.Attributes = append(result.Attributes, &gmodel.DeviceDefinitionAttribute{
-			Name:  &attr.Name,
-			Value: &attr.Value,
-		})
-	}
 
 	return &result, nil
 }
