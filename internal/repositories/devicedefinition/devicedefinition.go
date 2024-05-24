@@ -131,12 +131,14 @@ func (r *Repository) GetDeviceDefinitions(ctx context.Context, tableID, first *i
 
 	sqlBuild := goqu.Dialect("sqlite3").From(table)
 
-	if filterBy.Year != nil {
-		sqlBuild = sqlBuild.Where(goqu.Ex{"year": *filterBy.Year})
-	}
+	if filterBy != nil {
+		if filterBy.Year != nil {
+			sqlBuild = sqlBuild.Where(goqu.Ex{"year": *filterBy.Year})
+		}
 
-	if filterBy.Model != nil {
-		sqlBuild = sqlBuild.Where(goqu.Ex{"model": *filterBy.Model})
+		if filterBy.Model != nil {
+			sqlBuild = sqlBuild.Where(goqu.Ex{"model": *filterBy.Model})
+		}
 	}
 
 	countSQL, _, err := sqlBuild.Select(goqu.COUNT("*")).ToSQL()
