@@ -175,7 +175,7 @@ func (r *Repository) GetDeviceDefinitions(ctx context.Context, tableID, first *i
 		sqlBuild = sqlBuild.Where(goqu.C("id").Lt(beforeID))
 	}
 
-	if before != nil {
+	if last != nil {
 		sqlBuild = sqlBuild.Order(goqu.I("id").Desc())
 	} else {
 		sqlBuild = sqlBuild.Order(goqu.I("id").Asc())
