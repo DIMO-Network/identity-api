@@ -15,34 +15,29 @@ extend type Query {
 """
 Represents a Device Definition.
 """
-type DeviceDefinition implements Node {
+type DeviceDefinition {
   """
-  An opaque global identifier for this device definition.
+  Device definition id for this device definition.
   """
-  id: ID!
+  deviceDefinitionId: String!
 
   """
-  Device Definition ID for this device definition.
-  """
-  deviceDefinitionId: String
-
-  """
-  Legacy ID for this device definition.
+  Legacy id for this device definition. Newer device definitions may not have one.
   """
   legacyId: String
 
   """
   Model for this device definition.
   """
-  model: String
+  model: String!
 
   """
   Year for this device definition.
   """
-  year: Int
+  year: Int!
 
   """
-  Device Type for this device definition.
+  Device type for this device definition.
   """
   deviceType: String
 
@@ -61,12 +56,12 @@ type DeviceDefinitionAttribute {
   """
   Name for this device definition.
   """
-  name: String
+  name: String!
 
   """
   Value for this device definition.
   """
-  value: String
+  value: String!
 }
 
 """

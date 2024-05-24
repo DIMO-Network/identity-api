@@ -156,17 +156,15 @@ type Definition struct {
 
 // Represents a Device Definition.
 type DeviceDefinition struct {
-	// An opaque global identifier for this device definition.
-	ID string `json:"id"`
-	// Device Definition ID for this device definition.
-	DeviceDefinitionID *string `json:"deviceDefinitionId,omitempty"`
-	// Legacy ID for this device definition.
+	// Device definition id for this device definition.
+	DeviceDefinitionID string `json:"deviceDefinitionId"`
+	// Legacy id for this device definition. Newer device definitions may not have one.
 	LegacyID *string `json:"legacyId,omitempty"`
 	// Model for this device definition.
-	Model *string `json:"model,omitempty"`
+	Model string `json:"model"`
 	// Year for this device definition.
-	Year *int `json:"year,omitempty"`
-	// Device Type for this device definition.
+	Year int `json:"year"`
+	// Device type for this device definition.
 	DeviceType *string `json:"deviceType,omitempty"`
 	// Image URI for this device definition.
 	ImageURI *string `json:"imageURI,omitempty"`
@@ -174,14 +172,11 @@ type DeviceDefinition struct {
 	Attributes []*DeviceDefinitionAttribute `json:"attributes"`
 }
 
-func (DeviceDefinition) IsNode()            {}
-func (this DeviceDefinition) GetID() string { return this.ID }
-
 type DeviceDefinitionAttribute struct {
 	// Name for this device definition.
-	Name *string `json:"name,omitempty"`
+	Name string `json:"name"`
 	// Value for this device definition.
-	Value *string `json:"value,omitempty"`
+	Value string `json:"value"`
 }
 
 // Input used to specify a unique Device Definition to query.
