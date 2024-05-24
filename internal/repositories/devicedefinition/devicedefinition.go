@@ -180,7 +180,7 @@ func (r *Repository) GetDeviceDefinitions(ctx context.Context, tableID, first *i
 		sqlBuild = sqlBuild.Order(goqu.I("id").Asc())
 	}
 
-	sqlBuild = sqlBuild.Limit(uint(limit))
+	sqlBuild = sqlBuild.Limit(uint(limit) + 1)
 
 	allSQL, _, err := sqlBuild.ToSQL()
 	if err != nil {
