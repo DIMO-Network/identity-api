@@ -52,7 +52,7 @@ type AftermarketDevice implements Node {
   """
   Extended Unique Identifier (EUI) for LoRa devices.
   """
-  devEui: String
+  devEUI: String
   """
   The block timestamp at which this device was minted.
   """

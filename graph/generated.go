@@ -388,7 +388,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.AftermarketDevice.ClaimedAt(childComplexity), true
 
-	case "AftermarketDevice.devEui":
+	case "AftermarketDevice.devEUI":
 		if e.complexity.AftermarketDevice.DevEui == nil {
 			break
 		}
@@ -666,7 +666,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.DeviceDefinition.Attributes(childComplexity), true
 
-	case "DeviceDefinition.deviceDefinitionID":
+	case "DeviceDefinition.deviceDefinitionId":
 		if e.complexity.DeviceDefinition.DeviceDefinitionID == nil {
 			break
 		}
@@ -687,14 +687,14 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.DeviceDefinition.ID(childComplexity), true
 
-	case "DeviceDefinition.imageUri":
+	case "DeviceDefinition.imageURI":
 		if e.complexity.DeviceDefinition.ImageURI == nil {
 			break
 		}
 
 		return e.complexity.DeviceDefinition.ImageURI(childComplexity), true
 
-	case "DeviceDefinition.legacyID":
+	case "DeviceDefinition.legacyId":
 		if e.complexity.DeviceDefinition.LegacyID == nil {
 			break
 		}
@@ -1301,7 +1301,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Vehicle.AftermarketDevice(childComplexity), true
 
-	case "Vehicle.dataUri":
+	case "Vehicle.dataURI":
 		if e.complexity.Vehicle.DataURI == nil {
 			break
 		}
@@ -1343,7 +1343,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Vehicle.Image(childComplexity), true
 
-	case "Vehicle.imageUri":
+	case "Vehicle.imageURI":
 		if e.complexity.Vehicle.ImageURI == nil {
 			break
 		}
@@ -2569,8 +2569,8 @@ func (ec *executionContext) fieldContext_AftermarketDevice_imei(_ context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _AftermarketDevice_devEui(ctx context.Context, field graphql.CollectedField, obj *model.AftermarketDevice) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_AftermarketDevice_devEui(ctx, field)
+func (ec *executionContext) _AftermarketDevice_devEUI(ctx context.Context, field graphql.CollectedField, obj *model.AftermarketDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AftermarketDevice_devEUI(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -2597,7 +2597,7 @@ func (ec *executionContext) _AftermarketDevice_devEui(ctx context.Context, field
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_AftermarketDevice_devEui(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_AftermarketDevice_devEUI(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AftermarketDevice",
 		Field:      field,
@@ -2753,14 +2753,14 @@ func (ec *executionContext) fieldContext_AftermarketDevice_vehicle(_ context.Con
 				return ec.fieldContext_Vehicle_dcn(ctx, field)
 			case "name":
 				return ec.fieldContext_Vehicle_name(ctx, field)
-			case "imageUri":
-				return ec.fieldContext_Vehicle_imageUri(ctx, field)
+			case "imageURI":
+				return ec.fieldContext_Vehicle_imageURI(ctx, field)
 			case "image":
 				return ec.fieldContext_Vehicle_image(ctx, field)
 			case "earnings":
 				return ec.fieldContext_Vehicle_earnings(ctx, field)
-			case "dataUri":
-				return ec.fieldContext_Vehicle_dataUri(ctx, field)
+			case "dataURI":
+				return ec.fieldContext_Vehicle_dataURI(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
 		},
@@ -3094,8 +3094,8 @@ func (ec *executionContext) fieldContext_AftermarketDeviceConnection_nodes(_ con
 				return ec.fieldContext_AftermarketDevice_serial(ctx, field)
 			case "imei":
 				return ec.fieldContext_AftermarketDevice_imei(ctx, field)
-			case "devEui":
-				return ec.fieldContext_AftermarketDevice_devEui(ctx, field)
+			case "devEUI":
+				return ec.fieldContext_AftermarketDevice_devEUI(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_AftermarketDevice_mintedAt(ctx, field)
 			case "claimedAt":
@@ -3377,8 +3377,8 @@ func (ec *executionContext) fieldContext_AftermarketDeviceEdge_node(_ context.Co
 				return ec.fieldContext_AftermarketDevice_serial(ctx, field)
 			case "imei":
 				return ec.fieldContext_AftermarketDevice_imei(ctx, field)
-			case "devEui":
-				return ec.fieldContext_AftermarketDevice_devEui(ctx, field)
+			case "devEUI":
+				return ec.fieldContext_AftermarketDevice_devEUI(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_AftermarketDevice_mintedAt(ctx, field)
 			case "claimedAt":
@@ -3760,14 +3760,14 @@ func (ec *executionContext) fieldContext_DCN_vehicle(_ context.Context, field gr
 				return ec.fieldContext_Vehicle_dcn(ctx, field)
 			case "name":
 				return ec.fieldContext_Vehicle_name(ctx, field)
-			case "imageUri":
-				return ec.fieldContext_Vehicle_imageUri(ctx, field)
+			case "imageURI":
+				return ec.fieldContext_Vehicle_imageURI(ctx, field)
 			case "image":
 				return ec.fieldContext_Vehicle_image(ctx, field)
 			case "earnings":
 				return ec.fieldContext_Vehicle_earnings(ctx, field)
-			case "dataUri":
-				return ec.fieldContext_Vehicle_dataUri(ctx, field)
+			case "dataURI":
+				return ec.fieldContext_Vehicle_dataURI(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
 		},
@@ -4299,8 +4299,8 @@ func (ec *executionContext) fieldContext_DeviceDefinition_id(_ context.Context, 
 	return fc, nil
 }
 
-func (ec *executionContext) _DeviceDefinition_deviceDefinitionID(ctx context.Context, field graphql.CollectedField, obj *model.DeviceDefinition) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DeviceDefinition_deviceDefinitionID(ctx, field)
+func (ec *executionContext) _DeviceDefinition_deviceDefinitionId(ctx context.Context, field graphql.CollectedField, obj *model.DeviceDefinition) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeviceDefinition_deviceDefinitionId(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -4327,7 +4327,7 @@ func (ec *executionContext) _DeviceDefinition_deviceDefinitionID(ctx context.Con
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DeviceDefinition_deviceDefinitionID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DeviceDefinition_deviceDefinitionId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeviceDefinition",
 		Field:      field,
@@ -4340,8 +4340,8 @@ func (ec *executionContext) fieldContext_DeviceDefinition_deviceDefinitionID(_ c
 	return fc, nil
 }
 
-func (ec *executionContext) _DeviceDefinition_legacyID(ctx context.Context, field graphql.CollectedField, obj *model.DeviceDefinition) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DeviceDefinition_legacyID(ctx, field)
+func (ec *executionContext) _DeviceDefinition_legacyId(ctx context.Context, field graphql.CollectedField, obj *model.DeviceDefinition) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeviceDefinition_legacyId(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -4368,7 +4368,7 @@ func (ec *executionContext) _DeviceDefinition_legacyID(ctx context.Context, fiel
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DeviceDefinition_legacyID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DeviceDefinition_legacyId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeviceDefinition",
 		Field:      field,
@@ -4504,8 +4504,8 @@ func (ec *executionContext) fieldContext_DeviceDefinition_deviceType(_ context.C
 	return fc, nil
 }
 
-func (ec *executionContext) _DeviceDefinition_imageUri(ctx context.Context, field graphql.CollectedField, obj *model.DeviceDefinition) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DeviceDefinition_imageUri(ctx, field)
+func (ec *executionContext) _DeviceDefinition_imageURI(ctx context.Context, field graphql.CollectedField, obj *model.DeviceDefinition) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeviceDefinition_imageURI(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -4532,7 +4532,7 @@ func (ec *executionContext) _DeviceDefinition_imageUri(ctx context.Context, fiel
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DeviceDefinition_imageUri(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DeviceDefinition_imageURI(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeviceDefinition",
 		Field:      field,
@@ -4812,18 +4812,18 @@ func (ec *executionContext) fieldContext_DeviceDefinitionConnection_nodes(_ cont
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_DeviceDefinition_id(ctx, field)
-			case "deviceDefinitionID":
-				return ec.fieldContext_DeviceDefinition_deviceDefinitionID(ctx, field)
-			case "legacyID":
-				return ec.fieldContext_DeviceDefinition_legacyID(ctx, field)
+			case "deviceDefinitionId":
+				return ec.fieldContext_DeviceDefinition_deviceDefinitionId(ctx, field)
+			case "legacyId":
+				return ec.fieldContext_DeviceDefinition_legacyId(ctx, field)
 			case "model":
 				return ec.fieldContext_DeviceDefinition_model(ctx, field)
 			case "year":
 				return ec.fieldContext_DeviceDefinition_year(ctx, field)
 			case "deviceType":
 				return ec.fieldContext_DeviceDefinition_deviceType(ctx, field)
-			case "imageUri":
-				return ec.fieldContext_DeviceDefinition_imageUri(ctx, field)
+			case "imageURI":
+				return ec.fieldContext_DeviceDefinition_imageURI(ctx, field)
 			case "attributes":
 				return ec.fieldContext_DeviceDefinition_attributes(ctx, field)
 			}
@@ -4972,18 +4972,18 @@ func (ec *executionContext) fieldContext_DeviceDefinitionEdge_node(_ context.Con
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_DeviceDefinition_id(ctx, field)
-			case "deviceDefinitionID":
-				return ec.fieldContext_DeviceDefinition_deviceDefinitionID(ctx, field)
-			case "legacyID":
-				return ec.fieldContext_DeviceDefinition_legacyID(ctx, field)
+			case "deviceDefinitionId":
+				return ec.fieldContext_DeviceDefinition_deviceDefinitionId(ctx, field)
+			case "legacyId":
+				return ec.fieldContext_DeviceDefinition_legacyId(ctx, field)
 			case "model":
 				return ec.fieldContext_DeviceDefinition_model(ctx, field)
 			case "year":
 				return ec.fieldContext_DeviceDefinition_year(ctx, field)
 			case "deviceType":
 				return ec.fieldContext_DeviceDefinition_deviceType(ctx, field)
-			case "imageUri":
-				return ec.fieldContext_DeviceDefinition_imageUri(ctx, field)
+			case "imageURI":
+				return ec.fieldContext_DeviceDefinition_imageURI(ctx, field)
 			case "attributes":
 				return ec.fieldContext_DeviceDefinition_attributes(ctx, field)
 			}
@@ -5216,8 +5216,8 @@ func (ec *executionContext) fieldContext_Earning_aftermarketDevice(_ context.Con
 				return ec.fieldContext_AftermarketDevice_serial(ctx, field)
 			case "imei":
 				return ec.fieldContext_AftermarketDevice_imei(ctx, field)
-			case "devEui":
-				return ec.fieldContext_AftermarketDevice_devEui(ctx, field)
+			case "devEUI":
+				return ec.fieldContext_AftermarketDevice_devEUI(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_AftermarketDevice_mintedAt(ctx, field)
 			case "claimedAt":
@@ -5440,14 +5440,14 @@ func (ec *executionContext) fieldContext_Earning_vehicle(_ context.Context, fiel
 				return ec.fieldContext_Vehicle_dcn(ctx, field)
 			case "name":
 				return ec.fieldContext_Vehicle_name(ctx, field)
-			case "imageUri":
-				return ec.fieldContext_Vehicle_imageUri(ctx, field)
+			case "imageURI":
+				return ec.fieldContext_Vehicle_imageURI(ctx, field)
 			case "image":
 				return ec.fieldContext_Vehicle_image(ctx, field)
 			case "earnings":
 				return ec.fieldContext_Vehicle_earnings(ctx, field)
-			case "dataUri":
-				return ec.fieldContext_Vehicle_dataUri(ctx, field)
+			case "dataURI":
+				return ec.fieldContext_Vehicle_dataURI(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
 		},
@@ -6965,8 +6965,8 @@ func (ec *executionContext) fieldContext_Query_aftermarketDevice(ctx context.Con
 				return ec.fieldContext_AftermarketDevice_serial(ctx, field)
 			case "imei":
 				return ec.fieldContext_AftermarketDevice_imei(ctx, field)
-			case "devEui":
-				return ec.fieldContext_AftermarketDevice_devEui(ctx, field)
+			case "devEUI":
+				return ec.fieldContext_AftermarketDevice_devEUI(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_AftermarketDevice_mintedAt(ctx, field)
 			case "claimedAt":
@@ -7243,18 +7243,18 @@ func (ec *executionContext) fieldContext_Query_deviceDefinition(ctx context.Cont
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_DeviceDefinition_id(ctx, field)
-			case "deviceDefinitionID":
-				return ec.fieldContext_DeviceDefinition_deviceDefinitionID(ctx, field)
-			case "legacyID":
-				return ec.fieldContext_DeviceDefinition_legacyID(ctx, field)
+			case "deviceDefinitionId":
+				return ec.fieldContext_DeviceDefinition_deviceDefinitionId(ctx, field)
+			case "legacyId":
+				return ec.fieldContext_DeviceDefinition_legacyId(ctx, field)
 			case "model":
 				return ec.fieldContext_DeviceDefinition_model(ctx, field)
 			case "year":
 				return ec.fieldContext_DeviceDefinition_year(ctx, field)
 			case "deviceType":
 				return ec.fieldContext_DeviceDefinition_deviceType(ctx, field)
-			case "imageUri":
-				return ec.fieldContext_DeviceDefinition_imageUri(ctx, field)
+			case "imageURI":
+				return ec.fieldContext_DeviceDefinition_imageURI(ctx, field)
 			case "attributes":
 				return ec.fieldContext_DeviceDefinition_attributes(ctx, field)
 			}
@@ -7601,14 +7601,14 @@ func (ec *executionContext) fieldContext_Query_vehicle(ctx context.Context, fiel
 				return ec.fieldContext_Vehicle_dcn(ctx, field)
 			case "name":
 				return ec.fieldContext_Vehicle_name(ctx, field)
-			case "imageUri":
-				return ec.fieldContext_Vehicle_imageUri(ctx, field)
+			case "imageURI":
+				return ec.fieldContext_Vehicle_imageURI(ctx, field)
 			case "image":
 				return ec.fieldContext_Vehicle_image(ctx, field)
 			case "earnings":
 				return ec.fieldContext_Vehicle_earnings(ctx, field)
-			case "dataUri":
-				return ec.fieldContext_Vehicle_dataUri(ctx, field)
+			case "dataURI":
+				return ec.fieldContext_Vehicle_dataURI(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
 		},
@@ -8790,8 +8790,8 @@ func (ec *executionContext) fieldContext_Vehicle_aftermarketDevice(_ context.Con
 				return ec.fieldContext_AftermarketDevice_serial(ctx, field)
 			case "imei":
 				return ec.fieldContext_AftermarketDevice_imei(ctx, field)
-			case "devEui":
-				return ec.fieldContext_AftermarketDevice_devEui(ctx, field)
+			case "devEUI":
+				return ec.fieldContext_AftermarketDevice_devEUI(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_AftermarketDevice_mintedAt(ctx, field)
 			case "claimedAt":
@@ -9087,8 +9087,8 @@ func (ec *executionContext) fieldContext_Vehicle_name(_ context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _Vehicle_imageUri(ctx context.Context, field graphql.CollectedField, obj *model.Vehicle) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Vehicle_imageUri(ctx, field)
+func (ec *executionContext) _Vehicle_imageURI(ctx context.Context, field graphql.CollectedField, obj *model.Vehicle) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Vehicle_imageURI(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -9118,7 +9118,7 @@ func (ec *executionContext) _Vehicle_imageUri(ctx context.Context, field graphql
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Vehicle_imageUri(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Vehicle_imageURI(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Vehicle",
 		Field:      field,
@@ -9222,8 +9222,8 @@ func (ec *executionContext) fieldContext_Vehicle_earnings(_ context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _Vehicle_dataUri(ctx context.Context, field graphql.CollectedField, obj *model.Vehicle) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Vehicle_dataUri(ctx, field)
+func (ec *executionContext) _Vehicle_dataURI(ctx context.Context, field graphql.CollectedField, obj *model.Vehicle) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Vehicle_dataURI(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -9253,7 +9253,7 @@ func (ec *executionContext) _Vehicle_dataUri(ctx context.Context, field graphql.
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Vehicle_dataUri(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Vehicle_dataURI(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Vehicle",
 		Field:      field,
@@ -9421,14 +9421,14 @@ func (ec *executionContext) fieldContext_VehicleConnection_nodes(_ context.Conte
 				return ec.fieldContext_Vehicle_dcn(ctx, field)
 			case "name":
 				return ec.fieldContext_Vehicle_name(ctx, field)
-			case "imageUri":
-				return ec.fieldContext_Vehicle_imageUri(ctx, field)
+			case "imageURI":
+				return ec.fieldContext_Vehicle_imageURI(ctx, field)
 			case "image":
 				return ec.fieldContext_Vehicle_image(ctx, field)
 			case "earnings":
 				return ec.fieldContext_Vehicle_earnings(ctx, field)
-			case "dataUri":
-				return ec.fieldContext_Vehicle_dataUri(ctx, field)
+			case "dataURI":
+				return ec.fieldContext_Vehicle_dataURI(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
 		},
@@ -9660,14 +9660,14 @@ func (ec *executionContext) fieldContext_VehicleEdge_node(_ context.Context, fie
 				return ec.fieldContext_Vehicle_dcn(ctx, field)
 			case "name":
 				return ec.fieldContext_Vehicle_name(ctx, field)
-			case "imageUri":
-				return ec.fieldContext_Vehicle_imageUri(ctx, field)
+			case "imageURI":
+				return ec.fieldContext_Vehicle_imageURI(ctx, field)
 			case "image":
 				return ec.fieldContext_Vehicle_image(ctx, field)
 			case "earnings":
 				return ec.fieldContext_Vehicle_earnings(ctx, field)
-			case "dataUri":
-				return ec.fieldContext_Vehicle_dataUri(ctx, field)
+			case "dataURI":
+				return ec.fieldContext_Vehicle_dataURI(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
 		},
@@ -12183,8 +12183,8 @@ func (ec *executionContext) _AftermarketDevice(ctx context.Context, sel ast.Sele
 			out.Values[i] = ec._AftermarketDevice_serial(ctx, field, obj)
 		case "imei":
 			out.Values[i] = ec._AftermarketDevice_imei(ctx, field, obj)
-		case "devEui":
-			out.Values[i] = ec._AftermarketDevice_devEui(ctx, field, obj)
+		case "devEUI":
+			out.Values[i] = ec._AftermarketDevice_devEUI(ctx, field, obj)
 		case "mintedAt":
 			out.Values[i] = ec._AftermarketDevice_mintedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -12721,18 +12721,18 @@ func (ec *executionContext) _DeviceDefinition(ctx context.Context, sel ast.Selec
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "deviceDefinitionID":
-			out.Values[i] = ec._DeviceDefinition_deviceDefinitionID(ctx, field, obj)
-		case "legacyID":
-			out.Values[i] = ec._DeviceDefinition_legacyID(ctx, field, obj)
+		case "deviceDefinitionId":
+			out.Values[i] = ec._DeviceDefinition_deviceDefinitionId(ctx, field, obj)
+		case "legacyId":
+			out.Values[i] = ec._DeviceDefinition_legacyId(ctx, field, obj)
 		case "model":
 			out.Values[i] = ec._DeviceDefinition_model(ctx, field, obj)
 		case "year":
 			out.Values[i] = ec._DeviceDefinition_year(ctx, field, obj)
 		case "deviceType":
 			out.Values[i] = ec._DeviceDefinition_deviceType(ctx, field, obj)
-		case "imageUri":
-			out.Values[i] = ec._DeviceDefinition_imageUri(ctx, field, obj)
+		case "imageURI":
+			out.Values[i] = ec._DeviceDefinition_imageURI(ctx, field, obj)
 		case "attributes":
 			out.Values[i] = ec._DeviceDefinition_attributes(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -14247,8 +14247,8 @@ func (ec *executionContext) _Vehicle(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "imageUri":
-			out.Values[i] = ec._Vehicle_imageUri(ctx, field, obj)
+		case "imageURI":
+			out.Values[i] = ec._Vehicle_imageURI(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -14290,8 +14290,8 @@ func (ec *executionContext) _Vehicle(ctx context.Context, sel ast.SelectionSet, 
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "dataUri":
-			out.Values[i] = ec._Vehicle_dataUri(ctx, field, obj)
+		case "dataURI":
+			out.Values[i] = ec._Vehicle_dataURI(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}

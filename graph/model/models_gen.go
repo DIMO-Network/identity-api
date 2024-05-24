@@ -32,7 +32,7 @@ type AftermarketDevice struct {
 	// The International Mobile Equipment Identity (IMEI) for the device.
 	Imei *string `json:"imei,omitempty"`
 	// Extended Unique Identifier (EUI) for LoRa devices.
-	DevEui *string `json:"devEui,omitempty"`
+	DevEui *string `json:"devEUI,omitempty"`
 	// The block timestamp at which this device was minted.
 	MintedAt time.Time `json:"mintedAt"`
 	// The block timestamp at which this device was claimed, if it has been claimed. Devices must be
@@ -159,9 +159,9 @@ type DeviceDefinition struct {
 	// An opaque global identifier for this device definition.
 	ID string `json:"id"`
 	// Device Definition ID for this device definition.
-	DeviceDefinitionID *string `json:"deviceDefinitionID,omitempty"`
+	DeviceDefinitionID *string `json:"deviceDefinitionId,omitempty"`
 	// Legacy ID for this device definition.
-	LegacyID *string `json:"legacyID,omitempty"`
+	LegacyID *string `json:"legacyId,omitempty"`
 	// Model for this device definition.
 	Model *string `json:"model,omitempty"`
 	// Year for this device definition.
@@ -169,7 +169,7 @@ type DeviceDefinition struct {
 	// Device Type for this device definition.
 	DeviceType *string `json:"deviceType,omitempty"`
 	// Image URI for this device definition.
-	ImageURI *string `json:"imageUri,omitempty"`
+	ImageURI *string `json:"imageURI,omitempty"`
 	// Device attributes for this device definition.
 	Attributes []*DeviceDefinitionAttribute `json:"attributes"`
 }
@@ -413,10 +413,10 @@ type Vehicle struct {
 	// Encoded name of the device
 	Name string `json:"name"`
 	// A URI containing an image for the vehicle.
-	ImageURI       string           `json:"imageUri"`
+	ImageURI       string           `json:"imageURI"`
 	Image          string           `json:"image"`
 	Earnings       *VehicleEarnings `json:"earnings,omitempty"`
-	DataURI        string           `json:"dataUri"`
+	DataURI        string           `json:"dataURI"`
 	ManufacturerID int              `json:"-"`
 }
 

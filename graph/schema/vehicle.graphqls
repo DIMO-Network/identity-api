@@ -126,12 +126,12 @@ type Vehicle implements Node {
   """
   A URI containing an image for the vehicle.
   """
-  imageUri: String!
-  image: String! @deprecated(reason: "Use `imageUri` instead.")
+  imageURI: String!
+  image: String! @deprecated(reason: "Use `imageURI` instead.")
 
   earnings: VehicleEarnings
 
-  dataUri: String!
+  dataURI: String!
 }
 
 type Definition {
