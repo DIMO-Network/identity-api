@@ -45,28 +45,6 @@ type DeviceDefinition implements Node {
   Device Type for this device definition.
   """
   deviceType: String
-
-  """
-  Image URI for this device definition.
-  """
-  imageURI: String
-
-  """
-  Device attributes for this device definition.
-  """
-  attributes: [DeviceDefinitionAttribute!]!
-}
-
-type DeviceDefinitionAttribute {
-  """
-  Name for this device definition.
-  """
-  name: String
-
-  """
-  Value for this device definition.
-  """
-  value: String
 }
 
 """
