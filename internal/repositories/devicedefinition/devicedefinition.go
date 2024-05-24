@@ -61,7 +61,8 @@ func ToAPI(v *DeviceDefinitionTablelandModel) (*gmodel.DeviceDefinition, error) 
 	}
 
 	for _, attr := range v.Metadata.DeviceAttributes {
-		if attr.Name == "" || attr.Value == "" {
+		// No idea where this <nil> is coming from.
+		if attr.Name == "" || attr.Value == "" || attr.Value == "<nil>" {
 			continue
 		}
 		result.Attributes = append(result.Attributes, &gmodel.DeviceDefinitionAttribute{
