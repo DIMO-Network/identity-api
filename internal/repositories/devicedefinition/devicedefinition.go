@@ -119,19 +119,15 @@ func (r *Repository) GetDeviceDefinitions(ctx context.Context, tableID, first *i
 	}
 
 	if tableID == nil {
-		return nil, gqlerror.Errorf("Provide exactly one `manufacturer`.")
+		return &gmodel.DeviceDefinitionConnection{
+			Edges:      make([]*gmodel.DeviceDefinitionEdge, 0),
+			Nodes:      make([]*gmodel.DeviceDefinition, 0),
+			PageInfo:   &gmodel.PageInfo{},
+			TotalCount: 0,
+		}, nil
 	}
 
-	mfr, err := models.Manufacturers(models.ManufacturerWhere.Slug.EQ(filterBy.Manufacturer)).One(ctx, r.PDB.DBS().Reader)
-	if err != nil {
-		return nil, err
-	}
-
-	if !mfr.TableID.Valid {
-		return nil, fmt.Errorf("manufacturer %d does not have a device definition table", mfr.ID)
-	}
-
-	table := fmt.Sprintf("_%d_%d", r.Settings.DIMORegistryChainID, mfr.TableID.Int)
+	table := fmt.Sprintf("_%d_%d", r.Settings.DIMORegistryChainID, *tableID)
 
 	sqlBuild := goqu.Dialect("sqlite3").From(table)
 
