@@ -14,7 +14,7 @@ RUN go mod tidy
 RUN go mod vendor
 RUN make install
 
-FROM busybox AS package
+FROM gcr.io/distroless/static-debian12 AS package
 
 LABEL maintainer="DIMO <hello@dimo.zone>"
 

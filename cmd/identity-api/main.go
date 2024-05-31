@@ -65,6 +65,7 @@ func main() {
 
 	cfg := graph.Config{Resolvers: graph.NewResolver(baseRepo)}
 	cfg.Directives.OneOf = func(ctx context.Context, _ any, next graphql.Resolver) (any, error) {
+
 		// The directive on its own is advisory; everything is enforced inside of the resolver
 		return next(ctx)
 	}
