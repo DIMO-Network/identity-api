@@ -30,4 +30,4 @@ USER dimo
 EXPOSE 8080
 EXPOSE 8888
 
-CMD /identity-api
+CMD ["/identity-api"]
