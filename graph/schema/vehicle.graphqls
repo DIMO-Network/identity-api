@@ -72,6 +72,11 @@ input VehiclesFilter {
   Year filters for vehicles that are of the given year.
   """
   year: Int
+
+  """
+  Filter for vehicles produced by a particular manufacturer, specified by manufacturer token id.
+  """
+  manufacturerTokenId: Int
 }
 
 type Vehicle implements Node {

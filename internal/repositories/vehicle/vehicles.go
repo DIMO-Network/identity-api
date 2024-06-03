@@ -251,6 +251,9 @@ func queryModsFromFilters(filter *gmodel.VehiclesFilter) []qm.QueryMod {
 	if filter.Owner != nil {
 		queryMods = append(queryMods, models.VehicleWhere.OwnerAddress.EQ(filter.Owner.Bytes()))
 	}
+	if filter.ManufacturerTokenID != nil {
+		queryMods = append(queryMods, models.VehicleWhere.ManufacturerID.EQ(*filter.ManufacturerTokenID))
+	}
 
 	return queryMods
 }

@@ -452,4 +452,6 @@ type VehiclesFilter struct {
 	Model *string `json:"model,omitempty"`
 	// Year filters for vehicles that are of the given year.
 	Year *int `json:"year,omitempty"`
+	// Filter for vehicles produced by a particular manufacturer, specified by manufacturer token id.
+	ManufacturerTokenID *int `json:"manufacturerTokenId,omitempty"`
 }

@@ -1090,7 +1090,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 	_, wallet2, err := test.GenerateWallet()
 	o.NoError(err)
 
-	m := models.Manufacturer{
+	toyotaMfr := models.Manufacturer{
 		ID:       131,
 		Name:     "Toyota",
 		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
@@ -1098,11 +1098,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 		Slug:     "toyota",
 	}
 
-	if err := m.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer()); err != nil {
-		o.Require().NoError(err)
-	}
-
-	m2 := models.Manufacturer{
+	hondaMfr := models.Manufacturer{
 		ID:       48,
 		Name:     "Honda",
 		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDff"),
@@ -1110,11 +1106,15 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 		Slug:     "honda",
 	}
 
-	if err := m2.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer()); err != nil {
-		o.Require().NoError(err)
+	currTime := time.Now().UTC().Truncate(time.Second)
+
+	mfrs := []models.Manufacturer{toyotaMfr, hondaMfr}
+	for _, v := range mfrs {
+		if err := v.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer()); err != nil {
+			o.Require().NoError(err)
+		}
 	}
 
-	currTime := time.Now().UTC().Truncate(time.Second)
 	testVehicle1 := models.Vehicle{
 		ID:             1,
 		ManufacturerID: 131,
@@ -1279,7 +1279,16 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 				{Node: vehicle3AsAPI},
 			},
 		},
-
+		{
+			name: "Filter by Manufacturer",
+			filter: &gmodel.VehiclesFilter{
+				ManufacturerTokenID: &toyotaMfr.ID,
+			},
+			results: []*gmodel.VehicleEdge{
+				{Node: vehicle1AsAPI},
+				{Node: vehicle3AsAPI},
+			},
+		},
 		{
 			name: "Filter by Owner and Privileged same address",
 			filter: &gmodel.VehiclesFilter{
@@ -1309,6 +1318,16 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 			},
 			results: []*gmodel.VehicleEdge{
 				{Node: vehicle1AsAPI},
+				{Node: vehicle3AsAPI},
+			},
+		},
+		{
+			name: "Filter by Owner and Manufacturer",
+			filter: &gmodel.VehiclesFilter{
+				Owner:               wallet2,
+				ManufacturerTokenID: &toyotaMfr.ID,
+			},
+			results: []*gmodel.VehicleEdge{
 				{Node: vehicle3AsAPI},
 			},
 		},
