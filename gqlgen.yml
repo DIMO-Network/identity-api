@@ -90,11 +90,16 @@ models:
   BigInt:
     model:
       - github.com/DIMO-Network/identity-api/graph/types.BigInt
+  BigDecimal:
+    model:
+      - github.com/DIMO-Network/identity-api/graph/types.BigDecimal
   Bytes:
     model: github.com/DIMO-Network/identity-api/graph/types.Bytes
   Manufacturer:
     fields:
       aftermarketDevices:
+        resolver: true
+      deviceDefinitions:
         resolver: true
   DCN:
     fields:
@@ -115,7 +120,7 @@ models:
       VehicleID:
         type: "*int"
       ManufacturerID:
-        type: "*int"
+        type: "int"
   Vehicle:
     fields:
       manufacturer:
@@ -132,7 +137,7 @@ models:
         resolver: true
     extraFields:
       ManufacturerID:
-        type: "*int"
+        type: "int"
   VehicleEarnings:
     fields:
       history:

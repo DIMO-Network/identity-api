@@ -2,7 +2,10 @@ package vehicle
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
+	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -25,35 +28,7 @@ type Repository struct {
 	*base.Repository
 }
 
-// ToAPI converts a vehicle to a corresponding graphql model.
-func ToAPI(v *models.Vehicle, imageUrl string, dataURI string) (*gmodel.Vehicle, error) {
-	nameList := mnemonic.FromInt32WithObfuscation(int32(v.ID))
-	name := strings.Join(nameList, " ")
-
-	globalID, err := base.EncodeGlobalTokenID(TokenPrefix, v.ID)
-	if err != nil {
-		return nil, fmt.Errorf("error encoding vehicle id: %w", err)
-	}
-
-	return &gmodel.Vehicle{
-		ID:       globalID,
-		TokenID:  v.ID,
-		Owner:    common.BytesToAddress(v.OwnerAddress),
-		MintedAt: v.MintedAt,
-		Definition: &gmodel.Definition{
-			URI:   v.DefinitionURI.Ptr(),
-			Make:  v.Make.Ptr(),
-			Model: v.Model.Ptr(),
-			Year:  v.Year.Ptr(),
-		},
-		ManufacturerID: v.ManufacturerID.Ptr(),
-		Name:           name,
-		Image:          imageUrl,
-		DataURI:        dataURI,
-	}, nil
-}
-
-func (v *Repository) createVehiclesResponse(totalCount int64, vehicles models.VehicleSlice, hasNext bool, hasPrevious bool) (*gmodel.VehicleConnection, error) {
+func (r *Repository) createVehiclesResponse(totalCount int64, vehicles models.VehicleSlice, hasNext bool, hasPrevious bool) (*gmodel.VehicleConnection, error) {
 	var errList gqlerror.List
 	var endCur, startCur *string
 	if len(vehicles) != 0 {
@@ -68,11 +43,30 @@ func (v *Repository) createVehiclesResponse(totalCount int64, vehicles models.Ve
 	nodes := make([]*gmodel.Vehicle, len(vehicles))
 
 	for i, dv := range vehicles {
-		imageUrl := helpers.GetVehicleImageUrl(v.Settings.BaseImageURL, dv.ID)
-		dataURI := helpers.GetVehicleDataURI(v.Settings.BaseVehicleDataURI, dv.ID)
-		gv, err := ToAPI(dv, imageUrl, dataURI)
+		var imageURI string
+
+		if dv.ImageURI.Valid {
+			imageURI = dv.ImageURI.String
+		} else {
+			var err error
+			imageURI, err = DefaultImageURI(r.Settings.BaseImageURL, dv.ID)
+			if err != nil {
+				wErr := fmt.Errorf("error getting vehicle image url: %w", err)
+				errList = append(errList, gqlerror.Wrap(wErr))
+				continue
+			}
+		}
+
+		dataURI, err := GetVehicleDataURI(r.Settings.BaseVehicleDataURI, dv.ID)
 		if err != nil {
-			errList = append(errList, gqlerror.Wrap(err))
+			wErr := fmt.Errorf("error getting vehicle data uri: %w", err)
+			errList = append(errList, gqlerror.Wrap(wErr))
+			continue
+		}
+		gv, err := ToAPI(dv, imageURI, dataURI)
+		if err != nil {
+			wErr := fmt.Errorf("error converting vehicle to API: %w", err)
+			errList = append(errList, gqlerror.Wrap(wErr))
 			continue
 		}
 
@@ -108,7 +102,7 @@ func (v *Repository) createVehiclesResponse(totalCount int64, vehicles models.Ve
 // @Param after [*string] "base64 string representing a device tokenID. This is a pointer to where we start fetching devices from on each page"
 // @Param last [*int] "the number of devices to return from previous pages"
 // @Param before [*string] "base64 string representing a device tokenID. Pointer to where we start fetching devices from previous pages"
-func (v *Repository) GetVehicles(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *gmodel.VehiclesFilter) (*gmodel.VehicleConnection, error) {
+func (r *Repository) GetVehicles(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *gmodel.VehiclesFilter) (*gmodel.VehicleConnection, error) {
 	limit, err := helpers.ValidateFirstLast(first, last, base.MaxPageSize)
 	if err != nil {
 		return nil, err
@@ -122,12 +116,12 @@ func (v *Repository) GetVehicles(ctx context.Context, first *int, after *string,
 			// the original version of queryMods the entire SELECT clause will be replaced by
 			// SELECT COUNT(*), and we'll probably over-count the number of vehicles.
 			append([]qm.QueryMod{qm.Distinct(models.VehicleTableColumns.ID)}, queryMods[1:]...)...,
-		).Count(ctx, v.PDB.DBS().Reader)
+		).Count(ctx, r.PDB.DBS().Reader)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		totalCount, err = models.Vehicles(queryMods...).Count(ctx, v.PDB.DBS().Reader)
+		totalCount, err = models.Vehicles(queryMods...).Count(ctx, r.PDB.DBS().Reader)
 		if err != nil {
 			return nil, err
 		}
@@ -162,7 +156,7 @@ func (v *Repository) GetVehicles(ctx context.Context, first *int, after *string,
 		qm.OrderBy(models.VehicleColumns.ID+" "+orderBy),
 	)
 
-	all, err := models.Vehicles(queryMods...).All(ctx, v.PDB.DBS().Reader)
+	all, err := models.Vehicles(queryMods...).All(ctx, r.PDB.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}
@@ -183,17 +177,36 @@ func (v *Repository) GetVehicles(ctx context.Context, first *int, after *string,
 		slices.Reverse(all)
 	}
 
-	return v.createVehiclesResponse(totalCount, all, hasNext, hasPrevious)
+	return r.createVehiclesResponse(totalCount, all, hasNext, hasPrevious)
 }
 
 func (r *Repository) GetVehicle(ctx context.Context, id int) (*gmodel.Vehicle, error) {
 	v, err := models.FindVehicle(ctx, r.PDB.DBS().Reader, id)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("no vehicle with token id %d", id)
+		}
 		return nil, err
 	}
-	imageUrl := helpers.GetVehicleImageUrl(r.Settings.BaseImageURL, v.ID)
-	dataURI := helpers.GetVehicleDataURI(r.Settings.BaseVehicleDataURI, v.ID)
-	return ToAPI(v, imageUrl, dataURI)
+	var imageURI string
+
+	if v.ImageURI.Valid {
+		imageURI = v.ImageURI.String
+	} else {
+		var err error
+		imageURI, err = DefaultImageURI(r.Settings.BaseImageURL, v.ID)
+		if err != nil {
+			wErr := fmt.Errorf("error getting vehicle image url: %w", err)
+			return nil, gqlerror.Wrap(wErr)
+		}
+	}
+
+	dataURI, err := GetVehicleDataURI(r.Settings.BaseVehicleDataURI, v.ID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting vehicle data uri: %w", err)
+	}
+
+	return ToAPI(v, imageURI, dataURI)
 }
 
 // queryModsFromFilters returns a slice of query mods from the given filters.
@@ -239,8 +252,48 @@ func queryModsFromFilters(filter *gmodel.VehiclesFilter) []qm.QueryMod {
 		queryMods = append(queryMods, models.VehicleWhere.OwnerAddress.EQ(filter.Owner.Bytes()))
 	}
 	if filter.ManufacturerTokenID != nil {
-		queryMods = append(queryMods, models.VehicleWhere.ManufacturerID.EQ(null.IntFrom(*filter.ManufacturerTokenID)))
+		queryMods = append(queryMods, models.VehicleWhere.ManufacturerID.EQ(*filter.ManufacturerTokenID))
 	}
 
 	return queryMods
+}
+
+// ToAPI converts a vehicle to a corresponding graphql model.
+func ToAPI(v *models.Vehicle, imageURI string, dataURI string) (*gmodel.Vehicle, error) {
+	nameList := mnemonic.FromInt32WithObfuscation(int32(v.ID))
+	name := strings.Join(nameList, " ")
+
+	globalID, err := base.EncodeGlobalTokenID(TokenPrefix, v.ID)
+	if err != nil {
+		return nil, fmt.Errorf("error encoding vehicle id: %w", err)
+	}
+
+	return &gmodel.Vehicle{
+		ID:       globalID,
+		TokenID:  v.ID,
+		Owner:    common.BytesToAddress(v.OwnerAddress),
+		MintedAt: v.MintedAt,
+		Definition: &gmodel.Definition{
+			ID:    v.DeviceDefinitionID.Ptr(),
+			Make:  v.Make.Ptr(),
+			Model: v.Model.Ptr(),
+			Year:  v.Year.Ptr(),
+		},
+		ManufacturerID: v.ManufacturerID,
+		Name:           name,
+		ImageURI:       imageURI,
+		Image:          imageURI,
+		DataURI:        dataURI,
+	}, nil
+}
+
+// DefaultImageURI craates a URL for the vehicle image.
+func DefaultImageURI(baseURL string, tokenID int) (string, error) {
+	tokenStr := strconv.Itoa(tokenID)
+	return url.JoinPath(baseURL, "vehicle", tokenStr, "image")
+}
+
+func GetVehicleDataURI(baseURL string, tokenID int) (string, error) {
+	tokenStr := strconv.Itoa(tokenID)
+	return url.JoinPath(baseURL, tokenStr)
 }

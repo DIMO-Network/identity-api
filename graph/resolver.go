@@ -7,11 +7,13 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/repositories/aftermarket"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/internal/repositories/dcn"
+	"github.com/DIMO-Network/identity-api/internal/repositories/devicedefinition"
 	"github.com/DIMO-Network/identity-api/internal/repositories/manufacturer"
 	"github.com/DIMO-Network/identity-api/internal/repositories/reward"
 	"github.com/DIMO-Network/identity-api/internal/repositories/synthetic"
 	"github.com/DIMO-Network/identity-api/internal/repositories/vehicle"
 	"github.com/DIMO-Network/identity-api/internal/repositories/vehicleprivilege"
+	"github.com/DIMO-Network/identity-api/internal/services"
 )
 
 //go:generate go run github.com/99designs/gqlgen generate
@@ -62,6 +64,14 @@ type VehicleRepository interface {
 	GetVehicle(ctx context.Context, id int) (*model.Vehicle, error)
 }
 
+// DeviceDefinitionRepository interface for mocking devicedefinition.Repository.
+//
+//go:generate mockgen -destination=./mock_devicedefinition_test.go -package=graph github.com/DIMO-Network/identity-api/graph DeviceDefinitionRepository
+type DeviceDefinitionRepository interface {
+	GetDeviceDefinition(ctx context.Context, by model.DeviceDefinitionBy) (*model.DeviceDefinition, error)
+	GetDeviceDefinitions(ctx context.Context, tableID, first *int, after *string, last *int, before *string, filterBy *model.DeviceDefinitionFilter) (*model.DeviceDefinitionConnection, error)
+}
+
 // Resolver holds the repositories for the graph resolvers.
 type Resolver struct {
 	aftermarket      AftermarketDeviceRepository
@@ -71,10 +81,13 @@ type Resolver struct {
 	synthetic        SyntheticRepository
 	vehicle          VehicleRepository
 	vehicleprivilege vehicleprivilege.Repository
+	deviceDefinition DeviceDefinitionRepository
 }
 
 // NewResolver creates a new Resolver with allocated repositories.
 func NewResolver(baseRepo *base.Repository) *Resolver {
+	tablelandApiService := services.NewTablelandApiService(baseRepo.Log, &baseRepo.Settings)
+
 	return &Resolver{
 		aftermarket:      &aftermarket.Repository{Repository: baseRepo},
 		dcn:              &dcn.Repository{Repository: baseRepo},
@@ -83,5 +96,8 @@ func NewResolver(baseRepo *base.Repository) *Resolver {
 		synthetic:        &synthetic.Repository{Repository: baseRepo},
 		vehicle:          &vehicle.Repository{Repository: baseRepo},
 		vehicleprivilege: vehicleprivilege.Repository{Repository: baseRepo},
+		deviceDefinition: &devicedefinition.Repository{Repository: baseRepo,
+			TablelandApiService: tablelandApiService,
+		},
 	}
 }

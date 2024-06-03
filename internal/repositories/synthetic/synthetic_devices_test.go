@@ -18,7 +18,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
@@ -65,11 +65,13 @@ func Test_SyntheticDeviceToAPI(t *testing.T) {
 type SyntheticTestSuite struct {
 	suite.Suite
 	pdb       db.Store
-	container testcontainers.Container
+	container *postgres.PostgresContainer
 	repo      *Repository
 	settings  config.Settings
 
 	// Test data
+	toyota     models.Manufacturer
+	honda      models.Manufacturer
 	vehicle1   models.Vehicle
 	vehicle2   models.Vehicle
 	synthetic1 models.SyntheticDevice
@@ -108,22 +110,38 @@ func (s *SyntheticTestSuite) SetupSuite() {
 	_, synthetic3Addr, err := helpers.GenerateWallet()
 	s.Require().NoError(err)
 
+	s.toyota = models.Manufacturer{
+		ID:    131,
+		Name:  "Toyota",
+		Owner: vehicle1Owner.Bytes(),
+		Slug:  "toyota",
+	}
+
+	s.honda = models.Manufacturer{
+		ID:    48,
+		Name:  "Honda",
+		Owner: vehicle2Owner.Bytes(),
+		Slug:  "honda",
+	}
+
 	s.vehicle1 = models.Vehicle{
-		ID:           1,
-		OwnerAddress: vehicle1Owner.Bytes(),
-		Make:         toyota,
-		Model:        tacoma,
-		Year:         year2023,
-		MintedAt:     currTime,
+		ID:             1,
+		OwnerAddress:   vehicle1Owner.Bytes(),
+		ManufacturerID: 131,
+		Make:           toyota,
+		Model:          tacoma,
+		Year:           year2023,
+		MintedAt:       currTime,
 	}
 
 	s.vehicle2 = models.Vehicle{
-		ID:           2,
-		OwnerAddress: vehicle2Owner.Bytes(),
-		Make:         honda,
-		Model:        civic,
-		Year:         year2020,
-		MintedAt:     currTime,
+		ManufacturerID: 48,
+		ID:             2,
+		OwnerAddress:   vehicle2Owner.Bytes(),
+		Make:           honda,
+		Model:          civic,
+		Year:           year2020,
+		MintedAt:       currTime,
 	}
 
 	s.synthetic1 = models.SyntheticDevice{
@@ -154,7 +172,7 @@ func (s *SyntheticTestSuite) SetupSuite() {
 
 // TearDownTest after each test truncate tables.
 func (s *SyntheticTestSuite) TearDownTest() {
-	helpers.TruncateTables(s.pdb.DBS().Writer.DB, s.T())
+	s.Require().NoError(s.container.Restore(context.TODO()))
 }
 
 // TearDownSuite cleanup at end by terminating container.
@@ -167,6 +185,10 @@ func (s *SyntheticTestSuite) Test_GetSyntheticDevices() {
 	ctx := context.Background()
 	var err error
 	// insert test data into the database
+	err = s.toyota.Insert(ctx, s.pdb.DBS().Writer, boil.Infer())
+	s.Require().NoError(err)
+	err = s.honda.Insert(ctx, s.pdb.DBS().Writer, boil.Infer())
+	s.Require().NoError(err)
 	err = s.vehicle1.Insert(ctx, s.pdb.DBS().Writer, boil.Infer())
 	s.Require().NoError(err)
 	err = s.vehicle2.Insert(ctx, s.pdb.DBS().Writer, boil.Infer())

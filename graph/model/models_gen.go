@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/ericlagergren/decimal"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -20,7 +21,7 @@ type AftermarketDevice struct {
 	// The ERC-721 token id for the device.
 	TokenID int `json:"tokenId"`
 	// The manufacturer of this aftermarket device.
-	Manufacturer *Manufacturer `json:"manufacturer,omitempty"`
+	Manufacturer *Manufacturer `json:"manufacturer"`
 	// The Ethereum address for the device.
 	Address common.Address `json:"address"`
 	// The Ethereum address of the owner of the device.
@@ -31,7 +32,7 @@ type AftermarketDevice struct {
 	// The International Mobile Equipment Identity (IMEI) for the device.
 	Imei *string `json:"imei,omitempty"`
 	// Extended Unique Identifier (EUI) for LoRa devices.
-	DevEui *string `json:"devEui,omitempty"`
+	DevEui *string `json:"devEUI,omitempty"`
 	// The block timestamp at which this device was minted.
 	MintedAt time.Time `json:"mintedAt"`
 	// The block timestamp at which this device was claimed, if it has been claimed. Devices must be
@@ -47,7 +48,7 @@ type AftermarketDevice struct {
 	Image string `json:"image"`
 	// The earnings attached to the aftermarket device
 	Earnings       *AftermarketDeviceEarnings `json:"earnings,omitempty"`
-	ManufacturerID *int                       `json:"-"`
+	ManufacturerID int                        `json:"-"`
 	VehicleID      *int                       `json:"-"`
 }
 
@@ -70,7 +71,7 @@ type AftermarketDeviceConnection struct {
 }
 
 type AftermarketDeviceEarnings struct {
-	TotalTokens         *big.Int            `json:"totalTokens"`
+	TotalTokens         *decimal.Big        `json:"totalTokens"`
 	History             *EarningsConnection `json:"history"`
 	AftermarketDeviceID int                 `json:"-"`
 }
@@ -147,10 +148,73 @@ type DCNFilter struct {
 }
 
 type Definition struct {
-	URI   *string `json:"uri,omitempty"`
+	ID    *string `json:"id,omitempty"`
 	Make  *string `json:"make,omitempty"`
 	Model *string `json:"model,omitempty"`
 	Year  *int    `json:"year,omitempty"`
+}
+
+// Represents a Device Definition.
+type DeviceDefinition struct {
+	// Device definition id for this device definition.
+	DeviceDefinitionID string `json:"deviceDefinitionId"`
+	// Legacy id for this device definition. Newer device definitions may not have one.
+	LegacyID *string `json:"legacyId,omitempty"`
+	// Model for this device definition.
+	Model string `json:"model"`
+	// Year for this device definition.
+	Year int `json:"year"`
+	// Device type for this device definition.
+	DeviceType *string `json:"deviceType,omitempty"`
+	// Image URI for this device definition.
+	ImageURI *string `json:"imageURI,omitempty"`
+	// Device attributes for this device definition.
+	Attributes []*DeviceDefinitionAttribute `json:"attributes"`
+}
+
+type DeviceDefinitionAttribute struct {
+	// Name for this device definition.
+	Name string `json:"name"`
+	// Value for this device definition.
+	Value string `json:"value"`
+}
+
+// Input used to specify a unique Device Definition to query.
+type DeviceDefinitionBy struct {
+	// The id for the device definition.
+	ID string `json:"id"`
+}
+
+// Represents a Device Definition.
+type DeviceDefinitionConnection struct {
+	// The total count of Device Definitions in the connection.
+	TotalCount int `json:"totalCount"`
+	// A list of edges.
+	Edges []*DeviceDefinitionEdge `json:"edges"`
+	// A list of nodes in the connection
+	Nodes []*DeviceDefinition `json:"nodes"`
+	// Information to aid in pagination.
+	PageInfo *PageInfo `json:"pageInfo"`
+}
+
+// An edge in a Device Definition Connection.
+type DeviceDefinitionEdge struct {
+	// A cursor for use in pagination.
+	Cursor string `json:"cursor"`
+	// The item at the end of the edge.
+	Node *DeviceDefinition `json:"node"`
+}
+
+// Filter for Device Definition.
+type DeviceDefinitionFilter struct {
+	// The manufacturer for the device definition.
+	Manufacturer string `json:"manufacturer"`
+	// ID filters for the device definition that are of the given model.
+	ID *string `json:"id,omitempty"`
+	// Model filters for device definition that are of the given model.
+	Model *string `json:"model,omitempty"`
+	// Year filters for device definition that are of the given year.
+	Year *int `json:"year,omitempty"`
 }
 
 type Earning struct {
@@ -161,15 +225,15 @@ type Earning struct {
 	// Consecutive period of which vehicle was connected
 	ConnectionStreak *int `json:"connectionStreak,omitempty"`
 	// Tokens earned for connection period
-	StreakTokens *big.Int `json:"streakTokens"`
+	StreakTokens *decimal.Big `json:"streakTokens"`
 	// AftermarketDevice connected to vehicle
 	AftermarketDevice *AftermarketDevice `json:"aftermarketDevice,omitempty"`
 	// Tokens earned by aftermarketDevice
-	AftermarketDeviceTokens *big.Int `json:"aftermarketDeviceTokens"`
+	AftermarketDeviceTokens *decimal.Big `json:"aftermarketDeviceTokens"`
 	// SyntheticDevice connected to vehicle
 	SyntheticDevice *SyntheticDevice `json:"syntheticDevice,omitempty"`
 	// Tokens earned by SyntheticDevice
-	SyntheticDeviceTokens *big.Int `json:"syntheticDeviceTokens"`
+	SyntheticDeviceTokens *decimal.Big `json:"syntheticDeviceTokens"`
 	// Vehicle reward is assigned to
 	Vehicle *Vehicle `json:"vehicle,omitempty"`
 	// When the token was earned
@@ -177,11 +241,6 @@ type Earning struct {
 	AftermarketDeviceID *int      `json:"-"`
 	SyntheticDeviceID   *int      `json:"-"`
 	VehicleID           int       `json:"-"`
-}
-
-type Earnings struct {
-	EarnedTokens      *big.Int            `json:"earnedTokens"`
-	EarningsTransfers *EarningsConnection `json:"earningsTransfers"`
 }
 
 type EarningsConnection struct {
@@ -205,10 +264,14 @@ type Manufacturer struct {
 	Name string `json:"name"`
 	// The Ethereum address of the owner of this manufacturer.
 	Owner common.Address `json:"owner"`
+	// Id of the Tableland table holding the manufacturer's device definitions.
+	TableID *int `json:"tableId,omitempty"`
 	// The block timestamp at which this manufacturer was minted.
 	MintedAt time.Time `json:"mintedAt"`
 	// A Relay-style connection listing any aftermarket devices associated with manufacturer.
 	AftermarketDevices *AftermarketDeviceConnection `json:"aftermarketDevices"`
+	// List device definitions under this manufacturer.
+	DeviceDefinitions *DeviceDefinitionConnection `json:"deviceDefinitions"`
 }
 
 func (Manufacturer) IsNode()            {}
@@ -227,10 +290,11 @@ type PageInfo struct {
 }
 
 type Privilege struct {
+	// The id of the privilege.
 	ID int `json:"id"`
 	// The user holding the privilege.
 	User common.Address `json:"user"`
-	// When this privilege was last set for this user.
+	// The block timestamp at which this privilege was last set.
 	SetAt time.Time `json:"setAt"`
 	// The block timestamp at which the privilege expires.
 	ExpiresAt time.Time `json:"expiresAt"`
@@ -242,7 +306,8 @@ type PrivilegeEdge struct {
 }
 
 type PrivilegeFilterBy struct {
-	User *common.Address `json:"user,omitempty"`
+	User        *common.Address `json:"user,omitempty"`
+	PrivilegeID *int            `json:"privilegeId,omitempty"`
 }
 
 // The Connection type for Privileges.
@@ -251,6 +316,10 @@ type PrivilegesConnection struct {
 	Edges      []*PrivilegeEdge `json:"edges"`
 	Nodes      []*Privilege     `json:"nodes"`
 	PageInfo   *PageInfo        `json:"pageInfo"`
+}
+
+// The root query type for the GraphQL schema.
+type Query struct {
 }
 
 // The SyntheticDevice is a software connection established to connect the vehicle to the DIMO network.
@@ -310,7 +379,7 @@ type SyntheticDevicesFilter struct {
 }
 
 type UserRewards struct {
-	TotalTokens *big.Int            `json:"totalTokens"`
+	TotalTokens *decimal.Big        `json:"totalTokens"`
 	History     *EarningsConnection `json:"history"`
 	User        common.Address      `json:"-"`
 }
@@ -321,7 +390,7 @@ type Vehicle struct {
 	// The ERC-721 token id for the vehicle.
 	TokenID int `json:"tokenId"`
 	// The manufacturer of this vehicle.
-	Manufacturer *Manufacturer `json:"manufacturer,omitempty"`
+	Manufacturer *Manufacturer `json:"manufacturer"`
 	// The Ethereum address of the owner of this vehicle.
 	Owner common.Address `json:"owner"`
 	// The block timestamp at which this vehicle was minted.
@@ -338,11 +407,12 @@ type Vehicle struct {
 	Dcn        *Dcn        `json:"dcn,omitempty"`
 	// Encoded name of the device
 	Name string `json:"name"`
-	// The Image Url of he vehicle
+	// A URI containing an image for the vehicle.
+	ImageURI       string           `json:"imageURI"`
 	Image          string           `json:"image"`
 	Earnings       *VehicleEarnings `json:"earnings,omitempty"`
-	DataURI        string           `json:"dataUri"`
-	ManufacturerID *int             `json:"-"`
+	DataURI        string           `json:"dataURI"`
+	ManufacturerID int              `json:"-"`
 }
 
 func (Vehicle) IsNode()            {}
@@ -357,7 +427,7 @@ type VehicleConnection struct {
 }
 
 type VehicleEarnings struct {
-	TotalTokens *big.Int            `json:"totalTokens"`
+	TotalTokens *decimal.Big        `json:"totalTokens"`
 	History     *EarningsConnection `json:"history"`
 	VehicleID   int                 `json:"-"`
 }

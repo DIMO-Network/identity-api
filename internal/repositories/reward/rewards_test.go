@@ -14,10 +14,11 @@ import (
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/shared/dbtypes"
+	"github.com/ericlagergren/decimal"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/suite"
-	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -28,7 +29,7 @@ type RewardsRepoTestSuite struct {
 	suite.Suite
 	ctx              context.Context
 	pdb              db.Store
-	container        testcontainers.Container
+	container        *postgres.PostgresContainer
 	repo             *Repository
 	settings         config.Settings
 	paginationHelper helpers.PaginationHelper[RewardsCursor]
@@ -56,7 +57,7 @@ func (r *RewardsRepoTestSuite) SetupSuite() {
 
 // TearDownTest after each test truncate tables
 func (r *RewardsRepoTestSuite) TearDownTest() {
-	helpers.TruncateTables(r.pdb.DBS().Writer.DB, r.T())
+	r.Require().NoError(r.container.Restore(r.ctx))
 }
 
 // TearDownSuite cleanup at end by terminating container
@@ -74,6 +75,26 @@ func TestRewardsRepoTestSuite(t *testing.T) {
 }
 
 func (r *RewardsRepoTestSuite) createDependentRecords() {
+	var mfr = models.Manufacturer{
+		ID:       43,
+		Owner:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Name:     "Ford",
+		MintedAt: time.Now(),
+		Slug:     "ford",
+	}
+	err := mfr.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
+	r.NoError(err)
+
+	var mfr2 = models.Manufacturer{
+		ID:       137,
+		Owner:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDff"),
+		Name:     "AutoPi",
+		MintedAt: time.Now(),
+		Slug:     "autopi",
+	}
+	err = mfr2.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
+	r.NoError(err)
+
 	payloads := []struct {
 		AD  models.AftermarketDevice
 		SD  models.SyntheticDevice
@@ -82,22 +103,24 @@ func (r *RewardsRepoTestSuite) createDependentRecords() {
 	}{
 		{
 			Veh: models.Vehicle{
-				ID:           11,
-				OwnerAddress: common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
-				Make:         null.StringFrom("Ford"),
-				Model:        null.StringFrom("Bronco"),
-				Year:         null.IntFrom(2022),
-				MintedAt:     time.Now(),
+				ID:             11,
+				ManufacturerID: 43,
+				OwnerAddress:   common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+				Make:           null.StringFrom("Ford"),
+				Model:          null.StringFrom("Bronco"),
+				Year:           null.IntFrom(2022),
+				MintedAt:       time.Now(),
 			},
 			AD: models.AftermarketDevice{
-				ID:          1,
-				Address:     common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf5").Bytes(),
-				Owner:       common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4").Bytes(),
-				Serial:      null.StringFrom("aftermarketDeviceSerial-1"),
-				Imei:        null.StringFrom("aftermarketDeviceIMEI-1"),
-				MintedAt:    time.Now(),
-				VehicleID:   null.IntFrom(11),
-				Beneficiary: common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+				ManufacturerID: 137,
+				ID:             1,
+				Address:        common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf5").Bytes(),
+				Owner:          common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4").Bytes(),
+				Serial:         null.StringFrom("aftermarketDeviceSerial-1"),
+				Imei:           null.StringFrom("aftermarketDeviceIMEI-1"),
+				MintedAt:       time.Now(),
+				VehicleID:      null.IntFrom(11),
+				Beneficiary:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 			},
 			SD: models.SyntheticDevice{
 				ID:            1,
@@ -173,25 +196,25 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsSummary_Success() {
 		},
 	}
 
-	var aftEarn types.NullDecimal
-	var strkEarn types.NullDecimal
-	var syntEarn types.NullDecimal
+	var aftEarn *big.Int
+	var strkEarn *big.Int
+	var syntEarn *big.Int
 
 	for _, rr := range rw {
 		baseAmt, ok := new(big.Int).SetString("59147051345528509681", 10)
 		r.NotZero(ok)
 
-		aftEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(30)))
-		strkEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(50)))
-		syntEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(10)))
+		aftEarn = baseAmt.Add(baseAmt, big.NewInt(30))
+		strkEarn = baseAmt.Add(baseAmt, big.NewInt(50))
+		syntEarn = baseAmt.Add(baseAmt, big.NewInt(10))
 
-		rr.AftermarketEarnings = aftEarn
-		rr.StreakEarnings = strkEarn
-		rr.SyntheticEarnings = syntEarn
+		rr.AftermarketEarnings = dbtypes.IntToDecimal(aftEarn)
+		rr.StreakEarnings = dbtypes.IntToDecimal(strkEarn)
+		rr.SyntheticEarnings = dbtypes.IntToDecimal(syntEarn)
 
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(aftEarn))
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(strkEarn))
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(syntEarn))
+		totalEarned.Add(totalEarned, aftEarn)
+		totalEarned.Add(totalEarned, strkEarn)
+		totalEarned.Add(totalEarned, syntEarn)
 
 		err = rr.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
 		r.NoError(err)
@@ -201,7 +224,7 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsSummary_Success() {
 	r.NoError(err)
 
 	r.Equal(2, summary.TotalCount)
-	r.Equal(totalEarned, dbtypes.NullDecimalToInt(summary.TokenSum))
+	r.Equal(totalEarned, summary.TokenSum.Int(nil))
 }
 
 func (r *RewardsRepoTestSuite) Test_GetEarningsByVehicleID_Success() {
@@ -235,25 +258,25 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByVehicleID_Success() {
 		},
 	}
 
-	var aftEarn types.NullDecimal
-	var strkEarn types.NullDecimal
-	var syntEarn types.NullDecimal
+	var aftEarn *big.Int
+	var strkEarn *big.Int
+	var syntEarn *big.Int
 
 	for _, rr := range rw {
 		baseAmt, ok := new(big.Int).SetString("59147051345528509681", 10)
 		r.NotZero(ok)
 
-		aftEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(30)))
-		strkEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(50)))
-		syntEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(10)))
+		aftEarn = baseAmt.Add(baseAmt, big.NewInt(30))
+		strkEarn = baseAmt.Add(baseAmt, big.NewInt(50))
+		syntEarn = baseAmt.Add(baseAmt, big.NewInt(10))
 
-		rr.AftermarketEarnings = aftEarn
-		rr.StreakEarnings = strkEarn
-		rr.SyntheticEarnings = syntEarn
+		rr.AftermarketEarnings = dbtypes.IntToDecimal(aftEarn)
+		rr.StreakEarnings = dbtypes.IntToDecimal(strkEarn)
+		rr.SyntheticEarnings = dbtypes.IntToDecimal(syntEarn)
 
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(aftEarn))
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(strkEarn))
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(syntEarn))
+		totalEarned.Add(totalEarned, aftEarn)
+		totalEarned.Add(totalEarned, strkEarn)
+		totalEarned.Add(totalEarned, syntEarn)
 
 		err = rr.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
 		r.NoError(err)
@@ -278,7 +301,7 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByVehicleID_NoRows() {
 	r.NoError(err)
 
 	r.Equal(&gmodel.VehicleEarnings{
-		TotalTokens: big.NewInt(0),
+		TotalTokens: decimal.New(0, 18),
 		History: &gmodel.EarningsConnection{
 			TotalCount: 0,
 			Edges:      nil,
@@ -289,7 +312,6 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByVehicleID_NoRows() {
 }
 
 func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_Disallow_FirstAndLast() {
-
 	first := 1
 	last := 2
 	_, err := r.repo.PaginateVehicleEarningsByID(r.ctx, &gmodel.VehicleEarnings{}, &first, nil, &last, nil)
@@ -327,25 +349,25 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_FwdPagination_Fi
 		},
 	}
 
-	var aftEarn types.NullDecimal
-	var strkEarn types.NullDecimal
-	var syntEarn types.NullDecimal
+	var aftEarn *big.Int
+	var strkEarn *big.Int
+	var syntEarn *big.Int
 
 	for _, rr := range rw {
 		baseAmt, ok := new(big.Int).SetString("59147051345528509681", 10)
 		r.NotZero(ok)
 
-		aftEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(30)))
-		strkEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(50)))
-		syntEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(10)))
+		aftEarn = baseAmt.Add(baseAmt, big.NewInt(30))
+		strkEarn = baseAmt.Add(baseAmt, big.NewInt(50))
+		syntEarn = baseAmt.Add(baseAmt, big.NewInt(10))
 
-		rr.AftermarketEarnings = aftEarn
-		rr.StreakEarnings = strkEarn
-		rr.SyntheticEarnings = syntEarn
+		rr.AftermarketEarnings = dbtypes.IntToDecimal(aftEarn)
+		rr.StreakEarnings = dbtypes.IntToDecimal(strkEarn)
+		rr.SyntheticEarnings = dbtypes.IntToDecimal(syntEarn)
 
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(aftEarn))
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(strkEarn))
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(syntEarn))
+		totalEarned.Add(totalEarned, aftEarn)
+		totalEarned.Add(totalEarned, strkEarn)
+		totalEarned.Add(totalEarned, syntEarn)
 
 		err = rr.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
 		r.NoError(err)
@@ -378,11 +400,11 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_FwdPagination_Fi
 				Week:                    2,
 				Beneficiary:             common.BytesToAddress(beneficiary.Bytes()),
 				ConnectionStreak:        &connStrk,
-				StreakTokens:            dbtypes.NullDecimalToInt(strkEarn),
+				StreakTokens:            bigWeiToToken(strkEarn),
 				AftermarketDeviceID:     &aftID,
-				AftermarketDeviceTokens: dbtypes.NullDecimalToInt(aftEarn),
+				AftermarketDeviceTokens: bigWeiToToken(aftEarn),
 				SyntheticDeviceID:       &syntID,
-				SyntheticDeviceTokens:   dbtypes.NullDecimalToInt(syntEarn),
+				SyntheticDeviceTokens:   bigWeiToToken(syntEarn),
 				SentAt:                  currTime,
 				VehicleID:               11,
 			},
@@ -431,25 +453,25 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_FwdPagination_Fi
 		},
 	}
 
-	var aftEarn types.NullDecimal
-	var strkEarn types.NullDecimal
-	var syntEarn types.NullDecimal
+	var aftEarn *big.Int
+	var strkEarn *big.Int
+	var syntEarn *big.Int
 
 	for _, rr := range rw {
 		baseAmt, ok := new(big.Int).SetString("59147051345528509681", 10)
 		r.NotZero(ok)
 
-		aftEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(30)))
-		strkEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(50)))
-		syntEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(10)))
+		aftEarn = baseAmt.Add(baseAmt, big.NewInt(30))
+		strkEarn = baseAmt.Add(baseAmt, big.NewInt(50))
+		syntEarn = baseAmt.Add(baseAmt, big.NewInt(10))
 
-		rr.AftermarketEarnings = aftEarn
-		rr.StreakEarnings = strkEarn
-		rr.SyntheticEarnings = syntEarn
+		rr.AftermarketEarnings = dbtypes.IntToDecimal(aftEarn)
+		rr.StreakEarnings = dbtypes.IntToDecimal(strkEarn)
+		rr.SyntheticEarnings = dbtypes.IntToDecimal(syntEarn)
 
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(aftEarn))
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(strkEarn))
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(syntEarn))
+		totalEarned.Add(totalEarned, aftEarn)
+		totalEarned.Add(totalEarned, strkEarn)
+		totalEarned.Add(totalEarned, syntEarn)
 
 		err = rr.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
 		r.NoError(err)
@@ -485,11 +507,11 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_FwdPagination_Fi
 				Week:                    2,
 				Beneficiary:             common.BytesToAddress(beneficiary.Bytes()),
 				ConnectionStreak:        &connStrk[0],
-				StreakTokens:            dbtypes.NullDecimalToInt(strkEarn),
+				StreakTokens:            bigWeiToToken(strkEarn),
 				AftermarketDeviceID:     &aftID,
-				AftermarketDeviceTokens: dbtypes.NullDecimalToInt(aftEarn),
+				AftermarketDeviceTokens: bigWeiToToken(aftEarn),
 				SyntheticDeviceID:       &syntID,
-				SyntheticDeviceTokens:   dbtypes.NullDecimalToInt(syntEarn),
+				SyntheticDeviceTokens:   bigWeiToToken(syntEarn),
 				SentAt:                  currTime,
 				VehicleID:               11,
 			},
@@ -500,11 +522,11 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_FwdPagination_Fi
 				Week:                    1,
 				Beneficiary:             common.BytesToAddress(beneficiary.Bytes()),
 				ConnectionStreak:        &connStrk[1],
-				StreakTokens:            dbtypes.NullDecimalToInt(strkEarn),
+				StreakTokens:            bigWeiToToken(strkEarn),
 				AftermarketDeviceID:     &aftID,
-				AftermarketDeviceTokens: dbtypes.NullDecimalToInt(aftEarn),
+				AftermarketDeviceTokens: bigWeiToToken(aftEarn),
 				SyntheticDeviceID:       &syntID,
-				SyntheticDeviceTokens:   dbtypes.NullDecimalToInt(syntEarn),
+				SyntheticDeviceTokens:   bigWeiToToken(syntEarn),
 				SentAt:                  currTime,
 				VehicleID:               11,
 			},
@@ -553,25 +575,25 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_FwdPagination_Em
 		},
 	}
 
-	var aftEarn types.NullDecimal
-	var strkEarn types.NullDecimal
-	var syntEarn types.NullDecimal
+	var aftEarn *big.Int
+	var strkEarn *big.Int
+	var syntEarn *big.Int
 
 	for _, rr := range rw {
 		baseAmt, ok := new(big.Int).SetString("59147051345528509681", 10)
 		r.NotZero(ok)
 
-		aftEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(30)))
-		strkEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(50)))
-		syntEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(10)))
+		aftEarn = baseAmt.Add(baseAmt, big.NewInt(30))
+		strkEarn = baseAmt.Add(baseAmt, big.NewInt(50))
+		syntEarn = baseAmt.Add(baseAmt, big.NewInt(10))
 
-		rr.AftermarketEarnings = aftEarn
-		rr.StreakEarnings = strkEarn
-		rr.SyntheticEarnings = syntEarn
+		rr.AftermarketEarnings = dbtypes.IntToDecimal(aftEarn)
+		rr.StreakEarnings = dbtypes.IntToDecimal(strkEarn)
+		rr.SyntheticEarnings = dbtypes.IntToDecimal(syntEarn)
 
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(aftEarn))
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(strkEarn))
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(syntEarn))
+		totalEarned.Add(totalEarned, aftEarn)
+		totalEarned.Add(totalEarned, strkEarn)
+		totalEarned.Add(totalEarned, syntEarn)
 
 		err = rr.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
 		r.NoError(err)
@@ -627,25 +649,25 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_BackPagination_L
 		},
 	}
 
-	var aftEarn types.NullDecimal
-	var strkEarn types.NullDecimal
-	var syntEarn types.NullDecimal
+	var aftEarn *big.Int
+	var strkEarn *big.Int
+	var syntEarn *big.Int
 
 	for _, rr := range rw {
 		baseAmt, ok := new(big.Int).SetString("59147051345528509681", 10)
 		r.NotZero(ok)
 
-		aftEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(30)))
-		strkEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(50)))
-		syntEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(10)))
+		aftEarn = baseAmt.Add(baseAmt, big.NewInt(30))
+		strkEarn = baseAmt.Add(baseAmt, big.NewInt(50))
+		syntEarn = baseAmt.Add(baseAmt, big.NewInt(10))
 
-		rr.AftermarketEarnings = aftEarn
-		rr.StreakEarnings = strkEarn
-		rr.SyntheticEarnings = syntEarn
+		rr.AftermarketEarnings = dbtypes.IntToDecimal(aftEarn)
+		rr.StreakEarnings = dbtypes.IntToDecimal(strkEarn)
+		rr.SyntheticEarnings = dbtypes.IntToDecimal(syntEarn)
 
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(aftEarn))
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(strkEarn))
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(syntEarn))
+		totalEarned.Add(totalEarned, aftEarn)
+		totalEarned.Add(totalEarned, strkEarn)
+		totalEarned.Add(totalEarned, syntEarn)
 
 		err = rr.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
 		r.NoError(err)
@@ -680,11 +702,11 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_BackPagination_L
 				Week:                    1,
 				Beneficiary:             common.BytesToAddress(beneficiary.Bytes()),
 				ConnectionStreak:        &connStrk,
-				StreakTokens:            dbtypes.NullDecimalToInt(strkEarn),
+				StreakTokens:            bigWeiToToken(strkEarn),
 				AftermarketDeviceID:     &aftID,
-				AftermarketDeviceTokens: dbtypes.NullDecimalToInt(aftEarn),
+				AftermarketDeviceTokens: bigWeiToToken(aftEarn),
 				SyntheticDeviceID:       &syntID,
-				SyntheticDeviceTokens:   dbtypes.NullDecimalToInt(syntEarn),
+				SyntheticDeviceTokens:   bigWeiToToken(syntEarn),
 				SentAt:                  currTime,
 				VehicleID:               11,
 			},
@@ -733,25 +755,25 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_BackPagination_L
 		},
 	}
 
-	var aftEarn types.NullDecimal
-	var strkEarn types.NullDecimal
-	var syntEarn types.NullDecimal
+	var aftEarn *big.Int
+	var strkEarn *big.Int
+	var syntEarn *big.Int
 
 	for _, rr := range rw {
 		baseAmt, ok := new(big.Int).SetString("59147051345528509681", 10)
 		r.NotZero(ok)
 
-		aftEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(30)))
-		strkEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(50)))
-		syntEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(10)))
+		aftEarn = baseAmt.Add(baseAmt, big.NewInt(30))
+		strkEarn = baseAmt.Add(baseAmt, big.NewInt(50))
+		syntEarn = baseAmt.Add(baseAmt, big.NewInt(10))
 
-		rr.AftermarketEarnings = aftEarn
-		rr.StreakEarnings = strkEarn
-		rr.SyntheticEarnings = syntEarn
+		rr.AftermarketEarnings = dbtypes.IntToDecimal(aftEarn)
+		rr.StreakEarnings = dbtypes.IntToDecimal(strkEarn)
+		rr.SyntheticEarnings = dbtypes.IntToDecimal(syntEarn)
 
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(aftEarn))
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(strkEarn))
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(syntEarn))
+		totalEarned.Add(totalEarned, aftEarn)
+		totalEarned.Add(totalEarned, strkEarn)
+		totalEarned.Add(totalEarned, syntEarn)
 
 		err = rr.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
 		r.NoError(err)
@@ -789,11 +811,11 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_BackPagination_L
 				Week:                    3,
 				Beneficiary:             common.BytesToAddress(beneficiary.Bytes()),
 				ConnectionStreak:        &connStrk[1],
-				StreakTokens:            dbtypes.NullDecimalToInt(strkEarn),
+				StreakTokens:            bigWeiToToken(strkEarn),
 				AftermarketDeviceID:     &aftID,
-				AftermarketDeviceTokens: dbtypes.NullDecimalToInt(aftEarn),
+				AftermarketDeviceTokens: bigWeiToToken(aftEarn),
 				SyntheticDeviceID:       &syntID,
-				SyntheticDeviceTokens:   dbtypes.NullDecimalToInt(syntEarn),
+				SyntheticDeviceTokens:   bigWeiToToken(syntEarn),
 				SentAt:                  currTime,
 				VehicleID:               11,
 			},
@@ -804,11 +826,11 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_BackPagination_L
 				Week:                    2,
 				Beneficiary:             common.BytesToAddress(beneficiary.Bytes()),
 				ConnectionStreak:        &connStrk[0],
-				StreakTokens:            dbtypes.NullDecimalToInt(strkEarn),
+				StreakTokens:            bigWeiToToken(strkEarn),
 				AftermarketDeviceID:     &aftID,
-				AftermarketDeviceTokens: dbtypes.NullDecimalToInt(aftEarn),
+				AftermarketDeviceTokens: bigWeiToToken(aftEarn),
 				SyntheticDeviceID:       &syntID,
-				SyntheticDeviceTokens:   dbtypes.NullDecimalToInt(syntEarn),
+				SyntheticDeviceTokens:   bigWeiToToken(syntEarn),
 				SentAt:                  currTime,
 				VehicleID:               11,
 			},
@@ -857,25 +879,25 @@ func (r *RewardsRepoTestSuite) Test_PaginateVehicleEarningsByID_BackPagination_E
 		},
 	}
 
-	var aftEarn types.NullDecimal
-	var strkEarn types.NullDecimal
-	var syntEarn types.NullDecimal
+	var aftEarn *big.Int
+	var strkEarn *big.Int
+	var syntEarn *big.Int
 
 	for _, rr := range rw {
 		baseAmt, ok := new(big.Int).SetString("59147051345528509681", 10)
 		r.NotZero(ok)
 
-		aftEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(30)))
-		strkEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(50)))
-		syntEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(10)))
+		aftEarn = baseAmt.Add(baseAmt, big.NewInt(30))
+		strkEarn = baseAmt.Add(baseAmt, big.NewInt(50))
+		syntEarn = baseAmt.Add(baseAmt, big.NewInt(10))
 
-		rr.AftermarketEarnings = aftEarn
-		rr.StreakEarnings = strkEarn
-		rr.SyntheticEarnings = syntEarn
+		rr.AftermarketEarnings = dbtypes.IntToDecimal(aftEarn)
+		rr.StreakEarnings = dbtypes.IntToDecimal(strkEarn)
+		rr.SyntheticEarnings = dbtypes.IntToDecimal(syntEarn)
 
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(aftEarn))
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(strkEarn))
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(syntEarn))
+		totalEarned.Add(totalEarned, aftEarn)
+		totalEarned.Add(totalEarned, strkEarn)
+		totalEarned.Add(totalEarned, syntEarn)
 
 		err = rr.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
 		r.NoError(err)
@@ -939,10 +961,11 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_FwdPagination
 	totalEarned := big.NewInt(0)
 
 	aft := models.AftermarketDevice{
-		ID:          111,
-		Address:     beneficiary.Bytes(),
-		Beneficiary: beneficiary.Bytes(),
-		Owner:       beneficiary.Bytes(),
+		ID:             111,
+		ManufacturerID: 137,
+		Address:        beneficiary.Bytes(),
+		Beneficiary:    beneficiary.Bytes(),
+		Owner:          beneficiary.Bytes(),
 	}
 	err = aft.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
 	r.NoError(err)
@@ -954,25 +977,25 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_FwdPagination
 	})
 	r.NoError(err)
 
-	var aftEarn types.NullDecimal
-	var strkEarn types.NullDecimal
-	var syntEarn types.NullDecimal
+	var aftEarn *big.Int
+	var strkEarn *big.Int
+	var syntEarn *big.Int
 
 	for _, rr := range rw {
 		baseAmt, ok := new(big.Int).SetString("59147051345528509681", 10)
 		r.NotZero(ok)
 
-		aftEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(30)))
-		strkEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(50)))
-		syntEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(10)))
+		aftEarn = baseAmt.Add(baseAmt, big.NewInt(30))
+		strkEarn = baseAmt.Add(baseAmt, big.NewInt(50))
+		syntEarn = baseAmt.Add(baseAmt, big.NewInt(10))
 
-		rr.AftermarketEarnings = aftEarn
-		rr.StreakEarnings = strkEarn
-		rr.SyntheticEarnings = syntEarn
+		rr.AftermarketEarnings = dbtypes.IntToDecimal(aftEarn)
+		rr.StreakEarnings = dbtypes.IntToDecimal(strkEarn)
+		rr.SyntheticEarnings = dbtypes.IntToDecimal(syntEarn)
 
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(aftEarn))
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(strkEarn))
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(syntEarn))
+		totalEarned.Add(totalEarned, aftEarn)
+		totalEarned.Add(totalEarned, strkEarn)
+		totalEarned.Add(totalEarned, syntEarn)
 
 		err = rr.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
 		r.NoError(err)
@@ -1008,11 +1031,11 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_FwdPagination
 				Week:                    2,
 				Beneficiary:             common.BytesToAddress(beneficiary.Bytes()),
 				ConnectionStreak:        rw[1].ConnectionStreak.Ptr(),
-				StreakTokens:            dbtypes.NullDecimalToInt(strkEarn),
+				StreakTokens:            bigWeiToToken(strkEarn),
 				AftermarketDeviceID:     &aftID,
-				AftermarketDeviceTokens: dbtypes.NullDecimalToInt(aftEarn),
+				AftermarketDeviceTokens: bigWeiToToken(aftEarn),
 				SyntheticDeviceID:       &syntID,
-				SyntheticDeviceTokens:   dbtypes.NullDecimalToInt(syntEarn),
+				SyntheticDeviceTokens:   bigWeiToToken(syntEarn),
 				SentAt:                  currTime,
 				VehicleID:               11,
 			},
@@ -1023,11 +1046,11 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_FwdPagination
 				Week:                    1,
 				Beneficiary:             common.BytesToAddress(beneficiary.Bytes()),
 				ConnectionStreak:        rw[0].ConnectionStreak.Ptr(),
-				StreakTokens:            dbtypes.NullDecimalToInt(strkEarn),
+				StreakTokens:            bigWeiToToken(strkEarn),
 				AftermarketDeviceID:     &aftID,
-				AftermarketDeviceTokens: dbtypes.NullDecimalToInt(aftEarn),
+				AftermarketDeviceTokens: bigWeiToToken(aftEarn),
 				SyntheticDeviceID:       &syntID,
-				SyntheticDeviceTokens:   dbtypes.NullDecimalToInt(syntEarn),
+				SyntheticDeviceTokens:   bigWeiToToken(syntEarn),
 				SentAt:                  currTime,
 				VehicleID:               11,
 			},
@@ -1046,41 +1069,32 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_FwdPagination
 
 	totalEarned := big.NewInt(0)
 
-	aft := models.AftermarketDevice{
-		ID:          111,
-		Address:     beneficiary.Bytes(),
-		Beneficiary: beneficiary.Bytes(),
-		Owner:       beneficiary.Bytes(),
-	}
-	err = aft.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
-	r.NoError(err)
-
 	rw, err := r.createRewardsRecords(3, createRewardsRecordsInput{
 		beneficiary:         *beneficiary,
 		dateTime:            currTime,
-		afterMarketDeviceID: 111,
+		afterMarketDeviceID: 1,
 	})
 	r.NoError(err)
 
-	var aftEarn types.NullDecimal
-	var strkEarn types.NullDecimal
-	var syntEarn types.NullDecimal
+	var aftEarn *big.Int
+	var strkEarn *big.Int
+	var syntEarn *big.Int
 
 	for _, rr := range rw {
 		baseAmt, ok := new(big.Int).SetString("59147051345528509681", 10)
 		r.NotZero(ok)
 
-		aftEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(30)))
-		strkEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(50)))
-		syntEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(10)))
+		aftEarn = baseAmt.Add(baseAmt, big.NewInt(30))
+		strkEarn = baseAmt.Add(baseAmt, big.NewInt(50))
+		syntEarn = baseAmt.Add(baseAmt, big.NewInt(10))
 
-		rr.AftermarketEarnings = aftEarn
-		rr.StreakEarnings = strkEarn
-		rr.SyntheticEarnings = syntEarn
+		rr.AftermarketEarnings = dbtypes.IntToDecimal(aftEarn)
+		rr.StreakEarnings = dbtypes.IntToDecimal(strkEarn)
+		rr.SyntheticEarnings = dbtypes.IntToDecimal(syntEarn)
 
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(aftEarn))
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(strkEarn))
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(syntEarn))
+		totalEarned.Add(totalEarned, aftEarn)
+		totalEarned.Add(totalEarned, strkEarn)
+		totalEarned.Add(totalEarned, syntEarn)
 
 		err = rr.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
 		r.NoError(err)
@@ -1088,7 +1102,7 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_FwdPagination
 
 	first := 2
 	after := "kgML"
-	aftID := 111
+	aftID := 1
 
 	rwrd, err := r.repo.GetEarningsByAfterMarketDeviceID(r.ctx, aftID)
 	r.NoError(err)
@@ -1118,11 +1132,11 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_FwdPagination
 				Week:                    2,
 				Beneficiary:             common.BytesToAddress(beneficiary.Bytes()),
 				ConnectionStreak:        &connStrk[0],
-				StreakTokens:            dbtypes.NullDecimalToInt(strkEarn),
+				StreakTokens:            bigWeiToToken(strkEarn),
 				AftermarketDeviceID:     &aftID,
-				AftermarketDeviceTokens: dbtypes.NullDecimalToInt(aftEarn),
+				AftermarketDeviceTokens: bigWeiToToken(aftEarn),
 				SyntheticDeviceID:       &syntID,
-				SyntheticDeviceTokens:   dbtypes.NullDecimalToInt(syntEarn),
+				SyntheticDeviceTokens:   bigWeiToToken(syntEarn),
 				SentAt:                  currTime,
 				VehicleID:               11,
 			},
@@ -1133,11 +1147,11 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_FwdPagination
 				Week:                    1,
 				Beneficiary:             common.BytesToAddress(beneficiary.Bytes()),
 				ConnectionStreak:        &connStrk[1],
-				StreakTokens:            dbtypes.NullDecimalToInt(strkEarn),
+				StreakTokens:            bigWeiToToken(strkEarn),
 				AftermarketDeviceID:     &aftID,
-				AftermarketDeviceTokens: dbtypes.NullDecimalToInt(aftEarn),
+				AftermarketDeviceTokens: bigWeiToToken(aftEarn),
 				SyntheticDeviceID:       &syntID,
-				SyntheticDeviceTokens:   dbtypes.NullDecimalToInt(syntEarn),
+				SyntheticDeviceTokens:   bigWeiToToken(syntEarn),
 				SentAt:                  currTime,
 				VehicleID:               11,
 			},
@@ -1157,10 +1171,11 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_BackPaginatio
 	totalEarned := big.NewInt(0)
 
 	aft := models.AftermarketDevice{
-		ID:          111,
-		Address:     beneficiary.Bytes(),
-		Beneficiary: beneficiary.Bytes(),
-		Owner:       beneficiary.Bytes(),
+		ID:             111,
+		ManufacturerID: 137,
+		Address:        beneficiary.Bytes(),
+		Beneficiary:    beneficiary.Bytes(),
+		Owner:          beneficiary.Bytes(),
 	}
 	err = aft.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
 	r.NoError(err)
@@ -1172,25 +1187,25 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_BackPaginatio
 	})
 	r.NoError(err)
 
-	var aftEarn types.NullDecimal
-	var strkEarn types.NullDecimal
-	var syntEarn types.NullDecimal
+	var aftEarn *big.Int
+	var strkEarn *big.Int
+	var syntEarn *big.Int
 
 	for _, rr := range rw {
 		baseAmt, ok := new(big.Int).SetString("59147051345528509681", 10)
 		r.NotZero(ok)
 
-		aftEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(30)))
-		strkEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(50)))
-		syntEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(10)))
+		aftEarn = baseAmt.Add(baseAmt, big.NewInt(30))
+		strkEarn = baseAmt.Add(baseAmt, big.NewInt(50))
+		syntEarn = baseAmt.Add(baseAmt, big.NewInt(10))
 
-		rr.AftermarketEarnings = aftEarn
-		rr.StreakEarnings = strkEarn
-		rr.SyntheticEarnings = syntEarn
+		rr.AftermarketEarnings = dbtypes.IntToDecimal(aftEarn)
+		rr.StreakEarnings = dbtypes.IntToDecimal(strkEarn)
+		rr.SyntheticEarnings = dbtypes.IntToDecimal(syntEarn)
 
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(aftEarn))
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(strkEarn))
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(syntEarn))
+		totalEarned.Add(totalEarned, aftEarn)
+		totalEarned.Add(totalEarned, strkEarn)
+		totalEarned.Add(totalEarned, syntEarn)
 
 		err = rr.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
 		r.NoError(err)
@@ -1226,11 +1241,11 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_BackPaginatio
 				Week:                    1,
 				Beneficiary:             common.BytesToAddress(beneficiary.Bytes()),
 				ConnectionStreak:        &connStrk,
-				StreakTokens:            dbtypes.NullDecimalToInt(strkEarn),
+				StreakTokens:            bigWeiToToken(strkEarn),
 				AftermarketDeviceID:     &aftID,
-				AftermarketDeviceTokens: dbtypes.NullDecimalToInt(aftEarn),
+				AftermarketDeviceTokens: bigWeiToToken(aftEarn),
 				SyntheticDeviceID:       &syntID,
-				SyntheticDeviceTokens:   dbtypes.NullDecimalToInt(syntEarn),
+				SyntheticDeviceTokens:   bigWeiToToken(syntEarn),
 				SentAt:                  currTime,
 				VehicleID:               11,
 			},
@@ -1250,10 +1265,11 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_BackPaginatio
 	totalEarned := big.NewInt(0)
 
 	aft := models.AftermarketDevice{
-		ID:          111,
-		Address:     beneficiary.Bytes(),
-		Beneficiary: beneficiary.Bytes(),
-		Owner:       beneficiary.Bytes(),
+		ID:             111,
+		ManufacturerID: 137,
+		Address:        beneficiary.Bytes(),
+		Beneficiary:    beneficiary.Bytes(),
+		Owner:          beneficiary.Bytes(),
 	}
 	err = aft.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
 	r.NoError(err)
@@ -1265,25 +1281,25 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_BackPaginatio
 	})
 	r.NoError(err)
 
-	var aftEarn types.NullDecimal
-	var strkEarn types.NullDecimal
-	var syntEarn types.NullDecimal
+	var aftEarn *big.Int
+	var strkEarn *big.Int
+	var syntEarn *big.Int
 
 	for _, rr := range rw {
 		baseAmt, ok := new(big.Int).SetString("59147051345528509681", 10)
 		r.NotZero(ok)
 
-		aftEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(30)))
-		strkEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(50)))
-		syntEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(10)))
+		aftEarn = baseAmt.Add(baseAmt, big.NewInt(30))
+		strkEarn = baseAmt.Add(baseAmt, big.NewInt(50))
+		syntEarn = baseAmt.Add(baseAmt, big.NewInt(10))
 
-		rr.AftermarketEarnings = aftEarn
-		rr.StreakEarnings = strkEarn
-		rr.SyntheticEarnings = syntEarn
+		rr.AftermarketEarnings = dbtypes.IntToDecimal(aftEarn)
+		rr.StreakEarnings = dbtypes.IntToDecimal(strkEarn)
+		rr.SyntheticEarnings = dbtypes.IntToDecimal(syntEarn)
 
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(aftEarn))
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(strkEarn))
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(syntEarn))
+		totalEarned.Add(totalEarned, aftEarn)
+		totalEarned.Add(totalEarned, strkEarn)
+		totalEarned.Add(totalEarned, syntEarn)
 
 		err = rr.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
 		r.NoError(err)
@@ -1322,11 +1338,11 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_BackPaginatio
 				Week:                    3,
 				Beneficiary:             common.BytesToAddress(beneficiary.Bytes()),
 				ConnectionStreak:        &connStrk[1],
-				StreakTokens:            dbtypes.NullDecimalToInt(strkEarn),
+				StreakTokens:            bigWeiToToken(strkEarn),
 				AftermarketDeviceID:     &aftID,
-				AftermarketDeviceTokens: dbtypes.NullDecimalToInt(aftEarn),
+				AftermarketDeviceTokens: bigWeiToToken(aftEarn),
 				SyntheticDeviceID:       &syntID,
-				SyntheticDeviceTokens:   dbtypes.NullDecimalToInt(syntEarn),
+				SyntheticDeviceTokens:   bigWeiToToken(syntEarn),
 				SentAt:                  currTime,
 				VehicleID:               11,
 			},
@@ -1337,11 +1353,11 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByAfterMarketDevice_BackPaginatio
 				Week:                    2,
 				Beneficiary:             common.BytesToAddress(beneficiary.Bytes()),
 				ConnectionStreak:        &connStrk[0],
-				StreakTokens:            dbtypes.NullDecimalToInt(strkEarn),
+				StreakTokens:            bigWeiToToken(strkEarn),
 				AftermarketDeviceID:     &aftID,
-				AftermarketDeviceTokens: dbtypes.NullDecimalToInt(aftEarn),
+				AftermarketDeviceTokens: bigWeiToToken(aftEarn),
 				SyntheticDeviceID:       &syntID,
-				SyntheticDeviceTokens:   dbtypes.NullDecimalToInt(syntEarn),
+				SyntheticDeviceTokens:   bigWeiToToken(syntEarn),
 				SentAt:                  currTime,
 				VehicleID:               11,
 			},
@@ -1367,25 +1383,25 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByUserAddress_FwdPagination_First
 	})
 	r.NoError(err)
 
-	var aftEarn types.NullDecimal
-	var strkEarn types.NullDecimal
-	var syntEarn types.NullDecimal
+	var aftEarn *big.Int
+	var strkEarn *big.Int
+	var syntEarn *big.Int
 
 	for _, rr := range rw {
 		baseAmt, ok := new(big.Int).SetString("59147051345528509681", 10)
 		r.NotZero(ok)
 
-		aftEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(30)))
-		strkEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(50)))
-		syntEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(10)))
+		aftEarn = baseAmt.Add(baseAmt, big.NewInt(30))
+		strkEarn = baseAmt.Add(baseAmt, big.NewInt(50))
+		syntEarn = baseAmt.Add(baseAmt, big.NewInt(10))
 
-		rr.AftermarketEarnings = aftEarn
-		rr.StreakEarnings = strkEarn
-		rr.SyntheticEarnings = syntEarn
+		rr.AftermarketEarnings = dbtypes.IntToDecimal(aftEarn)
+		rr.StreakEarnings = dbtypes.IntToDecimal(strkEarn)
+		rr.SyntheticEarnings = dbtypes.IntToDecimal(syntEarn)
 
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(aftEarn))
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(strkEarn))
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(syntEarn))
+		totalEarned.Add(totalEarned, aftEarn)
+		totalEarned.Add(totalEarned, strkEarn)
+		totalEarned.Add(totalEarned, syntEarn)
 
 		err = rr.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
 		r.NoError(err)
@@ -1421,11 +1437,11 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByUserAddress_FwdPagination_First
 				Week:                    2,
 				Beneficiary:             common.BytesToAddress(beneficiary.Bytes()),
 				ConnectionStreak:        rw[1].ConnectionStreak.Ptr(),
-				StreakTokens:            dbtypes.NullDecimalToInt(strkEarn),
+				StreakTokens:            bigWeiToToken(strkEarn),
 				AftermarketDeviceID:     &aftID,
-				AftermarketDeviceTokens: dbtypes.NullDecimalToInt(aftEarn),
+				AftermarketDeviceTokens: bigWeiToToken(aftEarn),
 				SyntheticDeviceID:       &syntID,
-				SyntheticDeviceTokens:   dbtypes.NullDecimalToInt(syntEarn),
+				SyntheticDeviceTokens:   bigWeiToToken(syntEarn),
 				SentAt:                  currTime,
 				VehicleID:               11,
 			},
@@ -1436,11 +1452,11 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByUserAddress_FwdPagination_First
 				Week:                    1,
 				Beneficiary:             common.BytesToAddress(beneficiary.Bytes()),
 				ConnectionStreak:        rw[0].ConnectionStreak.Ptr(),
-				StreakTokens:            dbtypes.NullDecimalToInt(strkEarn),
+				StreakTokens:            bigWeiToToken(strkEarn),
 				AftermarketDeviceID:     &aftID,
-				AftermarketDeviceTokens: dbtypes.NullDecimalToInt(aftEarn),
+				AftermarketDeviceTokens: bigWeiToToken(aftEarn),
 				SyntheticDeviceID:       &syntID,
-				SyntheticDeviceTokens:   dbtypes.NullDecimalToInt(syntEarn),
+				SyntheticDeviceTokens:   bigWeiToToken(syntEarn),
 				SentAt:                  currTime,
 				VehicleID:               11,
 			},
@@ -1466,25 +1482,25 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByUserAddress_BackPagination_Last
 	})
 	r.NoError(err)
 
-	var aftEarn types.NullDecimal
-	var strkEarn types.NullDecimal
-	var syntEarn types.NullDecimal
+	var aftEarn *big.Int
+	var strkEarn *big.Int
+	var syntEarn *big.Int
 
 	for _, rr := range rw {
 		baseAmt, ok := new(big.Int).SetString("59147051345528509681", 10)
 		r.NotZero(ok)
 
-		aftEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(30)))
-		strkEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(50)))
-		syntEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(10)))
+		aftEarn = baseAmt.Add(baseAmt, big.NewInt(30))
+		strkEarn = baseAmt.Add(baseAmt, big.NewInt(50))
+		syntEarn = baseAmt.Add(baseAmt, big.NewInt(10))
 
-		rr.AftermarketEarnings = aftEarn
-		rr.StreakEarnings = strkEarn
-		rr.SyntheticEarnings = syntEarn
+		rr.AftermarketEarnings = dbtypes.IntToDecimal(aftEarn)
+		rr.StreakEarnings = dbtypes.IntToDecimal(strkEarn)
+		rr.SyntheticEarnings = dbtypes.IntToDecimal(syntEarn)
 
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(aftEarn))
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(strkEarn))
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(syntEarn))
+		totalEarned.Add(totalEarned, aftEarn)
+		totalEarned.Add(totalEarned, strkEarn)
+		totalEarned.Add(totalEarned, syntEarn)
 
 		err = rr.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
 		r.NoError(err)
@@ -1520,11 +1536,11 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByUserAddress_BackPagination_Last
 				Week:                    1,
 				Beneficiary:             common.BytesToAddress(beneficiary.Bytes()),
 				ConnectionStreak:        &connStrk,
-				StreakTokens:            dbtypes.NullDecimalToInt(strkEarn),
+				StreakTokens:            bigWeiToToken(strkEarn),
 				AftermarketDeviceID:     &aftID,
-				AftermarketDeviceTokens: dbtypes.NullDecimalToInt(aftEarn),
+				AftermarketDeviceTokens: bigWeiToToken(aftEarn),
 				SyntheticDeviceID:       &syntID,
-				SyntheticDeviceTokens:   dbtypes.NullDecimalToInt(syntEarn),
+				SyntheticDeviceTokens:   bigWeiToToken(syntEarn),
 				SentAt:                  currTime,
 				VehicleID:               11,
 			},
@@ -1547,8 +1563,9 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByUserAddress_MultipleVehicle_Fwd
 	totalEarned := big.NewInt(0)
 
 	veh := models.Vehicle{ // create a brand new vehicle here
-		ID:           5,
-		OwnerAddress: owner.Bytes(),
+		ManufacturerID: 43,
+		ID:             5,
+		OwnerAddress:   owner.Bytes(),
 	}
 	err = veh.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
 	r.NoError(err)
@@ -1563,25 +1580,25 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByUserAddress_MultipleVehicle_Fwd
 	rw[1].VehicleID = 5    // one of the rewards should be for our new vehicle
 	rw[1].IssuanceWeek = 1 // put new vehicle in same week as old vehicle
 
-	var aftEarn types.NullDecimal
-	var strkEarn types.NullDecimal
-	var syntEarn types.NullDecimal
+	var aftEarn *big.Int
+	var strkEarn *big.Int
+	var syntEarn *big.Int
 
 	for _, rr := range rw {
 		baseAmt, ok := new(big.Int).SetString("59147051345528509681", 10)
 		r.NotZero(ok)
 
-		aftEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(30)))
-		strkEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(50)))
-		syntEarn = dbtypes.NullIntToDecimal(baseAmt.Add(baseAmt, big.NewInt(10)))
+		aftEarn = baseAmt.Add(baseAmt, big.NewInt(30))
+		strkEarn = baseAmt.Add(baseAmt, big.NewInt(50))
+		syntEarn = baseAmt.Add(baseAmt, big.NewInt(10))
 
-		rr.AftermarketEarnings = aftEarn
-		rr.StreakEarnings = strkEarn
-		rr.SyntheticEarnings = syntEarn
+		rr.AftermarketEarnings = dbtypes.IntToDecimal(aftEarn)
+		rr.StreakEarnings = dbtypes.IntToDecimal(strkEarn)
+		rr.SyntheticEarnings = dbtypes.IntToDecimal(syntEarn)
 
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(aftEarn))
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(strkEarn))
-		totalEarned.Add(totalEarned, dbtypes.NullDecimalToInt(syntEarn))
+		totalEarned.Add(totalEarned, aftEarn)
+		totalEarned.Add(totalEarned, strkEarn)
+		totalEarned.Add(totalEarned, syntEarn)
 
 		err = rr.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
 		r.NoError(err)
@@ -1618,11 +1635,11 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByUserAddress_MultipleVehicle_Fwd
 				Week:                    3,
 				Beneficiary:             common.BytesToAddress(beneficiary.Bytes()),
 				ConnectionStreak:        rw[2].ConnectionStreak.Ptr(),
-				StreakTokens:            dbtypes.NullDecimalToInt(strkEarn),
+				StreakTokens:            bigWeiToToken(strkEarn),
 				AftermarketDeviceID:     &aftID,
-				AftermarketDeviceTokens: dbtypes.NullDecimalToInt(aftEarn),
+				AftermarketDeviceTokens: bigWeiToToken(aftEarn),
 				SyntheticDeviceID:       &syntID,
-				SyntheticDeviceTokens:   dbtypes.NullDecimalToInt(syntEarn),
+				SyntheticDeviceTokens:   bigWeiToToken(syntEarn),
 				SentAt:                  currTime,
 				VehicleID:               11,
 			},
@@ -1633,11 +1650,11 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByUserAddress_MultipleVehicle_Fwd
 				Week:                    1,
 				Beneficiary:             common.BytesToAddress(beneficiary.Bytes()),
 				ConnectionStreak:        rw[0].ConnectionStreak.Ptr(),
-				StreakTokens:            dbtypes.NullDecimalToInt(strkEarn),
+				StreakTokens:            bigWeiToToken(strkEarn),
 				AftermarketDeviceID:     &aftID,
-				AftermarketDeviceTokens: dbtypes.NullDecimalToInt(aftEarn),
+				AftermarketDeviceTokens: bigWeiToToken(aftEarn),
 				SyntheticDeviceID:       &syntID,
-				SyntheticDeviceTokens:   dbtypes.NullDecimalToInt(syntEarn),
+				SyntheticDeviceTokens:   bigWeiToToken(syntEarn),
 				SentAt:                  currTime,
 				VehicleID:               11,
 			},
@@ -1648,11 +1665,11 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByUserAddress_MultipleVehicle_Fwd
 				Week:                    1,
 				Beneficiary:             common.BytesToAddress(beneficiary.Bytes()),
 				ConnectionStreak:        rw[1].ConnectionStreak.Ptr(),
-				StreakTokens:            dbtypes.NullDecimalToInt(strkEarn),
+				StreakTokens:            bigWeiToToken(strkEarn),
 				AftermarketDeviceID:     &aftID,
-				AftermarketDeviceTokens: dbtypes.NullDecimalToInt(aftEarn),
+				AftermarketDeviceTokens: bigWeiToToken(aftEarn),
 				SyntheticDeviceID:       &syntID,
-				SyntheticDeviceTokens:   dbtypes.NullDecimalToInt(syntEarn),
+				SyntheticDeviceTokens:   bigWeiToToken(syntEarn),
 				SentAt:                  currTime,
 				VehicleID:               5,
 			},
@@ -1660,4 +1677,9 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByUserAddress_MultipleVehicle_Fwd
 		},
 	}, paginatedEarnings.Edges)
 
+}
+
+func bigWeiToToken(wei *big.Int) *decimal.Big {
+	bigDec := new(decimal.Big).SetBigMantScale(wei, 0)
+	return weiToToken(types.NewDecimal(bigDec))
 }

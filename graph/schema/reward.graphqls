@@ -12,11 +12,6 @@ extend type Query {
   ): UserRewards
 }
 
-type Earnings {
-  earnedTokens: BigInt!
-  earningsTransfers(first: Int): EarningsConnection!
-}
-
 type Earning {
   """
   Week reward was issued
@@ -33,7 +28,7 @@ type Earning {
   """
   Tokens earned for connection period
   """
-  streakTokens: BigInt!
+  streakTokens: BigDecimal!
   """
   AftermarketDevice connected to vehicle
   """
@@ -41,7 +36,7 @@ type Earning {
   """
   Tokens earned by aftermarketDevice
   """
-  aftermarketDeviceTokens: BigInt!
+  aftermarketDeviceTokens: BigDecimal!
   """
   SyntheticDevice connected to vehicle
   """
@@ -49,7 +44,7 @@ type Earning {
   """
   Tokens earned by SyntheticDevice
   """
-  syntheticDeviceTokens: BigInt!
+  syntheticDeviceTokens: BigDecimal!
   """
   Vehicle reward is assigned to
   """
@@ -73,7 +68,7 @@ type EarningsConnection {
 }
 
 type UserRewards {
-  totalTokens: BigInt!
+  totalTokens: BigDecimal!
   history(
     first: Int
     after: String

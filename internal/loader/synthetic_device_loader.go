@@ -3,7 +3,6 @@ package loader
 import (
 	"context"
 
-	"github.com/DIMO-Network/identity-api/graph/model"
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/repositories/synthetic"
 	"github.com/DIMO-Network/identity-api/models"
@@ -73,7 +72,7 @@ func (sd *SyntheticDeviceLoader) BatchGetSyntheticDeviceByID(ctx context.Context
 	sds, err := models.SyntheticDevices(models.SyntheticDeviceWhere.ID.IN(syntheticDeviceIDs)).All(ctx, sd.db.DBS().Reader)
 	if err != nil {
 		for i := range results {
-			results[i] = &dataloader.Result[*model.SyntheticDevice]{Error: err}
+			results[i] = &dataloader.Result[*gmodel.SyntheticDevice]{Error: err}
 		}
 		return results
 	}
@@ -88,7 +87,7 @@ func (sd *SyntheticDeviceLoader) BatchGetSyntheticDeviceByID(ctx context.Context
 			synthAPI, err := synthetic.ToAPI(sdv)
 			results[i] = &dataloader.Result[*gmodel.SyntheticDevice]{Data: synthAPI, Error: err}
 		} else {
-			results[i] = &dataloader.Result[*model.SyntheticDevice]{}
+			results[i] = &dataloader.Result[*gmodel.SyntheticDevice]{}
 		}
 	}
 

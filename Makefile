@@ -4,8 +4,11 @@ TAGS =
 
 INSTALL_DIR        = $(GOPATH)/bin
 DEST_DIR           = ./target
-PATHINSTBIN        = $(DEST_DIR)/bin
+PATHINSTBIN        = $(abspath $(DEST_DIR)/bin)
 PATHINSTDOCKER     = $(DEST_DIR)/docker
+
+# Add target bin dir to PATH
+export PATH := $(PATHINSTBIN):$(PATH)
 
 VERSION   := $(shell git describe --tags || echo "v0.0.0")
 VER_CUT   := $(shell echo $(VERSION) | cut -c2-)
@@ -20,13 +23,24 @@ GO_FLAGS   =
 DOCS_FLAGS =
 NAME?="new"
 
+GOLANGCI_VERSION   = latest
+# Get binary versions from go.mod
+GQLGEN_VERSION     =  $(shell go list -m -f '{{.Version}}' github.com/99designs/gqlgen)
+GOOSE_VERSION      =  $(shell go list -m -f '{{.Version}}' github.com/pressly/goose/v3)
+SQLBOILER_VERSION  =  $(shell go list -m -f '{{.Version}}' github.com/volatiletech/sqlboiler/v4)
 
 APPS = identity-api
+
+help:
+	@echo "\nSpecify a subcommand:\n"
+	@grep -hE '^[0-9a-zA-Z_-]+:.*?## .*$$' ${MAKEFILE_LIST} | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[0;36m%-20s\033[m %s\n", $$1, $$2}'
+	@echo ""
+
 all: $(APPS)
 
 install: $(APPS)
 	@mkdir -p bin
-	@cp $(PATHINSTBIN)/identity-api ./bin/
+	@cp $(PATHINSTBIN)/$(APPS) ./bin/
 
 deps:
 	@go mod tidy
@@ -61,25 +75,49 @@ fmt:
 	@go list -f {{.Dir}} ./... | xargs -I{} gofmt -w -s {}
 	@go mod tidy
 
-lint:
-	@go vet $(GO_FLAGS) ./...
+lint: ## Run linter.
+	@golangci-lint run
 
-test: $(APPS)
-	@go test $(GO_FLAGS) -timeout 3m -race ./...
-	@$(PATHINSTBIN)/identity-api test ./config/test/...
+test: ## Run all package tests.
+	@go test $(GO_FLAGS) -timeout 3m -p=1 ./...
 
-clean:
+clean: ## Remove previous builds.
 	rm -rf $(PATHINSTBIN)
 	rm -rf $(DEST_DIR)/dist
 	rm -rf $(PATHINSTDOCKER)
 
-run: ## Run the app.
-	go run ./cmd/identity-api
-migrate: ## Run database migrations.
-	go run ./cmd/identity-api migrate
+run: $(APPS) ## Run the app.
+	$(PATHINSTBIN)/$(APPS)
+
+migrate: $(APPS) ## Run database migrations.
+	$(PATHINSTBIN)/$(APPS) migrate
+
 sql: ## Create a new SQL migration file. Use the NAME variable to set the name: "make sql NAME=dcn_table".
-	goose -dir migrations create $(NAME) sql
+	@goose -version
+	goose  -dir migrations -s create $(NAME) sql 
+
 boil: ## Generate SQLBoiler models.
+	@sqlboiler --version
 	sqlboiler psql --no-tests --wipe
+
 gql: ## Generate gqlgen code.
-	go run github.com/99designs/gqlgen generate
+	@gqlgen version
+	gqlgen generate
+
+tools-golangci-lint: ## Install golangci-lint dependency.
+	@mkdir -p $(PATHINSTBIN)
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(PATHINSTBIN) $(GOLANGCI_VERSION)
+
+tools-gqlgen: ## Install gqlgen dependency.
+	@mkdir -p $(PATHINSTBIN)
+	GOBIN=$(PATHINSTBIN) go install github.com/99designs/gqlgen@$(GQLGEN_VERSION)
+
+tools-goose: ## Install goose dependency.
+	@mkdir -p $(PATHINSTBIN)
+	GOBIN=$(PATHINSTBIN) go install github.com/pressly/goose/v3/cmd/goose@$(GOOSE_VERSION)
+
+tools-sqlboiler: ## Install sqlboiler dependency.
+	@mkdir -p $(PATHINSTBIN)
+	GOBIN=$(PATHINSTBIN) go install github.com/volatiletech/sqlboiler/v4@$(SQLBOILER_VERSION)
+
+tools: tools-golangci-lint tools-gqlgen tools-goose tools-sqlboiler ## Install all tool dependencies.

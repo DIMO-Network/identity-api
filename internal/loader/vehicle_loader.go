@@ -2,11 +2,11 @@ package loader
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/config"
-	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/repositories/vehicle"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/db"
@@ -47,12 +47,31 @@ func (v *VehicleLoader) BatchGetVehicleByID(ctx context.Context, vehicleIDs []in
 
 	for i, k := range vehicleIDs {
 		if veh, ok := vehicleByID[k]; ok {
-			imageUrl := helpers.GetVehicleImageUrl(v.settings.BaseImageURL, veh.ID)
-			dataURI := helpers.GetVehicleDataURI(v.settings.BaseVehicleDataURI, veh.ID)
-			obj, err := vehicle.ToAPI(veh, imageUrl, dataURI)
+			var retErr error
+
+			var imageURI string
+
+			if veh.ImageURI.Valid {
+				imageURI = veh.ImageURI.String
+			} else {
+				var err error
+				imageURI, err = vehicle.DefaultImageURI(v.settings.BaseImageURL, veh.ID)
+				if err != nil {
+					retErr = errors.Join(retErr, fmt.Errorf("error getting vehicle image url: %w", err))
+				}
+			}
+
+			dataURI, err := vehicle.GetVehicleDataURI(v.settings.BaseVehicleDataURI, veh.ID)
+			if err != nil {
+				retErr = errors.Join(retErr, fmt.Errorf("error getting vehicle data uri: %w", err))
+			}
+			obj, err := vehicle.ToAPI(veh, imageURI, dataURI)
+			if err != nil {
+				retErr = errors.Join(retErr, fmt.Errorf("error converting vehicle to API: %w", err))
+			}
 			results[i] = &dataloader.Result[*model.Vehicle]{
 				Data:  obj,
-				Error: err,
+				Error: retErr,
 			}
 		} else {
 			results[i] = &dataloader.Result[*model.Vehicle]{Error: fmt.Errorf("no vehicle with id %d", k)}

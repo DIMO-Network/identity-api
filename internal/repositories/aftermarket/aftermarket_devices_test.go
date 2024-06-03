@@ -18,7 +18,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
-	"github.com/volatiletech/null/v8"
+	"github.com/stretchr/testify/require"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
@@ -36,12 +36,23 @@ func TestAftermarketDeviceNodeMintMultiResponse(t *testing.T) {
 
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDir)
 
+	var mfr2 = models.Manufacturer{
+		ID:       137,
+		Owner:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDff"),
+		Name:     "AutoPi",
+		MintedAt: time.Now(),
+		Slug:     "autopi",
+	}
+	err := mfr2.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
+
 	for i := 1; i < 6; i++ {
 		ad := models.AftermarketDevice{
-			ID:          i,
-			Owner:       aftermarketDeviceNodeMintedArgs.Owner.Bytes(),
-			Beneficiary: aftermarketDeviceNodeMintedArgs.Owner.Bytes(),
-			Address:     aftermarketDeviceNodeMintedArgs.AftermarketDeviceAddress.Bytes(),
+			ManufacturerID: 137,
+			ID:             i,
+			Owner:          aftermarketDeviceNodeMintedArgs.Owner.Bytes(),
+			Beneficiary:    aftermarketDeviceNodeMintedArgs.Owner.Bytes(),
+			Address:        aftermarketDeviceNodeMintedArgs.AftermarketDeviceAddress.Bytes(),
 		}
 
 		err := ad.Insert(ctx, pdb.DBS().Writer, boil.Infer())
@@ -70,13 +81,23 @@ func Test_GetOwnedAftermarketDevices_Pagination_PreviousPage(t *testing.T) {
 
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDir)
 
+	mfr := models.Manufacturer{
+		ID:    137,
+		Name:  "AutoPi",
+		Owner: common.FromHex("0xaba3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Slug:  "autopi",
+	}
+	err := mfr.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err)
+
 	var ad []models.AftermarketDevice
 	for i := 1; i <= 4; i++ {
 		ad = append(ad, models.AftermarketDevice{
-			ID:          i,
-			Owner:       aftermarketDeviceNodeMintedArgs.Owner.Bytes(),
-			Beneficiary: aftermarketDeviceNodeMintedArgs.Owner.Bytes(),
-			Address:     aftermarketDeviceNodeMintedArgs.AftermarketDeviceAddress.Bytes(),
+			ID:             i,
+			ManufacturerID: 137,
+			Owner:          aftermarketDeviceNodeMintedArgs.Owner.Bytes(),
+			Beneficiary:    aftermarketDeviceNodeMintedArgs.Owner.Bytes(),
+			Address:        aftermarketDeviceNodeMintedArgs.AftermarketDeviceAddress.Bytes(),
 		})
 	}
 
@@ -113,23 +134,25 @@ func Test_GetOwnedAftermarketDevices_Pagination_PreviousPage(t *testing.T) {
 	expected := []*model.AftermarketDeviceEdge{
 		{
 			Node: &model.AftermarketDevice{
-				ID:          "AD_kQM=",
-				TokenID:     3,
-				Owner:       common.BytesToAddress(ad[2].Owner),
-				Beneficiary: common.BytesToAddress(ad[2].Beneficiary),
-				Address:     common.BytesToAddress(ad[2].Address),
-				Image:       "https://mockUrl.com/v1/aftermarket/device/3/image",
+				ID:             "AD_kQM=",
+				ManufacturerID: 137,
+				TokenID:        3,
+				Owner:          common.BytesToAddress(ad[2].Owner),
+				Beneficiary:    common.BytesToAddress(ad[2].Beneficiary),
+				Address:        common.BytesToAddress(ad[2].Address),
+				Image:          "https://mockUrl.com/v1/aftermarket/device/3/image",
 			},
 			Cursor: "Mw==",
 		},
 		{
 			Node: &model.AftermarketDevice{
-				ID:          "AD_kQI=",
-				TokenID:     2,
-				Owner:       common.BytesToAddress(ad[1].Owner),
-				Beneficiary: common.BytesToAddress(ad[1].Beneficiary),
-				Address:     common.BytesToAddress(ad[1].Address),
-				Image:       "https://mockUrl.com/v1/aftermarket/device/2/image",
+				ID:             "AD_kQI=",
+				TokenID:        2,
+				ManufacturerID: 137,
+				Owner:          common.BytesToAddress(ad[1].Owner),
+				Beneficiary:    common.BytesToAddress(ad[1].Beneficiary),
+				Address:        common.BytesToAddress(ad[1].Address),
+				Image:          "https://mockUrl.com/v1/aftermarket/device/2/image",
 			},
 			Cursor: "Mg==",
 		},
@@ -147,6 +170,16 @@ func Test_GetAftermarketDevices_FilterByBeneficiary(t *testing.T) {
 	ctx := context.Background()
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDir)
 
+	var mfr2 = models.Manufacturer{
+		ID:       137,
+		Owner:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDff"),
+		Name:     "AutoPi",
+		MintedAt: time.Now(),
+		Slug:     "autopi",
+	}
+	err := mfr2.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
+
 	var tknID int
 	// dynamically setting bene for each AD
 	// overwriting beneficiary variable each time
@@ -156,10 +189,11 @@ func Test_GetAftermarketDevices_FilterByBeneficiary(t *testing.T) {
 		tknID = i
 		beneficiary = common.BigToAddress(big.NewInt(int64(i + 2)))
 		ad := models.AftermarketDevice{
-			ID:          tknID,
-			Owner:       aftermarketDeviceNodeMintedArgs.Owner.Bytes(),
-			Beneficiary: beneficiary.Bytes(),
-			Address:     aftermarketDeviceNodeMintedArgs.AftermarketDeviceAddress.Bytes(),
+			ID:             tknID,
+			ManufacturerID: 137,
+			Owner:          aftermarketDeviceNodeMintedArgs.Owner.Bytes(),
+			Beneficiary:    beneficiary.Bytes(),
+			Address:        aftermarketDeviceNodeMintedArgs.AftermarketDeviceAddress.Bytes(),
 		}
 
 		err := ad.Insert(ctx, pdb.DBS().Writer, boil.Infer())
@@ -206,12 +240,14 @@ func Test_GetAftermarketDevices_FilterByManufacturerID(t *testing.T) {
 			Owner:    common.HexToAddress("1").Bytes(),
 			MintedAt: time.Now(),
 			Name:     "Toyota",
+			Slug:     "toyota",
 		},
 		{
 			ID:       2,
 			Owner:    common.HexToAddress("2").Bytes(),
 			MintedAt: time.Now(),
 			Name:     "Honda",
+			Slug:     "honda",
 		},
 	}
 	for _, m := range mnfs {
@@ -225,11 +261,11 @@ func Test_GetAftermarketDevices_FilterByManufacturerID(t *testing.T) {
 			Owner:          aftermarketDeviceNodeMintedArgs.Owner.Bytes(),
 			Beneficiary:    common.BigToAddress(big.NewInt(int64(i + 2))).Bytes(),
 			Address:        aftermarketDeviceNodeMintedArgs.AftermarketDeviceAddress.Bytes(),
-			ManufacturerID: null.IntFrom(manufacturerID),
+			ManufacturerID: manufacturerID,
 		}
 
 		if i%2 == 0 {
-			ad.ManufacturerID = null.IntFrom(2)
+			ad.ManufacturerID = 2
 		}
 
 		err := ad.Insert(ctx, pdb.DBS().Writer, boil.Infer())
@@ -248,18 +284,18 @@ func Test_GetAftermarketDevices_FilterByManufacturerID(t *testing.T) {
 
 	expected := []struct {
 		id             string
-		manufacturerID *int
+		manufacturerID int
 		owner          common.Address
 		beneficiary    common.Address
 	}{
 		{
 			id:             "AD_kQM=",
-			manufacturerID: &manufacturerID,
+			manufacturerID: manufacturerID,
 			owner:          aftermarketDeviceNodeMintedArgs.Owner,
 		},
 		{
 			id:             "AD_kQE=",
-			manufacturerID: &manufacturerID,
+			manufacturerID: manufacturerID,
 			owner:          aftermarketDeviceNodeMintedArgs.Owner,
 		},
 	}
@@ -268,5 +304,51 @@ func Test_GetAftermarketDevices_FilterByManufacturerID(t *testing.T) {
 		assert.Exactly(t, e.id, actual.Edges[i].Node.ID)
 		assert.Exactly(t, e.manufacturerID, actual.Edges[i].Node.ManufacturerID)
 		assert.Exactly(t, e.owner, actual.Edges[i].Node.Owner)
+	}
+}
+
+func Test_GetAftermarketDeviceImageUrl(t *testing.T) {
+	testCases := []struct {
+		name        string
+		baseURL     string
+		tokenID     int
+		expectedURL string
+	}{
+		{
+			name:        "valid url",
+			baseURL:     "https://mockUrl.com/v1",
+			tokenID:     42,
+			expectedURL: "https://mockUrl.com/v1/aftermarket/device/42/image",
+		},
+		{
+			name:        "empty url",
+			baseURL:     "",
+			tokenID:     42,
+			expectedURL: "aftermarket/device/42/image",
+		},
+		{
+			name:        "leading slash",
+			baseURL:     "/v1",
+			tokenID:     42,
+			expectedURL: "/v1/aftermarket/device/42/image",
+		},
+		{
+			name:        "escaped base url",
+			baseURL:     "<div>",
+			tokenID:     42,
+			expectedURL: "%3Cdiv%3E/aftermarket/device/42/image",
+		},
+		{
+			name:        "trailing slash",
+			baseURL:     "https://mockUrl.com/v1/",
+			tokenID:     42,
+			expectedURL: "https://mockUrl.com/v1/aftermarket/device/42/image",
+		},
+	}
+
+	for _, tc := range testCases {
+		url, err := GetAftermarketDeviceImageURL(tc.baseURL, tc.tokenID)
+		require.NoError(t, err)
+		require.Equal(t, tc.expectedURL, url)
 	}
 }

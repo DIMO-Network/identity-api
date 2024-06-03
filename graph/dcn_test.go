@@ -20,6 +20,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/services"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -46,13 +47,26 @@ func TestDCNQuery(t *testing.T) {
 
 	_, wallet, err := test.GenerateWallet()
 	assert.NoError(err)
+
+	m := models.Manufacturer{
+		ID:       131,
+		Name:     "Toyota",
+		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		MintedAt: time.Now(),
+		Slug:     "toyota",
+	}
+
+	if err := m.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
+		require.NoError(err)
+	}
+
 	veh := models.Vehicle{
-		ID:            1,
-		OwnerAddress:  wallet.Bytes(),
-		Make:          null.StringFrom("Toyota"),
-		Model:         null.StringFrom("Corolla"),
-		Year:          null.IntFrom(2000),
-		DefinitionURI: null.StringFrom("mockUri"),
+		ID:             1,
+		ManufacturerID: 131,
+		OwnerAddress:   wallet.Bytes(),
+		Make:           null.StringFrom("Toyota"),
+		Model:          null.StringFrom("Corolla"),
+		Year:           null.IntFrom(2000),
 	}
 	err = veh.Insert(ctx, pdb.DBS().Writer.DB, boil.Infer())
 	assert.NoError(err)

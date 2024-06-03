@@ -15,6 +15,11 @@ An integer of arbitrary precision, decimal-encoded. Typically a uint256.
 scalar BigInt
 
 """
+BigDecimal decimal floating-point number, per the General Decimal Arithmetic specification.
+"""
+scalar BigDecimal
+
+"""
 An array of byte, encoded as a lowercase hex string with 0x prefix.
 """
 scalar Bytes

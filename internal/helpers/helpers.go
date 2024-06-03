@@ -3,7 +3,7 @@ package helpers
 import (
 	"crypto/rand"
 	"encoding/base64"
-	"fmt"
+
 	"strconv"
 )
 
@@ -31,16 +31,4 @@ func GenerateDCNNode() []byte {
 	}
 
 	return b
-}
-
-func GetVehicleImageUrl(baseURL string, tokenID int) string {
-	return fmt.Sprintf("%s/vehicle/%d/image", baseURL, tokenID)
-}
-
-func GetAftermarketDeviceImageUrl(baseURL string, tokenID int) string {
-	return fmt.Sprintf("%s/aftermarket/device/%d/image", baseURL, tokenID)
-}
-
-func GetVehicleDataURI(baseURL string, tokenID int) string {
-	return fmt.Sprintf("%s%d", baseURL, tokenID)
 }

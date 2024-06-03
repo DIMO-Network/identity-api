@@ -1,0 +1,127 @@
+# DeviceDefinition related types
+
+extend type Query {
+  """
+  View a particular device definition.
+  """
+  deviceDefinition(
+    """
+    criteria to search for a device definition
+    """
+    by: DeviceDefinitionBy!
+  ): DeviceDefinition!
+}
+
+"""
+Represents a Device Definition.
+"""
+type DeviceDefinition {
+  """
+  Device definition id for this device definition.
+  """
+  deviceDefinitionId: String!
+
+  """
+  Legacy id for this device definition. Newer device definitions may not have one.
+  """
+  legacyId: String
+
+  """
+  Model for this device definition.
+  """
+  model: String!
+
+  """
+  Year for this device definition.
+  """
+  year: Int!
+
+  """
+  Device type for this device definition.
+  """
+  deviceType: String
+
+  """
+  Image URI for this device definition.
+  """
+  imageURI: String
+
+  """
+  Device attributes for this device definition.
+  """
+  attributes: [DeviceDefinitionAttribute!]!
+}
+
+type DeviceDefinitionAttribute {
+  """
+  Name for this device definition.
+  """
+  name: String!
+
+  """
+  Value for this device definition.
+  """
+  value: String!
+}
+
+"""
+An edge in a Device Definition Connection.
+"""
+type DeviceDefinitionEdge {
+  """
+  A cursor for use in pagination.
+  """
+  cursor: String!
+  """
+  The item at the end of the edge.
+  """
+  node: DeviceDefinition!
+}
+
+"""
+Represents a Device Definition.
+"""
+type DeviceDefinitionConnection {
+  """
+  The total count of Device Definitions in the connection.
+  """
+  totalCount: Int!
+  """
+  A list of edges.
+  """
+  edges: [DeviceDefinitionEdge!]!
+  """
+  A list of nodes in the connection
+  """
+  nodes: [DeviceDefinition!]!
+  """
+  Information to aid in pagination.
+  """
+  pageInfo: PageInfo!
+}
+
+
+"""
+Input used to specify a unique Device Definition to query.
+"""
+input DeviceDefinitionBy @oneOf {
+  """
+  The id for the device definition.
+  """
+  id: String!
+}
+
+"""
+Filter for Device Definition.
+"""
+input DeviceDefinitionFilter {
+  """
+  Model filters for device definition that are of the given model.
+  """
+  model: String
+
+  """
+  Year filters for device definition that are of the given year.
+  """
+  year: Int
+}

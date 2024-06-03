@@ -18,7 +18,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
@@ -27,7 +27,7 @@ type OwnedVehiclesRepoTestSuite struct {
 	suite.Suite
 	ctx       context.Context
 	pdb       db.Store
-	container testcontainers.Container
+	container *postgres.PostgresContainer
 	repo      *Repository
 	settings  config.Settings
 }
@@ -50,7 +50,7 @@ func (s *OwnedVehiclesRepoTestSuite) SetupSuite() {
 
 // TearDownTest after each test truncate tables
 func (s *OwnedVehiclesRepoTestSuite) TearDownTest() {
-	helpers.TruncateTables(s.pdb.DBS().Writer.DB, s.T())
+	s.Require().NoError(s.container.Restore(s.ctx))
 }
 
 // TearDownSuite cleanup at end by terminating container
@@ -75,23 +75,37 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Success() {
 	_, wallet2, err := helpers.GenerateWallet()
 	s.NoError(err)
 
+	m := models.Manufacturer{
+		ID:       131,
+		Name:     "Toyota",
+		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		MintedAt: time.Now(),
+		Slug:     "toyota",
+	}
+
+	if err := m.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer()); err != nil {
+		s.NoError(err)
+	}
+
 	currTime := time.Now().UTC().Truncate(time.Second)
 	vehicles := []models.Vehicle{
 		{
-			ID:           1,
-			OwnerAddress: wallet.Bytes(),
-			Make:         null.StringFrom("Toyota"),
-			Model:        null.StringFrom("Camry"),
-			Year:         null.IntFrom(2020),
-			MintedAt:     currTime,
+			ID:             1,
+			ManufacturerID: 131,
+			OwnerAddress:   wallet.Bytes(),
+			Make:           null.StringFrom("Toyota"),
+			Model:          null.StringFrom("Camry"),
+			Year:           null.IntFrom(2020),
+			MintedAt:       currTime,
 		},
 		{
-			ID:           2,
-			OwnerAddress: wallet.Bytes(),
-			Make:         null.StringFrom("Toyota"),
-			Model:        null.StringFrom("Camry"),
-			Year:         null.IntFrom(2022),
-			MintedAt:     currTime,
+			ID:             2,
+			ManufacturerID: 131,
+			OwnerAddress:   wallet.Bytes(),
+			Make:           null.StringFrom("Toyota"),
+			Model:          null.StringFrom("Camry"),
+			Year:           null.IntFrom(2022),
+			MintedAt:       currTime,
 		},
 	}
 
@@ -128,9 +142,10 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Success() {
 	expected := []*gmodel.VehicleEdge{
 		{
 			Node: &gmodel.Vehicle{
-				ID:      "V_kQI=",
-				TokenID: 2,
-				Owner:   common.BytesToAddress(wallet.Bytes()),
+				ID:             "V_kQI=",
+				TokenID:        2,
+				ManufacturerID: 131,
+				Owner:          common.BytesToAddress(wallet.Bytes()),
 				Definition: &gmodel.Definition{
 					Make:  &vehicles[1].Make.String,
 					Model: &vehicles[1].Model.String,
@@ -139,15 +154,17 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Success() {
 				MintedAt:   vehicles[1].MintedAt,
 				Privileges: nil,
 				Image:      "https://mockUrl.com/v1/vehicle/2/image",
+				ImageURI:   "https://mockUrl.com/v1/vehicle/2/image",
 				DataURI:    "https://dimoData/vehicles/2",
 			},
 			Cursor: "Mg==",
 		},
 		{
 			Node: &gmodel.Vehicle{
-				ID:      "V_kQE=",
-				TokenID: 1,
-				Owner:   common.BytesToAddress(wallet.Bytes()),
+				ID:             "V_kQE=",
+				TokenID:        1,
+				ManufacturerID: 131,
+				Owner:          common.BytesToAddress(wallet.Bytes()),
 				Definition: &gmodel.Definition{
 					Make:  &vehicles[0].Make.String,
 					Model: &vehicles[0].Model.String,
@@ -156,6 +173,7 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Success() {
 				MintedAt:   vehicles[0].MintedAt,
 				Privileges: nil,
 				Image:      "https://mockUrl.com/v1/vehicle/1/image",
+				ImageURI:   "https://mockUrl.com/v1/vehicle/1/image",
 				DataURI:    "https://dimoData/vehicles/1",
 			},
 			Cursor: "MQ==",
@@ -173,23 +191,37 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination() {
 	_, wallet, err := helpers.GenerateWallet()
 	s.NoError(err)
 
+	m := models.Manufacturer{
+		ID:       131,
+		Name:     "Toyota",
+		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		MintedAt: time.Now(),
+		Slug:     "toyota",
+	}
+
+	if err := m.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer()); err != nil {
+		s.NoError(err)
+	}
+
 	currTime := time.Now().UTC().Truncate(time.Second)
 	vehicles := []models.Vehicle{
 		{
-			ID:           1,
-			OwnerAddress: wallet.Bytes(),
-			Make:         null.StringFrom("Toyota"),
-			Model:        null.StringFrom("Camry"),
-			Year:         null.IntFrom(2020),
-			MintedAt:     currTime,
+			ID:             1,
+			ManufacturerID: 131,
+			OwnerAddress:   wallet.Bytes(),
+			Make:           null.StringFrom("Toyota"),
+			Model:          null.StringFrom("Camry"),
+			Year:           null.IntFrom(2020),
+			MintedAt:       currTime,
 		},
 		{
-			ID:           2,
-			OwnerAddress: wallet.Bytes(),
-			Make:         null.StringFrom("Toyota"),
-			Model:        null.StringFrom("Camry"),
-			Year:         null.IntFrom(2022),
-			MintedAt:     currTime,
+			ID:             2,
+			ManufacturerID: 131,
+			OwnerAddress:   wallet.Bytes(),
+			Make:           null.StringFrom("Toyota"),
+			Model:          null.StringFrom("Camry"),
+			Year:           null.IntFrom(2022),
+			MintedAt:       currTime,
 		},
 	}
 
@@ -209,9 +241,10 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination() {
 	expected := []*gmodel.VehicleEdge{
 		{
 			Node: &gmodel.Vehicle{
-				ID:      "V_kQI=",
-				TokenID: 2,
-				Owner:   common.BytesToAddress(wallet.Bytes()),
+				ID:             "V_kQI=",
+				TokenID:        2,
+				ManufacturerID: 131,
+				Owner:          common.BytesToAddress(wallet.Bytes()),
 				Definition: &gmodel.Definition{
 					Make:  &vehicles[1].Make.String,
 					Model: &vehicles[1].Model.String,
@@ -220,6 +253,7 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination() {
 				MintedAt:   vehicles[1].MintedAt,
 				Privileges: nil,
 				Image:      "https://mockUrl.com/v1/vehicle/2/image",
+				ImageURI:   "https://mockUrl.com/v1/vehicle/2/image",
 				DataURI:    "https://dimoData/vehicles/2",
 			},
 			Cursor: "Mg==",
@@ -238,22 +272,37 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination_NextPage()
 	s.NoError(err)
 
 	currTime := time.Now().UTC().Truncate(time.Second)
+
+	m := models.Manufacturer{
+		ID:       131,
+		Name:     "Toyota",
+		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		MintedAt: time.Now(),
+		Slug:     "toyota",
+	}
+
+	if err := m.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer()); err != nil {
+		s.NoError(err)
+	}
+
 	vehicles := []models.Vehicle{
 		{
-			ID:           1,
-			OwnerAddress: wallet.Bytes(),
-			Make:         null.StringFrom("Toyota"),
-			Model:        null.StringFrom("Camry"),
-			Year:         null.IntFrom(2020),
-			MintedAt:     currTime,
+			ID:             1,
+			ManufacturerID: 131,
+			OwnerAddress:   wallet.Bytes(),
+			Make:           null.StringFrom("Toyota"),
+			Model:          null.StringFrom("Camry"),
+			Year:           null.IntFrom(2020),
+			MintedAt:       currTime,
 		},
 		{
-			ID:           2,
-			OwnerAddress: wallet.Bytes(),
-			Make:         null.StringFrom("Toyota"),
-			Model:        null.StringFrom("Camry"),
-			Year:         null.IntFrom(2022),
-			MintedAt:     currTime,
+			ID:             2,
+			ManufacturerID: 131,
+			OwnerAddress:   wallet.Bytes(),
+			Make:           null.StringFrom("Toyota"),
+			Model:          null.StringFrom("Camry"),
+			Year:           null.IntFrom(2022),
+			MintedAt:       currTime,
 		},
 	}
 
@@ -274,9 +323,10 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination_NextPage()
 	expected := []*gmodel.VehicleEdge{
 		{
 			Node: &gmodel.Vehicle{
-				ID:      "V_kQE=",
-				TokenID: 1,
-				Owner:   common.BytesToAddress(wallet.Bytes()),
+				ID:             "V_kQE=",
+				ManufacturerID: 131,
+				TokenID:        1,
+				Owner:          common.BytesToAddress(wallet.Bytes()),
 				Definition: &gmodel.Definition{
 					Make:  &vehicles[0].Make.String,
 					Model: &vehicles[0].Model.String,
@@ -284,6 +334,7 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination_NextPage()
 				},
 				MintedAt:   vehicles[0].MintedAt,
 				Privileges: nil,
+				ImageURI:   "https://mockUrl.com/v1/vehicle/1/image",
 				Image:      "https://mockUrl.com/v1/vehicle/1/image",
 				DataURI:    "https://dimoData/vehicles/1",
 			},
@@ -338,14 +389,27 @@ func Test_GetOwnedVehicles_Filters(t *testing.T) {
 		},
 	}
 
+	m := models.Manufacturer{
+		ID:       131,
+		Name:     "Toyota",
+		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		MintedAt: time.Now(),
+		Slug:     "toyota",
+	}
+
+	if err := m.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
+		assert.NoError(err)
+	}
+
 	for _, v := range data {
 		vehicle := models.Vehicle{
-			ID:           v.TokenID,
-			OwnerAddress: v.Owner.Bytes(),
-			Make:         null.StringFrom("Toyota"),
-			Model:        null.StringFrom("Camry"),
-			Year:         null.IntFrom(2022),
-			MintedAt:     time.Now(),
+			ID:             v.TokenID,
+			ManufacturerID: 131,
+			OwnerAddress:   v.Owner.Bytes(),
+			Make:           null.StringFrom("Toyota"),
+			Model:          null.StringFrom("Camry"),
+			Year:           null.IntFrom(2022),
+			MintedAt:       time.Now(),
 		}
 		if err := vehicle.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
 			assert.NoError(err)

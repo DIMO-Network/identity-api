@@ -44,6 +44,13 @@ type VehicleNodeMintedData struct {
 	Owner            common.Address
 }
 
+type VehicleNodeMintedWithDeviceDefinitionData struct {
+	ManufacturerId     *big.Int
+	VehicleId          *big.Int
+	Owner              common.Address
+	DeviceDefinitionID string
+}
+
 type ManufacturerNodeMintedData struct {
 	Name    string
 	TokenID *big.Int
@@ -149,4 +156,15 @@ type AftermarketDeviceAddressResetData struct {
 	ManufacturerId           *big.Int
 	TokenId                  *big.Int
 	AftermarketDeviceAddress common.Address
+}
+
+type ManufacturerTableSetData struct {
+	ManufacturerId *big.Int
+	TableId        *big.Int
+}
+
+type DeviceDefinitionTableCreatedData struct {
+	TableOwner     common.Address
+	ManufacturerId *big.Int
+	TableId        *big.Int
 }

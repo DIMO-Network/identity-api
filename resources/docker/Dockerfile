@@ -1,4 +1,4 @@
-FROM golang:1.21 AS build
+FROM golang:1.22 AS build
 
 RUN useradd -u 10001 dimo
 
@@ -14,7 +14,7 @@ RUN go mod tidy
 RUN go mod vendor
 RUN make install
 
-FROM busybox AS package
+FROM gcr.io/distroless/static-debian12 AS package
 
 LABEL maintainer="DIMO <hello@dimo.zone>"
 
@@ -30,4 +30,4 @@ USER dimo
 EXPOSE 8080
 EXPOSE 8888
 
-CMD /identity-api
+CMD ["/identity-api"]

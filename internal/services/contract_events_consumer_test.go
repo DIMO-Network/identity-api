@@ -2,9 +2,7 @@ package services
 
 import (
 	"context"
-	"fmt"
 	"math/big"
-	"net/http"
 	"os"
 	"testing"
 	"time"
@@ -16,7 +14,6 @@ import (
 	"github.com/ericlagergren/decimal"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/goccy/go-json"
-	"github.com/jarcoal/httpmock"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -26,31 +23,34 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/types"
 )
 
-const migrationsDirRelPath = "../../migrations"
-const aftermarketDeviceAddr = "0xcf9af64522162da85164a714c23a7705e6e466b3"
-const syntheticDeviceAddr = "0x85226A67FF1b3Ec6cb033162f7df5038a6C3bAB2"
-const rewardContractAddr = "0x375885164266d48C48abbbb439Be98864Ae62bBE"
+const (
+	migrationsDirRelPath  = "../../migrations"
+	aftermarketDeviceAddr = "0xcf9af64522162da85164a714c23a7705e6e466b3"
+	syntheticDeviceAddr   = "0x85226A67FF1b3Ec6cb033162f7df5038a6C3bAB2"
+	rewardContractAddr    = "0x375885164266d48C48abbbb439Be98864Ae62bBE"
+)
 
-var mintedAt = time.Now()
-
-var cloudEvent = shared.CloudEvent[json.RawMessage]{
-	ID:          "2SiTVhP3WBhfQQnnnpeBdMR7BSY",
-	Source:      "chain/80001",
-	SpecVersion: "1.0",
-	Subject:     "0x4de1bcf2b7e851e31216fc07989caa902a604784",
-	Time:        mintedAt,
-	Type:        "zone.dimo.contract.event",
-}
-
-var contractEventData = ContractEventData{
-	ChainID:         80001,
-	Contract:        common.HexToAddress("0x4de1bcf2b7e851e31216fc07989caa902a604784"),
-	TransactionHash: common.HexToHash("0x811a85e24d0129a2018c9a6668652db63d73bc6d1c76f21b07da2162c6bfea7d"),
-	EventSignature:  common.HexToHash("0xd624fd4c3311e1803d230d97ce71fd60c4f658c30a31fbe08edcb211fd90f63f"),
-	Block: Block{
-		Time: mintedAt,
-	},
-}
+var (
+	zeroDecimal = types.NewDecimal(decimal.New(0, 0))
+	mintedAt    = time.Now()
+	cloudEvent  = shared.CloudEvent[json.RawMessage]{
+		ID:          "2SiTVhP3WBhfQQnnnpeBdMR7BSY",
+		Source:      "chain/80001",
+		SpecVersion: "1.0",
+		Subject:     "0x4de1bcf2b7e851e31216fc07989caa902a604784",
+		Time:        mintedAt,
+		Type:        "zone.dimo.contract.event",
+	}
+	contractEventData = ContractEventData{
+		ChainID:         80001,
+		Contract:        common.HexToAddress("0x4de1bcf2b7e851e31216fc07989caa902a604784"),
+		TransactionHash: common.HexToHash("0x811a85e24d0129a2018c9a6668652db63d73bc6d1c76f21b07da2162c6bfea7d"),
+		EventSignature:  common.HexToHash("0xd624fd4c3311e1803d230d97ce71fd60c4f658c30a31fbe08edcb211fd90f63f"),
+		Block: Block{
+			Time: mintedAt,
+		},
+	}
+)
 
 // prepareEvent turns ContractEventData (the block time, number, etc) and the event arguments (from, to, tokenId, etc)
 // into a shared.CloudEvent[json.RawMessage] like the processor expects.
@@ -93,15 +93,26 @@ func TestHandleAftermarketDeviceAttributeSetEvent(t *testing.T) {
 	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
 	e := prepareEvent(t, contractEventData, aftermarketDeviceAttributesSerial)
 
-	d := models.AftermarketDevice{
-		ID:          int(aftermarketDeviceAttributesSerial.TokenID.Int64()),
-		Address:     common.FromHex("0xaba3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
-		Owner:       common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
-		Beneficiary: common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
-		Imei:        null.StringFrom("garbage-imei-value"),
-		DevEui:      null.StringFrom("garbage-deveui-value"),
+	mfr := models.Manufacturer{
+		ID:    137,
+		Name:  "AutoPi",
+		Owner: common.FromHex("0xaba3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Slug:  "autopi",
 	}
-	err := d.Insert(ctx, pdb.DBS().Writer.DB, boil.Infer())
+
+	err := mfr.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
+
+	d := models.AftermarketDevice{
+		ManufacturerID: 137,
+		ID:             int(aftermarketDeviceAttributesSerial.TokenID.Int64()),
+		Address:        common.FromHex("0xaba3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Owner:          common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Beneficiary:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Imei:           null.StringFrom("garbage-imei-value"),
+		DevEui:         null.StringFrom("garbage-deveui-value"),
+	}
+	err = d.Insert(ctx, pdb.DBS().Writer.DB, boil.Infer())
 	assert.NoError(t, err)
 
 	err = contractEventConsumer.Process(ctx, &e)
@@ -139,22 +150,45 @@ func TestHandleAftermarketDevicePairedEvent(t *testing.T) {
 	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
 	e := prepareEvent(t, contractEventData, aftermarketDevicePairData)
 
-	v := models.Vehicle{
-		ID:           11,
-		OwnerAddress: common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
-		Make:         null.StringFrom("Tesla"),
-		Model:        null.StringFrom("Model-3"),
-		Year:         null.IntFrom(2023),
-		MintedAt:     time.Now(),
+	m := models.Manufacturer{
+		ID:       130,
+		Name:     "Tesla",
+		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		MintedAt: time.Now(),
+		Slug:     "tesla",
 	}
-	err := v.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+
+	err := m.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	assert.NoError(t, err)
 
+	v := models.Vehicle{
+		ID:             11,
+		ManufacturerID: 130,
+		OwnerAddress:   common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Make:           null.StringFrom("Tesla"),
+		Model:          null.StringFrom("Model-3"),
+		Year:           null.IntFrom(2023),
+		MintedAt:       time.Now(),
+	}
+	err = v.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err)
+
+	mfr := models.Manufacturer{
+		ID:    137,
+		Name:  "AutoPi",
+		Owner: common.FromHex("0xaba3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Slug:  "autopi",
+	}
+
+	err = mfr.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
+
 	d := models.AftermarketDevice{
-		ID:          1,
-		Address:     common.FromHex("0xabb3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
-		Owner:       common.FromHex("0x12b3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
-		Beneficiary: common.FromHex("0x12b3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		ID:             1,
+		ManufacturerID: 137,
+		Address:        common.FromHex("0xabb3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Owner:          common.FromHex("0x12b3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Beneficiary:    common.FromHex("0x12b3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 	}
 	err = d.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	assert.NoError(t, err)
@@ -192,22 +226,46 @@ func TestHandleAftermarketDeviceUnPairedEvent(t *testing.T) {
 	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
 	e := prepareEvent(t, contractEventData, aftermarketDevicePairData)
 
+	m := models.Manufacturer{
+		ID:       131,
+		Name:     "Toyota",
+		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		MintedAt: time.Now(),
+		Slug:     "toyota",
+	}
+
+	if err := m.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
+		assert.NoError(t, err)
+	}
+
 	v := models.Vehicle{
-		ID:           11,
-		OwnerAddress: common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
-		Make:         null.StringFrom("Tesla"),
-		Model:        null.StringFrom("Model-3"),
-		Year:         null.IntFrom(2023),
-		MintedAt:     time.Now(),
+		ID:             11,
+		ManufacturerID: 131,
+		OwnerAddress:   common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Make:           null.StringFrom("Tesla"),
+		Model:          null.StringFrom("Model-3"),
+		Year:           null.IntFrom(2023),
+		MintedAt:       time.Now(),
 	}
 	err := v.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	assert.NoError(t, err)
 
+	mfr := models.Manufacturer{
+		ID:    137,
+		Name:  "AutoPi",
+		Owner: common.FromHex("0xaba3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Slug:  "autopi",
+	}
+
+	err = mfr.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
+
 	d := models.AftermarketDevice{
-		ID:          1,
-		Address:     common.FromHex("0xabb3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
-		Owner:       common.FromHex("0x12b3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
-		Beneficiary: common.FromHex("0x12b3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		ID:             1,
+		ManufacturerID: 137,
+		Address:        common.FromHex("0xabb3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Owner:          common.FromHex("0x12b3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Beneficiary:    common.FromHex("0x12b3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 	}
 	err = d.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	assert.NoError(t, err)
@@ -297,19 +355,42 @@ func TestHandleAftermarketDeviceTransferredEventExistingTokenID(t *testing.T) {
 	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
 	e := prepareEvent(t, contractEventData, aftermarketDeviceTransferredData)
 
-	v := models.Vehicle{
-		ID:           1,
-		OwnerAddress: common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+	m := models.Manufacturer{
+		ID:       130,
+		Name:     "Tesla",
+		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		MintedAt: time.Now(),
+		Slug:     "tesla",
 	}
-	err := v.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+
+	err := m.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	assert.NoError(t, err)
 
+	v := models.Vehicle{
+		ID:             1,
+		ManufacturerID: 130,
+		OwnerAddress:   common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+	}
+	err = v.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err)
+
+	mfr := models.Manufacturer{
+		ID:    137,
+		Name:  "AutoPi",
+		Owner: common.FromHex("0xaba3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Slug:  "autopi",
+	}
+
+	err = mfr.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
+
 	d := models.AftermarketDevice{
-		ID:          100,
-		Owner:       common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
-		Beneficiary: common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
-		Address:     common.FromHex("0xaba3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
-		VehicleID:   null.IntFrom(v.ID),
+		ID:             100,
+		ManufacturerID: 137,
+		Owner:          common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Beneficiary:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Address:        common.FromHex("0xaba3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		VehicleID:      null.IntFrom(v.ID),
 	}
 	err = d.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	assert.NoError(t, err)
@@ -350,14 +431,25 @@ func TestHandleBeneficiarySetEvent(t *testing.T) {
 	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
 	e := prepareEvent(t, contractEventData, beneficiarySetData)
 
+	var mfr2 = models.Manufacturer{
+		ID:       137,
+		Owner:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDff"),
+		Name:     "AutoPi",
+		MintedAt: time.Now(),
+		Slug:     "autopi",
+	}
+	err := mfr2.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
+
 	d := models.AftermarketDevice{
-		ID:          100,
-		Owner:       common.HexToAddress("0x22a3A41bd932244Dd08186e4c19F1a7E48cbcDf4").Bytes(),
-		Beneficiary: common.HexToAddress("0x22a3A41bd932244Dd08186e4c19F1a7E48cbcDf4").Bytes(),
-		Address:     common.FromHex("0xaba3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		ID:             100,
+		ManufacturerID: 137,
+		Owner:          common.HexToAddress("0x22a3A41bd932244Dd08186e4c19F1a7E48cbcDf4").Bytes(),
+		Beneficiary:    common.HexToAddress("0x22a3A41bd932244Dd08186e4c19F1a7E48cbcDf4").Bytes(),
+		Address:        common.FromHex("0xaba3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 	}
 
-	err := d.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	err = d.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	assert.NoError(t, err)
 
 	err = contractEventConsumer.Process(ctx, &e)
@@ -394,13 +486,24 @@ func TestHandleClearBeneficiaryEvent(t *testing.T) {
 	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
 	e := prepareEvent(t, contractEventData, beneficiarySetData)
 
-	d := models.AftermarketDevice{
-		ID:          100,
-		Owner:       common.FromHex("0x22a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
-		Beneficiary: common.FromHex("0x22a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
-		Address:     common.FromHex("0xaba3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+	var mfr2 = models.Manufacturer{
+		ID:       137,
+		Owner:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDff"),
+		Name:     "AutoPi",
+		MintedAt: time.Now(),
+		Slug:     "autopi",
 	}
-	err := d.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	err := mfr2.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
+
+	d := models.AftermarketDevice{
+		ID:             100,
+		ManufacturerID: 137,
+		Owner:          common.FromHex("0x22a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Beneficiary:    common.FromHex("0x22a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Address:        common.FromHex("0xaba3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+	}
+	err = d.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	assert.NoError(t, err)
 
 	err = contractEventConsumer.Process(ctx, &e)
@@ -446,21 +549,31 @@ func TestHandle_SyntheticDeviceNodeMintedEvent_Success(t *testing.T) {
 	e := prepareEvent(t, contractEventData, eventData)
 
 	currTime := time.Now().UTC().Truncate(time.Second)
-	vehicles := []models.Vehicle{
-		{
-			ID:           1,
-			OwnerAddress: wallet.Bytes(),
-			Make:         null.StringFrom("Toyota"),
-			Model:        null.StringFrom("Camry"),
-			Year:         null.IntFrom(2020),
-			MintedAt:     currTime,
-		},
+
+	m := models.Manufacturer{
+		ID:       131,
+		Name:     "Toyota",
+		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		MintedAt: time.Now(),
+		Slug:     "toyota",
 	}
 
-	for _, v := range vehicles {
-		if err := v.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
-			assert.NoError(t, err)
-		}
+	if err := m.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
+		assert.NoError(t, err)
+	}
+
+	v := models.Vehicle{
+		ID:             1,
+		ManufacturerID: 131,
+		OwnerAddress:   wallet.Bytes(),
+		Make:           null.StringFrom("Toyota"),
+		Model:          null.StringFrom("Camry"),
+		Year:           null.IntFrom(2020),
+		MintedAt:       currTime,
+	}
+
+	if err := v.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
+		assert.NoError(t, err)
 	}
 
 	err = contractEventConsumer.Process(ctx, &e)
@@ -493,21 +606,31 @@ func TestHandle_SyntheticDeviceNodeBurnedEvent_Success(t *testing.T) {
 	assert.NoError(t, err)
 
 	currTime := time.Now().UTC().Truncate(time.Second)
-	vehicles := []models.Vehicle{
-		{
-			ID:           1,
-			OwnerAddress: wallet.Bytes(),
-			Make:         null.StringFrom("Toyota"),
-			Model:        null.StringFrom("Camry"),
-			Year:         null.IntFrom(2020),
-			MintedAt:     currTime,
-		},
+
+	m := models.Manufacturer{
+		ID:       131,
+		Name:     "Toyota",
+		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		MintedAt: time.Now(),
+		Slug:     "toyota",
 	}
 
-	for _, v := range vehicles {
-		if err := v.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
-			assert.NoError(t, err)
-		}
+	if err := m.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
+		assert.NoError(t, err)
+	}
+
+	v := models.Vehicle{
+		ID:             1,
+		ManufacturerID: 131,
+		OwnerAddress:   wallet.Bytes(),
+		Make:           null.StringFrom("Toyota"),
+		Model:          null.StringFrom("Camry"),
+		Year:           null.IntFrom(2020),
+		MintedAt:       currTime,
+	}
+
+	if err := v.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
+		assert.NoError(t, err)
 	}
 
 	sd := models.SyntheticDevice{
@@ -555,83 +678,6 @@ func TestHandle_SyntheticDeviceNodeBurnedEvent_Success(t *testing.T) {
 	assert.Empty(t, sds)
 }
 
-func TestHandle_DefinitionUriAttribute_Event_Success(t *testing.T) {
-	ctx := context.Background()
-	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
-	contractEventData.EventName = string(VehicleAttributeSet)
-	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
-
-	_, wallet, err := helpers.GenerateWallet()
-	assert.NoError(t, err)
-
-	_, wallet2, err := helpers.GenerateWallet()
-	assert.NoError(t, err)
-
-	currTime := time.Now().UTC().Truncate(time.Second)
-	vehicles := []models.Vehicle{
-		{
-			ID:           1,
-			OwnerAddress: wallet.Bytes(),
-			Make:         null.StringFrom("Toyota"),
-			Model:        null.StringFrom("Camry"),
-			Year:         null.IntFrom(2020),
-			MintedAt:     currTime,
-		},
-	}
-
-	for _, v := range vehicles {
-		if err := v.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
-			assert.NoError(t, err)
-		}
-	}
-
-	sd := models.SyntheticDevice{
-		ID:            1,
-		IntegrationID: 2,
-		VehicleID:     1,
-		DeviceAddress: wallet2.Bytes(),
-		MintedAt:      currTime,
-	}
-
-	err = sd.Insert(ctx, pdb.DBS().Writer.DB, boil.Infer())
-	assert.NoError(t, err)
-
-	mockDefUri := "http://someurl.com/someid"
-	// http client mock
-	httpmock.Activate()
-	defer httpmock.DeactivateAndReset()
-	respJSON := fmt.Sprintf(`{ "type": { "make":"%s", "model":"%s", "year":%d }}`, "Toyota", "Camry", 2020)
-
-	httpmock.RegisterResponder(http.MethodGet, mockDefUri, httpmock.NewStringResponder(200, respJSON))
-
-	tkID := big.NewInt(1)
-	eventData := VehicleAttributeSetData{
-		TokenID:   tkID,
-		Attribute: "DefinitionURI",
-		Info:      mockDefUri,
-	}
-	settings := config.Settings{
-		DIMORegistryAddr:    contractEventData.Contract.String(),
-		DIMORegistryChainID: contractEventData.ChainID,
-	}
-
-	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
-	e := prepareEvent(t, contractEventData, eventData)
-
-	err = contractEventConsumer.Process(ctx, &e)
-	assert.NoError(t, err)
-
-	vhs, err := models.Vehicles(
-		models.VehicleWhere.ID.EQ(int(tkID.Int64())),
-	).All(ctx, pdb.DBS().Reader)
-	assert.NoError(t, err)
-
-	assert.Len(t, vhs, 1)
-	assert.Equal(t, "Toyota", *vhs[0].Make.Ptr())
-	assert.Equal(t, "Camry", *vhs[0].Model.Ptr())
-	assert.Equal(t, 2020, vhs[0].Year.Int)
-}
-
 func Test_HandleVehicle_Transferred_Event(t *testing.T) {
 	ctx := context.Background()
 	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
@@ -655,13 +701,26 @@ func Test_HandleVehicle_Transferred_Event(t *testing.T) {
 	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
 	e := prepareEvent(t, contractEventData, vehicleTransferredData)
 
+	m := models.Manufacturer{
+		ID:       131,
+		Name:     "Toyota",
+		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		MintedAt: time.Now(),
+		Slug:     "toyota",
+	}
+
+	if err := m.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
+		assert.NoError(t, err)
+	}
+
 	vehicle := models.Vehicle{
-		ID:           tkID,
-		OwnerAddress: vehicleTransferredData.From[:],
-		Make:         null.StringFrom("Toyota"),
-		Model:        null.StringFrom("Camry"),
-		Year:         null.IntFrom(2020),
-		MintedAt:     currTime,
+		ID:             tkID,
+		ManufacturerID: 131,
+		OwnerAddress:   vehicleTransferredData.From[:],
+		Make:           null.StringFrom("Toyota"),
+		Model:          null.StringFrom("Camry"),
+		Year:           null.IntFrom(2020),
+		MintedAt:       currTime,
 	}
 
 	if err := vehicle.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
@@ -708,13 +767,27 @@ func Test_HandleVehicle_Transferred_To_Zero_Event_ShouldDelete(t *testing.T) {
 	e := prepareEvent(t, contractEventData, vehicleTransferredData)
 
 	currTime := time.Now().UTC().Truncate(time.Second)
+
+	m := models.Manufacturer{
+		ID:       131,
+		Name:     "Toyota",
+		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		MintedAt: time.Now(),
+		Slug:     "toyota",
+	}
+
+	if err := m.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
+		assert.NoError(t, err)
+	}
+
 	vehicle := models.Vehicle{
-		ID:           tkID,
-		OwnerAddress: wallet.Bytes(),
-		Make:         null.StringFrom("Toyota"),
-		Model:        null.StringFrom("Camry"),
-		Year:         null.IntFrom(2020),
-		MintedAt:     currTime,
+		ID:             tkID,
+		ManufacturerID: 131,
+		OwnerAddress:   wallet.Bytes(),
+		Make:           null.StringFrom("Toyota"),
+		Model:          null.StringFrom("Camry"),
+		Year:           null.IntFrom(2020),
+		MintedAt:       currTime,
 	}
 
 	if err := vehicle.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
@@ -732,20 +805,42 @@ func Test_HandleVehicle_Transferred_To_Zero_Event_ShouldDelete(t *testing.T) {
 	err = privilege.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	assert.NoError(t, err)
 
+	reward := models.Reward{
+		IssuanceWeek: 1,
+		VehicleID:    tkID,
+		EarnedAt:     time.Now(),
+	}
+
+	err = reward.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err)
+
+	dcn := models.DCN{
+		Node:         common.Hash{}.Bytes(),
+		OwnerAddress: wallet.Bytes(),
+		MintedAt:     time.Now(),
+	}
+
+	err = dcn.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err)
+
 	err = contractEventConsumer.Process(ctx, &e)
 	assert.NoError(t, err)
 
-	veh, err := models.Vehicles(
-		models.VehicleWhere.ID.EQ(tkID),
-	).All(ctx, pdb.DBS().Reader.DB)
+	exists, err := models.VehicleExists(ctx, pdb.DBS().Reader, tkID)
 	assert.NoError(t, err)
+	assert.False(t, exists)
 
-	assert.Len(t, veh, 0)
-
-	priv, err := models.Privileges().All(ctx, pdb.DBS().Reader.DB)
+	numPrivs, err := models.Privileges().Count(ctx, pdb.DBS().Reader)
 	assert.NoError(t, err)
+	assert.Zero(t, numPrivs)
 
-	assert.Len(t, priv, 0)
+	numRewards, err := models.Rewards().Count(ctx, pdb.DBS().Reader)
+	assert.NoError(t, err)
+	assert.Zero(t, numRewards)
+
+	err = dcn.Reload(ctx, pdb.DBS().Reader.DB)
+	assert.NoError(t, err)
+	assert.False(t, dcn.VehicleID.Valid)
 }
 
 func Test_HandleVehicle_Transferred_To_Zero_Event_NoDelete_SyntheticDevice(t *testing.T) {
@@ -777,13 +872,27 @@ func Test_HandleVehicle_Transferred_To_Zero_Event_NoDelete_SyntheticDevice(t *te
 	e := prepareEvent(t, contractEventData, vehicleTransferredData)
 
 	currTime := time.Now().UTC().Truncate(time.Second)
+
+	m := models.Manufacturer{
+		ID:       131,
+		Name:     "Toyota",
+		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		MintedAt: time.Now(),
+		Slug:     "toyota",
+	}
+
+	if err := m.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
+		assert.NoError(t, err)
+	}
+
 	vehicle := models.Vehicle{
-		ID:           tkID,
-		OwnerAddress: wallet.Bytes(),
-		Make:         null.StringFrom("Toyota"),
-		Model:        null.StringFrom("Camry"),
-		Year:         null.IntFrom(2020),
-		MintedAt:     currTime,
+		ID:             tkID,
+		ManufacturerID: 131,
+		OwnerAddress:   wallet.Bytes(),
+		Make:           null.StringFrom("Toyota"),
+		Model:          null.StringFrom("Camry"),
+		Year:           null.IntFrom(2020),
+		MintedAt:       currTime,
 	}
 
 	if err := vehicle.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
@@ -839,26 +948,53 @@ func Test_HandleVehicle_Transferred_To_Zero_Event_NoDelete_AfterMarketDevice(t *
 	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
 	e := prepareEvent(t, contractEventData, vehicleTransferredData)
 
+	m := models.Manufacturer{
+		ID:       131,
+		Name:     "Toyota",
+		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		MintedAt: time.Now(),
+		Slug:     "toyota",
+	}
+
+	if err := m.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
+		assert.NoError(t, err)
+	}
+
 	currTime := time.Now().UTC().Truncate(time.Second)
+
 	vehicle := models.Vehicle{
-		ID:           tkID,
-		OwnerAddress: wallet.Bytes(),
-		Make:         null.StringFrom("Toyota"),
-		Model:        null.StringFrom("Camry"),
-		Year:         null.IntFrom(2020),
-		MintedAt:     currTime,
+		ID:             tkID,
+		ManufacturerID: 131,
+		OwnerAddress:   wallet.Bytes(),
+		Make:           null.StringFrom("Toyota"),
+		Model:          null.StringFrom("Camry"),
+		Year:           null.IntFrom(2020),
+		MintedAt:       currTime,
 	}
 
 	if err := vehicle.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
 		assert.NoError(t, err)
 	}
 
+	m2 := models.Manufacturer{
+		ID:       137,
+		Name:     "AutoPi",
+		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDff"),
+		MintedAt: time.Now(),
+		Slug:     "autopi",
+	}
+
+	if err := m2.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
+		assert.NoError(t, err)
+	}
+
 	d := models.AftermarketDevice{
-		ID:          200,
-		VehicleID:   null.IntFrom(tkID),
-		Owner:       common.FromHex("0x22a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
-		Beneficiary: common.FromHex("0x22a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
-		Address:     common.FromHex("0xaba3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		ID:             200,
+		ManufacturerID: 137,
+		VehicleID:      null.IntFrom(tkID),
+		Owner:          common.FromHex("0x22a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Beneficiary:    common.FromHex("0x22a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Address:        common.FromHex("0xaba3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 	}
 	err = d.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	assert.NoError(t, err)
@@ -876,21 +1012,39 @@ func Test_HandleVehicle_Transferred_To_Zero_Event_NoDelete_AfterMarketDevice(t *
 	assert.Equal(t, vehicle.OwnerAddress, veh[0].OwnerAddress)
 }
 
-func getCommonEntities(ctx context.Context, vehicleID, aftermarketDeviceID, syntheticDeviceID int, owner, beneficiary common.Address) (models.Vehicle, models.AftermarketDevice, models.SyntheticDevice) {
+func getCommonEntities(_ context.Context, vehicleID, aftermarketDeviceID, syntheticDeviceID int, owner, beneficiary common.Address) (models.Manufacturer, models.Manufacturer, models.Vehicle, models.AftermarketDevice, models.SyntheticDevice) {
+	mfr := models.Manufacturer{
+		ID:       130,
+		Name:     "Tesla",
+		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		MintedAt: time.Now(),
+		Slug:     "tesla",
+	}
+
+	adMfr := models.Manufacturer{
+		ID:       137,
+		Name:     "AutoPi",
+		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDff"),
+		MintedAt: time.Now(),
+		Slug:     "autopi",
+	}
+
 	veh := models.Vehicle{
-		ID:           vehicleID,
-		OwnerAddress: owner.Bytes(),
-		Make:         null.StringFrom("Tesla"),
-		Model:        null.StringFrom("Model-3"),
-		Year:         null.IntFrom(2023),
-		MintedAt:     time.Now(),
+		ID:             vehicleID,
+		ManufacturerID: 130,
+		OwnerAddress:   owner.Bytes(),
+		Make:           null.StringFrom("Tesla"),
+		Model:          null.StringFrom("Model-3"),
+		Year:           null.IntFrom(2023),
+		MintedAt:       time.Now(),
 	}
 
 	aftDevice := models.AftermarketDevice{
-		ID:          aftermarketDeviceID,
-		Address:     common.FromHex("0xaba3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
-		Beneficiary: beneficiary.Bytes(),
-		Owner:       owner.Bytes(),
+		ID:             aftermarketDeviceID,
+		ManufacturerID: 137,
+		Address:        common.FromHex("0xaba3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Beneficiary:    beneficiary.Bytes(),
+		Owner:          owner.Bytes(),
 	}
 
 	syntDevice := models.SyntheticDevice{
@@ -901,7 +1055,7 @@ func getCommonEntities(ctx context.Context, vehicleID, aftermarketDeviceID, synt
 		MintedAt:      time.Now(),
 	}
 
-	return veh, aftDevice, syntDevice
+	return mfr, adMfr, veh, aftDevice, syntDevice
 }
 
 func Test_Handle_TokensTransferred_ForDevice_AftermarketDevice_Event(t *testing.T) {
@@ -940,7 +1094,13 @@ func Test_Handle_TokensTransferred_ForDevice_AftermarketDevice_Event(t *testing.
 
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
 	afterMktID := 2
-	vehicle, afterMarketDevice, _ := getCommonEntities(ctx, int(vID.Int64()), afterMktID, 0, *user, *beneficiary)
+	mfr, adMfr, vehicle, afterMarketDevice, _ := getCommonEntities(ctx, int(vID.Int64()), afterMktID, 0, *user, *beneficiary)
+
+	err = mfr.Insert(ctx, pdb.DBS().Writer.DB, boil.Infer())
+	assert.NoError(t, err)
+
+	err = adMfr.Insert(ctx, pdb.DBS().Writer.DB, boil.Infer())
+	assert.NoError(t, err)
 
 	err = vehicle.Insert(ctx, pdb.DBS().Writer.DB, boil.Infer())
 	assert.NoError(t, err)
@@ -966,11 +1126,11 @@ func Test_Handle_TokensTransferred_ForDevice_AftermarketDevice_Event(t *testing.
 			ReceivedByAddress:   null.BytesFrom(user.Bytes()),
 			EarnedAt:            mintedTime,
 			AftermarketTokenID:  null.IntFrom(afterMktID),
-			AftermarketEarnings: types.NewNullDecimal(decimal.New(amt.Int64(), 0)),
+			AftermarketEarnings: types.NewDecimal(decimal.New(amt.Int64(), 0)),
 			ConnectionStreak:    null.Int{},
 			SyntheticTokenID:    null.Int{},
-			SyntheticEarnings:   types.NullDecimal{},
-			StreakEarnings:      types.NullDecimal{},
+			SyntheticEarnings:   zeroDecimal,
+			StreakEarnings:      zeroDecimal,
 		})
 	}
 }
@@ -1013,7 +1173,13 @@ func Test_Handle_TokensTransferred_ForDevice_SyntheticDevice_Event(t *testing.T)
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
 	afterMktID := 2
 
-	vehicle, afterMarketDevice, syntheticDevice := getCommonEntities(ctx, int(vID.Int64()), afterMktID, synthID, *user, *beneficiary)
+	mfr, adMfr, vehicle, afterMarketDevice, syntheticDevice := getCommonEntities(ctx, int(vID.Int64()), afterMktID, synthID, *user, *beneficiary)
+
+	err = mfr.Insert(ctx, pdb.DBS().Writer.DB, boil.Infer())
+	assert.NoError(t, err)
+
+	err = adMfr.Insert(ctx, pdb.DBS().Writer.DB, boil.Infer())
+	assert.NoError(t, err)
 
 	err = vehicle.Insert(ctx, pdb.DBS().Writer.DB, boil.Infer())
 	assert.NoError(t, err)
@@ -1042,11 +1208,11 @@ func Test_Handle_TokensTransferred_ForDevice_SyntheticDevice_Event(t *testing.T)
 			ReceivedByAddress:   null.BytesFrom(user.Bytes()),
 			EarnedAt:            mintedTime,
 			AftermarketTokenID:  null.Int{},
-			AftermarketEarnings: types.NullDecimal{},
+			AftermarketEarnings: zeroDecimal,
 			ConnectionStreak:    null.Int{},
-			StreakEarnings:      types.NullDecimal{},
+			StreakEarnings:      zeroDecimal,
 			SyntheticTokenID:    null.IntFrom(synthID),
-			SyntheticEarnings:   types.NewNullDecimal(decimal.New(amt.Int64(), 0)),
+			SyntheticEarnings:   types.NewDecimal(decimal.New(amt.Int64(), 0)),
 		})
 	}
 }
@@ -1080,7 +1246,13 @@ func Test_Handle_TokensTransferred_ForDevice_UpdateSynthetic_WhenAftermarketExis
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
 	afterMktID := 2
 	synthID := 3
-	vehicle, afterMarketDevice, syntheticDevice := getCommonEntities(ctx, int(vID.Int64()), afterMktID, synthID, *user, *beneficiary)
+	mfr, adMfr, vehicle, afterMarketDevice, syntheticDevice := getCommonEntities(ctx, int(vID.Int64()), afterMktID, synthID, *user, *beneficiary)
+
+	err = mfr.Insert(ctx, pdb.DBS().Writer.DB, boil.Infer())
+	assert.NoError(t, err)
+
+	err = adMfr.Insert(ctx, pdb.DBS().Writer.DB, boil.Infer())
+	assert.NoError(t, err)
 
 	err = vehicle.Insert(ctx, pdb.DBS().Writer.DB, boil.Infer())
 	assert.NoError(t, err)
@@ -1137,11 +1309,11 @@ func Test_Handle_TokensTransferred_ForDevice_UpdateSynthetic_WhenAftermarketExis
 			ReceivedByAddress:   null.BytesFrom(user.Bytes()),
 			EarnedAt:            mintedTime,
 			AftermarketTokenID:  null.IntFrom(afterMktID),
-			AftermarketEarnings: types.NewNullDecimal(decimal.New(payloads[0].amount.Int64(), 0)),
+			AftermarketEarnings: types.NewDecimal(decimal.New(payloads[0].amount.Int64(), 0)),
 			SyntheticTokenID:    null.IntFrom(synthID),
-			SyntheticEarnings:   types.NewNullDecimal(decimal.New(payloads[1].amount.Int64(), 0)),
+			SyntheticEarnings:   types.NewDecimal(decimal.New(payloads[1].amount.Int64(), 0)),
 			ConnectionStreak:    null.Int{},
-			StreakEarnings:      types.NullDecimal{},
+			StreakEarnings:      zeroDecimal,
 		})
 	}
 }
@@ -1173,9 +1345,15 @@ func Test_Handle_TokensTransferred_ForDevice_UpdateAftermarket_WhenSyntheticExis
 	}
 
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
-	afterMktID := 2
-	synthID := 3
-	vehicle, afterMarketDevice, syntheticDevice := getCommonEntities(ctx, int(vID.Int64()), afterMktID, synthID, *user, *beneficiary)
+	afterMktID := 1
+	synthID := 11
+	mfr, adMfr, vehicle, afterMarketDevice, syntheticDevice := getCommonEntities(ctx, int(vID.Int64()), afterMktID, synthID, *user, *beneficiary)
+
+	err = mfr.Insert(ctx, pdb.DBS().Writer.DB, boil.Infer())
+	assert.NoError(t, err)
+
+	err = adMfr.Insert(ctx, pdb.DBS().Writer.DB, boil.Infer())
+	assert.NoError(t, err)
 
 	err = vehicle.Insert(ctx, pdb.DBS().Writer.DB, boil.Infer())
 	assert.NoError(t, err)
@@ -1226,18 +1404,19 @@ func Test_Handle_TokensTransferred_ForDevice_UpdateAftermarket_WhenSyntheticExis
 	assert.Len(t, reward, 1)
 
 	if len(reward) > 0 {
-		assert.Equal(t, reward[0], &models.Reward{
+		assert.Equal(t, &models.Reward{
 			IssuanceWeek:        1,
 			VehicleID:           int(vID.Int64()),
 			ReceivedByAddress:   null.BytesFrom(user.Bytes()),
 			EarnedAt:            mintedTime,
 			AftermarketTokenID:  null.IntFrom(afterMktID),
-			AftermarketEarnings: types.NewNullDecimal(decimal.New(payloads[1].amount.Int64(), 0)),
+			AftermarketEarnings: types.NewDecimal(decimal.New(payloads[1].amount.Int64(), 0)),
 			SyntheticTokenID:    null.IntFrom(synthID),
-			SyntheticEarnings:   types.NewNullDecimal(decimal.New(payloads[0].amount.Int64(), 0)),
+			SyntheticEarnings:   types.NewDecimal(decimal.New(payloads[0].amount.Int64(), 0)),
 			ConnectionStreak:    null.Int{},
-			StreakEarnings:      types.NullDecimal{},
-		})
+			StreakEarnings:      zeroDecimal,
+		},
+			reward[0])
 	}
 }
 
@@ -1269,7 +1448,13 @@ func Test_Handle_TokensTransferredForConnectionStreak_Event(t *testing.T) {
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
 	afterMktID := 2
 	synthID := 3
-	vehicle, afterMarketDevice, syntheticDevice := getCommonEntities(ctx, int(vID.Int64()), afterMktID, synthID, *user, *beneficiary)
+	mfr, adMfr, vehicle, afterMarketDevice, syntheticDevice := getCommonEntities(ctx, int(vID.Int64()), afterMktID, synthID, *user, *beneficiary)
+
+	err = mfr.Insert(ctx, pdb.DBS().Writer.DB, boil.Infer())
+	assert.NoError(t, err)
+
+	err = adMfr.Insert(ctx, pdb.DBS().Writer.DB, boil.Infer())
+	assert.NoError(t, err)
 
 	err = vehicle.Insert(ctx, pdb.DBS().Writer.DB, boil.Infer())
 	assert.NoError(t, err)
@@ -1350,11 +1535,11 @@ func Test_Handle_TokensTransferredForConnectionStreak_Event(t *testing.T) {
 			ReceivedByAddress:   null.BytesFrom(user.Bytes()),
 			EarnedAt:            mintedTime,
 			AftermarketTokenID:  null.IntFrom(afterMktID),
-			AftermarketEarnings: types.NewNullDecimal(decimal.New(payloads[1].amount.Int64(), 0)),
+			AftermarketEarnings: types.NewDecimal(decimal.New(payloads[1].amount.Int64(), 0)),
 			SyntheticTokenID:    null.IntFrom(synthID),
-			SyntheticEarnings:   types.NewNullDecimal(decimal.New(payloads[0].amount.Int64(), 0)),
+			SyntheticEarnings:   types.NewDecimal(decimal.New(payloads[0].amount.Int64(), 0)),
 			ConnectionStreak:    null.IntFrom(int(payloads[2].connectionStreak.Int64())),
-			StreakEarnings:      types.NewNullDecimal(decimal.New(payloads[2].amount.Int64(), 0)),
+			StreakEarnings:      types.NewDecimal(decimal.New(payloads[2].amount.Int64(), 0)),
 		}, reward[0])
 	}
 }
@@ -1372,21 +1557,31 @@ func TestHandle_SyntheticDevice_NodeBurnet_RewardsNulled_Success(t *testing.T) {
 	assert.NoError(t, err)
 
 	currTime := time.Now().UTC().Truncate(time.Second)
-	vehicles := []models.Vehicle{
-		{
-			ID:           1,
-			OwnerAddress: wallet.Bytes(),
-			Make:         null.StringFrom("Toyota"),
-			Model:        null.StringFrom("Camry"),
-			Year:         null.IntFrom(2020),
-			MintedAt:     currTime,
-		},
+
+	m := models.Manufacturer{
+		ID:       131,
+		Name:     "Toyota",
+		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		MintedAt: time.Now(),
+		Slug:     "toyota",
 	}
 
-	for _, v := range vehicles {
-		if err := v.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
-			assert.NoError(t, err)
-		}
+	if err := m.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
+		assert.NoError(t, err)
+	}
+
+	v := models.Vehicle{
+		ID:             1,
+		ManufacturerID: 131,
+		OwnerAddress:   wallet.Bytes(),
+		Make:           null.StringFrom("Toyota"),
+		Model:          null.StringFrom("Camry"),
+		Year:           null.IntFrom(2020),
+		MintedAt:       currTime,
+	}
+
+	if err := v.Insert(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
+		assert.NoError(t, err)
 	}
 
 	sd := models.SyntheticDevice{
@@ -1458,14 +1653,24 @@ func TestHandleAftermarketDeviceAddressResetEvent(t *testing.T) {
 	}
 	e := prepareEvent(t, contractEventData, eventData)
 
-	amd := models.AftermarketDevice{
-		ID:          1,
-		Address:     common.FromHex("0xaba3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
-		Owner:       common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
-		Beneficiary: common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
-		Imei:        null.StringFrom("garbage-imei-value"),
+	mfr := models.Manufacturer{
+		ID:    137,
+		Name:  "AutoPi",
+		Owner: common.FromHex("0xaba3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Slug:  "autopi",
 	}
-	err := amd.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	err := mfr.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err)
+
+	amd := models.AftermarketDevice{
+		ID:             1,
+		ManufacturerID: 137,
+		Address:        common.FromHex("0xaba3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Owner:          common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Beneficiary:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Imei:           null.StringFrom("garbage-imei-value"),
+	}
+	err = amd.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	assert.NoError(t, err)
 
 	err = contractEventConsumer.Process(ctx, &e)

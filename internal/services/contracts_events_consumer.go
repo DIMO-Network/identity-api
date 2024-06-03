@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -11,13 +12,12 @@ import (
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared"
 	"github.com/DIMO-Network/shared/db"
-	"github.com/ericlagergren/decimal"
+	"github.com/DIMO-Network/shared/dbtypes"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/goccy/go-json"
 	"github.com/rs/zerolog"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
-	"github.com/volatiletech/sqlboiler/v4/types"
 )
 
 type ContractsEventsConsumer struct {
@@ -32,26 +32,42 @@ type EventName string
 var zeroAddress common.Address
 
 const (
-	Transfer                             EventName = "Transfer"
-	VehicleAttributeSet                  EventName = "VehicleAttributeSet"
-	ManufacturerNodeMinted               EventName = "ManufacturerNodeMinted"
-	AftermarketDeviceAttributeSet        EventName = "AftermarketDeviceAttributeSet"
-	PrivilegeSet                         EventName = "PrivilegeSet"
-	AftermarketDeviceClaimed             EventName = "AftermarketDeviceClaimed"
-	AftermarketDevicePaired              EventName = "AftermarketDevicePaired"
-	AftermarketDeviceUnpaired            EventName = "AftermarketDeviceUnpaired"
-	BeneficiarySetEvent                  EventName = "BeneficiarySet"
-	VehicleNodeMinted                    EventName = "VehicleNodeMinted"
-	AftermarketDeviceNodeMinted          EventName = "AftermarketDeviceNodeMinted"
-	SyntheticDeviceNodeMinted            EventName = "SyntheticDeviceNodeMinted"
-	SyntheticDeviceNodeBurned            EventName = "SyntheticDeviceNodeBurned"
-	NewNode                              EventName = "NewNode"
-	NewExpiration                        EventName = "NewExpiration"
-	NameChanged                          EventName = "NameChanged"
-	VehicleIdChanged                     EventName = "VehicleIdChanged"
+	// All NFTs.
+	Transfer            EventName = "Transfer"
+	PrivilegeSet        EventName = "PrivilegeSet"
+	BeneficiarySetEvent EventName = "BeneficiarySet"
+
+	// Manufacturers.
+	ManufacturerNodeMinted       EventName = "ManufacturerNodeMinted"
+	DeviceDefinitionTableCreated EventName = "DeviceDefinitionTableCreated"
+	ManufacturerTableSet         EventName = "ManufacturerTableSet"
+
+	// Aftermarket devices.
+	AftermarketDeviceNodeMinted   EventName = "AftermarketDeviceNodeMinted"
+	AftermarketDeviceAttributeSet EventName = "AftermarketDeviceAttributeSet"
+	AftermarketDeviceClaimed      EventName = "AftermarketDeviceClaimed"
+	AftermarketDevicePaired       EventName = "AftermarketDevicePaired"
+	AftermarketDeviceUnpaired     EventName = "AftermarketDeviceUnpaired"
+	AftermarketDeviceAddressReset EventName = "AftermarketDeviceAddressReset"
+
+	// Vehicles.
+	VehicleNodeMinted                     EventName = "VehicleNodeMinted"
+	VehicleAttributeSet                   EventName = "VehicleAttributeSet"
+	VehicleNodeMintedWithDeviceDefinition EventName = "VehicleNodeMintedWithDeviceDefinition"
+
+	// Synthetic devices.
+	SyntheticDeviceNodeMinted EventName = "SyntheticDeviceNodeMinted"
+	SyntheticDeviceNodeBurned EventName = "SyntheticDeviceNodeBurned"
+
+	// DCNs.
+	NewNode          EventName = "NewNode"
+	NewExpiration    EventName = "NewExpiration"
+	NameChanged      EventName = "NameChanged"
+	VehicleIdChanged EventName = "VehicleIdChanged"
+
+	// Rewards.
 	TokensTransferredForDevice           EventName = "TokensTransferredForDevice"
 	TokensTransferredForConnectionStreak EventName = "TokensTransferredForConnectionStreak"
-	AftermarketDeviceAddressReset        EventName = "AftermarketDeviceAddressReset"
 )
 
 func (r EventName) String() string {
@@ -102,9 +118,15 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 		switch eventName {
 		case ManufacturerNodeMinted:
 			return c.handleManufacturerNodeMintedEvent(ctx, &data)
+		case DeviceDefinitionTableCreated:
+			return c.handleDeviceDefinitionTableCreated(ctx, &data)
+		case ManufacturerTableSet:
+			return c.handleManufacturerTableSet(ctx, &data)
 
 		case VehicleNodeMinted:
 			return c.handleVehicleNodeMintedEvent(ctx, &data)
+		case VehicleNodeMintedWithDeviceDefinition:
+			return c.handleVehicleNodeMintedWithDeviceDefinitionEvent(ctx, &data)
 		case VehicleAttributeSet:
 			return c.handleVehicleAttributeSetEvent(ctx, &data)
 
@@ -180,9 +202,40 @@ func (c *ContractsEventsConsumer) handleManufacturerNodeMintedEvent(ctx context.
 		Name:     args.Name,
 		Owner:    args.Owner.Bytes(),
 		MintedAt: e.Block.Time,
+		Slug:     shared.SlugString(args.Name), // Better hope uniqueness is never a problem!
 	}
 
 	return mfr.Upsert(ctx, c.dbs.DBS().Writer, false, []string{models.ManufacturerColumns.ID}, boil.None(), boil.Infer())
+}
+
+func (c *ContractsEventsConsumer) handleDeviceDefinitionTableCreated(ctx context.Context, e *ContractEventData) error {
+	var args DeviceDefinitionTableCreatedData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	mfr := models.Manufacturer{
+		ID:      int(args.ManufacturerId.Int64()),
+		TableID: null.IntFrom(int(args.TableId.Int64())),
+	}
+
+	_, err := mfr.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.ManufacturerColumns.TableID))
+	return err
+}
+
+func (c *ContractsEventsConsumer) handleManufacturerTableSet(ctx context.Context, e *ContractEventData) error {
+	var args ManufacturerTableSetData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	mfr := models.Manufacturer{
+		ID:      int(args.ManufacturerId.Int64()),
+		TableID: null.IntFrom(int(args.TableId.Int64())),
+	}
+
+	_, err := mfr.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.ManufacturerColumns.TableID))
+	return err
 }
 
 func (c *ContractsEventsConsumer) handleVehicleNodeMintedEvent(ctx context.Context, e *ContractEventData) error {
@@ -195,7 +248,7 @@ func (c *ContractsEventsConsumer) handleVehicleNodeMintedEvent(ctx context.Conte
 		ID:             int(args.TokenID.Int64()),
 		OwnerAddress:   args.Owner.Bytes(),
 		MintedAt:       e.Block.Time,
-		ManufacturerID: null.IntFrom(int(args.ManufacturerNode.Int64())),
+		ManufacturerID: int(args.ManufacturerNode.Int64()),
 	}
 
 	cols := models.VehicleColumns
@@ -207,6 +260,32 @@ func (c *ContractsEventsConsumer) handleVehicleNodeMintedEvent(ctx context.Conte
 		[]string{cols.ID},
 		boil.None(),
 		boil.Whitelist(cols.ID, cols.OwnerAddress, cols.MintedAt, cols.ManufacturerID),
+	)
+}
+
+func (c *ContractsEventsConsumer) handleVehicleNodeMintedWithDeviceDefinitionEvent(ctx context.Context, e *ContractEventData) error {
+	var args VehicleNodeMintedWithDeviceDefinitionData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	v := models.Vehicle{
+		ID:                 int(args.VehicleId.Int64()),
+		OwnerAddress:       args.Owner.Bytes(),
+		DeviceDefinitionID: null.StringFrom(args.DeviceDefinitionID),
+		MintedAt:           e.Block.Time,
+		ManufacturerID:     int(args.ManufacturerId.Int64()),
+	}
+
+	cols := models.VehicleColumns
+
+	return v.Upsert(
+		ctx,
+		c.dbs.DBS().Writer,
+		false,
+		[]string{cols.ID},
+		boil.None(),
+		boil.Whitelist(cols.ID, cols.OwnerAddress, cols.MintedAt, cols.ManufacturerID, cols.DeviceDefinitionID),
 	)
 }
 
@@ -222,7 +301,7 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceMintedEvent(ctx context
 		Owner:          args.Owner.Bytes(),
 		MintedAt:       e.Block.Time,
 		Beneficiary:    args.Owner.Bytes(),
-		ManufacturerID: null.IntFrom(int(args.ManufacturerID.Int64())),
+		ManufacturerID: int(args.ManufacturerID.Int64()),
 	}
 
 	cols := models.AftermarketDeviceColumns
@@ -268,30 +347,13 @@ func (c *ContractsEventsConsumer) handleVehicleAttributeSetEvent(ctx context.Con
 			return err
 		}
 		return nil
-	case "DefinitionURI":
-		res, err := c.httpClient.Get(args.Info)
+	case "ImageURI":
+		_, err := url.ParseRequestURI(args.Info)
 		if err != nil {
-			return err
+			return fmt.Errorf("couldn't parse image URI string %q: %w", args.Info, err)
 		}
-		defer res.Body.Close()
-
-		if res.StatusCode != http.StatusOK {
-			return fmt.Errorf("device definition URI returned status code %d", res.StatusCode)
-		}
-
-		var ddf DeviceDefinition
-		if err := json.NewDecoder(res.Body).Decode(&ddf); err != nil {
-			return fmt.Errorf("couldn't parse device definition response: %w", err)
-		}
-
-		veh.Make = null.StringFrom(ddf.Type.Make)
-		veh.Model = null.StringFrom(ddf.Type.Model)
-		veh.Year = null.IntFrom(ddf.Type.Year)
-		veh.DefinitionURI = null.StringFrom(args.Info)
-
-		cols := models.VehicleColumns
-		_, err = veh.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(cols.DefinitionURI, cols.Make, cols.Model, cols.Year))
-
+		veh.ImageURI = null.StringFrom(args.Info)
+		_, err = veh.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.VehicleColumns.ImageURI))
 		return err
 	default:
 		return fmt.Errorf("unrecognized vehicle attribute %q", args.Attribute)
@@ -567,15 +629,14 @@ func (c *ContractsEventsConsumer) handleTokensTransferredForDevice(ctx context.C
 
 	if common.HexToAddress(c.settings.AftermarketDeviceAddr) == args.DeviceNftProxy {
 		reward.AftermarketTokenID = null.IntFrom(int(args.DeviceNode.Int64()))
-		reward.AftermarketEarnings = types.NewNullDecimal(new(decimal.Big).SetBigMantScale(args.Amount, 0))
-
+		reward.AftermarketEarnings = dbtypes.IntToDecimal(args.Amount)
 		return reward.Upsert(ctx, c.dbs.DBS().Writer, true,
 			[]string{cols.IssuanceWeek, cols.VehicleID},
 			boil.Whitelist(cols.AftermarketEarnings, cols.AftermarketTokenID),
 			boil.Infer())
 	} else if common.HexToAddress(c.settings.SyntheticDeviceAddr) == args.DeviceNftProxy {
 		reward.SyntheticTokenID = null.IntFrom(int(args.DeviceNode.Int64()))
-		reward.SyntheticEarnings = types.NewNullDecimal(new(decimal.Big).SetBigMantScale(args.Amount, 0))
+		reward.SyntheticEarnings = dbtypes.IntToDecimal(args.Amount)
 
 		return reward.Upsert(ctx, c.dbs.DBS().Writer, true,
 			[]string{cols.IssuanceWeek, cols.VehicleID},
@@ -596,7 +657,7 @@ func (c *ContractsEventsConsumer) handleTokensTransferredForConnectionStreak(ctx
 		IssuanceWeek:     int(args.Week.Int64()),
 		VehicleID:        int(args.VehicleNodeID.Int64()),
 		ConnectionStreak: null.IntFrom(int(args.ConnectionStreak.Int64())),
-		StreakEarnings:   types.NewNullDecimal(new(decimal.Big).SetBigMantScale(args.Amount, 0)),
+		StreakEarnings:   dbtypes.IntToDecimal(args.Amount),
 	}
 
 	cols := models.RewardColumns

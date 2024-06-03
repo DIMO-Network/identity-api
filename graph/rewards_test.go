@@ -20,16 +20,17 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/suite"
-	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/volatiletech/sqlboiler/v4/types"
 )
 
 type RewardsQueryTestSuite struct {
 	suite.Suite
 	ctx       context.Context
 	pdb       db.Store
-	container testcontainers.Container
+	container *postgres.PostgresContainer
 	settings  config.Settings
 	resolver  *Resolver
 	repo      *base.Repository
@@ -50,7 +51,7 @@ func (r *RewardsQueryTestSuite) SetupSuite() {
 
 // TearDownTest after each test truncate tables
 func (r *RewardsQueryTestSuite) TearDownTest() {
-	test.TruncateTables(r.pdb.DBS().Writer.DB, r.T())
+	r.Require().NoError(r.container.Restore(r.ctx))
 }
 
 // TearDownSuite cleanup at end by terminating container
@@ -68,24 +69,42 @@ func TestRewardsQueryTestSuite(t *testing.T) {
 }
 
 func (r *RewardsQueryTestSuite) createDependencies() {
+	var mfr = models.Manufacturer{
+		ID:       43,
+		Owner:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Name:     "Ford",
+		MintedAt: time.Now(),
+		Slug:     "ford",
+	}
+
+	var mfr2 = models.Manufacturer{
+		ID:       137,
+		Owner:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDff"),
+		Name:     "AutoPi",
+		MintedAt: time.Now(),
+		Slug:     "autopi",
+	}
+
 	var vehicle = models.Vehicle{
-		ID:           1,
-		OwnerAddress: common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
-		Make:         null.StringFrom("Ford"),
-		Model:        null.StringFrom("Bronco"),
-		Year:         null.IntFrom(2022),
-		MintedAt:     time.Now(),
+		ID:             1,
+		ManufacturerID: 43,
+		OwnerAddress:   common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Make:           null.StringFrom("Ford"),
+		Model:          null.StringFrom("Bronco"),
+		Year:           null.IntFrom(2022),
+		MintedAt:       time.Now(),
 	}
 
 	var aftermarketDevice = models.AftermarketDevice{
-		ID:          1,
-		Address:     common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf5").Bytes(),
-		Owner:       common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4").Bytes(),
-		Serial:      null.StringFrom("aftermarketDeviceSerial-1"),
-		Imei:        null.StringFrom("aftermarketDeviceIMEI-1"),
-		MintedAt:    time.Now(),
-		VehicleID:   null.IntFrom(1),
-		Beneficiary: common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		ID:             1,
+		ManufacturerID: 137,
+		Address:        common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf5").Bytes(),
+		Owner:          common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4").Bytes(),
+		Serial:         null.StringFrom("aftermarketDeviceSerial-1"),
+		Imei:           null.StringFrom("aftermarketDeviceIMEI-1"),
+		MintedAt:       time.Now(),
+		VehicleID:      null.IntFrom(1),
+		Beneficiary:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 	}
 
 	var syntheticDevice = models.SyntheticDevice{
@@ -96,7 +115,13 @@ func (r *RewardsQueryTestSuite) createDependencies() {
 		MintedAt:      time.Now(),
 	}
 
-	err := vehicle.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
+	err := mfr.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
+	r.NoError(err)
+
+	err = mfr2.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
+	r.NoError(err)
+
+	err = vehicle.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
 	r.NoError(err)
 
 	err = aftermarketDevice.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
@@ -129,11 +154,11 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate() {
 		IssuanceWeek:        2,
 		VehicleID:           1,
 		ConnectionStreak:    null.IntFrom(20),
-		StreakEarnings:      dbtypes.NullIntToDecimal(strkEarn),
+		StreakEarnings:      dbtypes.IntToDecimal(strkEarn),
 		AftermarketTokenID:  null.IntFrom(1),
-		AftermarketEarnings: dbtypes.NullIntToDecimal(adEarn),
+		AftermarketEarnings: dbtypes.IntToDecimal(adEarn),
 		SyntheticTokenID:    null.IntFrom(1),
-		SyntheticEarnings:   dbtypes.NullIntToDecimal(synthEarn),
+		SyntheticEarnings:   dbtypes.IntToDecimal(synthEarn),
 		ReceivedByAddress:   null.BytesFrom(beneficiary.Bytes()),
 		EarnedAt:            currTime,
 	}
@@ -205,7 +230,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate() {
 		"vehicle": {
 		  "id": "V_kQE=",
 		  "earnings": {
-			"totalTokens": "177441154036585529047",
+			"totalTokens": "177.44",
 			"history": {
 			  "totalCount": 1,
 			  "edges": [
@@ -215,12 +240,12 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate() {
 					"week": 2,
 					"beneficiary": "%s",
 					"connectionStreak": 20,
-					"streakTokens": "59147051345528509684",
+					"streakTokens": "59.15",
 					"aftermarketDevice": {
 					  "id": "AD_kQE=",
 					  "tokenId": 1
 					},
-					"aftermarketDeviceTokens": "59147051345528509681",
+					"aftermarketDeviceTokens": "59.15",
 					"syntheticDevice": {
 					  "tokenId": 1,
 					  "integrationId": 2
@@ -229,7 +254,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate() {
 					  "id": "V_kQE=",
 					  "tokenId": 1
 					},
-					"syntheticDeviceTokens": "59147051345528509682",
+					"syntheticDeviceTokens": "59.15",
 					"sentAt": "%s"
 				  }
 				}
@@ -278,11 +303,11 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate_Firs
 			IssuanceWeek:        2,
 			VehicleID:           1,
 			ConnectionStreak:    null.IntFrom(12),
-			StreakEarnings:      dbtypes.NullIntToDecimal(strkEarn),
+			StreakEarnings:      dbtypes.IntToDecimal(strkEarn),
 			AftermarketTokenID:  null.IntFrom(1),
-			AftermarketEarnings: dbtypes.NullIntToDecimal(adEarn),
+			AftermarketEarnings: dbtypes.IntToDecimal(adEarn),
 			SyntheticTokenID:    null.IntFrom(1),
-			SyntheticEarnings:   dbtypes.NullIntToDecimal(synthEarn),
+			SyntheticEarnings:   dbtypes.IntToDecimal(synthEarn),
 			ReceivedByAddress:   null.BytesFrom(beneficiary.Bytes()),
 			EarnedAt:            currTime,
 		},
@@ -290,11 +315,11 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate_Firs
 			IssuanceWeek:        3,
 			VehicleID:           1,
 			ConnectionStreak:    null.IntFrom(13),
-			StreakEarnings:      dbtypes.NullIntToDecimal(strkEarn),
+			StreakEarnings:      dbtypes.IntToDecimal(strkEarn),
 			AftermarketTokenID:  null.IntFrom(1),
-			AftermarketEarnings: dbtypes.NullIntToDecimal(adEarn),
+			AftermarketEarnings: dbtypes.IntToDecimal(adEarn),
 			SyntheticTokenID:    null.IntFrom(1),
-			SyntheticEarnings:   dbtypes.NullIntToDecimal(synthEarn),
+			SyntheticEarnings:   dbtypes.IntToDecimal(synthEarn),
 			ReceivedByAddress:   null.BytesFrom(beneficiary.Bytes()),
 			EarnedAt:            currTime,
 		},
@@ -302,11 +327,11 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate_Firs
 			IssuanceWeek:        4,
 			VehicleID:           1,
 			ConnectionStreak:    null.IntFrom(14),
-			StreakEarnings:      dbtypes.NullIntToDecimal(strkEarn),
+			StreakEarnings:      dbtypes.IntToDecimal(strkEarn),
 			AftermarketTokenID:  null.IntFrom(1),
-			AftermarketEarnings: dbtypes.NullIntToDecimal(adEarn),
+			AftermarketEarnings: dbtypes.IntToDecimal(adEarn),
 			SyntheticTokenID:    null.IntFrom(1),
-			SyntheticEarnings:   dbtypes.NullIntToDecimal(synthEarn),
+			SyntheticEarnings:   dbtypes.IntToDecimal(synthEarn),
 			ReceivedByAddress:   null.BytesFrom(beneficiary.Bytes()),
 			EarnedAt:            currTime,
 		},
@@ -381,7 +406,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate_Firs
 		"vehicle": {
 			"id": "V_kQE=",
 			"earnings": {
-			"totalTokens": "532323462109756587141",
+			"totalTokens": "532.32",
 			"history": {
 				"totalCount": 3,
 				"edges": [
@@ -391,12 +416,12 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate_Firs
 						"week": 3,
 						"beneficiary": "%s",
 						"connectionStreak": 13,
-						"streakTokens": "59147051345528509684",
+						"streakTokens": "59.15",
 						"aftermarketDevice": {
 							"id": "AD_kQE=",
 							"tokenId": 1
 						},
-						"aftermarketDeviceTokens": "59147051345528509681",
+						"aftermarketDeviceTokens": "59.15",
 						"syntheticDevice": {
 							"tokenId": 1,
 							"integrationId": 2
@@ -405,7 +430,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate_Firs
 							"id": "V_kQE=",
 							"tokenId": 1
 						},
-						"syntheticDeviceTokens": "59147051345528509682",
+						"syntheticDeviceTokens": "59.15",
 						"sentAt": "%s"
 						}
 					},
@@ -415,12 +440,12 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate_Firs
 						"week": 2,
 						"beneficiary": "%s",
 						"connectionStreak": 12,
-						"streakTokens": "59147051345528509684",
+						"streakTokens": "59.15",
 						"aftermarketDevice": {
 							"id": "AD_kQE=",
 							"tokenId": 1
 						},
-						"aftermarketDeviceTokens": "59147051345528509681",
+						"aftermarketDeviceTokens": "59.15",
 						"syntheticDevice": {
 							"tokenId": 1,
 							"integrationId": 2
@@ -429,7 +454,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate_Firs
 							"id": "V_kQE=",
 							"tokenId": 1
 						},
-						"syntheticDeviceTokens": "59147051345528509682",
+						"syntheticDeviceTokens": "59.15",
 						"sentAt": "%s"
 						}
 					}
@@ -483,11 +508,11 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 			IssuanceWeek:        2,
 			VehicleID:           1,
 			ConnectionStreak:    null.IntFrom(12),
-			StreakEarnings:      dbtypes.NullIntToDecimal(strkEarn),
+			StreakEarnings:      dbtypes.IntToDecimal(strkEarn),
 			AftermarketTokenID:  null.IntFrom(1),
-			AftermarketEarnings: dbtypes.NullIntToDecimal(adEarn),
+			AftermarketEarnings: dbtypes.IntToDecimal(adEarn),
 			SyntheticTokenID:    null.IntFrom(1),
-			SyntheticEarnings:   dbtypes.NullIntToDecimal(synthEarn),
+			SyntheticEarnings:   dbtypes.IntToDecimal(synthEarn),
 			ReceivedByAddress:   null.BytesFrom(beneficiary.Bytes()),
 			EarnedAt:            currTime,
 		},
@@ -495,11 +520,11 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 			IssuanceWeek:        3,
 			VehicleID:           1,
 			ConnectionStreak:    null.IntFrom(13),
-			StreakEarnings:      dbtypes.NullIntToDecimal(strkEarn),
+			StreakEarnings:      dbtypes.IntToDecimal(strkEarn),
 			AftermarketTokenID:  null.IntFrom(1),
-			AftermarketEarnings: dbtypes.NullIntToDecimal(adEarn),
+			AftermarketEarnings: dbtypes.IntToDecimal(adEarn),
 			SyntheticTokenID:    null.IntFrom(1),
-			SyntheticEarnings:   dbtypes.NullIntToDecimal(synthEarn),
+			SyntheticEarnings:   dbtypes.IntToDecimal(synthEarn),
 			ReceivedByAddress:   null.BytesFrom(beneficiary.Bytes()),
 			EarnedAt:            currTime,
 		},
@@ -507,11 +532,11 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 			IssuanceWeek:        4,
 			VehicleID:           1,
 			ConnectionStreak:    null.IntFrom(14),
-			StreakEarnings:      dbtypes.NullIntToDecimal(strkEarn),
+			StreakEarnings:      dbtypes.IntToDecimal(strkEarn),
 			AftermarketTokenID:  null.IntFrom(1),
-			AftermarketEarnings: dbtypes.NullIntToDecimal(adEarn),
+			AftermarketEarnings: dbtypes.IntToDecimal(adEarn),
 			SyntheticTokenID:    null.IntFrom(1),
-			SyntheticEarnings:   dbtypes.NullIntToDecimal(synthEarn),
+			SyntheticEarnings:   dbtypes.IntToDecimal(synthEarn),
 			ReceivedByAddress:   null.BytesFrom(beneficiary.Bytes()),
 			EarnedAt:            currTime,
 		},
@@ -586,7 +611,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 		"vehicle": {
 			"id": "V_kQE=",
 			"earnings": {
-			"totalTokens": "532323462109756587141",
+			"totalTokens": "532.32",
 			"history": {
 				"totalCount": 3,
 				"edges": [
@@ -596,12 +621,12 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 						"week": 3,
 						"beneficiary": "%s",
 						"connectionStreak": 13,
-						"streakTokens": "59147051345528509684",
+						"streakTokens": "59.15",
 						"aftermarketDevice": {
 							"id": "AD_kQE=",
 							"tokenId": 1
 						},
-						"aftermarketDeviceTokens": "59147051345528509681",
+						"aftermarketDeviceTokens": "59.15",
 						"syntheticDevice": {
 							"tokenId": 1,
 							"integrationId": 2
@@ -610,7 +635,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 							"id": "V_kQE=",
 							"tokenId": 1
 						},
-						"syntheticDeviceTokens": "59147051345528509682",
+						"syntheticDeviceTokens": "59.15",
 						"sentAt": "%s"
 						}
 					},
@@ -620,12 +645,12 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 						"week": 2,
 						"beneficiary": "%s",
 						"connectionStreak": 12,
-						"streakTokens": "59147051345528509684",
+						"streakTokens": "59.15",
 						"aftermarketDevice": {
 							"id": "AD_kQE=",
 							"tokenId": 1
 						},
-						"aftermarketDeviceTokens": "59147051345528509681",
+						"aftermarketDeviceTokens": "59.15",
 						"syntheticDevice": {
 							"tokenId": 1,
 							"integrationId": 2
@@ -634,7 +659,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 							"id": "V_kQE=",
 							"tokenId": 1
 						},
-						"syntheticDeviceTokens": "59147051345528509682",
+						"syntheticDeviceTokens": "59.15",
 						"sentAt": "%s"
 						}
 					}
@@ -688,11 +713,11 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 			IssuanceWeek:        2,
 			VehicleID:           1,
 			ConnectionStreak:    null.IntFrom(12),
-			StreakEarnings:      dbtypes.NullIntToDecimal(strkEarn),
+			StreakEarnings:      dbtypes.IntToDecimal(strkEarn),
 			AftermarketTokenID:  null.IntFrom(1),
-			AftermarketEarnings: dbtypes.NullIntToDecimal(adEarn),
+			AftermarketEarnings: dbtypes.IntToDecimal(adEarn),
 			SyntheticTokenID:    null.IntFrom(1),
-			SyntheticEarnings:   dbtypes.NullIntToDecimal(synthEarn),
+			SyntheticEarnings:   dbtypes.IntToDecimal(synthEarn),
 			ReceivedByAddress:   null.BytesFrom(beneficiary.Bytes()),
 			EarnedAt:            currTime,
 		},
@@ -700,11 +725,11 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 			IssuanceWeek:        3,
 			VehicleID:           1,
 			ConnectionStreak:    null.IntFrom(13),
-			StreakEarnings:      dbtypes.NullIntToDecimal(strkEarn),
+			StreakEarnings:      dbtypes.IntToDecimal(strkEarn),
 			AftermarketTokenID:  null.IntFrom(1),
-			AftermarketEarnings: dbtypes.NullIntToDecimal(adEarn),
+			AftermarketEarnings: dbtypes.IntToDecimal(adEarn),
 			SyntheticTokenID:    null.IntFrom(1),
-			SyntheticEarnings:   dbtypes.NullIntToDecimal(synthEarn),
+			SyntheticEarnings:   dbtypes.IntToDecimal(synthEarn),
 			ReceivedByAddress:   null.BytesFrom(beneficiary.Bytes()),
 			EarnedAt:            currTime,
 		},
@@ -712,11 +737,11 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 			IssuanceWeek:        4,
 			VehicleID:           1,
 			ConnectionStreak:    null.IntFrom(14),
-			StreakEarnings:      dbtypes.NullIntToDecimal(strkEarn),
+			StreakEarnings:      dbtypes.IntToDecimal(strkEarn),
 			AftermarketTokenID:  null.IntFrom(1),
-			AftermarketEarnings: dbtypes.NullIntToDecimal(adEarn),
+			AftermarketEarnings: dbtypes.IntToDecimal(adEarn),
 			SyntheticTokenID:    null.IntFrom(1),
-			SyntheticEarnings:   dbtypes.NullIntToDecimal(synthEarn),
+			SyntheticEarnings:   dbtypes.IntToDecimal(synthEarn),
 			ReceivedByAddress:   null.BytesFrom(beneficiary.Bytes()),
 			EarnedAt:            currTime,
 		},
@@ -791,7 +816,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 		"vehicle": {
 			"id": "V_kQE=",
 			"earnings": {
-			"totalTokens": "532323462109756587141",
+			"totalTokens": "532.32",
 			"history": {
 				"totalCount": 3,
 				"edges": [
@@ -801,12 +826,12 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 						"week": 4,
 						"beneficiary": "%s",
 						"connectionStreak": 14,
-						"streakTokens": "59147051345528509684",
+						"streakTokens": "59.15",
 						"aftermarketDevice": {
 							"id": "AD_kQE=",
 							"tokenId": 1
 						},
-						"aftermarketDeviceTokens": "59147051345528509681",
+						"aftermarketDeviceTokens": "59.15",
 						"syntheticDevice": {
 							"tokenId": 1,
 							"integrationId": 2
@@ -815,7 +840,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 							"id": "V_kQE=",
 							"tokenId": 1
 						},
-						"syntheticDeviceTokens": "59147051345528509682",
+						"syntheticDeviceTokens": "59.15",
 						"sentAt": "%s"
 						}
 					},
@@ -825,12 +850,12 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 						"week": 3,
 						"beneficiary": "%s",
 						"connectionStreak": 13,
-						"streakTokens": "59147051345528509684",
+						"streakTokens": "59.15",
 						"aftermarketDevice": {
 							"id": "AD_kQE=",
 							"tokenId": 1
 						},
-						"aftermarketDeviceTokens": "59147051345528509681",
+						"aftermarketDeviceTokens": "59.15",
 						"syntheticDevice": {
 							"tokenId": 1,
 							"integrationId": 2
@@ -839,7 +864,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 							"id": "V_kQE=",
 							"tokenId": 1
 						},
-						"syntheticDeviceTokens": "59147051345528509682",
+						"syntheticDeviceTokens": "59.15",
 						"sentAt": "%s"
 						}
 					}
@@ -892,11 +917,11 @@ func (r *RewardsQueryTestSuite) Test_Query_GetAftermarketDeviceEarnings_FwdPagin
 		IssuanceWeek:        2,
 		VehicleID:           1,
 		ConnectionStreak:    null.IntFrom(20),
-		StreakEarnings:      dbtypes.NullIntToDecimal(strkEarn),
+		StreakEarnings:      dbtypes.IntToDecimal(strkEarn),
 		AftermarketTokenID:  null.IntFrom(1),
-		AftermarketEarnings: dbtypes.NullIntToDecimal(adEarn),
+		AftermarketEarnings: dbtypes.IntToDecimal(adEarn),
 		SyntheticTokenID:    null.IntFrom(1),
-		SyntheticEarnings:   dbtypes.NullIntToDecimal(synthEarn),
+		SyntheticEarnings:   dbtypes.IntToDecimal(synthEarn),
 		ReceivedByAddress:   null.BytesFrom(beneficiary.Bytes()),
 		EarnedAt:            currTime,
 	}
@@ -960,7 +985,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetAftermarketDeviceEarnings_FwdPagin
 						"id": "AD_kQE=",
 						"tokenId": 1,
 						"earnings": {
-							"totalTokens": "177441154036585529047",
+							"totalTokens": "177.44",
 							"history": {
 								"totalCount": 1,
 								"pageInfo": {
@@ -1013,11 +1038,11 @@ func (r *RewardsQueryTestSuite) Test_Query_GetUserRewards_FwdPaginate() {
 			IssuanceWeek:        2,
 			VehicleID:           1,
 			ConnectionStreak:    null.IntFrom(12),
-			StreakEarnings:      dbtypes.NullIntToDecimal(strkEarn),
+			StreakEarnings:      dbtypes.IntToDecimal(strkEarn),
 			AftermarketTokenID:  null.IntFrom(1),
-			AftermarketEarnings: dbtypes.NullIntToDecimal(adEarn),
+			AftermarketEarnings: dbtypes.IntToDecimal(adEarn),
 			SyntheticTokenID:    null.IntFrom(1),
-			SyntheticEarnings:   dbtypes.NullIntToDecimal(synthEarn),
+			SyntheticEarnings:   dbtypes.IntToDecimal(synthEarn),
 			ReceivedByAddress:   null.BytesFrom(beneficiary.Bytes()),
 			EarnedAt:            currTime,
 		},
@@ -1025,11 +1050,11 @@ func (r *RewardsQueryTestSuite) Test_Query_GetUserRewards_FwdPaginate() {
 			IssuanceWeek:        3,
 			VehicleID:           1,
 			ConnectionStreak:    null.IntFrom(13),
-			StreakEarnings:      dbtypes.NullIntToDecimal(strkEarn),
+			StreakEarnings:      dbtypes.IntToDecimal(strkEarn),
 			AftermarketTokenID:  null.IntFrom(1),
-			AftermarketEarnings: dbtypes.NullIntToDecimal(adEarn),
+			AftermarketEarnings: dbtypes.IntToDecimal(adEarn),
 			SyntheticTokenID:    null.IntFrom(1),
-			SyntheticEarnings:   dbtypes.NullIntToDecimal(synthEarn),
+			SyntheticEarnings:   dbtypes.IntToDecimal(synthEarn),
 			ReceivedByAddress:   null.BytesFrom(beneficiary.Bytes()),
 			EarnedAt:            currTime,
 		},
@@ -1037,11 +1062,11 @@ func (r *RewardsQueryTestSuite) Test_Query_GetUserRewards_FwdPaginate() {
 			IssuanceWeek:        4,
 			VehicleID:           1,
 			ConnectionStreak:    null.IntFrom(14),
-			StreakEarnings:      dbtypes.NullIntToDecimal(strkEarn),
+			StreakEarnings:      dbtypes.IntToDecimal(strkEarn),
 			AftermarketTokenID:  null.IntFrom(1),
-			AftermarketEarnings: dbtypes.NullIntToDecimal(adEarn),
+			AftermarketEarnings: dbtypes.IntToDecimal(adEarn),
 			SyntheticTokenID:    null.IntFrom(1),
-			SyntheticEarnings:   dbtypes.NullIntToDecimal(synthEarn),
+			SyntheticEarnings:   dbtypes.IntToDecimal(synthEarn),
 			ReceivedByAddress:   null.BytesFrom(beneficiary.Bytes()),
 			EarnedAt:            currTime,
 		},
@@ -1103,7 +1128,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetUserRewards_FwdPaginate() {
 	r.JSONEq(fmt.Sprintf(`
 	{
 		"rewards": {
-			"totalTokens": "532323462109756587141",
+			"totalTokens": "532.32",
 			"history": {
 			  "totalCount": 3,
 			  "edges": [
@@ -1112,15 +1137,15 @@ func (r *RewardsQueryTestSuite) Test_Query_GetUserRewards_FwdPaginate() {
 					"week": 4,
 					"beneficiary": "%s",
 					"connectionStreak": 14,
-					"streakTokens": "59147051345528509684",
+					"streakTokens": "59.15",
 					"aftermarketDevice": {
 					  "id": "AD_kQE="
 					},
-					"aftermarketDeviceTokens": "59147051345528509681",
+					"aftermarketDeviceTokens": "59.15",
 					"syntheticDevice": {
 					  "tokenId": 1
 					},
-					"syntheticDeviceTokens": "59147051345528509682",
+					"syntheticDeviceTokens": "59.15",
 					"vehicle": {
 					  "id": "V_kQE=",
 					  "tokenId": 1
@@ -1133,15 +1158,15 @@ func (r *RewardsQueryTestSuite) Test_Query_GetUserRewards_FwdPaginate() {
 					"week": 3,
 					"beneficiary": "%s",
 					"connectionStreak": 13,
-					"streakTokens": "59147051345528509684",
+					"streakTokens": "59.15",
 					"aftermarketDevice": {
 					  "id": "AD_kQE="
 					},
-					"aftermarketDeviceTokens": "59147051345528509681",
+					"aftermarketDeviceTokens": "59.15",
 					"syntheticDevice": {
 					  "tokenId": 1
 					},
-					"syntheticDeviceTokens": "59147051345528509682",
+					"syntheticDeviceTokens": "59.15",
 					"vehicle": {
 					  "id": "V_kQE=",
 					  "tokenId": 1
@@ -1186,11 +1211,11 @@ func (r *RewardsQueryTestSuite) Test_Query_GetUserRewards_BackPaginate_LastBefor
 			IssuanceWeek:        2,
 			VehicleID:           1,
 			ConnectionStreak:    null.IntFrom(12),
-			StreakEarnings:      dbtypes.NullIntToDecimal(strkEarn),
+			StreakEarnings:      dbtypes.IntToDecimal(strkEarn),
 			AftermarketTokenID:  null.IntFrom(1),
-			AftermarketEarnings: dbtypes.NullIntToDecimal(adEarn),
+			AftermarketEarnings: dbtypes.IntToDecimal(adEarn),
 			SyntheticTokenID:    null.IntFrom(1),
-			SyntheticEarnings:   dbtypes.NullIntToDecimal(synthEarn),
+			SyntheticEarnings:   dbtypes.IntToDecimal(synthEarn),
 			ReceivedByAddress:   null.BytesFrom(beneficiary.Bytes()),
 			EarnedAt:            currTime,
 		},
@@ -1198,11 +1223,11 @@ func (r *RewardsQueryTestSuite) Test_Query_GetUserRewards_BackPaginate_LastBefor
 			IssuanceWeek:        3,
 			VehicleID:           1,
 			ConnectionStreak:    null.IntFrom(13),
-			StreakEarnings:      dbtypes.NullIntToDecimal(strkEarn),
+			StreakEarnings:      dbtypes.IntToDecimal(strkEarn),
 			AftermarketTokenID:  null.IntFrom(1),
-			AftermarketEarnings: dbtypes.NullIntToDecimal(adEarn),
+			AftermarketEarnings: dbtypes.IntToDecimal(adEarn),
 			SyntheticTokenID:    null.IntFrom(1),
-			SyntheticEarnings:   dbtypes.NullIntToDecimal(synthEarn),
+			SyntheticEarnings:   dbtypes.IntToDecimal(synthEarn),
 			ReceivedByAddress:   null.BytesFrom(beneficiary.Bytes()),
 			EarnedAt:            currTime,
 		},
@@ -1210,11 +1235,11 @@ func (r *RewardsQueryTestSuite) Test_Query_GetUserRewards_BackPaginate_LastBefor
 			IssuanceWeek:        4,
 			VehicleID:           1,
 			ConnectionStreak:    null.IntFrom(14),
-			StreakEarnings:      dbtypes.NullIntToDecimal(strkEarn),
+			StreakEarnings:      dbtypes.IntToDecimal(strkEarn),
 			AftermarketTokenID:  null.IntFrom(1),
-			AftermarketEarnings: dbtypes.NullIntToDecimal(adEarn),
+			AftermarketEarnings: dbtypes.IntToDecimal(adEarn),
 			SyntheticTokenID:    null.IntFrom(1),
-			SyntheticEarnings:   dbtypes.NullIntToDecimal(synthEarn),
+			SyntheticEarnings:   dbtypes.IntToDecimal(synthEarn),
 			ReceivedByAddress:   null.BytesFrom(beneficiary.Bytes()),
 			EarnedAt:            currTime,
 		},
@@ -1276,7 +1301,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetUserRewards_BackPaginate_LastBefor
 	r.JSONEq(fmt.Sprintf(`
 	{
 		"rewards": {
-			"totalTokens": "532323462109756587141",
+			"totalTokens": "532.32",
 			"history": {
 			  "totalCount": 3,
 			  "edges": [
@@ -1285,15 +1310,15 @@ func (r *RewardsQueryTestSuite) Test_Query_GetUserRewards_BackPaginate_LastBefor
 					"week": 3,
 					"beneficiary": "%s",
 					"connectionStreak": 13,
-					"streakTokens": "59147051345528509684",
+					"streakTokens": "59.15",
 					"aftermarketDevice": {
 					  "id": "AD_kQE="
 					},
-					"aftermarketDeviceTokens": "59147051345528509681",
+					"aftermarketDeviceTokens": "59.15",
 					"syntheticDevice": {
 					  "tokenId": 1
 					},
-					"syntheticDeviceTokens": "59147051345528509682",
+					"syntheticDeviceTokens": "59.15",
 					"vehicle": {
 					  "id": "V_kQE=",
 					  "tokenId": 1
@@ -1306,15 +1331,15 @@ func (r *RewardsQueryTestSuite) Test_Query_GetUserRewards_BackPaginate_LastBefor
 					"week": 2,
 					"beneficiary": "%s",
 					"connectionStreak": 12,
-					"streakTokens": "59147051345528509684",
+					"streakTokens": "59.15",
 					"aftermarketDevice": {
 					  "id": "AD_kQE="
 					},
-					"aftermarketDeviceTokens": "59147051345528509681",
+					"aftermarketDeviceTokens": "59.15",
 					"syntheticDevice": {
 					  "tokenId": 1
 					},
-					"syntheticDeviceTokens": "59147051345528509682",
+					"syntheticDeviceTokens": "59.15",
 					"vehicle": {
 					  "id": "V_kQE=",
 					  "tokenId": 1
@@ -1333,4 +1358,105 @@ func (r *RewardsQueryTestSuite) Test_Query_GetUserRewards_BackPaginate_LastBefor
 		}
 	}
 	`, beneficiary.Hex(), beneficiary.Hex()), string(b))
+}
+
+func (r *RewardsQueryTestSuite) Test_Query_GetUserRewards_NullEarnings() {
+	currTime := time.Now().UTC().Truncate(time.Second)
+	_, beneficiary, err := test.GenerateWallet()
+	r.NoError(err)
+
+	r.createDependencies()
+
+	var rewards = []models.Reward{
+		{
+			IssuanceWeek:        3,
+			VehicleID:           1,
+			ConnectionStreak:    null.IntFrom(13),
+			StreakEarnings:      dbtypes.IntToDecimal(big.NewInt(1e18)),
+			AftermarketTokenID:  null.IntFrom(1),
+			AftermarketEarnings: dbtypes.IntToDecimal(big.NewInt(1e18)),
+			SyntheticTokenID:    null.IntFrom(1),
+			SyntheticEarnings:   types.Decimal{},
+			ReceivedByAddress:   null.BytesFrom(beneficiary.Bytes()),
+			EarnedAt:            currTime,
+		},
+	}
+
+	for _, rwd := range rewards {
+		err = rwd.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
+		r.NoError(err)
+	}
+
+	query := fmt.Sprintf(`{
+		rewards(user: "%s") {
+			totalTokens
+			history(last: 2) {
+			  totalCount
+			  edges {
+				node {
+				  week
+				  beneficiary
+				  connectionStreak
+				  streakTokens
+				  aftermarketDevice {
+					id
+				  }
+				  aftermarketDeviceTokens
+				  syntheticDevice {
+					tokenId
+				  }
+				  syntheticDeviceTokens
+				  vehicle {
+					id
+					tokenId
+				  }
+				}
+			  }
+			}
+		}
+	  }`, beneficiary.Hex())
+
+	c := client.New(
+		loader.Middleware(
+			r.pdb,
+			handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: r.resolver})), r.settings,
+		),
+	)
+
+	var resp any
+	c.MustPost(query, &resp)
+	b, err := json.Marshal(resp)
+	r.NoError(err)
+	r.JSONEq(fmt.Sprintf(`
+	{
+		"rewards": {
+			"totalTokens": "2.00",
+			"history": {
+			  "totalCount": 1,
+			  "edges": [
+				{
+				  "node": {
+					"week": 3,
+					"beneficiary": "%s",
+					"connectionStreak": 13,
+					"streakTokens": "1.00",
+					"aftermarketDevice": {
+					  "id": "AD_kQE="
+					},
+					"aftermarketDeviceTokens": "1.00",
+					"syntheticDevice": {
+					  "tokenId": 1
+					},
+					"syntheticDeviceTokens": "0.00",
+					"vehicle": {
+					  "id": "V_kQE=",
+					  "tokenId": 1
+					}
+				  }
+				}
+			  ]
+			}
+		}
+	}
+	`, beneficiary.Hex()), string(b))
 }

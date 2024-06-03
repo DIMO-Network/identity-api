@@ -11,11 +11,6 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/adaptor"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/rs/zerolog"
-
 	"github.com/DIMO-Network/identity-api/graph"
 	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/identity-api/internal/loader"
@@ -24,6 +19,10 @@ import (
 	"github.com/DIMO-Network/shared"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/shared/kafka"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/adaptor"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/rs/zerolog"
 )
 
 func main() {
@@ -34,6 +33,13 @@ func main() {
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Couldn't load settings.")
 	}
+
+	zl, err := zerolog.ParseLevel(settings.LogLevel)
+	if err != nil {
+		logger.Fatal().Err(err).Msgf("Error parsing log level from %q.", settings.LogLevel)
+	}
+
+	logger = logger.Level(zl)
 
 	logger.Info().Msgf("Loaded configuration. Addresses: Registry %s, Vehicle %s, Aftermarket Device %s.", settings.DIMORegistryAddr, settings.VehicleNFTAddr, settings.AftermarketDeviceAddr)
 
@@ -59,6 +65,7 @@ func main() {
 
 	cfg := graph.Config{Resolvers: graph.NewResolver(baseRepo)}
 	cfg.Directives.OneOf = func(ctx context.Context, _ any, next graphql.Resolver) (any, error) {
+
 		// The directive on its own is advisory; everything is enforced inside of the resolver
 		return next(ctx)
 	}

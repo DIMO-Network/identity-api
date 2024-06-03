@@ -31,7 +31,7 @@ type AftermarketDevice implements Node {
   """
   The manufacturer of this aftermarket device.
   """
-  manufacturer: Manufacturer
+  manufacturer: Manufacturer!
   """
   The Ethereum address for the device.
   """
@@ -52,7 +52,7 @@ type AftermarketDevice implements Node {
   """
   Extended Unique Identifier (EUI) for LoRa devices.
   """
-  devEui: String
+  devEUI: String
   """
   The block timestamp at which this device was minted.
   """
@@ -125,7 +125,7 @@ type AftermarketDeviceEdge {
 }
 
 type AftermarketDeviceEarnings {
-  totalTokens: BigInt!
+  totalTokens: BigDecimal!
   history(
     first: Int
     after: String
