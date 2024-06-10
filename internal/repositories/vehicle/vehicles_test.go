@@ -18,6 +18,7 @@ import (
 	"github.com/DIMO-Network/shared/db"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog"
+	"github.com/segmentio/ksuid"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
@@ -1116,13 +1117,14 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 	}
 
 	testVehicle1 := models.Vehicle{
-		ID:             1,
-		ManufacturerID: 131,
-		OwnerAddress:   wallet1.Bytes(),
-		Make:           toyota,
-		Model:          camry,
-		Year:           year2020,
-		MintedAt:       currTime,
+		ID:                 1,
+		ManufacturerID:     131,
+		OwnerAddress:       wallet1.Bytes(),
+		Make:               toyota,
+		Model:              camry,
+		Year:               year2020,
+		MintedAt:           currTime,
+		DeviceDefinitionID: null.StringFrom(ksuid.New().String()),
 	}
 	vehicle1ImageURL, err := DefaultImageURI(o.settings.BaseImageURL, testVehicle1.ID)
 	o.Require().NoError(err)
@@ -1132,13 +1134,14 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 	o.NoError(err)
 
 	testVehicle2 := models.Vehicle{
-		ID:             2,
-		OwnerAddress:   wallet1.Bytes(),
-		Make:           honda,
-		Model:          civic,
-		ManufacturerID: 48,
-		Year:           year2022,
-		MintedAt:       currTime,
+		ID:                 2,
+		OwnerAddress:       wallet1.Bytes(),
+		Make:               honda,
+		Model:              civic,
+		ManufacturerID:     48,
+		Year:               year2022,
+		MintedAt:           currTime,
+		DeviceDefinitionID: null.StringFrom(ksuid.New().String()),
 	}
 	vehicle2ImageURL, err := DefaultImageURI(o.settings.BaseImageURL, testVehicle2.ID)
 	o.Require().NoError(err)
@@ -1148,13 +1151,14 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 	o.NoError(err)
 
 	testVehicle3 := models.Vehicle{
-		ID:             3,
-		OwnerAddress:   wallet2.Bytes(),
-		Make:           toyota,
-		ManufacturerID: 131,
-		Model:          rav4,
-		Year:           year2022,
-		MintedAt:       currTime,
+		ID:                 3,
+		OwnerAddress:       wallet2.Bytes(),
+		Make:               toyota,
+		ManufacturerID:     131,
+		Model:              rav4,
+		Year:               year2022,
+		MintedAt:           currTime,
+		DeviceDefinitionID: testVehicle1.DeviceDefinitionID,
 	}
 	vehicle3ImageURL, err := DefaultImageURI(o.settings.BaseImageURL, testVehicle3.ID)
 	o.Require().NoError(err)
@@ -1164,13 +1168,14 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 	o.NoError(err)
 
 	testVehicle4 := models.Vehicle{
-		ID:             4,
-		OwnerAddress:   wallet2.Bytes(),
-		Make:           honda,
-		Model:          accord,
-		ManufacturerID: 48,
-		Year:           year2020,
-		MintedAt:       currTime,
+		ID:                 4,
+		OwnerAddress:       wallet2.Bytes(),
+		Make:               honda,
+		Model:              accord,
+		ManufacturerID:     48,
+		Year:               year2020,
+		MintedAt:           currTime,
+		DeviceDefinitionID: null.StringFrom(ksuid.New().String()),
 	}
 	vehicle4ImageURL, err := DefaultImageURI(o.settings.BaseImageURL, testVehicle4.ID)
 	o.Require().NoError(err)
@@ -1359,6 +1364,16 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 				Privileged: wallet2,
 			},
 			results: []*gmodel.VehicleEdge{},
+		},
+		{
+			name: "Filter by Device Definition ID",
+			filter: &gmodel.VehiclesFilter{
+				DeviceDefinitionID: &testVehicle1.DeviceDefinitionID.String,
+			},
+			results: []*gmodel.VehicleEdge{
+				{Node: vehicle1AsAPI},
+				{Node: vehicle3AsAPI},
+			},
 		},
 	}
 

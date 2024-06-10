@@ -77,6 +77,11 @@ input VehiclesFilter {
   Filter for vehicles produced by a particular manufacturer, specified by manufacturer token id.
   """
   manufacturerTokenId: Int
+
+  """
+  Filter for vehicles by device definition id.
+  """
+  deviceDefinitionId: String
 }
 
 type Vehicle implements Node {

@@ -155,5 +155,6 @@ require (
 
 require (
 	github.com/doug-martin/goqu/v9 v9.19.0
+	github.com/segmentio/ksuid v1.0.4
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.31.0
 )
