@@ -50,6 +50,7 @@ type ResolverRoot interface {
 	Earning() EarningResolver
 	Manufacturer() ManufacturerResolver
 	Query() QueryResolver
+	SyntheticDevice() SyntheticDeviceResolver
 	UserRewards() UserRewardsResolver
 	Vehicle() VehicleResolver
 	VehicleEarnings() VehicleEarningsResolver
@@ -236,6 +237,7 @@ type ComplexityRoot struct {
 		MintedAt      func(childComplexity int) int
 		Name          func(childComplexity int) int
 		TokenID       func(childComplexity int) int
+		Vehicle       func(childComplexity int) int
 	}
 
 	SyntheticDeviceConnection struct {
@@ -328,6 +330,9 @@ type QueryResolver interface {
 	SyntheticDevices(ctx context.Context, first *int, last *int, after *string, before *string, filterBy *model.SyntheticDevicesFilter) (*model.SyntheticDeviceConnection, error)
 	Vehicle(ctx context.Context, tokenID int) (*model.Vehicle, error)
 	Vehicles(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.VehiclesFilter) (*model.VehicleConnection, error)
+}
+type SyntheticDeviceResolver interface {
+	Vehicle(ctx context.Context, obj *model.SyntheticDevice) (*model.Vehicle, error)
 }
 type UserRewardsResolver interface {
 	History(ctx context.Context, obj *model.UserRewards, first *int, after *string, last *int, before *string) (*model.EarningsConnection, error)
@@ -1224,6 +1229,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.SyntheticDevice.TokenID(childComplexity), true
+
+	case "SyntheticDevice.vehicle":
+		if e.complexity.SyntheticDevice.Vehicle == nil {
+			break
+		}
+
+		return e.complexity.SyntheticDevice.Vehicle(childComplexity), true
 
 	case "SyntheticDeviceConnection.edges":
 		if e.complexity.SyntheticDeviceConnection.Edges == nil {
@@ -5290,6 +5302,8 @@ func (ec *executionContext) fieldContext_Earning_syntheticDevice(_ context.Conte
 				return ec.fieldContext_SyntheticDevice_address(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_SyntheticDevice_mintedAt(ctx, field)
+			case "vehicle":
+				return ec.fieldContext_SyntheticDevice_vehicle(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SyntheticDevice", field.Name)
 		},
@@ -7414,6 +7428,8 @@ func (ec *executionContext) fieldContext_Query_syntheticDevice(ctx context.Conte
 				return ec.fieldContext_SyntheticDevice_address(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_SyntheticDevice_mintedAt(ctx, field)
+			case "vehicle":
+				return ec.fieldContext_SyntheticDevice_vehicle(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SyntheticDevice", field.Name)
 		},
@@ -8042,6 +8058,79 @@ func (ec *executionContext) fieldContext_SyntheticDevice_mintedAt(_ context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _SyntheticDevice_vehicle(ctx context.Context, field graphql.CollectedField, obj *model.SyntheticDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SyntheticDevice_vehicle(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.SyntheticDevice().Vehicle(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Vehicle)
+	fc.Result = res
+	return ec.marshalOVehicle2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐVehicle(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SyntheticDevice_vehicle(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SyntheticDevice",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Vehicle_id(ctx, field)
+			case "tokenId":
+				return ec.fieldContext_Vehicle_tokenId(ctx, field)
+			case "manufacturer":
+				return ec.fieldContext_Vehicle_manufacturer(ctx, field)
+			case "owner":
+				return ec.fieldContext_Vehicle_owner(ctx, field)
+			case "mintedAt":
+				return ec.fieldContext_Vehicle_mintedAt(ctx, field)
+			case "aftermarketDevice":
+				return ec.fieldContext_Vehicle_aftermarketDevice(ctx, field)
+			case "privileges":
+				return ec.fieldContext_Vehicle_privileges(ctx, field)
+			case "syntheticDevice":
+				return ec.fieldContext_Vehicle_syntheticDevice(ctx, field)
+			case "definition":
+				return ec.fieldContext_Vehicle_definition(ctx, field)
+			case "dcn":
+				return ec.fieldContext_Vehicle_dcn(ctx, field)
+			case "name":
+				return ec.fieldContext_Vehicle_name(ctx, field)
+			case "imageURI":
+				return ec.fieldContext_Vehicle_imageURI(ctx, field)
+			case "image":
+				return ec.fieldContext_Vehicle_image(ctx, field)
+			case "earnings":
+				return ec.fieldContext_Vehicle_earnings(ctx, field)
+			case "dataURI":
+				return ec.fieldContext_Vehicle_dataURI(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _SyntheticDeviceConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.SyntheticDeviceConnection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_SyntheticDeviceConnection_totalCount(ctx, field)
 	if err != nil {
@@ -8187,6 +8276,8 @@ func (ec *executionContext) fieldContext_SyntheticDeviceConnection_nodes(_ conte
 				return ec.fieldContext_SyntheticDevice_address(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_SyntheticDevice_mintedAt(ctx, field)
+			case "vehicle":
+				return ec.fieldContext_SyntheticDevice_vehicle(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SyntheticDevice", field.Name)
 		},
@@ -8343,6 +8434,8 @@ func (ec *executionContext) fieldContext_SyntheticDeviceEdge_node(_ context.Cont
 				return ec.fieldContext_SyntheticDevice_address(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_SyntheticDevice_mintedAt(ctx, field)
+			case "vehicle":
+				return ec.fieldContext_SyntheticDevice_vehicle(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SyntheticDevice", field.Name)
 		},
@@ -8883,6 +8976,8 @@ func (ec *executionContext) fieldContext_Vehicle_syntheticDevice(_ context.Conte
 				return ec.fieldContext_SyntheticDevice_address(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_SyntheticDevice_mintedAt(ctx, field)
+			case "vehicle":
+				return ec.fieldContext_SyntheticDevice_vehicle(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SyntheticDevice", field.Name)
 		},
@@ -11716,27 +11811,13 @@ func (ec *executionContext) unmarshalInputDeviceDefinitionFilter(ctx context.Con
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"manufacturer", "id", "model", "year"}
+	fieldsInOrder := [...]string{"model", "year"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "manufacturer":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("manufacturer"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Manufacturer = data
-		case "id":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ID = data
 		case "model":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("model"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -12005,8 +12086,6 @@ func (ec *executionContext) unmarshalInputVehiclesFilter(ctx context.Context, ob
 			}
 			it.Year = data
 		case "manufacturerTokenId":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("manufacturerTokenId"))
 			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
@@ -13784,33 +13863,66 @@ func (ec *executionContext) _SyntheticDevice(ctx context.Context, sel ast.Select
 		case "id":
 			out.Values[i] = ec._SyntheticDevice_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "name":
 			out.Values[i] = ec._SyntheticDevice_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "tokenId":
 			out.Values[i] = ec._SyntheticDevice_tokenId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "integrationId":
 			out.Values[i] = ec._SyntheticDevice_integrationId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "address":
 			out.Values[i] = ec._SyntheticDevice_address(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "mintedAt":
 			out.Values[i] = ec._SyntheticDevice_mintedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "vehicle":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._SyntheticDevice_vehicle(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

@@ -8,6 +8,7 @@ import (
 	"context"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
+	"github.com/DIMO-Network/identity-api/internal/loader"
 )
 
 // SyntheticDevice is the resolver for the syntheticDevice field.
@@ -19,3 +20,16 @@ func (r *queryResolver) SyntheticDevice(ctx context.Context, by model.SyntheticD
 func (r *queryResolver) SyntheticDevices(ctx context.Context, first *int, last *int, after *string, before *string, filterBy *model.SyntheticDevicesFilter) (*model.SyntheticDeviceConnection, error) {
 	return r.synthetic.GetSyntheticDevices(ctx, first, last, after, before, filterBy)
 }
+
+// Vehicle is the resolver for the vehicle field.
+func (r *syntheticDeviceResolver) Vehicle(ctx context.Context, obj *model.SyntheticDevice) (*model.Vehicle, error) {
+	if obj.VehicleID == nil {
+		return nil, nil
+	}
+	return loader.GetVehicleByID(ctx, *obj.VehicleID)
+}
+
+// SyntheticDevice returns SyntheticDeviceResolver implementation.
+func (r *Resolver) SyntheticDevice() SyntheticDeviceResolver { return &syntheticDeviceResolver{r} }
+
+type syntheticDeviceResolver struct{ *Resolver }
