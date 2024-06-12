@@ -18,7 +18,6 @@ import (
 	"github.com/DIMO-Network/shared/db"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog"
-	"github.com/segmentio/ksuid"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
@@ -1124,7 +1123,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 		Model:              camry,
 		Year:               year2020,
 		MintedAt:           currTime,
-		DeviceDefinitionID: null.StringFrom(ksuid.New().String()),
+		DeviceDefinitionID: null.StringFrom("nissan_gt-r_2020"),
 	}
 	vehicle1ImageURL, err := DefaultImageURI(o.settings.BaseImageURL, testVehicle1.ID)
 	o.Require().NoError(err)
@@ -1141,7 +1140,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 		ManufacturerID:     48,
 		Year:               year2022,
 		MintedAt:           currTime,
-		DeviceDefinitionID: null.StringFrom(ksuid.New().String()),
+		DeviceDefinitionID: null.StringFrom("cadillac_ats-v-coupe_2019"),
 	}
 	vehicle2ImageURL, err := DefaultImageURI(o.settings.BaseImageURL, testVehicle2.ID)
 	o.Require().NoError(err)
@@ -1175,7 +1174,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 		ManufacturerID:     48,
 		Year:               year2020,
 		MintedAt:           currTime,
-		DeviceDefinitionID: null.StringFrom(ksuid.New().String()),
+		DeviceDefinitionID: null.StringFrom("mazda_cx-5_2023"),
 	}
 	vehicle4ImageURL, err := DefaultImageURI(o.settings.BaseImageURL, testVehicle4.ID)
 	o.Require().NoError(err)
