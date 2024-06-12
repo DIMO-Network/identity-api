@@ -20,7 +20,7 @@ require (
 	github.com/rs/zerolog v1.32.0
 	github.com/stretchr/testify v1.9.0
 	github.com/testcontainers/testcontainers-go v0.31.0
-	github.com/vektah/gqlparser/v2 v2.5.11
+	github.com/vektah/gqlparser/v2 v2.5.14
 	github.com/vmihailenco/msgpack/v5 v5.4.1
 	github.com/volatiletech/null/v8 v8.1.2
 	github.com/volatiletech/sqlboiler/v4 v4.16.2
@@ -155,6 +155,5 @@ require (
 
 require (
 	github.com/doug-martin/goqu/v9 v9.19.0
-	github.com/segmentio/ksuid v1.0.4
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.31.0
 )
