@@ -11716,27 +11716,13 @@ func (ec *executionContext) unmarshalInputDeviceDefinitionFilter(ctx context.Con
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"manufacturer", "id", "model", "year"}
+	fieldsInOrder := [...]string{"model", "year"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "manufacturer":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("manufacturer"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Manufacturer = data
-		case "id":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ID = data
 		case "model":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("model"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -11962,7 +11948,7 @@ func (ec *executionContext) unmarshalInputVehiclesFilter(ctx context.Context, ob
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"privileged", "owner", "make", "model", "year", "manufacturerTokenId"}
+	fieldsInOrder := [...]string{"privileged", "owner", "make", "model", "year", "manufacturerTokenId", "deviceDefinitionId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -12005,14 +11991,19 @@ func (ec *executionContext) unmarshalInputVehiclesFilter(ctx context.Context, ob
 			}
 			it.Year = data
 		case "manufacturerTokenId":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("manufacturerTokenId"))
 			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.ManufacturerTokenID = data
+		case "deviceDefinitionId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceDefinitionId"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DeviceDefinitionID = data
 		}
 	}
 

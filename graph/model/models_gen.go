@@ -207,10 +207,6 @@ type DeviceDefinitionEdge struct {
 
 // Filter for Device Definition.
 type DeviceDefinitionFilter struct {
-	// The manufacturer for the device definition.
-	Manufacturer string `json:"manufacturer"`
-	// ID filters for the device definition that are of the given model.
-	ID *string `json:"id,omitempty"`
 	// Model filters for device definition that are of the given model.
 	Model *string `json:"model,omitempty"`
 	// Year filters for device definition that are of the given year.
@@ -454,4 +450,6 @@ type VehiclesFilter struct {
 	Year *int `json:"year,omitempty"`
 	// Filter for vehicles produced by a particular manufacturer, specified by manufacturer token id.
 	ManufacturerTokenID *int `json:"manufacturerTokenId,omitempty"`
+	// Filter for vehicles by device definition id.
+	DeviceDefinitionID *string `json:"deviceDefinitionId,omitempty"`
 }
