@@ -73,8 +73,8 @@ github.com/DATA-DOG/go-sqlmock v1.5.0 h1:Shsta01QNfFxHCfpW6YH2STWB0MudeXXEWMr20O
 github.com/DATA-DOG/go-sqlmock v1.5.0/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
 github.com/DIMO-Network/mnemonic v0.0.0-20240611180925-eecaa65be2b9 h1:gzD4pkrKRhjP+KeGjnMLG+D1Py6bVNt3s6BSgB4D/c4=
 github.com/DIMO-Network/mnemonic v0.0.0-20240611180925-eecaa65be2b9/go.mod h1:CTxZYuVPhvEJgDL665oqZClsxB8TtVHQ7qNwpJfqTxk=
-github.com/DIMO-Network/shared v0.10.15 h1:nWfDgaAMQGJGSkcZWtHrvCQ1cuuBANqo2G0ZpRqkGJ8=
-github.com/DIMO-Network/shared v0.10.15/go.mod h1:LDNCMzOGA+MqXtHbvRDFS/1kl8sHMQgxAS8fFh4GKJA=
+github.com/DIMO-Network/shared v0.10.16 h1:RD1kJDZVg5Vv6KxSWs1TL199c72oaZZfH8bEWGupap8=
+github.com/DIMO-Network/shared v0.10.16/go.mod h1:LDNCMzOGA+MqXtHbvRDFS/1kl8sHMQgxAS8fFh4GKJA=
 github.com/DataDog/datadog-go v3.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=
 github.com/DataDog/zstd v1.4.5 h1:EndNeuB0l9syBZhut0wns3gV1hL8zX8LIu6ZiVHWLIQ=
 github.com/DataDog/zstd v1.4.5/go.mod h1:1jcaCB/ufaK+sKp1NBhlGmpz41jOoPQ35bpF36t7BBo=
