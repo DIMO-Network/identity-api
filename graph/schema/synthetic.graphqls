@@ -65,7 +65,7 @@ type SyntheticDevice implements Node {
   """
   mintedAt: Time!
   """
-  The vehicle, if any, with which the synthetic device is paired.
+  The vehicle with which the synthetic device is paired.
   """
   vehicle: Vehicle!
 }
