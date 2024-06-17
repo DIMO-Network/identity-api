@@ -59,7 +59,7 @@ func Test_SyntheticDeviceToAPI(t *testing.T) {
 		IntegrationID: 2,
 		Address:       *wallet,
 		MintedAt:      currTime,
-		VehicleID:     &sd.VehicleID,
+		VehicleID:     sd.VehicleID,
 	}, res)
 }
 

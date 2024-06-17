@@ -23,10 +23,7 @@ func (r *queryResolver) SyntheticDevices(ctx context.Context, first *int, last *
 
 // Vehicle is the resolver for the vehicle field.
 func (r *syntheticDeviceResolver) Vehicle(ctx context.Context, obj *model.SyntheticDevice) (*model.Vehicle, error) {
-	if obj.VehicleID == nil {
-		return nil, nil
-	}
-	return loader.GetVehicleByID(ctx, *obj.VehicleID)
+	return loader.GetVehicleByID(ctx, obj.VehicleID)
 }
 
 // SyntheticDevice returns SyntheticDeviceResolver implementation.
