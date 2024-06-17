@@ -121,6 +121,13 @@ models:
         type: "*int"
       ManufacturerID:
         type: "int"
+  SyntheticDevice:
+    fields:
+      vehicle:
+        resolver: true
+    extraFields:
+      VehicleID:
+        type: "int"
   Vehicle:
     fields:
       manufacturer:

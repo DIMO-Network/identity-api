@@ -43,6 +43,7 @@ func ToAPI(sd *models.SyntheticDevice) (*gmodel.SyntheticDevice, error) {
 		IntegrationID: sd.IntegrationID,
 		Address:       common.BytesToAddress(sd.DeviceAddress),
 		MintedAt:      sd.MintedAt,
+		VehicleID:     sd.VehicleID,
 	}, nil
 }
 
@@ -101,15 +102,15 @@ func (r *Repository) GetSyntheticDevices(ctx context.Context, first *int, last *
 		queryMods = append(queryMods, models.SyntheticDeviceWhere.ID.GT(beforeID))
 	}
 
-	orderBy := "DESC"
+	orderBy := " DESC"
 	if last != nil {
-		orderBy = "ASC"
+		orderBy = " ASC"
 	}
 
 	queryMods = append(queryMods,
 		// Use limit + 1 here to check if there's another page.
 		qm.Limit(limit+1),
-		qm.OrderBy(models.SyntheticDeviceColumns.ID+" "+orderBy),
+		qm.OrderBy(models.SyntheticDeviceColumns.ID+orderBy),
 	)
 
 	all, err := models.SyntheticDevices(queryMods...).All(ctx, r.PDB.DBS().Reader)
