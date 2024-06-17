@@ -43,7 +43,7 @@ func ToAPI(sd *models.SyntheticDevice) (*gmodel.SyntheticDevice, error) {
 		IntegrationID: sd.IntegrationID,
 		Address:       common.BytesToAddress(sd.DeviceAddress),
 		MintedAt:      sd.MintedAt,
-		VehicleID:     &sd.VehicleID,
+		VehicleID:     sd.VehicleID,
 	}, nil
 }
 
