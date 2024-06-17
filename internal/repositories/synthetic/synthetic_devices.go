@@ -92,7 +92,9 @@ func (r *Repository) GetSyntheticDevices(ctx context.Context, first *int, last *
 			return nil, fmt.Errorf("invalid after cursor: %w", err)
 		}
 		queryMods = append(queryMods, models.SyntheticDeviceWhere.ID.LT(afterID))
-	} else if before != nil {
+	}
+
+	if before != nil {
 		beforeID, err := helpers.CursorToID(*before)
 		if err != nil {
 			return nil, fmt.Errorf("invalid before cursor: %w", err)
