@@ -332,7 +332,7 @@ type SyntheticDevice struct {
 	Address common.Address `json:"address"`
 	// The block timestamp at which this device was minted.
 	MintedAt time.Time `json:"mintedAt"`
-	// The vehicle, if any, with which the synthetic device is paired.
+	// The vehicle with which the synthetic device is paired.
 	Vehicle   *Vehicle `json:"vehicle"`
 	VehicleID int      `json:"-"`
 }
