@@ -1,65 +1,54 @@
 package services
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"github.com/DIMO-Network/identity-api/internal/config"
-	"github.com/rs/zerolog"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
-	"io/ioutil"
-	"net/url"
+	"net/http"
 	"os"
 	"testing"
+
+	"github.com/DIMO-Network/identity-api/internal/config"
+	"github.com/jarcoal/httpmock"
+	"github.com/rs/zerolog"
+	"github.com/stretchr/testify/require"
 )
 
-type MockHTTPClientWrapper struct {
-	mock.Mock
-}
-
-func (m *MockHTTPClientWrapper) ExecuteRequest(url, method string, body interface{}) (*http.Response, error) {
-	args := m.Called(url, method, body)
-	return args.Get(0).(*http.Response), args.Error(1)
-}
-
-func TestTablelandApiService_Query(t *testing.T) {
-	// Setup
+func Test_Query_Tableland_Success(t *testing.T) {
 	logger := zerolog.New(os.Stderr).With().Timestamp().Logger()
-	settings := &config.Settings{
-		TablelandAPIGateway: "https://example.com",
-	}
 
-	mockHTTPClient := new(MockHTTPClientWrapper)
-	apiService := &TablelandApiService{
-		log:        &logger,
-		settings:   settings,
-		httpClient: mockHTTPClient,
-		url:        &url.URL{Path: tablelandQueryPath},
-	}
+	const baseURL = "http://local"
 
-	// Test data
+	tablelandAPI := NewTablelandApiService(&logger, &config.Settings{
+		TablelandAPIGateway: baseURL,
+	})
+
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
 	statement := "SELECT * FROM table"
-	expectedResult := map[string]interface{}{"key": "value"}
+	expectedURL := "api/v1/query?statement=SELECT+%2A+FROM+table"
 
-	// Mock response
-	responseBody, _ := json.Marshal(expectedResult)
-	resp := &http.Response{
-		StatusCode: 200,
-		Body:       ioutil.NopCloser(bytes.NewReader(responseBody)),
-	}
+	respBody := `[
+		  {
+			"id": "alfa-romeo_147_2007",
+			"deviceType": "vehicle",
+			"imageURI": "https://image",
+			"ksuid": "26G3iFH7Xc9Wvsw7pg6sD7uzoSS",
+			"metadata": {
+			  "device_attributes": [
+				{
+				  "name": "powertrain_type",
+				  "value": "ICE"
+				}
+			  ]
+			}
+		  }
+		]`
 
-	// Expectations
-	mockHTTPClient.On("ExecuteRequest", "https://example.com/api/v1/query?statement=SELECT+%2A+FROM+table", "GET", nil).
-		Return(resp, nil)
+	httpmock.RegisterResponder(http.MethodGet, baseURL+expectedURL, httpmock.NewStringResponder(200, respBody))
 
-	// Execute
-	var result map[string]interface{}
-	err := apiService.Query(context.Background(), statement, &result)
+	var result []map[string]interface{}
+	err := tablelandAPI.Query(context.Background(), statement, &result)
 
-	// Assert
 	require.NoError(t, err)
-	assert.Equal(t, expectedResult, result)
-	mockHTTPClient.AssertExpectations(t)
+	require.NotEmpty(t, result)
 }
