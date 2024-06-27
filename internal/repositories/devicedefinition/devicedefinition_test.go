@@ -15,19 +15,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
-	"math/big"
 	"net/http"
 	"testing"
 )
 
 const migrationsDir = "../../../migrations"
-
-var aftermarketDeviceNodeMintedArgs = services.AftermarketDeviceNodeMintedData{
-	AftermarketDeviceAddress: common.HexToAddress("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
-	ManufacturerID:           big.NewInt(137),
-	Owner:                    common.HexToAddress("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
-	TokenID:                  big.NewInt(42),
-}
 
 func Test_GetDeviceDefinitions_Query(t *testing.T) {
 	ctx := context.Background()
