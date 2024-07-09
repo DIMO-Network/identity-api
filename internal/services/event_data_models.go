@@ -168,3 +168,8 @@ type DeviceDefinitionTableCreatedData struct {
 	ManufacturerId *big.Int
 	TableId        *big.Int
 }
+
+type OwnerRegisteredData struct {
+	Kernal common.Address
+	Owner  common.Address
+}

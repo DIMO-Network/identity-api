@@ -6,6 +6,7 @@ package models
 var TableNames = struct {
 	AftermarketDevices string
 	DCNS               string
+	KernalAccounts     string
 	Manufacturers      string
 	Privileges         string
 	Rewards            string
@@ -14,6 +15,7 @@ var TableNames = struct {
 }{
 	AftermarketDevices: "aftermarket_devices",
 	DCNS:               "dcns",
+	KernalAccounts:     "kernal_accounts",
 	Manufacturers:      "manufacturers",
 	Privileges:         "privileges",
 	Rewards:            "rewards",

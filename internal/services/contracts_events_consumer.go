@@ -68,6 +68,9 @@ const (
 	// Rewards.
 	TokensTransferredForDevice           EventName = "TokensTransferredForDevice"
 	TokensTransferredForConnectionStreak EventName = "TokensTransferredForConnectionStreak"
+
+	// Zerodev Entrypoint.
+	OwnerRegistered EventName = "OwnerRegistered"
 )
 
 func (r EventName) String() string {
@@ -103,6 +106,7 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 	DCNRegistryAddr := common.HexToAddress(c.settings.DCNRegistryAddr)
 	DCNResolverAddr := common.HexToAddress(c.settings.DCNResolverAddr)
 	RewardsContractAddr := common.HexToAddress(c.settings.RewardsContractAddr)
+	entrypointAddr := common.HexToAddress(c.settings.EntryPointAddr)
 
 	var data ContractEventData
 	if err := json.Unmarshal(event.Data, &data); err != nil {
@@ -162,7 +166,6 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 		case Transfer:
 			return c.handleAftermarketDeviceTransferredEvent(ctx, &data)
 		}
-
 	case DCNRegistryAddr:
 		switch eventName {
 		case NewNode:
@@ -183,6 +186,15 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 			return c.handleTokensTransferredForDevice(ctx, &data)
 		case TokensTransferredForConnectionStreak:
 			return c.handleTokensTransferredForConnectionStreak(ctx, &data)
+		}
+	case entrypointAddr:
+
+		b, _ := json.MarshalIndent(data, "", "  ")
+		fmt.Println(string(b))
+
+		switch eventName {
+		case OwnerRegistered:
+			return c.handleOwnerRegistered(ctx, &data)
 		}
 	}
 
@@ -683,4 +695,18 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceAddressResetEvent(ctx c
 	amd.Address = args.AftermarketDeviceAddress.Bytes()
 	_, err = amd.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.AftermarketDeviceColumns.Address))
 	return err
+}
+
+func (c *ContractsEventsConsumer) handleOwnerRegistered(ctx context.Context, e *ContractEventData) error {
+	var args OwnerRegisteredData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	kernal := models.KernalAccount{
+		Kernal:       args.Kernal.Bytes(),
+		OwnerAddress: args.Owner.Bytes(),
+	}
+
+	return kernal.Insert(ctx, c.dbs.DBS().Writer, boil.Infer())
 }
