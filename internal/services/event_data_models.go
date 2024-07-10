@@ -170,6 +170,6 @@ type DeviceDefinitionTableCreatedData struct {
 }
 
 type OwnerRegisteredData struct {
-	Kernal common.Address
+	Kernel common.Address
 	Owner  common.Address
 }

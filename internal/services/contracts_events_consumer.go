@@ -69,7 +69,7 @@ const (
 	TokensTransferredForDevice           EventName = "TokensTransferredForDevice"
 	TokensTransferredForConnectionStreak EventName = "TokensTransferredForConnectionStreak"
 
-	// Zerodev Entrypoint.
+	// Kernal ECDSA Validator.
 	OwnerRegistered EventName = "OwnerRegistered"
 )
 
@@ -106,7 +106,7 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 	DCNRegistryAddr := common.HexToAddress(c.settings.DCNRegistryAddr)
 	DCNResolverAddr := common.HexToAddress(c.settings.DCNResolverAddr)
 	RewardsContractAddr := common.HexToAddress(c.settings.RewardsContractAddr)
-	entrypointAddr := common.HexToAddress(c.settings.EntryPointAddr)
+	KernalECDSAValidator := common.HexToAddress(c.settings.KernalECDSAValidator)
 
 	var data ContractEventData
 	if err := json.Unmarshal(event.Data, &data); err != nil {
@@ -187,14 +187,10 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 		case TokensTransferredForConnectionStreak:
 			return c.handleTokensTransferredForConnectionStreak(ctx, &data)
 		}
-	case entrypointAddr:
-
-		b, _ := json.MarshalIndent(data, "", "  ")
-		fmt.Println(string(b))
-
+	case KernalECDSAValidator:
 		switch eventName {
 		case OwnerRegistered:
-			return c.handleOwnerRegistered(ctx, &data)
+			return c.handleOwnerRegisteredEvent(ctx, &data)
 		}
 	}
 
@@ -697,14 +693,14 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceAddressResetEvent(ctx c
 	return err
 }
 
-func (c *ContractsEventsConsumer) handleOwnerRegistered(ctx context.Context, e *ContractEventData) error {
+func (c *ContractsEventsConsumer) handleOwnerRegisteredEvent(ctx context.Context, e *ContractEventData) error {
 	var args OwnerRegisteredData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
 		return err
 	}
 
 	kernal := models.KernalAccount{
-		Kernal:       args.Kernal.Bytes(),
+		Kernal:       args.Kernel.Bytes(),
 		OwnerAddress: args.Owner.Bytes(),
 	}
 
