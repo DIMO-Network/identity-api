@@ -71,6 +71,9 @@ const (
 
 	// Kernal ECDSA Validator.
 	OwnerRegistered EventName = "OwnerRegistered"
+
+	// Kernal WebAuthn Validator.
+	WebAuthnPublicKeyRegistered EventName = "WebAuthnPublicKeyRegistered"
 )
 
 func (r EventName) String() string {
@@ -107,6 +110,7 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 	DCNResolverAddr := common.HexToAddress(c.settings.DCNResolverAddr)
 	RewardsContractAddr := common.HexToAddress(c.settings.RewardsContractAddr)
 	KernalECDSAValidator := common.HexToAddress(c.settings.KernalECDSAValidator)
+	KernalWebAuthnValidator := common.HexToAddress(c.settings.KernalWebAuthnValidator)
 
 	var data ContractEventData
 	if err := json.Unmarshal(event.Data, &data); err != nil {
@@ -191,6 +195,11 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 		switch eventName {
 		case OwnerRegistered:
 			return c.handleOwnerRegisteredEvent(ctx, &data)
+		}
+	case KernalWebAuthnValidator:
+		switch eventName {
+		case WebAuthnPublicKeyRegistered:
+			return c.handleWebAuthnPublicKeyRegisteredEvent(ctx, &data)
 		}
 	}
 
@@ -705,4 +714,15 @@ func (c *ContractsEventsConsumer) handleOwnerRegisteredEvent(ctx context.Context
 	}
 
 	return kernal.Insert(ctx, c.dbs.DBS().Writer, boil.Infer())
+}
+
+func (c *ContractsEventsConsumer) handleWebAuthnPublicKeyRegisteredEvent(ctx context.Context, e *ContractEventData) error {
+	var args WebAuthnPublicKeyRegisteredData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	// TODO(ae)
+	fmt.Println(args.Kernel, args.AuthenticatorIDHash, args.PubKeyX, args.PubKeyY)
+	return nil
 }

@@ -173,3 +173,10 @@ type OwnerRegisteredData struct {
 	Kernel common.Address
 	Owner  common.Address
 }
+
+type WebAuthnPublicKeyRegisteredData struct {
+	Kernel              common.Address
+	AuthenticatorIDHash [32]byte
+	PubKeyX             *big.Int
+	PubKeyY             *big.Int
+}
