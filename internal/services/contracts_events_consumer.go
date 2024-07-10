@@ -708,8 +708,8 @@ func (c *ContractsEventsConsumer) handleOwnerRegisteredEvent(ctx context.Context
 		return err
 	}
 
-	kernal := models.KernalAccount{
-		Kernal:       args.Kernel.Bytes(),
+	kernal := models.KernelAccount{
+		Kernel:       args.Kernel.Bytes(),
 		OwnerAddress: args.Owner.Bytes(),
 	}
 
