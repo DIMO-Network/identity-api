@@ -2,7 +2,6 @@ package account
 
 import (
 	"context"
-	"fmt"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
@@ -53,7 +52,6 @@ func (r *Repository) GetAccountByOwner(ctx context.Context, owner common.Address
 }
 
 func (r *Repository) GetAccounts(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *gmodel.AccountFilter) (*gmodel.AccountConnection, error) {
-	fmt.Println("Getting lots of accounts: ", first, after, last, before, filterBy)
 	limit, err := helpers.ValidateFirstLast(first, last, base.MaxPageSize)
 	if err != nil {
 		return nil, err
