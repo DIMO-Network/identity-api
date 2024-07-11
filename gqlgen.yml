@@ -181,3 +181,7 @@ models:
         type: "*int"
       VehicleID:
         type: "int"
+  Account:
+    extraFields:
+      kernel:
+        type: "github.com/ethereum/go-ethereum/common.Address"

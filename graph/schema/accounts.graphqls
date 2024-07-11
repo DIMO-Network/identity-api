@@ -1,0 +1,102 @@
+# DIMO Account related schema
+
+extend type Query {
+  """
+  View a particular DIMO Account.
+  """
+  account(by: AccountBy!): Account!
+
+  """
+  List DIMO accounts.
+  """
+  accounts(
+    """
+    Returns the first n elements from the list.
+    Mutually exclusive with `last`.
+    """
+    first: Int
+    """
+    A cursor for pagination. Retrieve accounts after this cursor.
+    """
+    after: String
+    """
+    Returns the last n elements from the list.
+    """
+    last: Int
+    """
+    A cursor for pagination. Retrieve accounts before this cursor.
+    """
+    before: String
+    """
+    Filters the accounts based on the specified criteria.
+    """
+    filterBy: AccountFilter
+  ): AccountConnection!
+}
+
+"""
+Represents a DIMO Account. This is a unique identifier for a vehicle.
+"""
+type Account {
+  """
+  Kernel addresses made from the owner account.
+  """
+  kernel: [Address!]
+  """
+  Ethereum address of account owner.
+  """
+  owner: Address!
+}
+
+"""
+An edge in a AccountConnection.
+"""
+type AccountEdge {
+  """
+  A cursor for use in pagination.
+  """
+  cursor: String!
+  """
+  The item at the end of the edge.
+  """
+  node: Account!
+}
+
+"""
+The Connection type for Account.
+"""
+type AccountConnection {
+  """
+  The total count of accounts in the connection.
+  """
+  totalCount: Int!
+  """
+  A list of edges.
+  """
+  edges: [AccountEdge!]!
+  """
+  A list of nodes in the connection
+  """
+  nodes: [Account!]!
+  """
+  Information to aid in pagination.
+  """
+  pageInfo: PageInfo!
+}
+
+"""
+Filter for Account.
+"""
+input AccountFilter {
+  """
+  Filter for Account owned by this address.
+  """
+  owner: Address
+}
+
+"""
+Input used to specify a unique Account to query.
+"""
+input AccountBy @oneOf {
+  owner: Address
+}

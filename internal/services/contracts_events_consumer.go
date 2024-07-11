@@ -69,7 +69,7 @@ const (
 	TokensTransferredForDevice           EventName = "TokensTransferredForDevice"
 	TokensTransferredForConnectionStreak EventName = "TokensTransferredForConnectionStreak"
 
-	// Kernal ECDSA Validator.
+	// Kernel ECDSA Validator.
 	OwnerRegistered EventName = "OwnerRegistered"
 )
 
@@ -106,7 +106,7 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 	DCNRegistryAddr := common.HexToAddress(c.settings.DCNRegistryAddr)
 	DCNResolverAddr := common.HexToAddress(c.settings.DCNResolverAddr)
 	RewardsContractAddr := common.HexToAddress(c.settings.RewardsContractAddr)
-	KernalECDSAValidator := common.HexToAddress(c.settings.KernalECDSAValidator)
+	KernelECDSAValidatorAddr := common.HexToAddress(c.settings.KernelECDSAValidator)
 
 	var data ContractEventData
 	if err := json.Unmarshal(event.Data, &data); err != nil {
@@ -187,7 +187,7 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 		case TokensTransferredForConnectionStreak:
 			return c.handleTokensTransferredForConnectionStreak(ctx, &data)
 		}
-	case KernalECDSAValidator:
+	case KernelECDSAValidatorAddr:
 		switch eventName {
 		case OwnerRegistered:
 			return c.handleOwnerRegisteredEvent(ctx, &data)
@@ -699,10 +699,10 @@ func (c *ContractsEventsConsumer) handleOwnerRegisteredEvent(ctx context.Context
 		return err
 	}
 
-	kernal := models.KernelAccount{
+	kernel := models.KernelAccount{
 		Kernel:       args.Kernel.Bytes(),
 		OwnerAddress: args.Owner.Bytes(),
 	}
 
-	return kernal.Insert(ctx, c.dbs.DBS().Writer, boil.Infer())
+	return kernel.Insert(ctx, c.dbs.DBS().Writer, boil.Infer())
 }

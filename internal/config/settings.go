@@ -22,5 +22,5 @@ type Settings struct {
 	BaseVehicleDataURI    string      `yaml:"BASE_VEHICLE_DATA_URI"`
 	TablelandAPIGateway   string      `yaml:"TABLELAND_API_GATEWAY"`
 	EthereumRPCURL        string      `yaml:"ETHEREUM_RPC_URL"`
-	KernalECDSAValidator  string      `yaml:"KERNAL_ECDSA_VALIDATOR"`
+	KernelECDSAValidator  string      `yaml:"KERNEL_ECDSA_VALIDATOR"`
 }

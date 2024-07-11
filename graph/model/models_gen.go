@@ -15,6 +15,46 @@ type Node interface {
 	GetID() string
 }
 
+// Represents a DIMO Account. This is a unique identifier for a vehicle.
+type Account struct {
+	// Kernel addresses made from the owner account.
+	Kernel []common.Address `json:"kernel,omitempty"`
+	// Ethereum address of account owner.
+	Owner  common.Address `json:"owner"`
+	kernel common.Address `json:"-"`
+}
+
+// Input used to specify a unique Account to query.
+type AccountBy struct {
+	Owner *common.Address `json:"owner,omitempty"`
+}
+
+// The Connection type for Account.
+type AccountConnection struct {
+	// The total count of accounts in the connection.
+	TotalCount int `json:"totalCount"`
+	// A list of edges.
+	Edges []*AccountEdge `json:"edges"`
+	// A list of nodes in the connection
+	Nodes []*Account `json:"nodes"`
+	// Information to aid in pagination.
+	PageInfo *PageInfo `json:"pageInfo"`
+}
+
+// An edge in a AccountConnection.
+type AccountEdge struct {
+	// A cursor for use in pagination.
+	Cursor string `json:"cursor"`
+	// The item at the end of the edge.
+	Node *Account `json:"node"`
+}
+
+// Filter for Account.
+type AccountFilter struct {
+	// Filter for Account owned by this address.
+	Owner *common.Address `json:"owner,omitempty"`
+}
+
 type AftermarketDevice struct {
 	// An opaque global identifier for this aftermarket device.
 	ID string `json:"id"`
