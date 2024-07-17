@@ -41,11 +41,37 @@ type Account {
   """
   Kernel addresses made from the owner account.
   """
-  kernel: [Address!]
+  kernel: [Kernel!]
   """
-  Ethereum address of account owner.
+  Ethereum address of account signer.
   """
-  owner: Address!
+  signer: Address!
+}
+
+type Kernel {
+  """
+  Kernel addresses made from the owner account.
+  """
+  address: Address!
+  """
+  When the kernal account was created
+  """
+  createdAt: Time!
+  """
+  Signer information for Kernel
+  """
+  signer: Signer!
+}
+
+type Signer {
+  """
+  Kernel signer (owner) account.
+  """
+  address: Address!
+  """
+  When signer was added
+  """
+  signerAdded: Time!
 }
 
 """
@@ -91,12 +117,14 @@ input AccountFilter {
   """
   Filter for Account owned by this address.
   """
-  owner: Address
+  signer: Address
 }
 
 """
 Input used to specify a unique Account to query.
 """
 input AccountBy @oneOf {
-  owner: Address
+  signer: Address
+  kernel: Address
+  address: Address
 }

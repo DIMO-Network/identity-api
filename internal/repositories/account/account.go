@@ -25,41 +25,110 @@ type AccountCursor struct {
 	Kernel       []byte
 }
 
-// ToAPI converts a Account database row to a Account API model.
-func ToAPI(d *models.KernelAccount) (*gmodel.Account, error) {
-	return &gmodel.Account{
-		Kernel: []common.Address{common.BytesToAddress(d.Kernel)},
-		Owner:  common.BytesToAddress(d.OwnerAddress),
-	}, nil
-}
-
 var accountCursorColumnsTuple = "(" + models.KernelAccountColumns.OwnerAddress + ", " + models.KernelAccountColumns.Kernel + ")"
 
 func (r *Repository) GetAccount(ctx context.Context, by gmodel.AccountBy) (*gmodel.Account, error) {
-	if by.Owner == nil {
-		return nil, gqlerror.Errorf("Provide exactly one of `owner`.")
+	if by.Signer != nil && by.Kernel == nil && by.Address == nil {
+		return r.GetAccountBySigner(ctx, *by.Signer), nil
 	}
 
-	return r.GetAccountByOwner(ctx, *by.Owner)
+	if by.Kernel != nil && by.Signer == nil && by.Address == nil {
+		return r.GetAccountByKernel(ctx, *by.Kernel), nil
+	}
+
+	if by.Address != nil && by.Signer == nil && by.Kernel == nil {
+		return r.GetAccountAddress(ctx, *by.Address), nil
+	}
+
+	return nil, gqlerror.Errorf("Provide exactly one of `signer`, `kernel` or `address`.")
 }
 
-func (r *Repository) GetAccountByOwner(ctx context.Context, owner common.Address) (*gmodel.Account, error) {
-	acc, err := models.KernelAccounts(models.KernelAccountWhere.OwnerAddress.EQ(owner.Bytes())).One(ctx, r.PDB.DBS().Reader)
+func (r *Repository) GetAccountBySigner(ctx context.Context, signer common.Address) *gmodel.Account {
+	all, err := models.KernelAccounts(models.KernelAccountWhere.OwnerAddress.EQ(signer.Bytes())).All(ctx, r.PDB.DBS().Reader)
 	if err != nil {
-		return nil, err
+		return nil
 	}
-	return ToAPI(acc)
+
+	apiAccount := &gmodel.Account{
+		Signer: common.BytesToAddress(signer.Bytes()),
+	}
+
+	for _, acct := range all {
+		apiAccount.Kernel = append(apiAccount.Kernel, &gmodel.Kernel{
+			Address:   common.BytesToAddress(acct.Kernel),
+			CreatedAt: acct.CreatedAt,
+			Signer: &gmodel.Signer{
+				Address:     common.BytesToAddress(signer.Bytes()),
+				SignerAdded: acct.SignerAdded,
+			},
+		})
+	}
+
+	return apiAccount
+}
+
+func (r *Repository) GetAccountByKernel(ctx context.Context, kernel common.Address) *gmodel.Account {
+	all, err := models.KernelAccounts(models.KernelAccountWhere.Kernel.EQ(kernel.Bytes())).All(ctx, r.PDB.DBS().Reader)
+	if err != nil {
+		return nil
+	}
+
+	var apiAccount gmodel.Account
+	for idx, acct := range all {
+		if idx == 0 {
+			apiAccount.Signer = common.BytesToAddress(acct.OwnerAddress)
+		}
+		apiAccount.Kernel = append(apiAccount.Kernel, &gmodel.Kernel{
+			Address:   common.BytesToAddress(acct.Kernel),
+			CreatedAt: acct.CreatedAt,
+			Signer: &gmodel.Signer{
+				Address:     common.BytesToAddress(kernel.Bytes()),
+				SignerAdded: acct.SignerAdded,
+			},
+		})
+	}
+
+	return &apiAccount
+}
+
+func (r *Repository) GetAccountAddress(ctx context.Context, address common.Address) *gmodel.Account {
+	all, err := models.KernelAccounts(
+		qm.Expr(
+			qm.Or2(models.KernelAccountWhere.Kernel.EQ(address.Bytes())),
+			qm.Or2(models.KernelAccountWhere.OwnerAddress.EQ(address.Bytes())),
+		),
+	).All(ctx, r.PDB.DBS().Reader)
+	if err != nil {
+		return nil
+	}
+
+	var apiAccount gmodel.Account
+	for idx, acct := range all {
+		if idx == 0 {
+			apiAccount.Signer = common.BytesToAddress(acct.OwnerAddress)
+		}
+		apiAccount.Kernel = append(apiAccount.Kernel, &gmodel.Kernel{
+			Address:   common.BytesToAddress(acct.Kernel),
+			CreatedAt: acct.CreatedAt,
+			Signer: &gmodel.Signer{
+				Address:     common.BytesToAddress(acct.OwnerAddress),
+				SignerAdded: acct.SignerAdded,
+			},
+		})
+	}
+
+	return &apiAccount
 }
 
 func (r *Repository) GetAccounts(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *gmodel.AccountFilter) (*gmodel.AccountConnection, error) {
-	limit, err := helpers.ValidateFirstLast(first, last, base.MaxPageSize)
+	limit, err := helpers.ValidateFirstLast(first, last, 30)
 	if err != nil {
 		return nil, err
 	}
 
 	queryMods := []qm.QueryMod{}
-	if filterBy != nil && filterBy.Owner != nil {
-		queryMods = append(queryMods, models.KernelAccountWhere.OwnerAddress.EQ(filterBy.Owner.Bytes()))
+	if filterBy != nil && filterBy.Signer != nil {
+		queryMods = append(queryMods, models.KernelAccountWhere.OwnerAddress.EQ(filterBy.Signer.Bytes()))
 	}
 
 	accountCount, err := models.KernelAccounts(queryMods...).Count(ctx, r.PDB.DBS().Reader)
@@ -116,24 +185,52 @@ func (r *Repository) GetAccounts(ctx context.Context, first *int, after *string,
 		slices.Reverse(all)
 	}
 
-	edges := make([]*gmodel.AccountEdge, len(all))
-	nodes := make([]*gmodel.Account, len(all))
-	var errList gqlerror.List
-	for i, acct := range all {
+	ordered := 0
+	ownerToKernals := make(map[common.Address]AcctInfos)
+	for _, acct := range all {
+		owner := common.BytesToAddress(acct.OwnerAddress)
 		c, err := pHelp.EncodeCursor(AccountCursor{OwnerAddress: acct.OwnerAddress, Kernel: acct.Kernel})
 		if err != nil {
 			return nil, err
 		}
-		apiAccount, err := ToAPI(acct)
-		if err != nil {
-			errList = append(errList, gqlerror.Errorf("error converting account to api: %v", err))
-			continue
+
+		acctInfos, ok := ownerToKernals[owner]
+		if !ok {
+			acctInfos = AcctInfos{Idx: ordered}
+			ordered++
 		}
-		edges[i] = &gmodel.AccountEdge{
-			Node:   apiAccount,
-			Cursor: c,
+
+		acctInfos.Kernels = append(acctInfos.Kernels, &gmodel.Kernel{
+			Address:   common.BytesToAddress(acct.Kernel),
+			CreatedAt: acct.CreatedAt,
+			Signer: &gmodel.Signer{
+				Address:     common.BytesToAddress(owner.Bytes()),
+				SignerAdded: acct.SignerAdded,
+			},
+		})
+		acctInfos.Cursor = append(acctInfos.Cursor, c)
+		ownerToKernals[owner] = acctInfos
+
+	}
+
+	edges := make([]*gmodel.AccountEdge, len(ownerToKernals))
+	nodes := make([]*gmodel.Account, len(ownerToKernals))
+	var errList gqlerror.List
+
+	for owner, acctInfos := range ownerToKernals {
+		apiAccount := &gmodel.Account{
+			Signer: owner,
+			Kernel: acctInfos.Kernels,
 		}
-		nodes[i] = edges[i].Node
+
+		edges[acctInfos.Idx] = &gmodel.AccountEdge{
+			Node: apiAccount,
+		}
+
+		if len(acctInfos.Cursor) != 0 {
+			edges[acctInfos.Idx].Cursor = acctInfos.Cursor[len(acctInfos.Cursor)-1]
+		}
+		nodes[acctInfos.Idx] = edges[acctInfos.Idx].Node
 	}
 
 	var endCur, startCur *string
@@ -158,4 +255,10 @@ func (r *Repository) GetAccounts(ctx context.Context, first *int, after *string,
 		return res, errList
 	}
 	return res, nil
+}
+
+type AcctInfos struct {
+	Idx     int
+	Kernels []*gmodel.Kernel
+	Cursor  []string
 }

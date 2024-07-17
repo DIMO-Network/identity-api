@@ -23,8 +23,10 @@ import (
 
 // KernelAccount is an object representing the database table.
 type KernelAccount struct {
-	Kernel       []byte `boil:"kernel" json:"kernel" toml:"kernel" yaml:"kernel"`
-	OwnerAddress []byte `boil:"owner_address" json:"owner_address" toml:"owner_address" yaml:"owner_address"`
+	Kernel       []byte    `boil:"kernel" json:"kernel" toml:"kernel" yaml:"kernel"`
+	CreatedAt    time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	SignerAdded  time.Time `boil:"signer_added" json:"signer_added" toml:"signer_added" yaml:"signer_added"`
+	OwnerAddress []byte    `boil:"owner_address" json:"owner_address" toml:"owner_address" yaml:"owner_address"`
 
 	R *kernelAccountR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L kernelAccountL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -32,17 +34,25 @@ type KernelAccount struct {
 
 var KernelAccountColumns = struct {
 	Kernel       string
+	CreatedAt    string
+	SignerAdded  string
 	OwnerAddress string
 }{
 	Kernel:       "kernel",
+	CreatedAt:    "created_at",
+	SignerAdded:  "signer_added",
 	OwnerAddress: "owner_address",
 }
 
 var KernelAccountTableColumns = struct {
 	Kernel       string
+	CreatedAt    string
+	SignerAdded  string
 	OwnerAddress string
 }{
 	Kernel:       "kernel_accounts.kernel",
+	CreatedAt:    "kernel_accounts.created_at",
+	SignerAdded:  "kernel_accounts.signer_added",
 	OwnerAddress: "kernel_accounts.owner_address",
 }
 
@@ -50,9 +60,13 @@ var KernelAccountTableColumns = struct {
 
 var KernelAccountWhere = struct {
 	Kernel       whereHelper__byte
+	CreatedAt    whereHelpertime_Time
+	SignerAdded  whereHelpertime_Time
 	OwnerAddress whereHelper__byte
 }{
 	Kernel:       whereHelper__byte{field: "\"identity_api\".\"kernel_accounts\".\"kernel\""},
+	CreatedAt:    whereHelpertime_Time{field: "\"identity_api\".\"kernel_accounts\".\"created_at\""},
+	SignerAdded:  whereHelpertime_Time{field: "\"identity_api\".\"kernel_accounts\".\"signer_added\""},
 	OwnerAddress: whereHelper__byte{field: "\"identity_api\".\"kernel_accounts\".\"owner_address\""},
 }
 
@@ -73,9 +87,9 @@ func (*kernelAccountR) NewStruct() *kernelAccountR {
 type kernelAccountL struct{}
 
 var (
-	kernelAccountAllColumns            = []string{"kernel", "owner_address"}
+	kernelAccountAllColumns            = []string{"kernel", "created_at", "signer_added", "owner_address"}
 	kernelAccountColumnsWithoutDefault = []string{"kernel", "owner_address"}
-	kernelAccountColumnsWithDefault    = []string{}
+	kernelAccountColumnsWithDefault    = []string{"created_at", "signer_added"}
 	kernelAccountPrimaryKeyColumns     = []string{"kernel"}
 	kernelAccountGeneratedColumns      = []string{}
 )
@@ -434,6 +448,13 @@ func (o *KernelAccount) Insert(ctx context.Context, exec boil.ContextExecutor, c
 	}
 
 	var err error
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		if o.CreatedAt.IsZero() {
+			o.CreatedAt = currTime
+		}
+	}
 
 	if err := o.doBeforeInsertHooks(ctx, exec); err != nil {
 		return err
@@ -638,6 +659,13 @@ func (o KernelAccountSlice) UpdateAll(ctx context.Context, exec boil.ContextExec
 func (o *KernelAccount) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns boil.Columns, opts ...UpsertOptionFunc) error {
 	if o == nil {
 		return errors.New("models: no kernel_accounts provided for upsert")
+	}
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		if o.CreatedAt.IsZero() {
+			o.CreatedAt = currTime
+		}
 	}
 
 	if err := o.doBeforeUpsertHooks(ctx, exec); err != nil {

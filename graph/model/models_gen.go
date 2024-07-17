@@ -18,15 +18,17 @@ type Node interface {
 // Represents a DIMO Account. This is a unique identifier for a vehicle.
 type Account struct {
 	// Kernel addresses made from the owner account.
-	Kernel []common.Address `json:"kernel,omitempty"`
-	// Ethereum address of account owner.
-	Owner  common.Address `json:"owner"`
+	Kernel []*Kernel `json:"kernel,omitempty"`
+	// Ethereum address of account signer.
+	Signer common.Address `json:"signer"`
 	kernel common.Address `json:"-"`
 }
 
 // Input used to specify a unique Account to query.
 type AccountBy struct {
-	Owner *common.Address `json:"owner,omitempty"`
+	Signer  *common.Address `json:"signer,omitempty"`
+	Kernel  *common.Address `json:"kernel,omitempty"`
+	Address *common.Address `json:"address,omitempty"`
 }
 
 // The Connection type for Account.
@@ -52,7 +54,7 @@ type AccountEdge struct {
 // Filter for Account.
 type AccountFilter struct {
 	// Filter for Account owned by this address.
-	Owner *common.Address `json:"owner,omitempty"`
+	Signer *common.Address `json:"signer,omitempty"`
 }
 
 type AftermarketDevice struct {
@@ -291,6 +293,15 @@ type EarningsEdge struct {
 	Cursor string   `json:"cursor"`
 }
 
+type Kernel struct {
+	// Kernel addresses made from the owner account.
+	Address common.Address `json:"address"`
+	// When the kernal account was created
+	CreatedAt time.Time `json:"createdAt"`
+	// Signer information for Kernel
+	Signer *Signer `json:"signer"`
+}
+
 type Manufacturer struct {
 	// An opaque global identifier for this manufacturer.
 	ID string `json:"id"`
@@ -356,6 +367,13 @@ type PrivilegesConnection struct {
 
 // The root query type for the GraphQL schema.
 type Query struct {
+}
+
+type Signer struct {
+	// Kernel signer (owner) account.
+	Address common.Address `json:"address"`
+	// When signer was added
+	SignerAdded time.Time `json:"signerAdded"`
 }
 
 // The SyntheticDevice is a software connection established to connect the vehicle to the DIMO network.

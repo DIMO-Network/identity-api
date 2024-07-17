@@ -63,7 +63,7 @@ type DirectiveRoot struct {
 type ComplexityRoot struct {
 	Account struct {
 		Kernel func(childComplexity int) int
-		Owner  func(childComplexity int) int
+		Signer func(childComplexity int) int
 	}
 
 	AccountConnection struct {
@@ -195,6 +195,12 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	Kernel struct {
+		Address   func(childComplexity int) int
+		CreatedAt func(childComplexity int) int
+		Signer    func(childComplexity int) int
+	}
+
 	Manufacturer struct {
 		AftermarketDevices func(childComplexity int, first *int, after *string, last *int, before *string, filterBy *model.AftermarketDevicesFilter) int
 		DeviceDefinitions  func(childComplexity int, first *int, after *string, last *int, before *string, filterBy *model.DeviceDefinitionFilter) int
@@ -247,6 +253,11 @@ type ComplexityRoot struct {
 		SyntheticDevices   func(childComplexity int, first *int, last *int, after *string, before *string, filterBy *model.SyntheticDevicesFilter) int
 		Vehicle            func(childComplexity int, tokenID int) int
 		Vehicles           func(childComplexity int, first *int, after *string, last *int, before *string, filterBy *model.VehiclesFilter) int
+	}
+
+	Signer struct {
+		Address     func(childComplexity int) int
+		SignerAdded func(childComplexity int) int
 	}
 
 	SyntheticDevice struct {
@@ -399,12 +410,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Account.Kernel(childComplexity), true
 
-	case "Account.owner":
-		if e.complexity.Account.Owner == nil {
+	case "Account.signer":
+		if e.complexity.Account.Signer == nil {
 			break
 		}
 
-		return e.complexity.Account.Owner(childComplexity), true
+		return e.complexity.Account.Signer(childComplexity), true
 
 	case "AccountConnection.edges":
 		if e.complexity.AccountConnection.Edges == nil {
@@ -957,6 +968,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.EarningsEdge.Node(childComplexity), true
 
+	case "Kernel.address":
+		if e.complexity.Kernel.Address == nil {
+			break
+		}
+
+		return e.complexity.Kernel.Address(childComplexity), true
+
+	case "Kernel.createdAt":
+		if e.complexity.Kernel.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.Kernel.CreatedAt(childComplexity), true
+
+	case "Kernel.signer":
+		if e.complexity.Kernel.Signer == nil {
+			break
+		}
+
+		return e.complexity.Kernel.Signer(childComplexity), true
+
 	case "Manufacturer.aftermarketDevices":
 		if e.complexity.Manufacturer.AftermarketDevices == nil {
 			break
@@ -1288,6 +1320,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Vehicles(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["filterBy"].(*model.VehiclesFilter)), true
+
+	case "Signer.address":
+		if e.complexity.Signer.Address == nil {
+			break
+		}
+
+		return e.complexity.Signer.Address(childComplexity), true
+
+	case "Signer.signerAdded":
+		if e.complexity.Signer.SignerAdded == nil {
+			break
+		}
+
+		return e.complexity.Signer.SignerAdded(childComplexity), true
 
 	case "SyntheticDevice.address":
 		if e.complexity.SyntheticDevice.Address == nil {
@@ -2446,9 +2492,9 @@ func (ec *executionContext) _Account_kernel(ctx context.Context, field graphql.C
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]common.Address)
+	res := resTmp.([]*model.Kernel)
 	fc.Result = res
-	return ec.marshalOAddress2ᚕgithubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddressᚄ(ctx, field.Selections, res)
+	return ec.marshalOKernel2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐKernelᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Account_kernel(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2458,14 +2504,22 @@ func (ec *executionContext) fieldContext_Account_kernel(_ context.Context, field
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Address does not have child fields")
+			switch field.Name {
+			case "address":
+				return ec.fieldContext_Kernel_address(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Kernel_createdAt(ctx, field)
+			case "signer":
+				return ec.fieldContext_Kernel_signer(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Kernel", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Account_owner(ctx context.Context, field graphql.CollectedField, obj *model.Account) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Account_owner(ctx, field)
+func (ec *executionContext) _Account_signer(ctx context.Context, field graphql.CollectedField, obj *model.Account) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Account_signer(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -2478,7 +2532,7 @@ func (ec *executionContext) _Account_owner(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Owner, nil
+		return obj.Signer, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2495,7 +2549,7 @@ func (ec *executionContext) _Account_owner(ctx context.Context, field graphql.Co
 	return ec.marshalNAddress2githubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Account_owner(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Account_signer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Account",
 		Field:      field,
@@ -2643,8 +2697,8 @@ func (ec *executionContext) fieldContext_AccountConnection_nodes(_ context.Conte
 			switch field.Name {
 			case "kernel":
 				return ec.fieldContext_Account_kernel(ctx, field)
-			case "owner":
-				return ec.fieldContext_Account_owner(ctx, field)
+			case "signer":
+				return ec.fieldContext_Account_signer(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Account", field.Name)
 		},
@@ -2791,8 +2845,8 @@ func (ec *executionContext) fieldContext_AccountEdge_node(_ context.Context, fie
 			switch field.Name {
 			case "kernel":
 				return ec.fieldContext_Account_kernel(ctx, field)
-			case "owner":
-				return ec.fieldContext_Account_owner(ctx, field)
+			case "signer":
+				return ec.fieldContext_Account_signer(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Account", field.Name)
 		},
@@ -6343,6 +6397,144 @@ func (ec *executionContext) fieldContext_EarningsEdge_cursor(_ context.Context, 
 	return fc, nil
 }
 
+func (ec *executionContext) _Kernel_address(ctx context.Context, field graphql.CollectedField, obj *model.Kernel) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kernel_address(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Address, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(common.Address)
+	fc.Result = res
+	return ec.marshalNAddress2githubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Kernel_address(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Kernel",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Address does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Kernel_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Kernel) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kernel_createdAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Kernel_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Kernel",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Kernel_signer(ctx context.Context, field graphql.CollectedField, obj *model.Kernel) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kernel_signer(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Signer, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Signer)
+	fc.Result = res
+	return ec.marshalNSigner2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSigner(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Kernel_signer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Kernel",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "address":
+				return ec.fieldContext_Signer_address(ctx, field)
+			case "signerAdded":
+				return ec.fieldContext_Signer_signerAdded(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Signer", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Manufacturer_id(ctx context.Context, field graphql.CollectedField, obj *model.Manufacturer) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Manufacturer_id(ctx, field)
 	if err != nil {
@@ -7473,8 +7665,8 @@ func (ec *executionContext) fieldContext_Query_account(ctx context.Context, fiel
 			switch field.Name {
 			case "kernel":
 				return ec.fieldContext_Account_kernel(ctx, field)
-			case "owner":
-				return ec.fieldContext_Account_owner(ctx, field)
+			case "signer":
+				return ec.fieldContext_Account_signer(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Account", field.Name)
 		},
@@ -8462,6 +8654,94 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 				return ec.fieldContext___Schema_directives(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Schema", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Signer_address(ctx context.Context, field graphql.CollectedField, obj *model.Signer) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Signer_address(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Address, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(common.Address)
+	fc.Result = res
+	return ec.marshalNAddress2githubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Signer_address(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Signer",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Address does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Signer_signerAdded(ctx context.Context, field graphql.CollectedField, obj *model.Signer) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Signer_signerAdded(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SignerAdded, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Signer_signerAdded(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Signer",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
 		},
 	}
 	return fc, nil
@@ -12227,15 +12507,15 @@ func (ec *executionContext) unmarshalInputAccountBy(ctx context.Context, obj int
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"owner"}
+	fieldsInOrder := [...]string{"signer", "kernel", "address"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "owner":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("owner"))
+		case "signer":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("signer"))
 			directive0 := func(ctx context.Context) (interface{}, error) {
 				return ec.unmarshalOAddress2ᚖgithubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, v)
 			}
@@ -12251,9 +12531,57 @@ func (ec *executionContext) unmarshalInputAccountBy(ctx context.Context, obj int
 				return it, graphql.ErrorOnPath(ctx, err)
 			}
 			if data, ok := tmp.(*common.Address); ok {
-				it.Owner = data
+				it.Signer = data
 			} else if tmp == nil {
-				it.Owner = nil
+				it.Signer = nil
+			} else {
+				err := fmt.Errorf(`unexpected type %T from directive, should be *github.com/ethereum/go-ethereum/common.Address`, tmp)
+				return it, graphql.ErrorOnPath(ctx, err)
+			}
+		case "kernel":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kernel"))
+			directive0 := func(ctx context.Context) (interface{}, error) {
+				return ec.unmarshalOAddress2ᚖgithubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, v)
+			}
+			directive1 := func(ctx context.Context) (interface{}, error) {
+				if ec.directives.OneOf == nil {
+					return nil, errors.New("directive oneOf is not implemented")
+				}
+				return ec.directives.OneOf(ctx, obj, directive0)
+			}
+
+			tmp, err := directive1(ctx)
+			if err != nil {
+				return it, graphql.ErrorOnPath(ctx, err)
+			}
+			if data, ok := tmp.(*common.Address); ok {
+				it.Kernel = data
+			} else if tmp == nil {
+				it.Kernel = nil
+			} else {
+				err := fmt.Errorf(`unexpected type %T from directive, should be *github.com/ethereum/go-ethereum/common.Address`, tmp)
+				return it, graphql.ErrorOnPath(ctx, err)
+			}
+		case "address":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("address"))
+			directive0 := func(ctx context.Context) (interface{}, error) {
+				return ec.unmarshalOAddress2ᚖgithubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, v)
+			}
+			directive1 := func(ctx context.Context) (interface{}, error) {
+				if ec.directives.OneOf == nil {
+					return nil, errors.New("directive oneOf is not implemented")
+				}
+				return ec.directives.OneOf(ctx, obj, directive0)
+			}
+
+			tmp, err := directive1(ctx)
+			if err != nil {
+				return it, graphql.ErrorOnPath(ctx, err)
+			}
+			if data, ok := tmp.(*common.Address); ok {
+				it.Address = data
+			} else if tmp == nil {
+				it.Address = nil
 			} else {
 				err := fmt.Errorf(`unexpected type %T from directive, should be *github.com/ethereum/go-ethereum/common.Address`, tmp)
 				return it, graphql.ErrorOnPath(ctx, err)
@@ -12271,20 +12599,20 @@ func (ec *executionContext) unmarshalInputAccountFilter(ctx context.Context, obj
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"owner"}
+	fieldsInOrder := [...]string{"signer"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "owner":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("owner"))
+		case "signer":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("signer"))
 			data, err := ec.unmarshalOAddress2ᚖgithubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Owner = data
+			it.Signer = data
 		}
 	}
 
@@ -12917,8 +13245,8 @@ func (ec *executionContext) _Account(ctx context.Context, sel ast.SelectionSet, 
 			out.Values[i] = graphql.MarshalString("Account")
 		case "kernel":
 			out.Values[i] = ec._Account_kernel(ctx, field, obj)
-		case "owner":
-			out.Values[i] = ec._Account_owner(ctx, field, obj)
+		case "signer":
+			out.Values[i] = ec._Account_signer(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -14101,6 +14429,55 @@ func (ec *executionContext) _EarningsEdge(ctx context.Context, sel ast.Selection
 	return out
 }
 
+var kernelImplementors = []string{"Kernel"}
+
+func (ec *executionContext) _Kernel(ctx context.Context, sel ast.SelectionSet, obj *model.Kernel) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, kernelImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Kernel")
+		case "address":
+			out.Values[i] = ec._Kernel_address(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._Kernel_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "signer":
+			out.Values[i] = ec._Kernel_signer(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var manufacturerImplementors = []string{"Manufacturer", "Node"}
 
 func (ec *executionContext) _Manufacturer(ctx context.Context, sel ast.SelectionSet, obj *model.Manufacturer) graphql.Marshaler {
@@ -14763,6 +15140,50 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___schema(ctx, field)
 			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var signerImplementors = []string{"Signer"}
+
+func (ec *executionContext) _Signer(ctx context.Context, sel ast.SelectionSet, obj *model.Signer) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, signerImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Signer")
+		case "address":
+			out.Values[i] = ec._Signer_address(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "signerAdded":
+			out.Values[i] = ec._Signer_signerAdded(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -16661,6 +17082,16 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
+func (ec *executionContext) marshalNKernel2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐKernel(ctx context.Context, sel ast.SelectionSet, v *model.Kernel) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Kernel(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNManufacturer2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐManufacturer(ctx context.Context, sel ast.SelectionSet, v model.Manufacturer) graphql.Marshaler {
 	return ec._Manufacturer(ctx, sel, &v)
 }
@@ -16810,6 +17241,16 @@ func (ec *executionContext) marshalNPrivilegesConnection2ᚖgithubᚗcomᚋDIMO�
 		return graphql.Null
 	}
 	return ec._PrivilegesConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNSigner2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSigner(ctx context.Context, sel ast.SelectionSet, v *model.Signer) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Signer(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
@@ -17360,44 +17801,6 @@ func (ec *executionContext) unmarshalOAccountFilter2ᚖgithubᚗcomᚋDIMOᚑNet
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalOAddress2ᚕgithubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddressᚄ(ctx context.Context, v interface{}) ([]common.Address, error) {
-	if v == nil {
-		return nil, nil
-	}
-	var vSlice []interface{}
-	if v != nil {
-		vSlice = graphql.CoerceList(v)
-	}
-	var err error
-	res := make([]common.Address, len(vSlice))
-	for i := range vSlice {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNAddress2githubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, vSlice[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	return res, nil
-}
-
-func (ec *executionContext) marshalOAddress2ᚕgithubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddressᚄ(ctx context.Context, sel ast.SelectionSet, v []common.Address) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	for i := range v {
-		ret[i] = ec.marshalNAddress2githubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, sel, v[i])
-	}
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
 func (ec *executionContext) unmarshalOAddress2ᚖgithubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx context.Context, v interface{}) (*common.Address, error) {
 	if v == nil {
 		return nil, nil
@@ -17522,6 +17925,53 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	}
 	res := graphql.MarshalInt(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOKernel2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐKernelᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Kernel) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNKernel2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐKernel(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalONode2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐNode(ctx context.Context, sel ast.SelectionSet, v model.Node) graphql.Marshaler {
