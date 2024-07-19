@@ -21,92 +21,37 @@ type Repository struct {
 }
 
 type AccountCursor struct {
-	OwnerAddress []byte
-	Kernel       []byte
+	Signer []byte
+	Kernel []byte
 }
 
 var accountCursorColumnsTuple = "(" + models.KernelAccountColumns.OwnerAddress + ", " + models.KernelAccountColumns.Kernel + ")"
 
 func (r *Repository) GetAccount(ctx context.Context, by gmodel.AccountBy) (*gmodel.Account, error) {
-	if by.Signer != nil && by.Kernel == nil && by.Address == nil {
-		return r.GetAccountBySigner(ctx, *by.Signer), nil
+
+	var acctBy []qm.QueryMod
+	switch {
+	case by.Signer != nil || by.Address != nil:
+		acctBy = append(acctBy, models.KernelAccountWhere.OwnerAddress.EQ(by.Signer.Bytes()))
+	case by.Kernel != nil || by.Address != nil:
+		acctBy = append(acctBy, models.KernelAccountWhere.Kernel.EQ(by.Kernel.Bytes()))
+	default:
+		return nil, gqlerror.Errorf("Provide exactly one of `signer`, `kernel` or `address`.")
 	}
 
-	if by.Kernel != nil && by.Signer == nil && by.Address == nil {
-		return r.GetAccountByKernel(ctx, *by.Kernel), nil
-	}
-
-	if by.Address != nil && by.Signer == nil && by.Kernel == nil {
-		return r.GetAccountAddress(ctx, *by.Address), nil
-	}
-
-	return nil, gqlerror.Errorf("Provide exactly one of `signer`, `kernel` or `address`.")
-}
-
-func (r *Repository) GetAccountBySigner(ctx context.Context, signer common.Address) *gmodel.Account {
-	all, err := models.KernelAccounts(models.KernelAccountWhere.OwnerAddress.EQ(signer.Bytes())).All(ctx, r.PDB.DBS().Reader)
+	all, err := models.KernelAccounts(acctBy...).All(ctx, r.PDB.DBS().Reader)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
-	apiAccount := &gmodel.Account{
-		Signer: common.BytesToAddress(signer.Bytes()),
-	}
-
+	var apiAccount *gmodel.Account
 	for _, acct := range all {
-		apiAccount.Kernel = append(apiAccount.Kernel, &gmodel.Kernel{
-			Address:   common.BytesToAddress(acct.Kernel),
-			CreatedAt: acct.CreatedAt,
-			Signer: &gmodel.Signer{
-				Address:     common.BytesToAddress(signer.Bytes()),
-				SignerAdded: acct.SignerAdded,
-			},
-		})
-	}
-
-	return apiAccount
-}
-
-func (r *Repository) GetAccountByKernel(ctx context.Context, kernel common.Address) *gmodel.Account {
-	all, err := models.KernelAccounts(models.KernelAccountWhere.Kernel.EQ(kernel.Bytes())).All(ctx, r.PDB.DBS().Reader)
-	if err != nil {
-		return nil
-	}
-
-	var apiAccount gmodel.Account
-	for idx, acct := range all {
-		if idx == 0 {
-			apiAccount.Signer = common.BytesToAddress(acct.OwnerAddress)
+		if apiAccount == nil {
+			apiAccount = &gmodel.Account{
+				Signer: common.BytesToAddress(acct.OwnerAddress),
+			}
 		}
-		apiAccount.Kernel = append(apiAccount.Kernel, &gmodel.Kernel{
-			Address:   common.BytesToAddress(acct.Kernel),
-			CreatedAt: acct.CreatedAt,
-			Signer: &gmodel.Signer{
-				Address:     common.BytesToAddress(kernel.Bytes()),
-				SignerAdded: acct.SignerAdded,
-			},
-		})
-	}
 
-	return &apiAccount
-}
-
-func (r *Repository) GetAccountAddress(ctx context.Context, address common.Address) *gmodel.Account {
-	all, err := models.KernelAccounts(
-		qm.Expr(
-			qm.Or2(models.KernelAccountWhere.Kernel.EQ(address.Bytes())),
-			qm.Or2(models.KernelAccountWhere.OwnerAddress.EQ(address.Bytes())),
-		),
-	).All(ctx, r.PDB.DBS().Reader)
-	if err != nil {
-		return nil
-	}
-
-	var apiAccount gmodel.Account
-	for idx, acct := range all {
-		if idx == 0 {
-			apiAccount.Signer = common.BytesToAddress(acct.OwnerAddress)
-		}
 		apiAccount.Kernel = append(apiAccount.Kernel, &gmodel.Kernel{
 			Address:   common.BytesToAddress(acct.Kernel),
 			CreatedAt: acct.CreatedAt,
@@ -117,11 +62,11 @@ func (r *Repository) GetAccountAddress(ctx context.Context, address common.Addre
 		})
 	}
 
-	return &apiAccount
+	return apiAccount, nil
 }
 
 func (r *Repository) GetAccounts(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *gmodel.AccountFilter) (*gmodel.AccountConnection, error) {
-	limit, err := helpers.ValidateFirstLast(first, last, 30)
+	limit, err := helpers.ValidateFirstLast(first, last, base.MaxPageSize)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +98,7 @@ func (r *Repository) GetAccounts(ctx context.Context, first *int, after *string,
 			return nil, err
 		}
 		queryMods = append(queryMods,
-			qm.Where(accountCursorColumnsTuple+" < (?, ?)", afterT.OwnerAddress, afterT.Kernel),
+			qm.Where(accountCursorColumnsTuple+" < (?, ?)", afterT.Signer, afterT.Kernel),
 		)
 	} else if before != nil {
 		beforeT, err := pHelp.DecodeCursor(*before)
@@ -161,7 +106,7 @@ func (r *Repository) GetAccounts(ctx context.Context, first *int, after *string,
 			return nil, err
 		}
 		queryMods = append(queryMods,
-			qm.Where(accountCursorColumnsTuple+" < (?, ?)", beforeT.OwnerAddress, beforeT.Kernel),
+			qm.Where(accountCursorColumnsTuple+" < (?, ?)", beforeT.Signer, beforeT.Kernel),
 		)
 	}
 
@@ -189,7 +134,7 @@ func (r *Repository) GetAccounts(ctx context.Context, first *int, after *string,
 	ownerToKernals := make(map[common.Address]AcctInfos)
 	for _, acct := range all {
 		owner := common.BytesToAddress(acct.OwnerAddress)
-		c, err := pHelp.EncodeCursor(AccountCursor{OwnerAddress: acct.OwnerAddress, Kernel: acct.Kernel})
+		c, err := pHelp.EncodeCursor(AccountCursor{Signer: acct.OwnerAddress, Kernel: acct.Kernel})
 		if err != nil {
 			return nil, err
 		}
