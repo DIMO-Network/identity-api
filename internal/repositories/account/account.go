@@ -2,6 +2,7 @@ package account
 
 import (
 	"context"
+	"fmt"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
@@ -25,30 +26,33 @@ type AccountCursor struct {
 	Kernel []byte
 }
 
-var accountCursorColumnsTuple = "(" + models.KernelAccountColumns.OwnerAddress + ", " + models.KernelAccountColumns.Kernel + ")"
+var accountCursorColumnsTuple = "(" + models.AccountColumns.Signer + ", " + models.AccountColumns.Kernel + ")"
 
 func (r *Repository) GetAccount(ctx context.Context, by gmodel.AccountBy) (*gmodel.Account, error) {
-
 	var acctBy []qm.QueryMod
+
 	switch {
-	case by.Signer != nil || by.Address != nil:
-		acctBy = append(acctBy, models.KernelAccountWhere.OwnerAddress.EQ(by.Signer.Bytes()))
-	case by.Kernel != nil || by.Address != nil:
-		acctBy = append(acctBy, models.KernelAccountWhere.Kernel.EQ(by.Kernel.Bytes()))
+	case by.Signer != nil && by.Kernel == nil && by.Address == nil:
+		acctBy = append(acctBy, models.AccountWhere.Signer.EQ(by.Signer.Bytes()))
+	case by.Kernel != nil && by.Address == nil && by.Signer == nil:
+		acctBy = append(acctBy, models.AccountWhere.Kernel.EQ(by.Kernel.Bytes()))
+	case by.Address != nil && by.Signer == nil && by.Kernel == nil:
+		acctBy = append(acctBy, qm.Or2(models.AccountWhere.Kernel.EQ(by.Address.Bytes())), qm.Or2(models.AccountWhere.Signer.EQ(by.Address.Bytes())))
 	default:
 		return nil, gqlerror.Errorf("Provide exactly one of `signer`, `kernel` or `address`.")
 	}
 
-	all, err := models.KernelAccounts(acctBy...).All(ctx, r.PDB.DBS().Reader)
+	all, err := models.Accounts(acctBy...).All(ctx, r.PDB.DBS().Reader)
 	if err != nil {
-		return nil, err
+		r.Log.Err(err).Msg("failed fetching account")
+		return nil, fmt.Errorf("failed fetching account")
 	}
 
 	var apiAccount *gmodel.Account
 	for _, acct := range all {
 		if apiAccount == nil {
 			apiAccount = &gmodel.Account{
-				Signer: common.BytesToAddress(acct.OwnerAddress),
+				Signer: common.BytesToAddress(acct.Signer),
 			}
 		}
 
@@ -56,7 +60,7 @@ func (r *Repository) GetAccount(ctx context.Context, by gmodel.AccountBy) (*gmod
 			Address:   common.BytesToAddress(acct.Kernel),
 			CreatedAt: acct.CreatedAt,
 			Signer: &gmodel.Signer{
-				Address:     common.BytesToAddress(acct.OwnerAddress),
+				Address:     common.BytesToAddress(acct.Signer),
 				SignerAdded: acct.SignerAdded,
 			},
 		})
@@ -73,10 +77,10 @@ func (r *Repository) GetAccounts(ctx context.Context, first *int, after *string,
 
 	queryMods := []qm.QueryMod{}
 	if filterBy != nil && filterBy.Signer != nil {
-		queryMods = append(queryMods, models.KernelAccountWhere.OwnerAddress.EQ(filterBy.Signer.Bytes()))
+		queryMods = append(queryMods, models.AccountWhere.Signer.EQ(filterBy.Signer.Bytes()))
 	}
 
-	accountCount, err := models.KernelAccounts(queryMods...).Count(ctx, r.PDB.DBS().Reader)
+	accountCount, err := models.Accounts(queryMods...).Count(ctx, r.PDB.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +92,8 @@ func (r *Repository) GetAccounts(ctx context.Context, first *int, after *string,
 
 	queryMods = append(queryMods,
 		qm.Limit(limit+1),
-		qm.OrderBy(models.KernelAccountColumns.OwnerAddress+orderBy+", "+models.KernelAccountColumns.Kernel+orderBy),
+		qm.OrderBy(models.AccountColumns.Signer+orderBy),
+		qm.OrderBy(models.AccountColumns.Kernel+orderBy),
 	)
 
 	pHelp := &helpers.PaginationHelper[AccountCursor]{}
@@ -110,9 +115,10 @@ func (r *Repository) GetAccounts(ctx context.Context, first *int, after *string,
 		)
 	}
 
-	all, err := models.KernelAccounts(queryMods...).All(ctx, r.PDB.DBS().Reader)
+	all, err := models.Accounts(queryMods...).All(ctx, r.PDB.DBS().Reader)
 	if err != nil {
-		return nil, err
+		r.Log.Err(err).Msg("failed fetching account")
+		return nil, fmt.Errorf("failed fetching account")
 	}
 
 	hasNext := before != nil
@@ -131,15 +137,15 @@ func (r *Repository) GetAccounts(ctx context.Context, first *int, after *string,
 	}
 
 	ordered := 0
-	ownerToKernals := make(map[common.Address]AcctInfos)
+	signerToKernels := make(map[common.Address]AcctInfos)
 	for _, acct := range all {
-		owner := common.BytesToAddress(acct.OwnerAddress)
-		c, err := pHelp.EncodeCursor(AccountCursor{Signer: acct.OwnerAddress, Kernel: acct.Kernel})
+		signer := common.BytesToAddress(acct.Signer)
+		c, err := pHelp.EncodeCursor(AccountCursor{Signer: acct.Signer, Kernel: acct.Kernel})
 		if err != nil {
 			return nil, err
 		}
 
-		acctInfos, ok := ownerToKernals[owner]
+		acctInfos, ok := signerToKernels[signer]
 		if !ok {
 			acctInfos = AcctInfos{Idx: ordered}
 			ordered++
@@ -149,22 +155,20 @@ func (r *Repository) GetAccounts(ctx context.Context, first *int, after *string,
 			Address:   common.BytesToAddress(acct.Kernel),
 			CreatedAt: acct.CreatedAt,
 			Signer: &gmodel.Signer{
-				Address:     common.BytesToAddress(owner.Bytes()),
+				Address:     common.BytesToAddress(signer.Bytes()),
 				SignerAdded: acct.SignerAdded,
 			},
 		})
 		acctInfos.Cursor = append(acctInfos.Cursor, c)
-		ownerToKernals[owner] = acctInfos
+		signerToKernels[signer] = acctInfos
 
 	}
 
-	edges := make([]*gmodel.AccountEdge, len(ownerToKernals))
-	nodes := make([]*gmodel.Account, len(ownerToKernals))
-	var errList gqlerror.List
-
-	for owner, acctInfos := range ownerToKernals {
+	edges := make([]*gmodel.AccountEdge, len(signerToKernels))
+	nodes := make([]*gmodel.Account, len(signerToKernels))
+	for signer, acctInfos := range signerToKernels {
 		apiAccount := &gmodel.Account{
-			Signer: owner,
+			Signer: signer,
 			Kernel: acctInfos.Kernels,
 		}
 
@@ -179,7 +183,6 @@ func (r *Repository) GetAccounts(ctx context.Context, first *int, after *string,
 	}
 
 	var endCur, startCur *string
-
 	if len(all) != 0 {
 		startCur = &edges[0].Cursor
 		endCur = &edges[len(edges)-1].Cursor
@@ -196,9 +199,7 @@ func (r *Repository) GetAccounts(ctx context.Context, first *int, after *string,
 			HasPreviousPage: hasPrevious,
 		},
 	}
-	if errList != nil {
-		return res, errList
-	}
+
 	return res, nil
 }
 

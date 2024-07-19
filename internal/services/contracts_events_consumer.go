@@ -71,6 +71,9 @@ const (
 
 	// Kernel ECDSA Validator.
 	OwnerRegistered EventName = "OwnerRegistered"
+
+	// WebAuthnPublicKeyRegistered
+	WebAuthnPublicKeyRegistered EventName = "WebAuthnPublicKeyRegistered"
 )
 
 func (r EventName) String() string {
@@ -699,9 +702,9 @@ func (c *ContractsEventsConsumer) handleOwnerRegisteredEvent(ctx context.Context
 		return err
 	}
 
-	kernel := models.KernelAccount{
-		Kernel:       args.Kernel.Bytes(),
-		OwnerAddress: args.Owner.Bytes(),
+	kernel := models.Account{
+		Kernel: args.Kernel.Bytes(),
+		Signer: args.Owner.Bytes(),
 	}
 
 	return kernel.Insert(ctx, c.dbs.DBS().Writer, boil.Infer())

@@ -1,14 +1,14 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE TABLE kernel_accounts(
-    kernel bytea CONSTRAINT kernel_accounts_kernel_address_check CHECK (length(kernel) = 20) PRIMARY KEY,
+CREATE TABLE accounts(
+    kernel bytea CONSTRAINT accounts_kernel_address_check CHECK (length(kernel) = 20) PRIMARY KEY,
+    signer bytea CONSTRAINT accounts_signer_check CHECK (length(signer) = 20) NOT NULL,
     created_at timestamptz NOT NULL DEFAULT NOW(),
-    signer_added timestamptz NOT NULL DEFAULT NOW(),
-    owner_address bytea CONSTRAINT kernel_accounts_owner_address_check CHECK (length(owner_address) = 20) NOT NULL -- TODO(ae): should this reference any other table?
+    signer_added timestamptz NOT NULL DEFAULT NOW()
 );
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
-DROP TABLE kernel_accounts;
+DROP TABLE accounts;
 -- +goose StatementEnd

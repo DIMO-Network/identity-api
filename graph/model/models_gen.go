@@ -21,7 +21,6 @@ type Account struct {
 	Kernel []*Kernel `json:"kernel,omitempty"`
 	// Ethereum address of account signer.
 	Signer common.Address `json:"signer"`
-	kernel common.Address `json:"-"`
 }
 
 // Input used to specify a unique Account to query.
