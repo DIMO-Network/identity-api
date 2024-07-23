@@ -138,7 +138,7 @@ func (r *Repository) GetDeviceDefinitions(ctx context.Context, tableID, first *i
 		}
 
 		if filterBy.Model != nil {
-			sqlBuild = sqlBuild.Where(goqu.Ex{"model": *filterBy.Model})
+			sqlBuild = sqlBuild.Where(goqu.L("model = ? COLLATE NOCASE", *filterBy.Model))
 		}
 	}
 
