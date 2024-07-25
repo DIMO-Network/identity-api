@@ -117,6 +117,7 @@ Filter for Device Definition.
 input DeviceDefinitionFilter {
   """
   Model filters for device definition that are of the given model.
+  This filter is case insensitive.
   """
   model: String
 
