@@ -68,6 +68,12 @@ const (
 	// Rewards.
 	TokensTransferredForDevice           EventName = "TokensTransferredForDevice"
 	TokensTransferredForConnectionStreak EventName = "TokensTransferredForConnectionStreak"
+
+	// Kernel ECDSA Validator.
+	OwnerRegistered EventName = "OwnerRegistered"
+
+	// WebAuthnPublicKeyRegistered
+	WebAuthnPublicKeyRegistered EventName = "WebAuthnPublicKeyRegistered"
 )
 
 func (r EventName) String() string {
@@ -103,6 +109,7 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 	DCNRegistryAddr := common.HexToAddress(c.settings.DCNRegistryAddr)
 	DCNResolverAddr := common.HexToAddress(c.settings.DCNResolverAddr)
 	RewardsContractAddr := common.HexToAddress(c.settings.RewardsContractAddr)
+	KernelECDSAValidatorAddr := common.HexToAddress(c.settings.KernelECDSAValidator)
 
 	var data ContractEventData
 	if err := json.Unmarshal(event.Data, &data); err != nil {
@@ -162,7 +169,6 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 		case Transfer:
 			return c.handleAftermarketDeviceTransferredEvent(ctx, &data)
 		}
-
 	case DCNRegistryAddr:
 		switch eventName {
 		case NewNode:
@@ -183,6 +189,11 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 			return c.handleTokensTransferredForDevice(ctx, &data)
 		case TokensTransferredForConnectionStreak:
 			return c.handleTokensTransferredForConnectionStreak(ctx, &data)
+		}
+	case KernelECDSAValidatorAddr:
+		switch eventName {
+		case OwnerRegistered:
+			return c.handleOwnerRegisteredEvent(ctx, &data)
 		}
 	}
 
@@ -683,4 +694,18 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceAddressResetEvent(ctx c
 	amd.Address = args.AftermarketDeviceAddress.Bytes()
 	_, err = amd.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.AftermarketDeviceColumns.Address))
 	return err
+}
+
+func (c *ContractsEventsConsumer) handleOwnerRegisteredEvent(ctx context.Context, e *ContractEventData) error {
+	var args OwnerRegisteredData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	kernel := models.Account{
+		Kernel: args.Kernel.Bytes(),
+		Signer: args.Owner.Bytes(),
+	}
+
+	return kernel.Insert(ctx, c.dbs.DBS().Writer, boil.Infer())
 }

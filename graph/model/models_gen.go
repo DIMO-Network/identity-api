@@ -15,6 +15,47 @@ type Node interface {
 	GetID() string
 }
 
+// Represents a DIMO Account. This is a unique identifier for a vehicle.
+type Account struct {
+	// Kernel addresses made from the owner account.
+	Kernel []*Kernel `json:"kernel,omitempty"`
+	// Ethereum address of account signer.
+	Signer common.Address `json:"signer"`
+}
+
+// Input used to specify a unique Account to query.
+type AccountBy struct {
+	Signer  *common.Address `json:"signer,omitempty"`
+	Kernel  *common.Address `json:"kernel,omitempty"`
+	Address *common.Address `json:"address,omitempty"`
+}
+
+// The Connection type for Account.
+type AccountConnection struct {
+	// The total count of accounts in the connection.
+	TotalCount int `json:"totalCount"`
+	// A list of edges.
+	Edges []*AccountEdge `json:"edges"`
+	// A list of nodes in the connection
+	Nodes []*Account `json:"nodes"`
+	// Information to aid in pagination.
+	PageInfo *PageInfo `json:"pageInfo"`
+}
+
+// An edge in a AccountConnection.
+type AccountEdge struct {
+	// A cursor for use in pagination.
+	Cursor string `json:"cursor"`
+	// The item at the end of the edge.
+	Node *Account `json:"node"`
+}
+
+// Filter for Account.
+type AccountFilter struct {
+	// Filter for Account owned by this address.
+	Signer *common.Address `json:"signer,omitempty"`
+}
+
 type AftermarketDevice struct {
 	// An opaque global identifier for this aftermarket device.
 	ID string `json:"id"`
@@ -251,6 +292,15 @@ type EarningsEdge struct {
 	Cursor string   `json:"cursor"`
 }
 
+type Kernel struct {
+	// Kernel addresses made from the owner account.
+	Address common.Address `json:"address"`
+	// When the kernal account was created
+	CreatedAt time.Time `json:"createdAt"`
+	// Signer information for Kernel
+	Signer *Signer `json:"signer"`
+}
+
 type Manufacturer struct {
 	// An opaque global identifier for this manufacturer.
 	ID string `json:"id"`
@@ -316,6 +366,13 @@ type PrivilegesConnection struct {
 
 // The root query type for the GraphQL schema.
 type Query struct {
+}
+
+type Signer struct {
+	// Kernel signer (owner) account.
+	Address common.Address `json:"address"`
+	// When signer was added
+	SignerAdded time.Time `json:"signerAdded"`
 }
 
 // The SyntheticDevice is a software connection established to connect the vehicle to the DIMO network.

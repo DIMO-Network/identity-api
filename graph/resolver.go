@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
+	"github.com/DIMO-Network/identity-api/internal/repositories/account"
 	"github.com/DIMO-Network/identity-api/internal/repositories/aftermarket"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/internal/repositories/dcn"
@@ -29,6 +30,11 @@ type AftermarketDeviceRepository interface {
 	GetAftermarketDevices(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.AftermarketDevicesFilter) (*model.AftermarketDeviceConnection, error)
 	GetAftermarketDevice(ctx context.Context, by model.AftermarketDeviceBy) (*model.AftermarketDevice, error)
 	GetAftermarketDevicesForManufacturer(ctx context.Context, obj *model.Manufacturer, first *int, after *string, last *int, before *string, filterBy *model.AftermarketDevicesFilter) (*model.AftermarketDeviceConnection, error)
+}
+
+type AccountRepository interface {
+	GetAccount(ctx context.Context, by model.AccountBy) (*model.Account, error)
+	GetAccounts(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.AccountFilter) (*model.AccountConnection, error)
 }
 
 // DCNRepository interface for mocking dcn.Repository.
@@ -82,6 +88,7 @@ type Resolver struct {
 	vehicle          VehicleRepository
 	vehicleprivilege vehicleprivilege.Repository
 	deviceDefinition DeviceDefinitionRepository
+	account          AccountRepository
 }
 
 // NewResolver creates a new Resolver with allocated repositories.
@@ -99,5 +106,6 @@ func NewResolver(baseRepo *base.Repository) *Resolver {
 		deviceDefinition: &devicedefinition.Repository{Repository: baseRepo,
 			TablelandApiService: tablelandApiService,
 		},
+		account: &account.Repository{Repository: baseRepo},
 	}
 }
