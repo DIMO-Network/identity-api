@@ -82,7 +82,8 @@ func (r *Repository) GetAccounts(ctx context.Context, first *int, after *string,
 
 	accountCount, err := models.Accounts(queryMods...).Count(ctx, r.PDB.DBS().Reader)
 	if err != nil {
-		return nil, err
+		r.Log.Err(err).Msg("failed fetching accounts")
+		return nil, fmt.Errorf("failed fetching accounts")
 	}
 
 	orderBy := " DESC"
@@ -117,8 +118,8 @@ func (r *Repository) GetAccounts(ctx context.Context, first *int, after *string,
 
 	all, err := models.Accounts(queryMods...).All(ctx, r.PDB.DBS().Reader)
 	if err != nil {
-		r.Log.Err(err).Msg("failed fetching account")
-		return nil, fmt.Errorf("failed fetching account")
+		r.Log.Err(err).Msg("failed fetching accounts")
+		return nil, fmt.Errorf("failed fetching accounts")
 	}
 
 	hasNext := before != nil
