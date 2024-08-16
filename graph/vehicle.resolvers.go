@@ -9,6 +9,7 @@ import (
 
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/loader"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 // Vehicle is the resolver for the vehicle field.
@@ -34,6 +35,11 @@ func (r *vehicleResolver) AftermarketDevice(ctx context.Context, obj *model.Vehi
 // Privileges is the resolver for the privileges field.
 func (r *vehicleResolver) Privileges(ctx context.Context, obj *model.Vehicle, first *int, after *string, last *int, before *string, filterBy *model.PrivilegeFilterBy) (*model.PrivilegesConnection, error) {
 	return r.vehicleprivilege.GetPrivilegesForVehicle(ctx, obj.TokenID, first, after, last, before, filterBy)
+}
+
+// Sacd is the resolver for the sacd field.
+func (r *vehicleResolver) Sacd(ctx context.Context, obj *model.Vehicle, first *int, after *string, last *int, before *string, grantee *common.Address) (*model.SacdsConnection, error) {
+	return r.vehiclesacd.GetSacdsForVehicle(ctx, obj.TokenID, first, after, last, before, grantee)
 }
 
 // SyntheticDevice is the resolver for the syntheticDevice field.

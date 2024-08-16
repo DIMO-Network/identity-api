@@ -1,0 +1,39 @@
+# Sacd Types
+
+type Sacd {
+  """
+  Recipient of sacd permission grant
+  """
+  grantee: Address!
+  """
+  Hex string of permissions
+  """
+  permissions: String!
+  """
+  Permission source
+  """
+  source: String!
+  """
+  The block timestamp at which this permission was set.
+  """
+  createdAt: Time!
+  """
+  The block timestamp at which the permission expires.
+  """
+  expiresAt: Time!
+}
+
+type SacdEdge {
+  node: Sacd!
+  cursor: String!
+}
+
+"""
+The Connection type for Sacds.
+"""
+type SacdsConnection {
+  totalCount: Int!
+  edges: [SacdEdge!]!
+  nodes: [Sacd!]!
+  pageInfo: PageInfo!
+}

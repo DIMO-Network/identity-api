@@ -13,6 +13,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/repositories/synthetic"
 	"github.com/DIMO-Network/identity-api/internal/repositories/vehicle"
 	"github.com/DIMO-Network/identity-api/internal/repositories/vehicleprivilege"
+	"github.com/DIMO-Network/identity-api/internal/repositories/vehiclesacd"
 	"github.com/DIMO-Network/identity-api/internal/services"
 )
 
@@ -81,6 +82,7 @@ type Resolver struct {
 	synthetic        SyntheticRepository
 	vehicle          VehicleRepository
 	vehicleprivilege vehicleprivilege.Repository
+	vehiclesacd      vehiclesacd.Repository
 	deviceDefinition DeviceDefinitionRepository
 }
 
@@ -96,6 +98,7 @@ func NewResolver(baseRepo *base.Repository) *Resolver {
 		synthetic:        &synthetic.Repository{Repository: baseRepo},
 		vehicle:          &vehicle.Repository{Repository: baseRepo},
 		vehicleprivilege: vehicleprivilege.Repository{Repository: baseRepo},
+		vehiclesacd:      vehiclesacd.Repository{Repository: baseRepo},
 		deviceDefinition: &devicedefinition.Repository{Repository: baseRepo,
 			TablelandApiService: tablelandApiService,
 		},

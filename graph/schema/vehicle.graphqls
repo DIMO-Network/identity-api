@@ -112,13 +112,11 @@ type Vehicle implements Node {
   """
   A Relay-style connection listing any active privilege grants on this vehicle.
   """
-  privileges(
-    first: Int
-    after: String
-    last: Int
-    before: String
-    filterBy: PrivilegeFilterBy
-  ): PrivilegesConnection!
+  privileges(first: Int, after: String, last: Int, before: String, filterBy: PrivilegeFilterBy): PrivilegesConnection!
+  """
+  A Relay-style connection listing any active sacd permissions grants on this vehicle.
+  """
+  sacd(first: Int, after: String, last: Int, before: String, grantee: Address): SacdsConnection!
   """
   The paired synthetic device, if any.
   """
@@ -171,10 +169,5 @@ type VehicleConnection {
 
 type VehicleEarnings {
   totalTokens: BigDecimal!
-  history(
-    first: Int
-    after: String
-    last: Int
-    before: String
-  ): EarningsConnection!
+  history(first: Int, after: String, last: Int, before: String): EarningsConnection!
 }

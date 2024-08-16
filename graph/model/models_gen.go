@@ -208,6 +208,7 @@ type DeviceDefinitionEdge struct {
 // Filter for Device Definition.
 type DeviceDefinitionFilter struct {
 	// Model filters for device definition that are of the given model.
+	// This filter performs a case insensitive match.
 	Model *string `json:"model,omitempty"`
 	// Year filters for device definition that are of the given year.
 	Year *int `json:"year,omitempty"`
@@ -318,6 +319,32 @@ type PrivilegesConnection struct {
 type Query struct {
 }
 
+type Sacd struct {
+	// Recipient of sacd permission grant
+	Grantee common.Address `json:"grantee"`
+	// Hex string of permissions
+	Permissions string `json:"permissions"`
+	// Permission source
+	Source string `json:"source"`
+	// The block timestamp at which this permission was set.
+	CreatedAt time.Time `json:"createdAt"`
+	// The block timestamp at which the permission expires.
+	ExpiresAt time.Time `json:"expiresAt"`
+}
+
+type SacdEdge struct {
+	Node   *Sacd  `json:"node"`
+	Cursor string `json:"cursor"`
+}
+
+// The Connection type for Sacds.
+type SacdsConnection struct {
+	TotalCount int         `json:"totalCount"`
+	Edges      []*SacdEdge `json:"edges"`
+	Nodes      []*Sacd     `json:"nodes"`
+	PageInfo   *PageInfo   `json:"pageInfo"`
+}
+
 // The SyntheticDevice is a software connection established to connect the vehicle to the DIMO network.
 type SyntheticDevice struct {
 	// An opaque global identifier for this syntheticDevice.
@@ -398,6 +425,8 @@ type Vehicle struct {
 	AftermarketDevice *AftermarketDevice `json:"aftermarketDevice,omitempty"`
 	// A Relay-style connection listing any active privilege grants on this vehicle.
 	Privileges *PrivilegesConnection `json:"privileges"`
+	// A Relay-style connection listing any active sacd permissions grants on this vehicle.
+	Sacd *SacdsConnection `json:"sacd"`
 	// The paired synthetic device, if any.
 	SyntheticDevice *SyntheticDevice `json:"syntheticDevice,omitempty"`
 	// The device definition for this vehicle; which includes make, model, and year among
