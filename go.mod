@@ -11,7 +11,7 @@ require (
 	github.com/ethereum/go-ethereum v1.14.5
 	github.com/friendsofgo/errors v0.9.2
 	github.com/goccy/go-json v0.10.3
-	github.com/gofiber/fiber/v2 v2.52.4
+	github.com/gofiber/fiber/v2 v2.52.5
 	github.com/graph-gophers/dataloader/v7 v7.1.0
 	github.com/jarcoal/httpmock v1.3.1
 	github.com/pkg/errors v0.9.1 // indirect
