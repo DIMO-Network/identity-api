@@ -3,6 +3,7 @@ package vehicle
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"net/url"
 	"strconv"
@@ -11,6 +12,7 @@ import (
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
+	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/mnemonic"
@@ -183,8 +185,8 @@ func (r *Repository) GetVehicles(ctx context.Context, first *int, after *string,
 func (r *Repository) GetVehicle(ctx context.Context, id int) (*gmodel.Vehicle, error) {
 	v, err := models.FindVehicle(ctx, r.PDB.DBS().Reader, id)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("no vehicle with token id %d", id)
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, repositories.ErrNotFound
 		}
 		return nil, err
 	}

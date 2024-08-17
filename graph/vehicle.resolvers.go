@@ -6,15 +6,29 @@ package graph
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/loader"
+	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 )
 
 // Vehicle is the resolver for the vehicle field.
 func (r *queryResolver) Vehicle(ctx context.Context, tokenID int) (*model.Vehicle, error) {
-	return r.vehicle.GetVehicle(ctx, tokenID)
+	v, err := r.vehicle.GetVehicle(ctx, tokenID)
+	if errors.Is(err, repositories.ErrNotFound) {
+		return nil, graphql.ErrorOnPath(ctx, &gqlerror.Error{
+			Message: fmt.Sprintf("No vehicle with token id %d.", tokenID),
+			Extensions: map[string]interface{}{
+				"code": "NOT_FOUND",
+			},
+		})
+	}
+	return v, err
 }
 
 // Vehicles is the resolver for the vehicles field.

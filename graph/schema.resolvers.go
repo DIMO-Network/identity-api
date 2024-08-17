@@ -38,7 +38,7 @@ func (r *queryResolver) Node(ctx context.Context, id string) (model.Node, error)
 	case synthetic.TokenPrefix:
 		return r.synthetic.GetSyntheticDevice(ctx, model.SyntheticDeviceBy{TokenID: &objID})
 	default:
-		return nil, errors.New("Unrecognized global id.")
+		return nil, errors.New("unrecognized global id") // TODO(elffs): Fix.
 	}
 }
 
