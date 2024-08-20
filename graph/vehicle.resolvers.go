@@ -13,7 +13,6 @@ import (
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/loader"
 	"github.com/DIMO-Network/identity-api/internal/repositories"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 )
 
@@ -79,13 +78,3 @@ func (r *Resolver) VehicleEarnings() VehicleEarningsResolver { return &vehicleEa
 
 type vehicleResolver struct{ *Resolver }
 type vehicleEarningsResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//     it when you're done.
-//   - You have helper methods in this file. Move them out to keep these resolver files clean.
-func (r *vehicleResolver) Sacd(ctx context.Context, obj *model.Vehicle, first *int, after *string, last *int, before *string, grantee *common.Address) (*model.SacdsConnection, error) {
-	return r.vehiclesacd.GetSacdsForVehicle(ctx, obj.TokenID, first, after, last, before, grantee)
-}
