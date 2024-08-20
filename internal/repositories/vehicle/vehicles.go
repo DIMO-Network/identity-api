@@ -243,7 +243,7 @@ func queryModsFromFilters(filter *gmodel.VehiclesFilter) []qm.QueryMod {
 				qm.Or2(
 					qm.Expr(
 						models.VehicleSacdWhere.Grantee.EQ(addr.Bytes()),
-						models.PrivilegeWhere.ExpiresAt.GT(time.Now()),
+						models.VehicleSacdWhere.ExpiresAt.GT(time.Now()),
 					),
 				),
 			),
