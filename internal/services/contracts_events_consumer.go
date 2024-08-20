@@ -37,6 +37,9 @@ const (
 	PrivilegeSet        EventName = "PrivilegeSet"
 	BeneficiarySetEvent EventName = "BeneficiarySet"
 
+	// SACD.
+	PermissionsSetEvent EventName = "PermissionsSet"
+
 	// Manufacturers.
 	ManufacturerNodeMinted       EventName = "ManufacturerNodeMinted"
 	DeviceDefinitionTableCreated EventName = "DeviceDefinitionTableCreated"
@@ -103,6 +106,7 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 	DCNRegistryAddr := common.HexToAddress(c.settings.DCNRegistryAddr)
 	DCNResolverAddr := common.HexToAddress(c.settings.DCNResolverAddr)
 	RewardsContractAddr := common.HexToAddress(c.settings.RewardsContractAddr)
+	sacdAddr := common.HexToAddress(c.settings.SACDAddress)
 
 	var data ContractEventData
 	if err := json.Unmarshal(event.Data, &data); err != nil {
@@ -156,6 +160,11 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 			return c.handleVehicleTransferEvent(ctx, &data)
 		case PrivilegeSet:
 			return c.handlePrivilegeSetEvent(ctx, &data)
+		}
+	case sacdAddr:
+		switch eventName {
+		case PermissionsSetEvent:
+			return c.handlePermissionsSetEvent(ctx, &data)
 		}
 	case aftermarketDeviceAddr:
 		switch eventName {
@@ -435,6 +444,45 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceAttributeSetEvent(ctx c
 			return err
 		}
 	}
+
+	return nil
+}
+
+func (c *ContractsEventsConsumer) handlePermissionsSetEvent(ctx context.Context, e *ContractEventData) error {
+	logger := c.log.With().Str("EventName", PermissionsSetEvent.String()).Logger()
+
+	var args PermissionsSetData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	if args.Asset != common.HexToAddress(c.settings.VehicleNFTAddr) {
+		return nil
+	}
+
+	sacd := models.VehicleSacd{
+		VehicleID:   int(args.TokenId.Int64()),
+		Grantee:     args.Grantee.Bytes(),
+		Permissions: args.Permissions.Text(2),
+		Source:      args.Source,
+		CreatedAt:   e.Block.Time,
+		ExpiresAt:   time.Unix(args.Expiration.Int64(), 0),
+	}
+
+	if err := sacd.Upsert(ctx, c.dbs.DBS().Writer, true,
+		[]string{
+			models.VehicleSacdColumns.VehicleID,
+			models.VehicleSacdColumns.Grantee,
+		},
+		boil.Whitelist(models.VehicleSacdColumns.Permissions, models.VehicleSacdColumns.Source, models.PrivilegeColumns.SetAt, models.PrivilegeColumns.ExpiresAt),
+		boil.Infer()); err != nil {
+		return err
+	}
+
+	logger.Info().
+		Int64("vehicleId", args.TokenId.Int64()).
+		Str("grantee", args.Grantee.Hex()).
+		Msg("Vehicle SACD processed.")
 
 	return nil
 }

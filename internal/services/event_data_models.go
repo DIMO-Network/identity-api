@@ -168,3 +168,12 @@ type DeviceDefinitionTableCreatedData struct {
 	ManufacturerId *big.Int
 	TableId        *big.Int
 }
+
+type PermissionsSetData struct {
+	Asset       common.Address
+	TokenId     *big.Int
+	Permissions *big.Int
+	Grantee     common.Address
+	Expiration  *big.Int
+	Source      string
+}
