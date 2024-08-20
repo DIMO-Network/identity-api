@@ -229,12 +229,21 @@ func queryModsFromFilters(filter *gmodel.VehiclesFilter) []qm.QueryMod {
 			qm.LeftOuterJoin(
 				helpers.WithSchema(models.TableNames.Privileges)+" ON "+models.VehicleTableColumns.ID+" = "+models.PrivilegeTableColumns.TokenID,
 			),
+			qm.LeftOuterJoin(
+				helpers.WithSchema(models.TableNames.VehicleSacds)+" ON "+models.VehicleTableColumns.ID+" = "+models.VehicleSacdColumns.VehicleID,
+			),
 			qm.Expr(
 				models.VehicleWhere.OwnerAddress.EQ(addr.Bytes()),
 				qm.Or2(
 					qm.Expr(
 						models.PrivilegeWhere.UserAddress.EQ(addr.Bytes()),
-						models.PrivilegeWhere.ExpiresAt.GTE(time.Now()),
+						models.PrivilegeWhere.ExpiresAt.GT(time.Now()),
+					),
+				),
+				qm.Or2(
+					qm.Expr(
+						models.VehicleSacdWhere.Grantee.EQ(addr.Bytes()),
+						models.PrivilegeWhere.ExpiresAt.GT(time.Now()),
 					),
 				),
 			),
