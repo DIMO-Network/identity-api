@@ -180,6 +180,8 @@ func (p *Repository) GetSacdsForVehicle(ctx context.Context, tokenID int, first 
 		return &gmodel.SacdConnection{
 			TotalCount: int(totalCount),
 			Edges:      []*gmodel.SacdEdge{},
+			Nodes:      []*gmodel.Sacd{},
+			PageInfo:   &gmodel.PageInfo{},
 		}, nil
 	}
 
