@@ -50,6 +50,11 @@ func (r *vehicleResolver) Privileges(ctx context.Context, obj *model.Vehicle, fi
 	return r.vehicleprivilege.GetPrivilegesForVehicle(ctx, obj.TokenID, first, after, last, before, filterBy)
 }
 
+// Sacds is the resolver for the sacds field.
+func (r *vehicleResolver) Sacds(ctx context.Context, obj *model.Vehicle, first *int, after *string, last *int, before *string) (*model.SacdConnection, error) {
+	return r.vehiclesacd.GetSacdsForVehicle(ctx, obj.TokenID, first, after, last, before)
+}
+
 // SyntheticDevice is the resolver for the syntheticDevice field.
 func (r *vehicleResolver) SyntheticDevice(ctx context.Context, obj *model.Vehicle) (*model.SyntheticDevice, error) {
 	return loader.GetSyntheticDeviceByVehicleID(ctx, obj.TokenID)

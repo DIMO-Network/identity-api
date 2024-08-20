@@ -363,7 +363,7 @@ type VehicleResolver interface {
 
 	AftermarketDevice(ctx context.Context, obj *model.Vehicle) (*model.AftermarketDevice, error)
 	Privileges(ctx context.Context, obj *model.Vehicle, first *int, after *string, last *int, before *string, filterBy *model.PrivilegeFilterBy) (*model.PrivilegesConnection, error)
-
+	Sacds(ctx context.Context, obj *model.Vehicle, first *int, after *string, last *int, before *string) (*model.SacdConnection, error)
 	SyntheticDevice(ctx context.Context, obj *model.Vehicle) (*model.SyntheticDevice, error)
 
 	Dcn(ctx context.Context, obj *model.Vehicle) (*model.Dcn, error)
@@ -9633,7 +9633,7 @@ func (ec *executionContext) _Vehicle_sacds(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Sacds, nil
+		return ec.resolvers.Vehicle().Sacds(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9654,8 +9654,8 @@ func (ec *executionContext) fieldContext_Vehicle_sacds(ctx context.Context, fiel
 	fc = &graphql.FieldContext{
 		Object:     "Vehicle",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "totalCount":
@@ -15183,10 +15183,41 @@ func (ec *executionContext) _Vehicle(ctx context.Context, sel ast.SelectionSet, 
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "sacds":
-			out.Values[i] = ec._Vehicle_sacds(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Vehicle_sacds(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
 			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "syntheticDevice":
 			field := field
 
@@ -16725,6 +16756,10 @@ func (ec *executionContext) marshalNSacd2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋiden
 		return graphql.Null
 	}
 	return ec._Sacd(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNSacdConnection2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSacdConnection(ctx context.Context, sel ast.SelectionSet, v model.SacdConnection) graphql.Marshaler {
+	return ec._SacdConnection(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNSacdConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSacdConnection(ctx context.Context, sel ast.SelectionSet, v *model.SacdConnection) graphql.Marshaler {

@@ -102,7 +102,7 @@ func (p *Repository) createSacdResponse(sacds models.VehicleSacdSlice, totalCoun
 	return res, nil
 }
 
-func (p *Repository) GetSacdsForVehicle(ctx context.Context, tokenID int, first *int, after *string, last *int, before *string, grantee *common.Address) (*gmodel.SacdConnection, error) {
+func (p *Repository) GetSacdsForVehicle(ctx context.Context, tokenID int, first *int, after *string, last *int, before *string) (*gmodel.SacdConnection, error) {
 	pHelp := helpers.PaginationHelper[SacdCursor]{}
 
 	limit, err := helpers.ValidateFirstLast(first, last, base.MaxPageSize)

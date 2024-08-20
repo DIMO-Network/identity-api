@@ -136,7 +136,7 @@ models:
         resolver: true
       privileges:
         resolver: true
-      sacd:
+      sacds:
         resolver: true
       syntheticDevice:
         resolver: true
