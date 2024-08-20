@@ -31,7 +31,7 @@ type SacdEdge {
 """
 The Connection type for Sacds.
 """
-type SacdsConnection {
+type SacdConnection {
   totalCount: Int!
   edges: [SacdEdge!]!
   nodes: [Sacd!]!

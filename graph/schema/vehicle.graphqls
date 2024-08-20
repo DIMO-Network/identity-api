@@ -114,9 +114,9 @@ type Vehicle implements Node {
   """
   privileges(first: Int, after: String, last: Int, before: String, filterBy: PrivilegeFilterBy): PrivilegesConnection!
   """
-  A Relay-style connection listing any active sacd permissions grants on this vehicle.
+  A Relay-style connection listing any active SACD permission grants on this vehicle.
   """
-  sacd(first: Int, after: String, last: Int, before: String, grantee: Address): SacdsConnection!
+  sacds(first: Int, after: String, last: Int, before: String): SacdConnection!
   """
   The paired synthetic device, if any.
   """

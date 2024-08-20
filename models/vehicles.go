@@ -113,16 +113,16 @@ var VehicleRels = struct {
 	DCNS              string
 	TokenPrivileges   string
 	Rewards           string
-	TokenSacds        string
 	SyntheticDevices  string
+	VehicleSacds      string
 }{
 	Manufacturer:      "Manufacturer",
 	AftermarketDevice: "AftermarketDevice",
 	DCNS:              "DCNS",
 	TokenPrivileges:   "TokenPrivileges",
 	Rewards:           "Rewards",
-	TokenSacds:        "TokenSacds",
 	SyntheticDevices:  "SyntheticDevices",
+	VehicleSacds:      "VehicleSacds",
 }
 
 // vehicleR is where relationships are stored.
@@ -132,8 +132,8 @@ type vehicleR struct {
 	DCNS              DCNSlice             `boil:"DCNS" json:"DCNS" toml:"DCNS" yaml:"DCNS"`
 	TokenPrivileges   PrivilegeSlice       `boil:"TokenPrivileges" json:"TokenPrivileges" toml:"TokenPrivileges" yaml:"TokenPrivileges"`
 	Rewards           RewardSlice          `boil:"Rewards" json:"Rewards" toml:"Rewards" yaml:"Rewards"`
-	TokenSacds        SacdSlice            `boil:"TokenSacds" json:"TokenSacds" toml:"TokenSacds" yaml:"TokenSacds"`
 	SyntheticDevices  SyntheticDeviceSlice `boil:"SyntheticDevices" json:"SyntheticDevices" toml:"SyntheticDevices" yaml:"SyntheticDevices"`
+	VehicleSacds      VehicleSacdSlice     `boil:"VehicleSacds" json:"VehicleSacds" toml:"VehicleSacds" yaml:"VehicleSacds"`
 }
 
 // NewStruct creates a new relationship struct
@@ -176,18 +176,18 @@ func (r *vehicleR) GetRewards() RewardSlice {
 	return r.Rewards
 }
 
-func (r *vehicleR) GetTokenSacds() SacdSlice {
-	if r == nil {
-		return nil
-	}
-	return r.TokenSacds
-}
-
 func (r *vehicleR) GetSyntheticDevices() SyntheticDeviceSlice {
 	if r == nil {
 		return nil
 	}
 	return r.SyntheticDevices
+}
+
+func (r *vehicleR) GetVehicleSacds() VehicleSacdSlice {
+	if r == nil {
+		return nil
+	}
+	return r.VehicleSacds
 }
 
 // vehicleL is where Load methods for each relationship are stored.
@@ -570,20 +570,6 @@ func (o *Vehicle) Rewards(mods ...qm.QueryMod) rewardQuery {
 	return Rewards(queryMods...)
 }
 
-// TokenSacds retrieves all the sacd's Sacds with an executor via token_id column.
-func (o *Vehicle) TokenSacds(mods ...qm.QueryMod) sacdQuery {
-	var queryMods []qm.QueryMod
-	if len(mods) != 0 {
-		queryMods = append(queryMods, mods...)
-	}
-
-	queryMods = append(queryMods,
-		qm.Where("\"identity_api\".\"sacds\".\"token_id\"=?", o.ID),
-	)
-
-	return Sacds(queryMods...)
-}
-
 // SyntheticDevices retrieves all the synthetic_device's SyntheticDevices with an executor.
 func (o *Vehicle) SyntheticDevices(mods ...qm.QueryMod) syntheticDeviceQuery {
 	var queryMods []qm.QueryMod
@@ -596,6 +582,20 @@ func (o *Vehicle) SyntheticDevices(mods ...qm.QueryMod) syntheticDeviceQuery {
 	)
 
 	return SyntheticDevices(queryMods...)
+}
+
+// VehicleSacds retrieves all the vehicle_sacd's VehicleSacds with an executor.
+func (o *Vehicle) VehicleSacds(mods ...qm.QueryMod) vehicleSacdQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"identity_api\".\"vehicle_sacds\".\"vehicle_id\"=?", o.ID),
+	)
+
+	return VehicleSacds(queryMods...)
 }
 
 // LoadManufacturer allows an eager lookup of values, cached into the
@@ -1174,119 +1174,6 @@ func (vehicleL) LoadRewards(ctx context.Context, e boil.ContextExecutor, singula
 	return nil
 }
 
-// LoadTokenSacds allows an eager lookup of values, cached into the
-// loaded structs of the objects. This is for a 1-M or N-M relationship.
-func (vehicleL) LoadTokenSacds(ctx context.Context, e boil.ContextExecutor, singular bool, maybeVehicle interface{}, mods queries.Applicator) error {
-	var slice []*Vehicle
-	var object *Vehicle
-
-	if singular {
-		var ok bool
-		object, ok = maybeVehicle.(*Vehicle)
-		if !ok {
-			object = new(Vehicle)
-			ok = queries.SetFromEmbeddedStruct(&object, &maybeVehicle)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeVehicle))
-			}
-		}
-	} else {
-		s, ok := maybeVehicle.(*[]*Vehicle)
-		if ok {
-			slice = *s
-		} else {
-			ok = queries.SetFromEmbeddedStruct(&slice, maybeVehicle)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeVehicle))
-			}
-		}
-	}
-
-	args := make(map[interface{}]struct{})
-	if singular {
-		if object.R == nil {
-			object.R = &vehicleR{}
-		}
-		args[object.ID] = struct{}{}
-	} else {
-		for _, obj := range slice {
-			if obj.R == nil {
-				obj.R = &vehicleR{}
-			}
-			args[obj.ID] = struct{}{}
-		}
-	}
-
-	if len(args) == 0 {
-		return nil
-	}
-
-	argsSlice := make([]interface{}, len(args))
-	i := 0
-	for arg := range args {
-		argsSlice[i] = arg
-		i++
-	}
-
-	query := NewQuery(
-		qm.From(`identity_api.sacds`),
-		qm.WhereIn(`identity_api.sacds.token_id in ?`, argsSlice...),
-	)
-	if mods != nil {
-		mods.Apply(query)
-	}
-
-	results, err := query.QueryContext(ctx, e)
-	if err != nil {
-		return errors.Wrap(err, "failed to eager load sacds")
-	}
-
-	var resultSlice []*Sacd
-	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice sacds")
-	}
-
-	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results in eager load on sacds")
-	}
-	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for sacds")
-	}
-
-	if len(sacdAfterSelectHooks) != 0 {
-		for _, obj := range resultSlice {
-			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
-				return err
-			}
-		}
-	}
-	if singular {
-		object.R.TokenSacds = resultSlice
-		for _, foreign := range resultSlice {
-			if foreign.R == nil {
-				foreign.R = &sacdR{}
-			}
-			foreign.R.Token = object
-		}
-		return nil
-	}
-
-	for _, foreign := range resultSlice {
-		for _, local := range slice {
-			if local.ID == foreign.TokenID {
-				local.R.TokenSacds = append(local.R.TokenSacds, foreign)
-				if foreign.R == nil {
-					foreign.R = &sacdR{}
-				}
-				foreign.R.Token = local
-				break
-			}
-		}
-	}
-
-	return nil
-}
-
 // LoadSyntheticDevices allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for a 1-M or N-M relationship.
 func (vehicleL) LoadSyntheticDevices(ctx context.Context, e boil.ContextExecutor, singular bool, maybeVehicle interface{}, mods queries.Applicator) error {
@@ -1390,6 +1277,119 @@ func (vehicleL) LoadSyntheticDevices(ctx context.Context, e boil.ContextExecutor
 				local.R.SyntheticDevices = append(local.R.SyntheticDevices, foreign)
 				if foreign.R == nil {
 					foreign.R = &syntheticDeviceR{}
+				}
+				foreign.R.Vehicle = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadVehicleSacds allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (vehicleL) LoadVehicleSacds(ctx context.Context, e boil.ContextExecutor, singular bool, maybeVehicle interface{}, mods queries.Applicator) error {
+	var slice []*Vehicle
+	var object *Vehicle
+
+	if singular {
+		var ok bool
+		object, ok = maybeVehicle.(*Vehicle)
+		if !ok {
+			object = new(Vehicle)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeVehicle)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeVehicle))
+			}
+		}
+	} else {
+		s, ok := maybeVehicle.(*[]*Vehicle)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeVehicle)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeVehicle))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &vehicleR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &vehicleR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`identity_api.vehicle_sacds`),
+		qm.WhereIn(`identity_api.vehicle_sacds.vehicle_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load vehicle_sacds")
+	}
+
+	var resultSlice []*VehicleSacd
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice vehicle_sacds")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on vehicle_sacds")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for vehicle_sacds")
+	}
+
+	if len(vehicleSacdAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.VehicleSacds = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &vehicleSacdR{}
+			}
+			foreign.R.Vehicle = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.VehicleID {
+				local.R.VehicleSacds = append(local.R.VehicleSacds, foreign)
+				if foreign.R == nil {
+					foreign.R = &vehicleSacdR{}
 				}
 				foreign.R.Vehicle = local
 				break
@@ -1754,59 +1754,6 @@ func (o *Vehicle) AddRewards(ctx context.Context, exec boil.ContextExecutor, ins
 	return nil
 }
 
-// AddTokenSacds adds the given related objects to the existing relationships
-// of the vehicle, optionally inserting them as new records.
-// Appends related to o.R.TokenSacds.
-// Sets related.R.Token appropriately.
-func (o *Vehicle) AddTokenSacds(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Sacd) error {
-	var err error
-	for _, rel := range related {
-		if insert {
-			rel.TokenID = o.ID
-			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
-				return errors.Wrap(err, "failed to insert into foreign table")
-			}
-		} else {
-			updateQuery := fmt.Sprintf(
-				"UPDATE \"identity_api\".\"sacds\" SET %s WHERE %s",
-				strmangle.SetParamNames("\"", "\"", 1, []string{"token_id"}),
-				strmangle.WhereClause("\"", "\"", 2, sacdPrimaryKeyColumns),
-			)
-			values := []interface{}{o.ID, rel.TokenID, rel.Grantee, rel.Permissions}
-
-			if boil.IsDebug(ctx) {
-				writer := boil.DebugWriterFrom(ctx)
-				fmt.Fprintln(writer, updateQuery)
-				fmt.Fprintln(writer, values)
-			}
-			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
-				return errors.Wrap(err, "failed to update foreign table")
-			}
-
-			rel.TokenID = o.ID
-		}
-	}
-
-	if o.R == nil {
-		o.R = &vehicleR{
-			TokenSacds: related,
-		}
-	} else {
-		o.R.TokenSacds = append(o.R.TokenSacds, related...)
-	}
-
-	for _, rel := range related {
-		if rel.R == nil {
-			rel.R = &sacdR{
-				Token: o,
-			}
-		} else {
-			rel.R.Token = o
-		}
-	}
-	return nil
-}
-
 // AddSyntheticDevices adds the given related objects to the existing relationships
 // of the vehicle, optionally inserting them as new records.
 // Appends related to o.R.SyntheticDevices.
@@ -1851,6 +1798,59 @@ func (o *Vehicle) AddSyntheticDevices(ctx context.Context, exec boil.ContextExec
 	for _, rel := range related {
 		if rel.R == nil {
 			rel.R = &syntheticDeviceR{
+				Vehicle: o,
+			}
+		} else {
+			rel.R.Vehicle = o
+		}
+	}
+	return nil
+}
+
+// AddVehicleSacds adds the given related objects to the existing relationships
+// of the vehicle, optionally inserting them as new records.
+// Appends related to o.R.VehicleSacds.
+// Sets related.R.Vehicle appropriately.
+func (o *Vehicle) AddVehicleSacds(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*VehicleSacd) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.VehicleID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"identity_api\".\"vehicle_sacds\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"vehicle_id"}),
+				strmangle.WhereClause("\"", "\"", 2, vehicleSacdPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.VehicleID, rel.Grantee}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.VehicleID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &vehicleR{
+			VehicleSacds: related,
+		}
+	} else {
+		o.R.VehicleSacds = append(o.R.VehicleSacds, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &vehicleSacdR{
 				Vehicle: o,
 			}
 		} else {

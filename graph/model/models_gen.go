@@ -332,17 +332,17 @@ type Sacd struct {
 	ExpiresAt time.Time `json:"expiresAt"`
 }
 
-type SacdEdge struct {
-	Node   *Sacd  `json:"node"`
-	Cursor string `json:"cursor"`
-}
-
 // The Connection type for Sacds.
-type SacdsConnection struct {
+type SacdConnection struct {
 	TotalCount int         `json:"totalCount"`
 	Edges      []*SacdEdge `json:"edges"`
 	Nodes      []*Sacd     `json:"nodes"`
 	PageInfo   *PageInfo   `json:"pageInfo"`
+}
+
+type SacdEdge struct {
+	Node   *Sacd  `json:"node"`
+	Cursor string `json:"cursor"`
 }
 
 // The SyntheticDevice is a software connection established to connect the vehicle to the DIMO network.
@@ -425,8 +425,8 @@ type Vehicle struct {
 	AftermarketDevice *AftermarketDevice `json:"aftermarketDevice,omitempty"`
 	// A Relay-style connection listing any active privilege grants on this vehicle.
 	Privileges *PrivilegesConnection `json:"privileges"`
-	// A Relay-style connection listing any active sacd permissions grants on this vehicle.
-	Sacd *SacdsConnection `json:"sacd"`
+	// A Relay-style connection listing any active SACD permission grants on this vehicle.
+	Sacds *SacdConnection `json:"sacds"`
 	// The paired synthetic device, if any.
 	SyntheticDevice *SyntheticDevice `json:"syntheticDevice,omitempty"`
 	// The device definition for this vehicle; which includes make, model, and year among

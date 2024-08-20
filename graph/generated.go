@@ -238,16 +238,16 @@ type ComplexityRoot struct {
 		Source      func(childComplexity int) int
 	}
 
-	SacdEdge struct {
-		Cursor func(childComplexity int) int
-		Node   func(childComplexity int) int
-	}
-
-	SacdsConnection struct {
+	SacdConnection struct {
 		Edges      func(childComplexity int) int
 		Nodes      func(childComplexity int) int
 		PageInfo   func(childComplexity int) int
 		TotalCount func(childComplexity int) int
+	}
+
+	SacdEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
 	}
 
 	SyntheticDevice struct {
@@ -291,7 +291,7 @@ type ComplexityRoot struct {
 		Name              func(childComplexity int) int
 		Owner             func(childComplexity int) int
 		Privileges        func(childComplexity int, first *int, after *string, last *int, before *string, filterBy *model.PrivilegeFilterBy) int
-		Sacd              func(childComplexity int, first *int, after *string, last *int, before *string, grantee *common.Address) int
+		Sacds             func(childComplexity int, first *int, after *string, last *int, before *string) int
 		SyntheticDevice   func(childComplexity int) int
 		TokenID           func(childComplexity int) int
 	}
@@ -363,7 +363,7 @@ type VehicleResolver interface {
 
 	AftermarketDevice(ctx context.Context, obj *model.Vehicle) (*model.AftermarketDevice, error)
 	Privileges(ctx context.Context, obj *model.Vehicle, first *int, after *string, last *int, before *string, filterBy *model.PrivilegeFilterBy) (*model.PrivilegesConnection, error)
-	Sacd(ctx context.Context, obj *model.Vehicle, first *int, after *string, last *int, before *string, grantee *common.Address) (*model.SacdsConnection, error)
+
 	SyntheticDevice(ctx context.Context, obj *model.Vehicle) (*model.SyntheticDevice, error)
 
 	Dcn(ctx context.Context, obj *model.Vehicle) (*model.Dcn, error)
@@ -1245,6 +1245,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Sacd.Source(childComplexity), true
 
+	case "SacdConnection.edges":
+		if e.complexity.SacdConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.SacdConnection.Edges(childComplexity), true
+
+	case "SacdConnection.nodes":
+		if e.complexity.SacdConnection.Nodes == nil {
+			break
+		}
+
+		return e.complexity.SacdConnection.Nodes(childComplexity), true
+
+	case "SacdConnection.pageInfo":
+		if e.complexity.SacdConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.SacdConnection.PageInfo(childComplexity), true
+
+	case "SacdConnection.totalCount":
+		if e.complexity.SacdConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.SacdConnection.TotalCount(childComplexity), true
+
 	case "SacdEdge.cursor":
 		if e.complexity.SacdEdge.Cursor == nil {
 			break
@@ -1258,34 +1286,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.SacdEdge.Node(childComplexity), true
-
-	case "SacdsConnection.edges":
-		if e.complexity.SacdsConnection.Edges == nil {
-			break
-		}
-
-		return e.complexity.SacdsConnection.Edges(childComplexity), true
-
-	case "SacdsConnection.nodes":
-		if e.complexity.SacdsConnection.Nodes == nil {
-			break
-		}
-
-		return e.complexity.SacdsConnection.Nodes(childComplexity), true
-
-	case "SacdsConnection.pageInfo":
-		if e.complexity.SacdsConnection.PageInfo == nil {
-			break
-		}
-
-		return e.complexity.SacdsConnection.PageInfo(childComplexity), true
-
-	case "SacdsConnection.totalCount":
-		if e.complexity.SacdsConnection.TotalCount == nil {
-			break
-		}
-
-		return e.complexity.SacdsConnection.TotalCount(childComplexity), true
 
 	case "SyntheticDevice.address":
 		if e.complexity.SyntheticDevice.Address == nil {
@@ -1493,17 +1493,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Vehicle.Privileges(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["filterBy"].(*model.PrivilegeFilterBy)), true
 
-	case "Vehicle.sacd":
-		if e.complexity.Vehicle.Sacd == nil {
+	case "Vehicle.sacds":
+		if e.complexity.Vehicle.Sacds == nil {
 			break
 		}
 
-		args, err := ec.field_Vehicle_sacd_args(context.TODO(), rawArgs)
+		args, err := ec.field_Vehicle_sacds_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Vehicle.Sacd(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["grantee"].(*common.Address)), true
+		return e.complexity.Vehicle.Sacds(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
 
 	case "Vehicle.syntheticDevice":
 		if e.complexity.Vehicle.SyntheticDevice == nil {
@@ -2327,7 +2327,7 @@ func (ec *executionContext) field_Vehicle_privileges_args(ctx context.Context, r
 	return args, nil
 }
 
-func (ec *executionContext) field_Vehicle_sacd_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Vehicle_sacds_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 *int
@@ -2366,15 +2366,6 @@ func (ec *executionContext) field_Vehicle_sacd_args(ctx context.Context, rawArgs
 		}
 	}
 	args["before"] = arg3
-	var arg4 *common.Address
-	if tmp, ok := rawArgs["grantee"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("grantee"))
-		arg4, err = ec.unmarshalOAddress2ᚖgithubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["grantee"] = arg4
 	return args, nil
 }
 
@@ -2912,8 +2903,8 @@ func (ec *executionContext) fieldContext_AftermarketDevice_vehicle(_ context.Con
 				return ec.fieldContext_Vehicle_aftermarketDevice(ctx, field)
 			case "privileges":
 				return ec.fieldContext_Vehicle_privileges(ctx, field)
-			case "sacd":
-				return ec.fieldContext_Vehicle_sacd(ctx, field)
+			case "sacds":
+				return ec.fieldContext_Vehicle_sacds(ctx, field)
 			case "syntheticDevice":
 				return ec.fieldContext_Vehicle_syntheticDevice(ctx, field)
 			case "definition":
@@ -3921,8 +3912,8 @@ func (ec *executionContext) fieldContext_DCN_vehicle(_ context.Context, field gr
 				return ec.fieldContext_Vehicle_aftermarketDevice(ctx, field)
 			case "privileges":
 				return ec.fieldContext_Vehicle_privileges(ctx, field)
-			case "sacd":
-				return ec.fieldContext_Vehicle_sacd(ctx, field)
+			case "sacds":
+				return ec.fieldContext_Vehicle_sacds(ctx, field)
 			case "syntheticDevice":
 				return ec.fieldContext_Vehicle_syntheticDevice(ctx, field)
 			case "definition":
@@ -5572,8 +5563,8 @@ func (ec *executionContext) fieldContext_Earning_vehicle(_ context.Context, fiel
 				return ec.fieldContext_Vehicle_aftermarketDevice(ctx, field)
 			case "privileges":
 				return ec.fieldContext_Vehicle_privileges(ctx, field)
-			case "sacd":
-				return ec.fieldContext_Vehicle_sacd(ctx, field)
+			case "sacds":
+				return ec.fieldContext_Vehicle_sacds(ctx, field)
 			case "syntheticDevice":
 				return ec.fieldContext_Vehicle_syntheticDevice(ctx, field)
 			case "definition":
@@ -7735,8 +7726,8 @@ func (ec *executionContext) fieldContext_Query_vehicle(ctx context.Context, fiel
 				return ec.fieldContext_Vehicle_aftermarketDevice(ctx, field)
 			case "privileges":
 				return ec.fieldContext_Vehicle_privileges(ctx, field)
-			case "sacd":
-				return ec.fieldContext_Vehicle_sacd(ctx, field)
+			case "sacds":
+				return ec.fieldContext_Vehicle_sacds(ctx, field)
 			case "syntheticDevice":
 				return ec.fieldContext_Vehicle_syntheticDevice(ctx, field)
 			case "definition":
@@ -8185,6 +8176,210 @@ func (ec *executionContext) fieldContext_Sacd_expiresAt(_ context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _SacdConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.SacdConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SacdConnection_totalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SacdConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SacdConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SacdConnection_edges(ctx context.Context, field graphql.CollectedField, obj *model.SacdConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SacdConnection_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.SacdEdge)
+	fc.Result = res
+	return ec.marshalNSacdEdge2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSacdEdgeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SacdConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SacdConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "node":
+				return ec.fieldContext_SacdEdge_node(ctx, field)
+			case "cursor":
+				return ec.fieldContext_SacdEdge_cursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SacdEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SacdConnection_nodes(ctx context.Context, field graphql.CollectedField, obj *model.SacdConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SacdConnection_nodes(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Nodes, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Sacd)
+	fc.Result = res
+	return ec.marshalNSacd2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSacdᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SacdConnection_nodes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SacdConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "grantee":
+				return ec.fieldContext_Sacd_grantee(ctx, field)
+			case "permissions":
+				return ec.fieldContext_Sacd_permissions(ctx, field)
+			case "source":
+				return ec.fieldContext_Sacd_source(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Sacd_createdAt(ctx, field)
+			case "expiresAt":
+				return ec.fieldContext_Sacd_expiresAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Sacd", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SacdConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.SacdConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SacdConnection_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SacdConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SacdConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _SacdEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.SacdEdge) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_SacdEdge_node(ctx, field)
 	if err != nil {
@@ -8280,210 +8475,6 @@ func (ec *executionContext) fieldContext_SacdEdge_cursor(_ context.Context, fiel
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SacdsConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.SacdsConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SacdsConnection_totalCount(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.TotalCount, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SacdsConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SacdsConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SacdsConnection_edges(ctx context.Context, field graphql.CollectedField, obj *model.SacdsConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SacdsConnection_edges(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Edges, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]*model.SacdEdge)
-	fc.Result = res
-	return ec.marshalNSacdEdge2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSacdEdgeᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SacdsConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SacdsConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "node":
-				return ec.fieldContext_SacdEdge_node(ctx, field)
-			case "cursor":
-				return ec.fieldContext_SacdEdge_cursor(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type SacdEdge", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SacdsConnection_nodes(ctx context.Context, field graphql.CollectedField, obj *model.SacdsConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SacdsConnection_nodes(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Nodes, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]*model.Sacd)
-	fc.Result = res
-	return ec.marshalNSacd2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSacdᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SacdsConnection_nodes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SacdsConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "grantee":
-				return ec.fieldContext_Sacd_grantee(ctx, field)
-			case "permissions":
-				return ec.fieldContext_Sacd_permissions(ctx, field)
-			case "source":
-				return ec.fieldContext_Sacd_source(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Sacd_createdAt(ctx, field)
-			case "expiresAt":
-				return ec.fieldContext_Sacd_expiresAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Sacd", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SacdsConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.SacdsConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SacdsConnection_pageInfo(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PageInfo, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.PageInfo)
-	fc.Result = res
-	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SacdsConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SacdsConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "startCursor":
-				return ec.fieldContext_PageInfo_startCursor(ctx, field)
-			case "endCursor":
-				return ec.fieldContext_PageInfo_endCursor(ctx, field)
-			case "hasPreviousPage":
-				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
-			case "hasNextPage":
-				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
 		},
 	}
 	return fc, nil
@@ -8806,8 +8797,8 @@ func (ec *executionContext) fieldContext_SyntheticDevice_vehicle(_ context.Conte
 				return ec.fieldContext_Vehicle_aftermarketDevice(ctx, field)
 			case "privileges":
 				return ec.fieldContext_Vehicle_privileges(ctx, field)
-			case "sacd":
-				return ec.fieldContext_Vehicle_sacd(ctx, field)
+			case "sacds":
+				return ec.fieldContext_Vehicle_sacds(ctx, field)
 			case "syntheticDevice":
 				return ec.fieldContext_Vehicle_syntheticDevice(ctx, field)
 			case "definition":
@@ -9628,8 +9619,8 @@ func (ec *executionContext) fieldContext_Vehicle_privileges(ctx context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _Vehicle_sacd(ctx context.Context, field graphql.CollectedField, obj *model.Vehicle) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Vehicle_sacd(ctx, field)
+func (ec *executionContext) _Vehicle_sacds(ctx context.Context, field graphql.CollectedField, obj *model.Vehicle) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Vehicle_sacds(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -9642,7 +9633,7 @@ func (ec *executionContext) _Vehicle_sacd(ctx context.Context, field graphql.Col
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Vehicle().Sacd(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["grantee"].(*common.Address))
+		return obj.Sacds, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9654,29 +9645,29 @@ func (ec *executionContext) _Vehicle_sacd(ctx context.Context, field graphql.Col
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.SacdsConnection)
+	res := resTmp.(*model.SacdConnection)
 	fc.Result = res
-	return ec.marshalNSacdsConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSacdsConnection(ctx, field.Selections, res)
+	return ec.marshalNSacdConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSacdConnection(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Vehicle_sacd(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Vehicle_sacds(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Vehicle",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "totalCount":
-				return ec.fieldContext_SacdsConnection_totalCount(ctx, field)
+				return ec.fieldContext_SacdConnection_totalCount(ctx, field)
 			case "edges":
-				return ec.fieldContext_SacdsConnection_edges(ctx, field)
+				return ec.fieldContext_SacdConnection_edges(ctx, field)
 			case "nodes":
-				return ec.fieldContext_SacdsConnection_nodes(ctx, field)
+				return ec.fieldContext_SacdConnection_nodes(ctx, field)
 			case "pageInfo":
-				return ec.fieldContext_SacdsConnection_pageInfo(ctx, field)
+				return ec.fieldContext_SacdConnection_pageInfo(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type SacdsConnection", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type SacdConnection", field.Name)
 		},
 	}
 	defer func() {
@@ -9686,7 +9677,7 @@ func (ec *executionContext) fieldContext_Vehicle_sacd(ctx context.Context, field
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Vehicle_sacd_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Vehicle_sacds_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -10230,8 +10221,8 @@ func (ec *executionContext) fieldContext_VehicleConnection_nodes(_ context.Conte
 				return ec.fieldContext_Vehicle_aftermarketDevice(ctx, field)
 			case "privileges":
 				return ec.fieldContext_Vehicle_privileges(ctx, field)
-			case "sacd":
-				return ec.fieldContext_Vehicle_sacd(ctx, field)
+			case "sacds":
+				return ec.fieldContext_Vehicle_sacds(ctx, field)
 			case "syntheticDevice":
 				return ec.fieldContext_Vehicle_syntheticDevice(ctx, field)
 			case "definition":
@@ -10471,8 +10462,8 @@ func (ec *executionContext) fieldContext_VehicleEdge_node(_ context.Context, fie
 				return ec.fieldContext_Vehicle_aftermarketDevice(ctx, field)
 			case "privileges":
 				return ec.fieldContext_Vehicle_privileges(ctx, field)
-			case "sacd":
-				return ec.fieldContext_Vehicle_sacd(ctx, field)
+			case "sacds":
+				return ec.fieldContext_Vehicle_sacds(ctx, field)
 			case "syntheticDevice":
 				return ec.fieldContext_Vehicle_syntheticDevice(ctx, field)
 			case "definition":
@@ -14684,24 +14675,34 @@ func (ec *executionContext) _Sacd(ctx context.Context, sel ast.SelectionSet, obj
 	return out
 }
 
-var sacdEdgeImplementors = []string{"SacdEdge"}
+var sacdConnectionImplementors = []string{"SacdConnection"}
 
-func (ec *executionContext) _SacdEdge(ctx context.Context, sel ast.SelectionSet, obj *model.SacdEdge) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, sacdEdgeImplementors)
+func (ec *executionContext) _SacdConnection(ctx context.Context, sel ast.SelectionSet, obj *model.SacdConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, sacdConnectionImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("SacdEdge")
-		case "node":
-			out.Values[i] = ec._SacdEdge_node(ctx, field, obj)
+			out.Values[i] = graphql.MarshalString("SacdConnection")
+		case "totalCount":
+			out.Values[i] = ec._SacdConnection_totalCount(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "cursor":
-			out.Values[i] = ec._SacdEdge_cursor(ctx, field, obj)
+		case "edges":
+			out.Values[i] = ec._SacdConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "nodes":
+			out.Values[i] = ec._SacdConnection_nodes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._SacdConnection_pageInfo(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -14728,34 +14729,24 @@ func (ec *executionContext) _SacdEdge(ctx context.Context, sel ast.SelectionSet,
 	return out
 }
 
-var sacdsConnectionImplementors = []string{"SacdsConnection"}
+var sacdEdgeImplementors = []string{"SacdEdge"}
 
-func (ec *executionContext) _SacdsConnection(ctx context.Context, sel ast.SelectionSet, obj *model.SacdsConnection) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, sacdsConnectionImplementors)
+func (ec *executionContext) _SacdEdge(ctx context.Context, sel ast.SelectionSet, obj *model.SacdEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, sacdEdgeImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("SacdsConnection")
-		case "totalCount":
-			out.Values[i] = ec._SacdsConnection_totalCount(ctx, field, obj)
+			out.Values[i] = graphql.MarshalString("SacdEdge")
+		case "node":
+			out.Values[i] = ec._SacdEdge_node(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "edges":
-			out.Values[i] = ec._SacdsConnection_edges(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "nodes":
-			out.Values[i] = ec._SacdsConnection_nodes(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "pageInfo":
-			out.Values[i] = ec._SacdsConnection_pageInfo(ctx, field, obj)
+		case "cursor":
+			out.Values[i] = ec._SacdEdge_cursor(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -15191,42 +15182,11 @@ func (ec *executionContext) _Vehicle(ctx context.Context, sel ast.SelectionSet, 
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "sacd":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Vehicle_sacd(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
+		case "sacds":
+			out.Values[i] = ec._Vehicle_sacds(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
 			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "syntheticDevice":
 			field := field
 
@@ -16767,6 +16727,16 @@ func (ec *executionContext) marshalNSacd2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋiden
 	return ec._Sacd(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNSacdConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSacdConnection(ctx context.Context, sel ast.SelectionSet, v *model.SacdConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SacdConnection(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNSacdEdge2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSacdEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SacdEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -16819,20 +16789,6 @@ func (ec *executionContext) marshalNSacdEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋ
 		return graphql.Null
 	}
 	return ec._SacdEdge(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNSacdsConnection2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSacdsConnection(ctx context.Context, sel ast.SelectionSet, v model.SacdsConnection) graphql.Marshaler {
-	return ec._SacdsConnection(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNSacdsConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSacdsConnection(ctx context.Context, sel ast.SelectionSet, v *model.SacdsConnection) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._SacdsConnection(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
