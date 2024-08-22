@@ -453,10 +453,11 @@ func (c *ContractsEventsConsumer) handlePermissionsSetEvent(ctx context.Context,
 
 	var args PermissionsSetData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
-		return err
+		return fmt.Errorf("error unmarshaling PermissionsSet inputs: %w", err)
 	}
 
 	if args.Asset != common.HexToAddress(c.settings.VehicleNFTAddr) {
+		logger.Warn().Msgf("SACD set for non-vehicle asset %s.", args.Asset.Hex())
 		return nil
 	}
 
@@ -474,9 +475,9 @@ func (c *ContractsEventsConsumer) handlePermissionsSetEvent(ctx context.Context,
 			models.VehicleSacdColumns.VehicleID,
 			models.VehicleSacdColumns.Grantee,
 		},
-		boil.Whitelist(models.VehicleSacdColumns.Permissions, models.VehicleSacdColumns.Source, models.PrivilegeColumns.SetAt, models.PrivilegeColumns.ExpiresAt),
+		boil.Whitelist(models.VehicleSacdColumns.Permissions, models.VehicleSacdColumns.Source, models.VehicleSacdColumns.CreatedAt, models.PrivilegeColumns.ExpiresAt),
 		boil.Infer()); err != nil {
-		return err
+		return fmt.Errorf("error upserting vehicle SACD: %w", err)
 	}
 
 	logger.Info().
