@@ -2,7 +2,7 @@ replicaCount: 1
 image:
   repository: dimozone/identity-api
   pullPolicy: IfNotPresent
-  tag: d717992
+  tag: 9f411d4
 imagePullSecrets: []
 nameOverride: ''
 fullnameOverride: ''
@@ -42,7 +42,7 @@ env:
   BASE_IMAGE_URL: https://devices-api.dev.dimo.zone/v1/
   BASE_VEHICLE_DATA_URI: https://device-data-api.dev.dimo.zone/v2/vehicles/
   TABLELAND_API_GATEWAY: https://tableland-node.dev.dimo.zone/
-  SACD_ADDRESS: "0x3e78Cb1f68132D34C811dcd7D4a10E0Aad752C3c"
+  SACD_ADDRESS: '0x3e78Cb1f68132D34C811dcd7D4a10E0Aad752C3c'
 service:
   type: ClusterIP
   ports:
