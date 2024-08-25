@@ -80,7 +80,7 @@ func StartContainerDatabase(ctx context.Context, t *testing.T, migrationsDirRelP
 		return
 	}
 
-	err = container.Snapshot(ctx)
+	err = container.Snapshot(ctx, postgres.WithSnapshotName("dimo_snapshot"))
 	if err != nil {
 		err = fmt.Errorf("error taking blank snapshot: %w", err)
 	}

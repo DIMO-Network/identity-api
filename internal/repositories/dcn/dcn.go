@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"slices"
 	"time"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
@@ -15,7 +16,6 @@ import (
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
-	"golang.org/x/exp/slices"
 )
 
 // TokenPrefix is the prefix for a global token id for DCNs.

@@ -3,6 +3,7 @@ package reward
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
@@ -13,7 +14,6 @@ import (
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"github.com/volatiletech/sqlboiler/v4/types"
-	"golang.org/x/exp/slices"
 )
 
 // weiPerEther is the number of wei in an ether.

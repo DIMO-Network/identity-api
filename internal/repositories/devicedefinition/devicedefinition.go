@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
@@ -14,7 +15,6 @@ import (
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/vektah/gqlparser/v2/gqlerror"
-	"golang.org/x/exp/slices"
 )
 
 // TokenPrefix is the prefix for a global token id for Device Definition.

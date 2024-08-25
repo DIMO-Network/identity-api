@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -19,7 +20,6 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
-	"golang.org/x/exp/slices"
 )
 
 // TokenPrefix is the prefix for a global token id for aftermarket devices.
