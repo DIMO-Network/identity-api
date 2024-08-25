@@ -336,33 +336,45 @@ func (c *ContractsEventsConsumer) handleVehicleAttributeSetEvent(ctx context.Con
 	}
 
 	switch args.Attribute {
-	case "Make", "Model", "Year":
-		switch args.Attribute {
-		case "Make":
-			veh.Make = null.StringFrom(args.Info)
-			_, err := veh.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.VehicleColumns.Make))
-			return err
-		case "Model":
-			veh.Model = null.StringFrom(args.Info)
-			_, err := veh.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.VehicleColumns.Model))
-			return err
-		case "Year":
-			year, err := strconv.Atoi(args.Info)
+	case "Make":
+		var make null.String
+		if args.Info != "" {
+			make = null.StringFrom(args.Info)
+		}
+		veh.Make = make
+		_, err := veh.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.VehicleColumns.Make))
+		return err
+	case "Model":
+		var model null.String
+		if args.Info != "" {
+			model = null.StringFrom(args.Info)
+		}
+		veh.Model = model
+		_, err := veh.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.VehicleColumns.Model))
+		return err
+	case "Year":
+		var year null.Int
+		if args.Info != "" {
+			yr, err := strconv.Atoi(args.Info)
 			if err != nil {
 				return fmt.Errorf("couldn't parse year string %q: %w", args.Info, err)
 			}
-			veh.Year = null.IntFrom(year)
-			_, err = veh.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.VehicleColumns.Year))
-			return err
+			year = null.IntFrom(yr)
 		}
-		return nil
+		veh.Year = year
+		_, err := veh.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.VehicleColumns.Year))
+		return err
 	case "ImageURI":
-		_, err := url.ParseRequestURI(args.Info)
-		if err != nil {
-			return fmt.Errorf("couldn't parse image URI string %q: %w", args.Info, err)
+		var imageURI null.String
+		if args.Info != "" {
+			_, err := url.ParseRequestURI(args.Info)
+			if err != nil {
+				return fmt.Errorf("couldn't parse image URI string %q: %w", args.Info, err)
+			}
+			imageURI = null.StringFrom(args.Info)
 		}
-		veh.ImageURI = null.StringFrom(args.Info)
-		_, err = veh.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.VehicleColumns.ImageURI))
+		veh.ImageURI = imageURI
+		_, err := veh.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.VehicleColumns.ImageURI))
 		return err
 	case "DefinitionURI", "DataURI":
 		// We never ended up using these.
