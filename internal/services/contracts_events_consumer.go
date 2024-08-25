@@ -364,6 +364,9 @@ func (c *ContractsEventsConsumer) handleVehicleAttributeSetEvent(ctx context.Con
 		veh.ImageURI = null.StringFrom(args.Info)
 		_, err = veh.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.VehicleColumns.ImageURI))
 		return err
+	case "DefinitionURI", "DataURI":
+		// We never ended up using these.
+		return nil
 	default:
 		return fmt.Errorf("unrecognized vehicle attribute %q", args.Attribute)
 	}

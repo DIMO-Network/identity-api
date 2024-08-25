@@ -3,12 +3,15 @@ package synthetic
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
+	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/mnemonic"
@@ -64,7 +67,10 @@ func (r *Repository) GetSyntheticDevice(ctx context.Context, by gmodel.Synthetic
 
 	synth, err := models.SyntheticDevices(mod).One(ctx, r.PDB.DBS().Reader)
 	if err != nil {
-		r.Log.Error().Err(err).Msg("failed to get query device")
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, repositories.ErrNotFound
+		}
+		r.Log.Error().Err(err).Msg("Failed to find synthetic device.")
 		return nil, base.InternalError
 	}
 

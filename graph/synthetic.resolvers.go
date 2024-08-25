@@ -6,14 +6,37 @@ package graph
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/loader"
+	"github.com/DIMO-Network/identity-api/internal/repositories"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 )
 
 // SyntheticDevice is the resolver for the syntheticDevice field.
 func (r *queryResolver) SyntheticDevice(ctx context.Context, by model.SyntheticDeviceBy) (*model.SyntheticDevice, error) {
-	return r.synthetic.GetSyntheticDevice(ctx, by)
+	sd, err := r.synthetic.GetSyntheticDevice(ctx, by)
+	if err != nil {
+		if errors.Is(err, repositories.ErrNotFound) {
+			var msg string
+			if by.Address != nil {
+				msg = fmt.Sprintf("No synthetic device with address %s.", *by.Address)
+			} else if by.TokenID != nil {
+				msg = fmt.Sprintf("No synthetic device with token id %d.", *by.TokenID)
+			}
+			return nil, graphql.ErrorOnPath(ctx, &gqlerror.Error{
+				Message: msg,
+				Extensions: map[string]interface{}{
+					"code": "NOT_FOUND",
+				},
+			})
+		}
+		return nil, err
+	}
+	return sd, nil
 }
 
 // SyntheticDevices is the resolver for the syntheticDevices field.
