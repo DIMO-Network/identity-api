@@ -115,7 +115,7 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 
 	eventName := EventName(data.EventName)
 
-	c.log.Info().Str("Event", string(eventName)).Str("Contract", data.Contract.Hex()).Msg("Event Received")
+	c.log.Debug().Str("Event", string(eventName)).Str("Contract", data.Contract.Hex()).Msg("Event Received")
 
 	switch data.Contract {
 	case registryAddr:
