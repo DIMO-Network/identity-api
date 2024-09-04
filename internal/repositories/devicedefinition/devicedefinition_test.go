@@ -81,14 +81,7 @@ func Test_GetDeviceDefinitions_Query(t *testing.T) {
 		"deviceType": "vehicle",
 		"imageURI": "https://image",
 		"ksuid": "12G3iFH7Xc9Wvsw7pg6sD7uzoKK",
-		"metadata": {
-		  "device_attributes": [
-			{
-			  "name": "powertrain_type",
-			  "value": "EV"
-			}
-		  ]
-		}
+		"metadata": ""
 	  }
 	]`
 	var modelQueryTablelandResponse []DeviceDefinitionTablelandModel
