@@ -13,6 +13,7 @@ import (
 	"github.com/jarcoal/httpmock"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"net/http"
@@ -81,23 +82,18 @@ func Test_GetDeviceDefinitions_Query(t *testing.T) {
 		"deviceType": "vehicle",
 		"imageURI": "https://image",
 		"ksuid": "12G3iFH7Xc9Wvsw7pg6sD7uzoKK",
-		"metadata": {
-		  "device_attributes": [
-			{
-			  "name": "powertrain_type",
-			  "value": "EV"
-			}
-		  ]
-		}
+		"metadata": ""
 	  }
 	]`
+	// when we query against tableland, if metadata is not set, it is returned as an empty string ""
 	var modelQueryTablelandResponse []DeviceDefinitionTablelandModel
-	_ = json.Unmarshal([]byte(respQueryBody), &modelQueryTablelandResponse)
+	errUm := json.Unmarshal([]byte(respQueryBody), &modelQueryTablelandResponse)
+	require.NoError(t, errUm)
 
 	httpmock.RegisterResponder(http.MethodGet, baseURL+queryURL, httpmock.NewStringResponder(200, respQueryBody))
 
 	res, err := adController.GetDeviceDefinitions(ctx, &mfr.TableID.Int, nil, nil, &last, &before, &model.DeviceDefinitionFilter{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.Len(t, res.Edges, 2)
 	assert.Equal(t, res.TotalCount, 4)

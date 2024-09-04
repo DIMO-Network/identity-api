@@ -34,9 +34,9 @@ func StartContainerDatabase(ctx context.Context, t *testing.T, migrationsDirRelP
 
 	var err error
 
-	container, err = postgres.RunContainer(
+	container, err = postgres.Run(
 		ctx,
-		testcontainers.WithImage("docker.io/postgres:14.10-alpine"),
+		"docker.io/postgres:14.10-alpine",
 		postgres.WithDatabase("identity_api"),
 		postgres.WithUsername("dimo"),
 		postgres.WithPassword("dimo"),

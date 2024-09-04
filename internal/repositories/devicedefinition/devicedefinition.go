@@ -3,6 +3,7 @@ package devicedefinition
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"slices"
@@ -25,18 +26,46 @@ type DeviceDefinitionTablelandCountModel struct {
 }
 
 type DeviceDefinitionTablelandModel struct {
-	ID         string `json:"id"`
-	KSUID      string `json:"ksuid"`
-	Model      string `json:"model"`
-	Year       int    `json:"year"`
-	DeviceType string `json:"devicetype"`
-	ImageURI   string `json:"imageuri"`
-	Metadata   struct {
-		DeviceAttributes []struct {
-			Name  string `json:"name"`
-			Value string `json:"value"`
-		} `json:"device_attributes"`
-	} `json:"metadata"`
+	ID         string                    `json:"id"`
+	KSUID      string                    `json:"ksuid"`
+	Model      string                    `json:"model"`
+	Year       int                       `json:"year"`
+	DeviceType string                    `json:"devicetype"`
+	ImageURI   string                    `json:"imageuri"`
+	Metadata   *DeviceDefinitionMetadata `json:"metadata"`
+}
+
+type DeviceDefinitionMetadata struct {
+	DeviceAttributes []struct {
+		Name  string `json:"name"`
+		Value string `json:"value"`
+	} `json:"device_attributes"`
+}
+
+// UnmarshalJSON customizes the unmarshaling of DeviceDefinitionTablelandModel to handle cases where metadata is an empty string.
+func (d *DeviceDefinitionTablelandModel) UnmarshalJSON(data []byte) error {
+	type Alias DeviceDefinitionTablelandModel // Create an alias to avoid recursion
+
+	aux := &struct {
+		Metadata json.RawMessage `json:"metadata"`
+		*Alias
+	}{
+		Alias: (*Alias)(d),
+	}
+
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	if len(aux.Metadata) > 0 && string(aux.Metadata) != `""` {
+		metadata := new(DeviceDefinitionMetadata)
+		if err := json.Unmarshal(aux.Metadata, metadata); err != nil {
+			return err
+		}
+		d.Metadata = metadata
+	}
+
+	return nil
 }
 
 type Repository struct {
@@ -60,15 +89,17 @@ func ToAPI(v *DeviceDefinitionTablelandModel) (*gmodel.DeviceDefinition, error) 
 		result.DeviceType = &v.DeviceType
 	}
 
-	for _, attr := range v.Metadata.DeviceAttributes {
-		// No idea where this <nil> is coming from.
-		if attr.Name == "" || attr.Value == "" || attr.Value == "<nil>" {
-			continue
+	if v.Metadata != nil {
+		for _, attr := range v.Metadata.DeviceAttributes {
+			// No idea where this <nil> is coming from.
+			if attr.Name == "" || attr.Value == "" || attr.Value == "<nil>" {
+				continue
+			}
+			result.Attributes = append(result.Attributes, &gmodel.DeviceDefinitionAttribute{
+				Name:  attr.Name,
+				Value: attr.Value,
+			})
 		}
-		result.Attributes = append(result.Attributes, &gmodel.DeviceDefinitionAttribute{
-			Name:  attr.Name,
-			Value: attr.Value,
-		})
 	}
 
 	return &result, nil
