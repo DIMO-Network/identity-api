@@ -54,6 +54,10 @@ type AftermarketDevice implements Node {
   """
   devEUI: String
   """
+  Manufacturer-specific hardware revision. May not always be present.
+  """
+  hardwareRevision: String
+  """
   The block timestamp at which this device was minted.
   """
   mintedAt: Time!

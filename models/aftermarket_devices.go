@@ -24,72 +24,77 @@ import (
 
 // AftermarketDevice is an object representing the database table.
 type AftermarketDevice struct {
-	ID             int         `boil:"id" json:"id" toml:"id" yaml:"id"`
-	Address        []byte      `boil:"address" json:"address" toml:"address" yaml:"address"`
-	Owner          []byte      `boil:"owner" json:"owner" toml:"owner" yaml:"owner"`
-	Serial         null.String `boil:"serial" json:"serial,omitempty" toml:"serial" yaml:"serial,omitempty"`
-	Imei           null.String `boil:"imei" json:"imei,omitempty" toml:"imei" yaml:"imei,omitempty"`
-	MintedAt       time.Time   `boil:"minted_at" json:"minted_at" toml:"minted_at" yaml:"minted_at"`
-	VehicleID      null.Int    `boil:"vehicle_id" json:"vehicle_id,omitempty" toml:"vehicle_id" yaml:"vehicle_id,omitempty"`
-	Beneficiary    []byte      `boil:"beneficiary" json:"beneficiary" toml:"beneficiary" yaml:"beneficiary"`
-	ManufacturerID int         `boil:"manufacturer_id" json:"manufacturer_id" toml:"manufacturer_id" yaml:"manufacturer_id"`
-	ClaimedAt      null.Time   `boil:"claimed_at" json:"claimed_at,omitempty" toml:"claimed_at" yaml:"claimed_at,omitempty"`
-	DevEui         null.String `boil:"dev_eui" json:"dev_eui,omitempty" toml:"dev_eui" yaml:"dev_eui,omitempty"`
+	ID               int         `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Address          []byte      `boil:"address" json:"address" toml:"address" yaml:"address"`
+	Owner            []byte      `boil:"owner" json:"owner" toml:"owner" yaml:"owner"`
+	Serial           null.String `boil:"serial" json:"serial,omitempty" toml:"serial" yaml:"serial,omitempty"`
+	Imei             null.String `boil:"imei" json:"imei,omitempty" toml:"imei" yaml:"imei,omitempty"`
+	MintedAt         time.Time   `boil:"minted_at" json:"minted_at" toml:"minted_at" yaml:"minted_at"`
+	VehicleID        null.Int    `boil:"vehicle_id" json:"vehicle_id,omitempty" toml:"vehicle_id" yaml:"vehicle_id,omitempty"`
+	Beneficiary      []byte      `boil:"beneficiary" json:"beneficiary" toml:"beneficiary" yaml:"beneficiary"`
+	ManufacturerID   int         `boil:"manufacturer_id" json:"manufacturer_id" toml:"manufacturer_id" yaml:"manufacturer_id"`
+	ClaimedAt        null.Time   `boil:"claimed_at" json:"claimed_at,omitempty" toml:"claimed_at" yaml:"claimed_at,omitempty"`
+	DevEui           null.String `boil:"dev_eui" json:"dev_eui,omitempty" toml:"dev_eui" yaml:"dev_eui,omitempty"`
+	HardwareRevision null.String `boil:"hardware_revision" json:"hardware_revision,omitempty" toml:"hardware_revision" yaml:"hardware_revision,omitempty"`
 
 	R *aftermarketDeviceR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L aftermarketDeviceL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var AftermarketDeviceColumns = struct {
-	ID             string
-	Address        string
-	Owner          string
-	Serial         string
-	Imei           string
-	MintedAt       string
-	VehicleID      string
-	Beneficiary    string
-	ManufacturerID string
-	ClaimedAt      string
-	DevEui         string
+	ID               string
+	Address          string
+	Owner            string
+	Serial           string
+	Imei             string
+	MintedAt         string
+	VehicleID        string
+	Beneficiary      string
+	ManufacturerID   string
+	ClaimedAt        string
+	DevEui           string
+	HardwareRevision string
 }{
-	ID:             "id",
-	Address:        "address",
-	Owner:          "owner",
-	Serial:         "serial",
-	Imei:           "imei",
-	MintedAt:       "minted_at",
-	VehicleID:      "vehicle_id",
-	Beneficiary:    "beneficiary",
-	ManufacturerID: "manufacturer_id",
-	ClaimedAt:      "claimed_at",
-	DevEui:         "dev_eui",
+	ID:               "id",
+	Address:          "address",
+	Owner:            "owner",
+	Serial:           "serial",
+	Imei:             "imei",
+	MintedAt:         "minted_at",
+	VehicleID:        "vehicle_id",
+	Beneficiary:      "beneficiary",
+	ManufacturerID:   "manufacturer_id",
+	ClaimedAt:        "claimed_at",
+	DevEui:           "dev_eui",
+	HardwareRevision: "hardware_revision",
 }
 
 var AftermarketDeviceTableColumns = struct {
-	ID             string
-	Address        string
-	Owner          string
-	Serial         string
-	Imei           string
-	MintedAt       string
-	VehicleID      string
-	Beneficiary    string
-	ManufacturerID string
-	ClaimedAt      string
-	DevEui         string
+	ID               string
+	Address          string
+	Owner            string
+	Serial           string
+	Imei             string
+	MintedAt         string
+	VehicleID        string
+	Beneficiary      string
+	ManufacturerID   string
+	ClaimedAt        string
+	DevEui           string
+	HardwareRevision string
 }{
-	ID:             "aftermarket_devices.id",
-	Address:        "aftermarket_devices.address",
-	Owner:          "aftermarket_devices.owner",
-	Serial:         "aftermarket_devices.serial",
-	Imei:           "aftermarket_devices.imei",
-	MintedAt:       "aftermarket_devices.minted_at",
-	VehicleID:      "aftermarket_devices.vehicle_id",
-	Beneficiary:    "aftermarket_devices.beneficiary",
-	ManufacturerID: "aftermarket_devices.manufacturer_id",
-	ClaimedAt:      "aftermarket_devices.claimed_at",
-	DevEui:         "aftermarket_devices.dev_eui",
+	ID:               "aftermarket_devices.id",
+	Address:          "aftermarket_devices.address",
+	Owner:            "aftermarket_devices.owner",
+	Serial:           "aftermarket_devices.serial",
+	Imei:             "aftermarket_devices.imei",
+	MintedAt:         "aftermarket_devices.minted_at",
+	VehicleID:        "aftermarket_devices.vehicle_id",
+	Beneficiary:      "aftermarket_devices.beneficiary",
+	ManufacturerID:   "aftermarket_devices.manufacturer_id",
+	ClaimedAt:        "aftermarket_devices.claimed_at",
+	DevEui:           "aftermarket_devices.dev_eui",
+	HardwareRevision: "aftermarket_devices.hardware_revision",
 }
 
 // Generated where
@@ -260,29 +265,31 @@ func (w whereHelpernull_Time) IsNull() qm.QueryMod    { return qmhelper.WhereIsN
 func (w whereHelpernull_Time) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
 var AftermarketDeviceWhere = struct {
-	ID             whereHelperint
-	Address        whereHelper__byte
-	Owner          whereHelper__byte
-	Serial         whereHelpernull_String
-	Imei           whereHelpernull_String
-	MintedAt       whereHelpertime_Time
-	VehicleID      whereHelpernull_Int
-	Beneficiary    whereHelper__byte
-	ManufacturerID whereHelperint
-	ClaimedAt      whereHelpernull_Time
-	DevEui         whereHelpernull_String
+	ID               whereHelperint
+	Address          whereHelper__byte
+	Owner            whereHelper__byte
+	Serial           whereHelpernull_String
+	Imei             whereHelpernull_String
+	MintedAt         whereHelpertime_Time
+	VehicleID        whereHelpernull_Int
+	Beneficiary      whereHelper__byte
+	ManufacturerID   whereHelperint
+	ClaimedAt        whereHelpernull_Time
+	DevEui           whereHelpernull_String
+	HardwareRevision whereHelpernull_String
 }{
-	ID:             whereHelperint{field: "\"identity_api\".\"aftermarket_devices\".\"id\""},
-	Address:        whereHelper__byte{field: "\"identity_api\".\"aftermarket_devices\".\"address\""},
-	Owner:          whereHelper__byte{field: "\"identity_api\".\"aftermarket_devices\".\"owner\""},
-	Serial:         whereHelpernull_String{field: "\"identity_api\".\"aftermarket_devices\".\"serial\""},
-	Imei:           whereHelpernull_String{field: "\"identity_api\".\"aftermarket_devices\".\"imei\""},
-	MintedAt:       whereHelpertime_Time{field: "\"identity_api\".\"aftermarket_devices\".\"minted_at\""},
-	VehicleID:      whereHelpernull_Int{field: "\"identity_api\".\"aftermarket_devices\".\"vehicle_id\""},
-	Beneficiary:    whereHelper__byte{field: "\"identity_api\".\"aftermarket_devices\".\"beneficiary\""},
-	ManufacturerID: whereHelperint{field: "\"identity_api\".\"aftermarket_devices\".\"manufacturer_id\""},
-	ClaimedAt:      whereHelpernull_Time{field: "\"identity_api\".\"aftermarket_devices\".\"claimed_at\""},
-	DevEui:         whereHelpernull_String{field: "\"identity_api\".\"aftermarket_devices\".\"dev_eui\""},
+	ID:               whereHelperint{field: "\"identity_api\".\"aftermarket_devices\".\"id\""},
+	Address:          whereHelper__byte{field: "\"identity_api\".\"aftermarket_devices\".\"address\""},
+	Owner:            whereHelper__byte{field: "\"identity_api\".\"aftermarket_devices\".\"owner\""},
+	Serial:           whereHelpernull_String{field: "\"identity_api\".\"aftermarket_devices\".\"serial\""},
+	Imei:             whereHelpernull_String{field: "\"identity_api\".\"aftermarket_devices\".\"imei\""},
+	MintedAt:         whereHelpertime_Time{field: "\"identity_api\".\"aftermarket_devices\".\"minted_at\""},
+	VehicleID:        whereHelpernull_Int{field: "\"identity_api\".\"aftermarket_devices\".\"vehicle_id\""},
+	Beneficiary:      whereHelper__byte{field: "\"identity_api\".\"aftermarket_devices\".\"beneficiary\""},
+	ManufacturerID:   whereHelperint{field: "\"identity_api\".\"aftermarket_devices\".\"manufacturer_id\""},
+	ClaimedAt:        whereHelpernull_Time{field: "\"identity_api\".\"aftermarket_devices\".\"claimed_at\""},
+	DevEui:           whereHelpernull_String{field: "\"identity_api\".\"aftermarket_devices\".\"dev_eui\""},
+	HardwareRevision: whereHelpernull_String{field: "\"identity_api\".\"aftermarket_devices\".\"hardware_revision\""},
 }
 
 // AftermarketDeviceRels is where relationship names are stored.
@@ -333,9 +340,9 @@ func (r *aftermarketDeviceR) GetAftermarketTokenRewards() RewardSlice {
 type aftermarketDeviceL struct{}
 
 var (
-	aftermarketDeviceAllColumns            = []string{"id", "address", "owner", "serial", "imei", "minted_at", "vehicle_id", "beneficiary", "manufacturer_id", "claimed_at", "dev_eui"}
+	aftermarketDeviceAllColumns            = []string{"id", "address", "owner", "serial", "imei", "minted_at", "vehicle_id", "beneficiary", "manufacturer_id", "claimed_at", "dev_eui", "hardware_revision"}
 	aftermarketDeviceColumnsWithoutDefault = []string{"id", "address", "owner", "minted_at", "beneficiary", "manufacturer_id"}
-	aftermarketDeviceColumnsWithDefault    = []string{"serial", "imei", "vehicle_id", "claimed_at", "dev_eui"}
+	aftermarketDeviceColumnsWithDefault    = []string{"serial", "imei", "vehicle_id", "claimed_at", "dev_eui", "hardware_revision"}
 	aftermarketDevicePrimaryKeyColumns     = []string{"id"}
 	aftermarketDeviceGeneratedColumns      = []string{}
 )

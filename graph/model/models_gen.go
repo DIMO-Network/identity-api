@@ -33,6 +33,8 @@ type AftermarketDevice struct {
 	Imei *string `json:"imei,omitempty"`
 	// Extended Unique Identifier (EUI) for LoRa devices.
 	DevEui *string `json:"devEUI,omitempty"`
+	// Manufacturer-specific hardware revision. May not always be present.
+	HardwareRevision *string `json:"hardwareRevision,omitempty"`
 	// The block timestamp at which this device was minted.
 	MintedAt time.Time `json:"mintedAt"`
 	// The block timestamp at which this device was claimed, if it has been claimed. Devices must be

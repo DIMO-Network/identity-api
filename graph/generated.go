@@ -62,21 +62,22 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	AftermarketDevice struct {
-		Address      func(childComplexity int) int
-		Beneficiary  func(childComplexity int) int
-		ClaimedAt    func(childComplexity int) int
-		DevEui       func(childComplexity int) int
-		Earnings     func(childComplexity int) int
-		ID           func(childComplexity int) int
-		Image        func(childComplexity int) int
-		Imei         func(childComplexity int) int
-		Manufacturer func(childComplexity int) int
-		MintedAt     func(childComplexity int) int
-		Name         func(childComplexity int) int
-		Owner        func(childComplexity int) int
-		Serial       func(childComplexity int) int
-		TokenID      func(childComplexity int) int
-		Vehicle      func(childComplexity int) int
+		Address          func(childComplexity int) int
+		Beneficiary      func(childComplexity int) int
+		ClaimedAt        func(childComplexity int) int
+		DevEui           func(childComplexity int) int
+		Earnings         func(childComplexity int) int
+		HardwareRevision func(childComplexity int) int
+		ID               func(childComplexity int) int
+		Image            func(childComplexity int) int
+		Imei             func(childComplexity int) int
+		Manufacturer     func(childComplexity int) int
+		MintedAt         func(childComplexity int) int
+		Name             func(childComplexity int) int
+		Owner            func(childComplexity int) int
+		Serial           func(childComplexity int) int
+		TokenID          func(childComplexity int) int
+		Vehicle          func(childComplexity int) int
 	}
 
 	AftermarketDeviceConnection struct {
@@ -427,6 +428,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.AftermarketDevice.Earnings(childComplexity), true
+
+	case "AftermarketDevice.hardwareRevision":
+		if e.complexity.AftermarketDevice.HardwareRevision == nil {
+			break
+		}
+
+		return e.complexity.AftermarketDevice.HardwareRevision(childComplexity), true
 
 	case "AftermarketDevice.id":
 		if e.complexity.AftermarketDevice.ID == nil {
@@ -2768,6 +2776,47 @@ func (ec *executionContext) fieldContext_AftermarketDevice_devEUI(_ context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _AftermarketDevice_hardwareRevision(ctx context.Context, field graphql.CollectedField, obj *model.AftermarketDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AftermarketDevice_hardwareRevision(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.HardwareRevision, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AftermarketDevice_hardwareRevision(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AftermarketDevice",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _AftermarketDevice_mintedAt(ctx context.Context, field graphql.CollectedField, obj *model.AftermarketDevice) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_AftermarketDevice_mintedAt(ctx, field)
 	if err != nil {
@@ -3256,6 +3305,8 @@ func (ec *executionContext) fieldContext_AftermarketDeviceConnection_nodes(_ con
 				return ec.fieldContext_AftermarketDevice_imei(ctx, field)
 			case "devEUI":
 				return ec.fieldContext_AftermarketDevice_devEUI(ctx, field)
+			case "hardwareRevision":
+				return ec.fieldContext_AftermarketDevice_hardwareRevision(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_AftermarketDevice_mintedAt(ctx, field)
 			case "claimedAt":
@@ -3539,6 +3590,8 @@ func (ec *executionContext) fieldContext_AftermarketDeviceEdge_node(_ context.Co
 				return ec.fieldContext_AftermarketDevice_imei(ctx, field)
 			case "devEUI":
 				return ec.fieldContext_AftermarketDevice_devEUI(ctx, field)
+			case "hardwareRevision":
+				return ec.fieldContext_AftermarketDevice_hardwareRevision(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_AftermarketDevice_mintedAt(ctx, field)
 			case "claimedAt":
@@ -5347,6 +5400,8 @@ func (ec *executionContext) fieldContext_Earning_aftermarketDevice(_ context.Con
 				return ec.fieldContext_AftermarketDevice_imei(ctx, field)
 			case "devEUI":
 				return ec.fieldContext_AftermarketDevice_devEUI(ctx, field)
+			case "hardwareRevision":
+				return ec.fieldContext_AftermarketDevice_hardwareRevision(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_AftermarketDevice_mintedAt(ctx, field)
 			case "claimedAt":
@@ -7100,6 +7155,8 @@ func (ec *executionContext) fieldContext_Query_aftermarketDevice(ctx context.Con
 				return ec.fieldContext_AftermarketDevice_imei(ctx, field)
 			case "devEUI":
 				return ec.fieldContext_AftermarketDevice_devEUI(ctx, field)
+			case "hardwareRevision":
+				return ec.fieldContext_AftermarketDevice_hardwareRevision(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_AftermarketDevice_mintedAt(ctx, field)
 			case "claimedAt":
@@ -9533,6 +9590,8 @@ func (ec *executionContext) fieldContext_Vehicle_aftermarketDevice(_ context.Con
 				return ec.fieldContext_AftermarketDevice_imei(ctx, field)
 			case "devEUI":
 				return ec.fieldContext_AftermarketDevice_devEUI(ctx, field)
+			case "hardwareRevision":
+				return ec.fieldContext_AftermarketDevice_hardwareRevision(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_AftermarketDevice_mintedAt(ctx, field)
 			case "claimedAt":
@@ -12990,6 +13049,8 @@ func (ec *executionContext) _AftermarketDevice(ctx context.Context, sel ast.Sele
 			out.Values[i] = ec._AftermarketDevice_imei(ctx, field, obj)
 		case "devEUI":
 			out.Values[i] = ec._AftermarketDevice_devEUI(ctx, field, obj)
+		case "hardwareRevision":
+			out.Values[i] = ec._AftermarketDevice_hardwareRevision(ctx, field, obj)
 		case "mintedAt":
 			out.Values[i] = ec._AftermarketDevice_mintedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

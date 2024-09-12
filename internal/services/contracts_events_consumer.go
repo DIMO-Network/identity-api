@@ -462,6 +462,14 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceAttributeSetEvent(ctx c
 			boil.Whitelist(models.AftermarketDeviceColumns.DevEui)); err != nil {
 			return err
 		}
+	case "HardwareRevision":
+		ad.HardwareRevision = null.StringFrom(args.Info)
+		if _, err := ad.Update(
+			ctx,
+			c.dbs.DBS().Writer,
+			boil.Whitelist(models.AftermarketDeviceColumns.HardwareRevision)); err != nil {
+			return err
+		}
 	}
 
 	return nil

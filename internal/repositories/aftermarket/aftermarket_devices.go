@@ -202,20 +202,21 @@ func ToAPI(d *models.AftermarketDevice, imageURL string) (*gmodel.AftermarketDev
 	name := strings.Join(nameList, " ")
 
 	return &gmodel.AftermarketDevice{
-		ID:             globalID,
-		TokenID:        d.ID,
-		Address:        common.BytesToAddress(d.Address),
-		Owner:          common.BytesToAddress(d.Owner),
-		Serial:         d.Serial.Ptr(),
-		Imei:           d.Imei.Ptr(),
-		DevEui:         d.DevEui.Ptr(),
-		Beneficiary:    common.BytesToAddress(d.Beneficiary),
-		VehicleID:      d.VehicleID.Ptr(),
-		MintedAt:       d.MintedAt,
-		ClaimedAt:      d.ClaimedAt.Ptr(),
-		ManufacturerID: d.ManufacturerID,
-		Name:           name,
-		Image:          imageURL,
+		ID:               globalID,
+		TokenID:          d.ID,
+		Address:          common.BytesToAddress(d.Address),
+		Owner:            common.BytesToAddress(d.Owner),
+		Serial:           d.Serial.Ptr(),
+		Imei:             d.Imei.Ptr(),
+		DevEui:           d.DevEui.Ptr(),
+		Beneficiary:      common.BytesToAddress(d.Beneficiary),
+		VehicleID:        d.VehicleID.Ptr(),
+		MintedAt:         d.MintedAt,
+		ClaimedAt:        d.ClaimedAt.Ptr(),
+		ManufacturerID:   d.ManufacturerID,
+		Name:             name,
+		Image:            imageURL,
+		HardwareRevision: d.HardwareRevision.Ptr(),
 	}, nil
 }
 
