@@ -39,7 +39,7 @@ env:
   DCN_RESOLVER_ADDR: '0x8E498009CaCa11ca9dD6696Bc00eEFcCd51811d5'
   SYNTHETIC_DEVICE_CONTRACT_ADDRESS: '0x78513c8CB4D6B6079f813850376bc9c7fc8aE67f'
   REWARDS_CONTRACT_ADDRESS: '0x375885164266d48C48abbbb439Be98864Ae62bBE'
-  BASE_IMAGE_URL: https://devices-api.dev.dimo.zone/v1/
+  BASE_IMAGE_URL: https://assets.dev.dimo.xyz/
   BASE_VEHICLE_DATA_URI: https://device-data-api.dev.dimo.zone/v2/vehicles/
   TABLELAND_API_GATEWAY: https://tableland-node.dev.dimo.zone/
   SACD_ADDRESS: '0x3e78Cb1f68132D34C811dcd7D4a10E0Aad752C3c'

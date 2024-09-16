@@ -16,7 +16,7 @@ env:
   DCN_RESOLVER_ADDR: '0x60627326F55054Ea448e0a7BC750785bD65EF757'
   SYNTHETIC_DEVICE_CONTRACT_ADDRESS: '0x4804e8D1661cd1a1e5dDdE1ff458A7f878c0aC6D'
   REWARDS_CONTRACT_ADDRESS: '0x8129f3cd3eba82136caf5ab87e2321c958da5b63'
-  BASE_IMAGE_URL: https://devices-api.dimo.zone/v1
+  BASE_IMAGE_URL: https://assets.dimo.xyz/
   BASE_VEHICLE_DATA_URI: https://device-data-api.dimo.zone/v2/vehicles/
   TABLELAND_API_GATEWAY: https://tableland-node.dimo.zone/
 ingress:
