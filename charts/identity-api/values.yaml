@@ -42,7 +42,7 @@ env:
   BASE_IMAGE_URL: https://assets.dev.dimo.xyz/
   BASE_VEHICLE_DATA_URI: https://device-data-api.dev.dimo.zone/v2/vehicles/
   TABLELAND_API_GATEWAY: https://tableland-node.dev.dimo.zone/
-  SACD_ADDRESS: '0x3e78Cb1f68132D34C811dcd7D4a10E0Aad752C3c'
+  SACD_ADDRESS: '0xaC24E8add57e7Ca8e8B2D0d76f4210Ae53ebDB28'
 service:
   type: ClusterIP
   ports:
