@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/DIMO-Network/identity-api/internal/repositories/manufacturer"
 	"slices"
 	"strings"
 
@@ -73,12 +74,19 @@ type Repository struct {
 	TablelandApiService *services.TablelandApiService
 }
 
-func ToAPI(v *DeviceDefinitionTablelandModel) (*gmodel.DeviceDefinition, error) {
+func ToAPI(v *DeviceDefinitionTablelandModel, mfr *models.Manufacturer) (*gmodel.DeviceDefinition, error) {
 	var result = gmodel.DeviceDefinition{
 		DeviceDefinitionID: v.ID,
 		LegacyID:           &v.KSUID,
 		Year:               v.Year,
 		Model:              v.Model,
+	}
+	if mfr != nil {
+		gmfr, err := manufacturer.ToAPI(mfr)
+		if err != nil {
+			return nil, err
+		}
+		result.Manufacturer = gmfr
 	}
 
 	if v.ImageURI != "" {
@@ -141,7 +149,7 @@ func (r *Repository) GetDeviceDefinition(ctx context.Context, by gmodel.DeviceDe
 		return nil, errors.New("no device definition found with that id")
 	}
 
-	return ToAPI(&modelTableland[0])
+	return ToAPI(&modelTableland[0], mfr)
 }
 
 func (r *Repository) GetDeviceDefinitions(ctx context.Context, tableID, first *int, after *string, last *int, before *string, filterBy *gmodel.DeviceDefinitionFilter) (*gmodel.DeviceDefinitionConnection, error) {
@@ -254,7 +262,7 @@ func (r *Repository) GetDeviceDefinitions(ctx context.Context, tableID, first *i
 	nodes := make([]*gmodel.DeviceDefinition, len(all))
 
 	for i, dv := range all {
-		gv, err := ToAPI(&dv)
+		gv, err := ToAPI(&dv, nil)
 		if err != nil {
 			errList = append(errList, gqlerror.Wrap(err))
 			continue
