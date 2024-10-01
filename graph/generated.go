@@ -133,6 +133,7 @@ type ComplexityRoot struct {
 		DeviceType         func(childComplexity int) int
 		ImageURI           func(childComplexity int) int
 		LegacyID           func(childComplexity int) int
+		Manufacturer       func(childComplexity int) int
 		Model              func(childComplexity int) int
 		Year               func(childComplexity int) int
 	}
@@ -727,6 +728,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.DeviceDefinition.LegacyID(childComplexity), true
+
+	case "DeviceDefinition.manufacturer":
+		if e.complexity.DeviceDefinition.Manufacturer == nil {
+			break
+		}
+
+		return e.complexity.DeviceDefinition.Manufacturer(childComplexity), true
 
 	case "DeviceDefinition.model":
 		if e.complexity.DeviceDefinition.Model == nil {
@@ -4555,6 +4563,65 @@ func (ec *executionContext) fieldContext_DeviceDefinition_legacyId(_ context.Con
 	return fc, nil
 }
 
+func (ec *executionContext) _DeviceDefinition_manufacturer(ctx context.Context, field graphql.CollectedField, obj *model.DeviceDefinition) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeviceDefinition_manufacturer(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Manufacturer, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Manufacturer)
+	fc.Result = res
+	return ec.marshalOManufacturer2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐManufacturer(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DeviceDefinition_manufacturer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeviceDefinition",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Manufacturer_id(ctx, field)
+			case "tokenId":
+				return ec.fieldContext_Manufacturer_tokenId(ctx, field)
+			case "name":
+				return ec.fieldContext_Manufacturer_name(ctx, field)
+			case "owner":
+				return ec.fieldContext_Manufacturer_owner(ctx, field)
+			case "tableId":
+				return ec.fieldContext_Manufacturer_tableId(ctx, field)
+			case "mintedAt":
+				return ec.fieldContext_Manufacturer_mintedAt(ctx, field)
+			case "aftermarketDevices":
+				return ec.fieldContext_Manufacturer_aftermarketDevices(ctx, field)
+			case "deviceDefinitions":
+				return ec.fieldContext_Manufacturer_deviceDefinitions(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Manufacturer", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _DeviceDefinition_model(ctx context.Context, field graphql.CollectedField, obj *model.DeviceDefinition) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_DeviceDefinition_model(ctx, field)
 	if err != nil {
@@ -5000,6 +5067,8 @@ func (ec *executionContext) fieldContext_DeviceDefinitionConnection_nodes(_ cont
 				return ec.fieldContext_DeviceDefinition_deviceDefinitionId(ctx, field)
 			case "legacyId":
 				return ec.fieldContext_DeviceDefinition_legacyId(ctx, field)
+			case "manufacturer":
+				return ec.fieldContext_DeviceDefinition_manufacturer(ctx, field)
 			case "model":
 				return ec.fieldContext_DeviceDefinition_model(ctx, field)
 			case "year":
@@ -5158,6 +5227,8 @@ func (ec *executionContext) fieldContext_DeviceDefinitionEdge_node(_ context.Con
 				return ec.fieldContext_DeviceDefinition_deviceDefinitionId(ctx, field)
 			case "legacyId":
 				return ec.fieldContext_DeviceDefinition_legacyId(ctx, field)
+			case "manufacturer":
+				return ec.fieldContext_DeviceDefinition_manufacturer(ctx, field)
 			case "model":
 				return ec.fieldContext_DeviceDefinition_model(ctx, field)
 			case "year":
@@ -7435,6 +7506,8 @@ func (ec *executionContext) fieldContext_Query_deviceDefinition(ctx context.Cont
 				return ec.fieldContext_DeviceDefinition_deviceDefinitionId(ctx, field)
 			case "legacyId":
 				return ec.fieldContext_DeviceDefinition_legacyId(ctx, field)
+			case "manufacturer":
+				return ec.fieldContext_DeviceDefinition_manufacturer(ctx, field)
 			case "model":
 				return ec.fieldContext_DeviceDefinition_model(ctx, field)
 			case "year":
@@ -13589,6 +13662,8 @@ func (ec *executionContext) _DeviceDefinition(ctx context.Context, sel ast.Selec
 			}
 		case "legacyId":
 			out.Values[i] = ec._DeviceDefinition_legacyId(ctx, field, obj)
+		case "manufacturer":
+			out.Values[i] = ec._DeviceDefinition_manufacturer(ctx, field, obj)
 		case "model":
 			out.Values[i] = ec._DeviceDefinition_model(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -17551,6 +17626,13 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	}
 	res := graphql.MarshalInt(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOManufacturer2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐManufacturer(ctx context.Context, sel ast.SelectionSet, v *model.Manufacturer) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Manufacturer(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalONode2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐNode(ctx context.Context, sel ast.SelectionSet, v model.Node) graphql.Marshaler {

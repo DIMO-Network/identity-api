@@ -162,6 +162,8 @@ type DeviceDefinition struct {
 	DeviceDefinitionID string `json:"deviceDefinitionId"`
 	// Legacy id for this device definition. Newer device definitions may not have one.
 	LegacyID *string `json:"legacyId,omitempty"`
+	// Manufacturer for this device definition.
+	Manufacturer *Manufacturer `json:"manufacturer,omitempty"`
 	// Model for this device definition.
 	Model string `json:"model"`
 	// Year for this device definition.

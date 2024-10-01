@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/DIMO-Network/identity-api/internal/repositories/manufacturer"
 	"slices"
 	"strings"
 
@@ -73,12 +74,19 @@ type Repository struct {
 	TablelandApiService *services.TablelandApiService
 }
 
-func ToAPI(v *DeviceDefinitionTablelandModel) (*gmodel.DeviceDefinition, error) {
+func ToAPI(v *DeviceDefinitionTablelandModel, mfr *models.Manufacturer) (*gmodel.DeviceDefinition, error) {
 	var result = gmodel.DeviceDefinition{
 		DeviceDefinitionID: v.ID,
 		LegacyID:           &v.KSUID,
 		Year:               v.Year,
 		Model:              v.Model,
+	}
+	if mfr != nil {
+		gmfr, err := manufacturer.ToAPI(mfr)
+		if err != nil {
+			return nil, err
+		}
+		result.Manufacturer = gmfr
 	}
 
 	if v.ImageURI != "" {
@@ -141,7 +149,7 @@ func (r *Repository) GetDeviceDefinition(ctx context.Context, by gmodel.DeviceDe
 		return nil, errors.New("no device definition found with that id")
 	}
 
-	return ToAPI(&modelTableland[0])
+	return ToAPI(&modelTableland[0], mfr)
 }
 
 func (r *Repository) GetDeviceDefinitions(ctx context.Context, tableID, first *int, after *string, last *int, before *string, filterBy *gmodel.DeviceDefinitionFilter) (*gmodel.DeviceDefinitionConnection, error) {
@@ -253,8 +261,23 @@ func (r *Repository) GetDeviceDefinitions(ctx context.Context, tableID, first *i
 	edges := make([]*gmodel.DeviceDefinitionEdge, len(all))
 	nodes := make([]*gmodel.DeviceDefinition, len(all))
 
+	mfrs := make(map[string]*models.Manufacturer)
+
 	for i, dv := range all {
-		gv, err := ToAPI(&dv)
+		// get the manufacturer and cache it in a map outside the loop, using the cached mfr when exists
+		var mfr *models.Manufacturer
+		mfrSlug, _, found := strings.Cut(dv.ID, "_")
+		if found {
+			ok := false
+			if mfr, ok = mfrs[mfrSlug]; !ok {
+				mfr, err = models.Manufacturers(models.ManufacturerWhere.Slug.EQ(mfrSlug)).One(ctx, r.PDB.DBS().Reader)
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
+
+		gv, err := ToAPI(&dv, mfr)
 		if err != nil {
 			errList = append(errList, gqlerror.Wrap(err))
 			continue
