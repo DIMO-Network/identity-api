@@ -29,12 +29,21 @@ func Test_GetDeviceDefinitions_Query(t *testing.T) {
 
 	mfr := models.Manufacturer{
 		ID:      137,
-		Name:    "Toyota",
+		Name:    "Alfa Romeo",
 		Owner:   common.FromHex("0xaba3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
-		Slug:    "toyota",
+		Slug:    "alfa-romeo",
 		TableID: null.IntFrom(1),
 	}
 	err := mfr.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err)
+	mfr2 := models.Manufacturer{
+		ID:      13,
+		Name:    "BMW",
+		Owner:   common.FromHex("0xaba3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Slug:    "bmw",
+		TableID: null.IntFrom(2),
+	}
+	err = mfr2.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	assert.NoError(t, err)
 
 	logger := zerolog.Nop()
@@ -108,6 +117,10 @@ func Test_GetDeviceDefinitions_Query(t *testing.T) {
 				DeviceDefinitionID: "bmw_x5_2019",
 				LegacyID:           &legacyID2,
 				DeviceType:         &deviceType,
+				Manufacturer: &model.Manufacturer{
+					Name:    "BMW",
+					TokenID: 13,
+				},
 			},
 			Cursor: "Mg==",
 		},
@@ -116,6 +129,10 @@ func Test_GetDeviceDefinitions_Query(t *testing.T) {
 				DeviceDefinitionID: "alfa-romeo_147_2007",
 				LegacyID:           &legacyID1,
 				DeviceType:         &deviceType,
+				Manufacturer: &model.Manufacturer{
+					Name:    "Alfa Romeo",
+					TokenID: 137,
+				},
 			},
 			Cursor: "Mw==",
 		},
@@ -125,6 +142,8 @@ func Test_GetDeviceDefinitions_Query(t *testing.T) {
 		assert.Equal(t, e.Node.DeviceDefinitionID, res.Edges[i].Node.DeviceDefinitionID)
 		assert.Equal(t, e.Node.LegacyID, res.Edges[i].Node.LegacyID)
 		assert.Equal(t, e.Node.DeviceType, res.Edges[i].Node.DeviceType)
+		assert.Equal(t, e.Node.Manufacturer.Name, res.Edges[i].Node.Manufacturer.Name)
+		assert.Equal(t, e.Node.Manufacturer.TokenID, res.Edges[i].Node.Manufacturer.TokenID)
 	}
 }
 

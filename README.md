@@ -2,12 +2,6 @@
 
 Run `make help` to see some helpful sub-commands:
 
-## If you're using MacOS, install latest make
-
-`brew install make`
-
-`make` will now be called `gmake`
-
 ```
 % make help
 

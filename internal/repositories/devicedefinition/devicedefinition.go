@@ -261,8 +261,23 @@ func (r *Repository) GetDeviceDefinitions(ctx context.Context, tableID, first *i
 	edges := make([]*gmodel.DeviceDefinitionEdge, len(all))
 	nodes := make([]*gmodel.DeviceDefinition, len(all))
 
+	mfrs := make(map[string]*models.Manufacturer)
+
 	for i, dv := range all {
-		gv, err := ToAPI(&dv, nil)
+		// get the manufacturer and cache it in a map outside the loop, using the cached mfr when exists
+		var mfr *models.Manufacturer
+		mfrSlug, _, found := strings.Cut(dv.ID, "_")
+		if found {
+			ok := false
+			if mfr, ok = mfrs[mfrSlug]; !ok {
+				mfr, err = models.Manufacturers(models.ManufacturerWhere.Slug.EQ(mfrSlug)).One(ctx, r.PDB.DBS().Reader)
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
+
+		gv, err := ToAPI(&dv, mfr)
 		if err != nil {
 			errList = append(errList, gqlerror.Wrap(err))
 			continue
