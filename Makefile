@@ -9,6 +9,8 @@ PATHINSTDOCKER     = $(DEST_DIR)/docker
 
 # Add target bin dir to PATH
 export PATH := $(PATHINSTBIN):$(PATH)
+OLDSHELL := $(SHELL)
+SHELL = env PATH=$(PATH) $(OLDSHELL)
 
 VERSION   := $(shell git describe --tags || echo "v0.0.0")
 VER_CUT   := $(shell echo $(VERSION) | cut -c2-)
