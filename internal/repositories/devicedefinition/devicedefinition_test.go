@@ -127,3 +127,71 @@ func Test_GetDeviceDefinitions_Query(t *testing.T) {
 		assert.Equal(t, e.Node.DeviceType, res.Edges[i].Node.DeviceType)
 	}
 }
+
+func Test_GetDeviceDefinition_Query(t *testing.T) {
+	ctx := context.Background()
+
+	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDir)
+
+	mfr := models.Manufacturer{
+		ID:      137,
+		Name:    "Toyota",
+		Owner:   common.FromHex("0xaba3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Slug:    "toyota",
+		TableID: null.IntFrom(1),
+	}
+	err := mfr.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err)
+
+	logger := zerolog.Nop()
+
+	const baseURL = "http://local"
+
+	repo := base.NewRepository(pdb, config.Settings{DIMORegistryChainID: 30001, TablelandAPIGateway: baseURL}, &logger)
+
+	tablelandAPI := services.NewTablelandApiService(&logger, &config.Settings{
+		TablelandAPIGateway: baseURL,
+	})
+
+	adController := Repository{Repository: repo, TablelandApiService: tablelandAPI}
+
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	queryURL := "api/v1/query?statement=SELECT+%2A+FROM+%22_30001_1%22+WHERE+%28%22id%22+%3D+%27toyota_camry_2007%27%29"
+	respQueryBody := `
+	  [{
+		"id": "toyota_camry_2007",
+		"deviceType": "vehicle",
+		"imageURI": "https://image",
+		"ksuid": "26G3iFH7Xc9Wvsw7pg6sD7uzoSS",
+		"metadata": {
+		  "device_attributes": [
+			{
+			  "name": "powertrain_type",
+			  "value": "ICE"
+			}
+		  ]
+		}
+	  }]
+	`
+	// when we query against tableland, if metadata is not set, it is returned as an empty string ""
+	var modelQueryTablelandResponse []DeviceDefinitionTablelandModel
+	errUm := json.Unmarshal([]byte(respQueryBody), &modelQueryTablelandResponse)
+	require.NoError(t, errUm)
+
+	httpmock.RegisterResponder(http.MethodGet, baseURL+queryURL, httpmock.NewStringResponder(200, respQueryBody))
+
+	res, err := adController.GetDeviceDefinition(ctx, model.DeviceDefinitionBy{ID: "toyota_camry_2007"})
+	require.NoError(t, err)
+
+	deviceType := "vehicle"
+	legacyID1 := "26G3iFH7Xc9Wvsw7pg6sD7uzoSS"
+
+	assert.Equal(t, "toyota_camry_2007", res.DeviceDefinitionID)
+	assert.Equal(t, legacyID1, *res.LegacyID)
+	assert.Equal(t, deviceType, *res.DeviceType)
+	assert.Equal(t, "https://image", *res.ImageURI)
+	assert.Equal(t, "Toyota", res.Manufacturer.Name)
+	assert.Equal(t, 137, res.Manufacturer.TokenID)
+}
