@@ -103,8 +103,6 @@ boil: ## Generate SQLBoiler models.
 	sqlboiler psql --no-tests --wipe
 
 gql: ## Generate gqlgen code.
-	echo $(PATH)
-	which gqlgen
 	@gqlgen version
 	gqlgen generate
 
