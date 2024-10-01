@@ -27,6 +27,11 @@ type DeviceDefinition {
   legacyId: String
 
   """
+  Manufacturer for this device definition.
+  """
+  manufacturer: Manufacturer
+
+  """
   Model for this device definition.
   """
   model: String!
