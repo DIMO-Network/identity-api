@@ -19,6 +19,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
@@ -352,3 +353,55 @@ func Test_GetAftermarketDeviceImageUrl(t *testing.T) {
 		require.Equal(t, tc.expectedURL, url)
 	}
 }
+
+func TestAftermarketDeviceBy(t *testing.T) {
+	ctx := context.Background()
+
+	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDir)
+
+	var mfr2 = models.Manufacturer{
+		ID:       137,
+		Owner:    common.FromHex("46a3A41bd932244Dd08186e4c19F1a7E48cbcDff"),
+		Name:     "AutoPi",
+		MintedAt: time.Now(),
+		Slug:     "autopi",
+	}
+	err := mfr2.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
+
+	imeiAd := models.AftermarketDevice{
+		ManufacturerID: 137,
+		ID:             1,
+		Owner:          aftermarketDeviceNodeMintedArgs.Owner.Bytes(),
+		Beneficiary:    aftermarketDeviceNodeMintedArgs.Owner.Bytes(),
+		Address:        aftermarketDeviceNodeMintedArgs.AftermarketDeviceAddress.Bytes(),
+		Imei:           null.StringFrom("123456789012345"),
+	}
+
+	err = imeiAd.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
+
+	devEUIAd := models.AftermarketDevice{
+		ManufacturerID: 137,
+		ID:             2,
+		Owner:          aftermarketDeviceNodeMintedArgs.Owner.Bytes(),
+		Beneficiary:    aftermarketDeviceNodeMintedArgs.Owner.Bytes(),
+		Address:        aftermarketDeviceNodeMintedArgs.AftermarketDeviceAddress.Bytes(),
+		DevEui:         null.StringFrom("123456789012345"),
+	}
+
+	err = devEUIAd.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
+
+	logger := zerolog.Nop()
+	adController := Repository{Repository: base.NewRepository(pdb, config.Settings{}, &logger)}
+	res, err := adController.GetAftermarketDevice(ctx, model.AftermarketDeviceBy{Imei: ref("123456789012345")})
+	require.NoError(t, err)
+	require.Equal(t, imeiAd.ID, res.TokenID)
+
+	res, err = adController.GetAftermarketDevice(ctx, model.AftermarketDeviceBy{DevEui: ref("123456789012345")})
+	require.NoError(t, err)
+	require.Equal(t, devEUIAd.ID, res.TokenID)
+}
+
+func ref[T any](v T) *T { return &v }

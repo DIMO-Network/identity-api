@@ -92,9 +92,30 @@ type AftermarketDevice implements Node {
 The AftermarketDeviceBy input is used to specify a unique aftermarket device to query.
 """
 input AftermarketDeviceBy @oneOf {
+  """
+  token id of the aftermarket device NFT
+  """
   tokenId: Int
+
+  """
+  address of the aftermarket device
+  """
   address: Address
+
+  """
+  serial number of the aftermarket device
+  """
   serial: String
+
+  """
+  The International Mobile Equipment Identity (IMEI) for the device if available
+  """
+  imei: String
+
+  """
+  Extended Unique Identifier (EUI) for LoRa devices if available
+  """
+  devEUI: String
 }
 
 """
