@@ -159,8 +159,8 @@ func (r *Repository) GetAftermarketDevices(ctx context.Context, first *int, afte
 }
 
 func (r *Repository) GetAftermarketDevice(ctx context.Context, by gmodel.AftermarketDeviceBy) (*gmodel.AftermarketDevice, error) {
-	if base.CountTrue(by.Address != nil, by.TokenID != nil, by.Serial != nil) != 1 {
-		return nil, gqlerror.Errorf("Pass in exactly one of `address`, `id`, or `serial`.")
+	if base.CountTrue(by.Address != nil, by.TokenID != nil, by.Serial != nil, by.Imei != nil, by.DevEui != nil) != 1 {
+		return nil, gqlerror.Errorf("Pass in exactly one of `address`, `id`, `serial`, `imei` or `devEUI`.")
 	}
 
 	var qm qm.QueryMod
@@ -172,6 +172,10 @@ func (r *Repository) GetAftermarketDevice(ctx context.Context, by gmodel.Afterma
 		qm = models.AftermarketDeviceWhere.ID.EQ(*by.TokenID)
 	case by.Serial != nil:
 		qm = models.AftermarketDeviceWhere.Serial.EQ(null.StringFrom(*by.Serial))
+	case by.Imei != nil:
+		qm = models.AftermarketDeviceWhere.Imei.EQ(null.StringFrom(*by.Imei))
+	case by.DevEui != nil:
+		qm = models.AftermarketDeviceWhere.DevEui.EQ(null.StringFrom(*by.DevEui))
 	}
 
 	ad, err := models.AftermarketDevices(qm).One(ctx, r.PDB.DBS().Reader)

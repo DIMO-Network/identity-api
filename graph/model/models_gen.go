@@ -59,9 +59,16 @@ func (this AftermarketDevice) GetID() string { return this.ID }
 
 // The AftermarketDeviceBy input is used to specify a unique aftermarket device to query.
 type AftermarketDeviceBy struct {
-	TokenID *int            `json:"tokenId,omitempty"`
+	// token id of the aftermarket device NFT
+	TokenID *int `json:"tokenId,omitempty"`
+	// address of the aftermarket device
 	Address *common.Address `json:"address,omitempty"`
-	Serial  *string         `json:"serial,omitempty"`
+	// serial number of the aftermarket device
+	Serial *string `json:"serial,omitempty"`
+	// The International Mobile Equipment Identity (IMEI) for the device if available
+	Imei *string `json:"imei,omitempty"`
+	// Extended Unique Identifier (EUI) for LoRa devices if available
+	DevEui *string `json:"devEUI,omitempty"`
 }
 
 // The Connection type for AftermarketDevice.
