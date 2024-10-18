@@ -19,6 +19,7 @@ env:
   BASE_IMAGE_URL: https://assets.dimo.xyz/
   BASE_VEHICLE_DATA_URI: https://device-data-api.dimo.zone/v2/vehicles/
   TABLELAND_API_GATEWAY: https://tableland-node.dimo.zone/
+  SACD_ADDRESS: '0x4E5F9320b1c7cB3DE5ebDD760aD67375B66cF8a3'
 ingress:
   enabled: true
   className: nginx
