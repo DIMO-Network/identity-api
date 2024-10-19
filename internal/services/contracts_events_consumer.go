@@ -776,14 +776,12 @@ func (c *ContractsEventsConsumer) handleDevLicenseIssued(ctx context.Context, e 
 		return err
 	}
 
-	amd, err := models.AftermarketDevices(
-		models.AftermarketDeviceWhere.ID.EQ(int(args.TokenId.Int64())),
-	).One(ctx, c.dbs.DBS().Reader)
-	if err != nil {
-		return err
+	dl := models.DeveloperLicense{
+		TokenID:  int(args.TokenId.Int64()),
+		Owner:    args.Owner.Bytes(),
+		Address:  args.ClientId.Bytes(),
+		MintedAt: e.Block.Time,
 	}
 
-	amd.Address = args.AftermarketDeviceAddress.Bytes()
-	_, err = amd.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.AftermarketDeviceColumns.Address))
-	return err
+	return dl.Upsert(ctx, c.dbs.DBS().Writer, false, []string{models.DeveloperLicenseColumns.TokenID}, boil.None(), boil.Infer())
 }

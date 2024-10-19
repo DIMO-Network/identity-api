@@ -159,9 +159,9 @@ type AftermarketDeviceAddressResetData struct {
 }
 
 type IssuedData struct {
-	ManufacturerId           *big.Int
-	TokenId                  *big.Int
-	AftermarketDeviceAddress common.Address
+	TokenId  *big.Int
+	Owner    common.Address
+	ClientId common.Address
 }
 
 type ManufacturerTableSetData struct {
