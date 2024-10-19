@@ -127,6 +127,14 @@ type ComplexityRoot struct {
 		Year  func(childComplexity int) int
 	}
 
+	DeveloperLicense struct {
+		Alias    func(childComplexity int) int
+		ClientID func(childComplexity int) int
+		MintedAt func(childComplexity int) int
+		Owner    func(childComplexity int) int
+		TokenID  func(childComplexity int) int
+	}
+
 	DeviceDefinition struct {
 		Attributes         func(childComplexity int) int
 		DeviceDefinitionID func(childComplexity int) int
@@ -222,6 +230,7 @@ type ComplexityRoot struct {
 		AftermarketDevices func(childComplexity int, first *int, after *string, last *int, before *string, filterBy *model.AftermarketDevicesFilter) int
 		Dcn                func(childComplexity int, by model.DCNBy) int
 		Dcns               func(childComplexity int, first *int, after *string, last *int, before *string, filterBy *model.DCNFilter) int
+		DeveloperLicense   func(childComplexity int, by model.DeveloperLicenseBy) int
 		DeviceDefinition   func(childComplexity int, by model.DeviceDefinitionBy) int
 		Manufacturer       func(childComplexity int, by model.ManufacturerBy) int
 		Node               func(childComplexity int, id string) int
@@ -346,6 +355,7 @@ type QueryResolver interface {
 	AftermarketDevices(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.AftermarketDevicesFilter) (*model.AftermarketDeviceConnection, error)
 	Dcn(ctx context.Context, by model.DCNBy) (*model.Dcn, error)
 	Dcns(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.DCNFilter) (*model.DCNConnection, error)
+	DeveloperLicense(ctx context.Context, by model.DeveloperLicenseBy) (*model.DeveloperLicense, error)
 	DeviceDefinition(ctx context.Context, by model.DeviceDefinitionBy) (*model.DeviceDefinition, error)
 	Manufacturer(ctx context.Context, by model.ManufacturerBy) (*model.Manufacturer, error)
 	Rewards(ctx context.Context, user common.Address) (*model.UserRewards, error)
@@ -693,6 +703,41 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Definition.Year(childComplexity), true
+
+	case "DeveloperLicense.alias":
+		if e.complexity.DeveloperLicense.Alias == nil {
+			break
+		}
+
+		return e.complexity.DeveloperLicense.Alias(childComplexity), true
+
+	case "DeveloperLicense.clientId":
+		if e.complexity.DeveloperLicense.ClientID == nil {
+			break
+		}
+
+		return e.complexity.DeveloperLicense.ClientID(childComplexity), true
+
+	case "DeveloperLicense.mintedAt":
+		if e.complexity.DeveloperLicense.MintedAt == nil {
+			break
+		}
+
+		return e.complexity.DeveloperLicense.MintedAt(childComplexity), true
+
+	case "DeveloperLicense.owner":
+		if e.complexity.DeveloperLicense.Owner == nil {
+			break
+		}
+
+		return e.complexity.DeveloperLicense.Owner(childComplexity), true
+
+	case "DeveloperLicense.tokenId":
+		if e.complexity.DeveloperLicense.TokenID == nil {
+			break
+		}
+
+		return e.complexity.DeveloperLicense.TokenID(childComplexity), true
 
 	case "DeviceDefinition.attributes":
 		if e.complexity.DeviceDefinition.Attributes == nil {
@@ -1129,6 +1174,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Dcns(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["filterBy"].(*model.DCNFilter)), true
+
+	case "Query.developerLicense":
+		if e.complexity.Query.DeveloperLicense == nil {
+			break
+		}
+
+		args, err := ec.field_Query_developerLicense_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.DeveloperLicense(childComplexity, args["by"].(model.DeveloperLicenseBy)), true
 
 	case "Query.deviceDefinition":
 		if e.complexity.Query.DeviceDefinition == nil {
@@ -1608,6 +1665,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputAftermarketDevicesFilter,
 		ec.unmarshalInputDCNBy,
 		ec.unmarshalInputDCNFilter,
+		ec.unmarshalInputDeveloperLicenseBy,
 		ec.unmarshalInputDeviceDefinitionBy,
 		ec.unmarshalInputDeviceDefinitionFilter,
 		ec.unmarshalInputManufacturerBy,
@@ -1696,7 +1754,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 	return introspection.WrapTypeFromDef(ec.Schema(), ec.Schema().Types[name]), nil
 }
 
-//go:embed "schema/aftermarket.graphqls" "schema/dcn.graphqls" "schema/devicedefinition.graphqls" "schema/manufacturer.graphqls" "schema/privilege.graphqls" "schema/reward.graphqls" "schema/sacd.graphqls" "schema/schema.graphqls" "schema/synthetic.graphqls" "schema/vehicle.graphqls"
+//go:embed "schema/aftermarket.graphqls" "schema/dcn.graphqls" "schema/developerlicense.graphqls" "schema/devicedefinition.graphqls" "schema/manufacturer.graphqls" "schema/privilege.graphqls" "schema/reward.graphqls" "schema/sacd.graphqls" "schema/schema.graphqls" "schema/synthetic.graphqls" "schema/vehicle.graphqls"
 var sourcesFS embed.FS
 
 func sourceData(filename string) string {
@@ -1710,6 +1768,7 @@ func sourceData(filename string) string {
 var sources = []*ast.Source{
 	{Name: "schema/aftermarket.graphqls", Input: sourceData("schema/aftermarket.graphqls"), BuiltIn: false},
 	{Name: "schema/dcn.graphqls", Input: sourceData("schema/dcn.graphqls"), BuiltIn: false},
+	{Name: "schema/developerlicense.graphqls", Input: sourceData("schema/developerlicense.graphqls"), BuiltIn: false},
 	{Name: "schema/devicedefinition.graphqls", Input: sourceData("schema/devicedefinition.graphqls"), BuiltIn: false},
 	{Name: "schema/manufacturer.graphqls", Input: sourceData("schema/manufacturer.graphqls"), BuiltIn: false},
 	{Name: "schema/privilege.graphqls", Input: sourceData("schema/privilege.graphqls"), BuiltIn: false},
@@ -2491,6 +2550,38 @@ func (ec *executionContext) field_Query_dcns_argsFilterBy(
 	}
 
 	var zeroVal *model.DCNFilter
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_developerLicense_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Query_developerLicense_argsBy(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["by"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Query_developerLicense_argsBy(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (model.DeveloperLicenseBy, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["by"]
+	if !ok {
+		var zeroVal model.DeveloperLicenseBy
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("by"))
+	if tmp, ok := rawArgs["by"]; ok {
+		return ec.unmarshalNDeveloperLicenseBy2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeveloperLicenseBy(ctx, tmp)
+	}
+
+	var zeroVal model.DeveloperLicenseBy
 	return zeroVal, nil
 }
 
@@ -5572,6 +5663,223 @@ func (ec *executionContext) fieldContext_Definition_year(_ context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _DeveloperLicense_tokenId(ctx context.Context, field graphql.CollectedField, obj *model.DeveloperLicense) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeveloperLicense_tokenId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TokenID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DeveloperLicense_tokenId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeveloperLicense",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DeveloperLicense_owner(ctx context.Context, field graphql.CollectedField, obj *model.DeveloperLicense) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeveloperLicense_owner(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Owner, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(common.Address)
+	fc.Result = res
+	return ec.marshalNAddress2githubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DeveloperLicense_owner(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeveloperLicense",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Address does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DeveloperLicense_clientId(ctx context.Context, field graphql.CollectedField, obj *model.DeveloperLicense) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeveloperLicense_clientId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ClientID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(common.Address)
+	fc.Result = res
+	return ec.marshalNAddress2githubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DeveloperLicense_clientId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeveloperLicense",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Address does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DeveloperLicense_mintedAt(ctx context.Context, field graphql.CollectedField, obj *model.DeveloperLicense) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeveloperLicense_mintedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MintedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DeveloperLicense_mintedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeveloperLicense",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DeveloperLicense_alias(ctx context.Context, field graphql.CollectedField, obj *model.DeveloperLicense) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeveloperLicense_alias(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Alias, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DeveloperLicense_alias(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeveloperLicense",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _DeviceDefinition_deviceDefinitionId(ctx context.Context, field graphql.CollectedField, obj *model.DeviceDefinition) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_DeviceDefinition_deviceDefinitionId(ctx, field)
 	if err != nil {
@@ -8551,6 +8859,70 @@ func (ec *executionContext) fieldContext_Query_dcns(ctx context.Context, field g
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_dcns_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_developerLicense(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_developerLicense(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().DeveloperLicense(rctx, fc.Args["by"].(model.DeveloperLicenseBy))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.DeveloperLicense)
+	fc.Result = res
+	return ec.marshalODeveloperLicense2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeveloperLicense(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_developerLicense(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "tokenId":
+				return ec.fieldContext_DeveloperLicense_tokenId(ctx, field)
+			case "owner":
+				return ec.fieldContext_DeveloperLicense_owner(ctx, field)
+			case "clientId":
+				return ec.fieldContext_DeveloperLicense_clientId(ctx, field)
+			case "mintedAt":
+				return ec.fieldContext_DeveloperLicense_mintedAt(ctx, field)
+			case "alias":
+				return ec.fieldContext_DeveloperLicense_alias(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DeveloperLicense", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_developerLicense_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -13808,6 +14180,52 @@ func (ec *executionContext) unmarshalInputDCNFilter(ctx context.Context, obj int
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputDeveloperLicenseBy(ctx context.Context, obj interface{}) (model.DeveloperLicenseBy, error) {
+	var it model.DeveloperLicenseBy
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"clientId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "clientId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clientId"))
+			directive0 := func(ctx context.Context) (interface{}, error) {
+				return ec.unmarshalOAddress2ᚖgithubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, v)
+			}
+
+			directive1 := func(ctx context.Context) (interface{}, error) {
+				if ec.directives.OneOf == nil {
+					var zeroVal *common.Address
+					return zeroVal, errors.New("directive oneOf is not implemented")
+				}
+				return ec.directives.OneOf(ctx, obj, directive0)
+			}
+
+			tmp, err := directive1(ctx)
+			if err != nil {
+				return it, graphql.ErrorOnPath(ctx, err)
+			}
+			if data, ok := tmp.(*common.Address); ok {
+				it.ClientID = data
+			} else if tmp == nil {
+				it.ClientID = nil
+			} else {
+				err := fmt.Errorf(`unexpected type %T from directive, should be *github.com/ethereum/go-ethereum/common.Address`, tmp)
+				return it, graphql.ErrorOnPath(ctx, err)
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputDeviceDefinitionBy(ctx context.Context, obj interface{}) (model.DeviceDefinitionBy, error) {
 	var it model.DeviceDefinitionBy
 	asMap := map[string]interface{}{}
@@ -14806,6 +15224,62 @@ func (ec *executionContext) _Definition(ctx context.Context, sel ast.SelectionSe
 	return out
 }
 
+var developerLicenseImplementors = []string{"DeveloperLicense"}
+
+func (ec *executionContext) _DeveloperLicense(ctx context.Context, sel ast.SelectionSet, obj *model.DeveloperLicense) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, developerLicenseImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DeveloperLicense")
+		case "tokenId":
+			out.Values[i] = ec._DeveloperLicense_tokenId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "owner":
+			out.Values[i] = ec._DeveloperLicense_owner(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "clientId":
+			out.Values[i] = ec._DeveloperLicense_clientId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "mintedAt":
+			out.Values[i] = ec._DeveloperLicense_mintedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "alias":
+			out.Values[i] = ec._DeveloperLicense_alias(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var deviceDefinitionImplementors = []string{"DeviceDefinition"}
 
 func (ec *executionContext) _DeviceDefinition(ctx context.Context, sel ast.SelectionSet, obj *model.DeviceDefinition) graphql.Marshaler {
@@ -15723,6 +16197,25 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "developerLicense":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_developerLicense(ctx, field)
 				return res
 			}
 
@@ -17514,6 +18007,11 @@ func (ec *executionContext) marshalNDCNEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋi
 	return ec._DCNEdge(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNDeveloperLicenseBy2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeveloperLicenseBy(ctx context.Context, v interface{}) (model.DeveloperLicenseBy, error) {
+	res, err := ec.unmarshalInputDeveloperLicenseBy(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNDeviceDefinition2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeviceDefinition(ctx context.Context, sel ast.SelectionSet, v model.DeviceDefinition) graphql.Marshaler {
 	return ec._DeviceDefinition(ctx, sel, &v)
 }
@@ -18764,6 +19262,13 @@ func (ec *executionContext) marshalODefinition2ᚖgithubᚗcomᚋDIMOᚑNetwork�
 		return graphql.Null
 	}
 	return ec._Definition(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalODeveloperLicense2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeveloperLicense(ctx context.Context, sel ast.SelectionSet, v *model.DeveloperLicense) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._DeveloperLicense(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalODeviceDefinitionFilter2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeviceDefinitionFilter(ctx context.Context, v interface{}) (*model.DeviceDefinitionFilter, error) {

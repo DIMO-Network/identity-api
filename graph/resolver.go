@@ -73,6 +73,10 @@ type DeviceDefinitionRepository interface {
 	GetDeviceDefinitions(ctx context.Context, tableID, first *int, after *string, last *int, before *string, filterBy *model.DeviceDefinitionFilter) (*model.DeviceDefinitionConnection, error)
 }
 
+type DeveloperLicenseRepository interface {
+	GetDeveloperLicense(ctx context.Context, by model.DeveloperLicenseBy) (*model.DeveloperLicense, error)
+}
+
 // Resolver holds the repositories for the graph resolvers.
 type Resolver struct {
 	aftermarket      AftermarketDeviceRepository
@@ -84,6 +88,7 @@ type Resolver struct {
 	vehicleprivilege vehicleprivilege.Repository
 	vehiclesacd      vehiclesacd.Repository
 	deviceDefinition DeviceDefinitionRepository
+	developerLicense DeveloperLicenseRepository
 }
 
 // NewResolver creates a new Resolver with allocated repositories.

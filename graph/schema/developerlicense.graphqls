@@ -4,7 +4,7 @@ type DeveloperLicense {
   """
   Token id of the developer license as an NFT.
   """
-  tokenId: Int
+  tokenId: Int!
   """
   Address of the license owner.
   """
@@ -21,4 +21,12 @@ type DeveloperLicense {
   An optional, unique alias for this license.
   """
   alias: String
+}
+
+input DeveloperLicenseBy @oneOf {
+  clientId: Address
+}
+
+extend type Query {
+  developerLicense(by: DeveloperLicenseBy!): DeveloperLicense
 }

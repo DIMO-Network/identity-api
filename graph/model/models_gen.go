@@ -163,6 +163,23 @@ type Definition struct {
 	Year  *int    `json:"year,omitempty"`
 }
 
+type DeveloperLicense struct {
+	// Token id of the developer license as an NFT.
+	TokenID int `json:"tokenId"`
+	// Address of the license owner.
+	Owner common.Address `json:"owner"`
+	// OAuth client id of the license, which is also an Ethereum address.
+	ClientID common.Address `json:"clientId"`
+	// The block timestamp at which this license was minted.
+	MintedAt time.Time `json:"mintedAt"`
+	// An optional, unique alias for this license.
+	Alias *string `json:"alias,omitempty"`
+}
+
+type DeveloperLicenseBy struct {
+	ClientID *common.Address `json:"clientId,omitempty"`
+}
+
 // Represents a Device Definition.
 type DeviceDefinition struct {
 	// Device definition id for this device definition.
