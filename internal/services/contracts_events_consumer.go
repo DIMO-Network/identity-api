@@ -779,7 +779,7 @@ func (c *ContractsEventsConsumer) handleDevLicenseIssued(ctx context.Context, e 
 	dl := models.DeveloperLicense{
 		TokenID:  int(args.TokenId.Int64()),
 		Owner:    args.Owner.Bytes(),
-		Address:  args.ClientId.Bytes(),
+		ClientID: args.ClientId.Bytes(),
 		MintedAt: e.Block.Time,
 	}
 

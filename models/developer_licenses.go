@@ -26,7 +26,7 @@ import (
 type DeveloperLicense struct {
 	TokenID  int         `boil:"token_id" json:"token_id" toml:"token_id" yaml:"token_id"`
 	Owner    []byte      `boil:"owner" json:"owner" toml:"owner" yaml:"owner"`
-	Address  []byte      `boil:"address" json:"address" toml:"address" yaml:"address"`
+	ClientID []byte      `boil:"client_id" json:"client_id" toml:"client_id" yaml:"client_id"`
 	MintedAt time.Time   `boil:"minted_at" json:"minted_at" toml:"minted_at" yaml:"minted_at"`
 	Alias    null.String `boil:"alias" json:"alias,omitempty" toml:"alias" yaml:"alias,omitempty"`
 
@@ -37,13 +37,13 @@ type DeveloperLicense struct {
 var DeveloperLicenseColumns = struct {
 	TokenID  string
 	Owner    string
-	Address  string
+	ClientID string
 	MintedAt string
 	Alias    string
 }{
 	TokenID:  "token_id",
 	Owner:    "owner",
-	Address:  "address",
+	ClientID: "client_id",
 	MintedAt: "minted_at",
 	Alias:    "alias",
 }
@@ -51,13 +51,13 @@ var DeveloperLicenseColumns = struct {
 var DeveloperLicenseTableColumns = struct {
 	TokenID  string
 	Owner    string
-	Address  string
+	ClientID string
 	MintedAt string
 	Alias    string
 }{
 	TokenID:  "developer_licenses.token_id",
 	Owner:    "developer_licenses.owner",
-	Address:  "developer_licenses.address",
+	ClientID: "developer_licenses.client_id",
 	MintedAt: "developer_licenses.minted_at",
 	Alias:    "developer_licenses.alias",
 }
@@ -67,13 +67,13 @@ var DeveloperLicenseTableColumns = struct {
 var DeveloperLicenseWhere = struct {
 	TokenID  whereHelperint
 	Owner    whereHelper__byte
-	Address  whereHelper__byte
+	ClientID whereHelper__byte
 	MintedAt whereHelpertime_Time
 	Alias    whereHelpernull_String
 }{
 	TokenID:  whereHelperint{field: "\"identity_api\".\"developer_licenses\".\"token_id\""},
 	Owner:    whereHelper__byte{field: "\"identity_api\".\"developer_licenses\".\"owner\""},
-	Address:  whereHelper__byte{field: "\"identity_api\".\"developer_licenses\".\"address\""},
+	ClientID: whereHelper__byte{field: "\"identity_api\".\"developer_licenses\".\"client_id\""},
 	MintedAt: whereHelpertime_Time{field: "\"identity_api\".\"developer_licenses\".\"minted_at\""},
 	Alias:    whereHelpernull_String{field: "\"identity_api\".\"developer_licenses\".\"alias\""},
 }
@@ -95,8 +95,8 @@ func (*developerLicenseR) NewStruct() *developerLicenseR {
 type developerLicenseL struct{}
 
 var (
-	developerLicenseAllColumns            = []string{"token_id", "owner", "address", "minted_at", "alias"}
-	developerLicenseColumnsWithoutDefault = []string{"token_id", "owner", "address", "minted_at"}
+	developerLicenseAllColumns            = []string{"token_id", "owner", "client_id", "minted_at", "alias"}
+	developerLicenseColumnsWithoutDefault = []string{"token_id", "owner", "client_id", "minted_at"}
 	developerLicenseColumnsWithDefault    = []string{"alias"}
 	developerLicensePrimaryKeyColumns     = []string{"token_id"}
 	developerLicenseGeneratedColumns      = []string{}
