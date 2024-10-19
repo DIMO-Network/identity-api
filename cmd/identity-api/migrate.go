@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/pressly/goose/v3"
@@ -10,6 +11,7 @@ import (
 )
 
 func migrateDatabase(logger zerolog.Logger, settings *config.Settings, command string) {
+	fmt.Println("xdd")
 	var db *sql.DB
 	// setup database
 	db, err := sql.Open("postgres", settings.DB.BuildConnectionString(true))
@@ -35,7 +37,8 @@ func migrateDatabase(logger zerolog.Logger, settings *config.Settings, command s
 	}
 	goose.SetTableName("identity_api.migrations")
 	if err := goose.RunContext(context.Background(), command, db, "migrations"); err != nil {
-		logger.Fatal().Msgf("failed to apply go code migrations: %v\n", err)
+		fmt.Println("xdt", err)
+		logger.Fatal().Err(err).Msgf("failed to apply go code migrations: %v\n", err)
 	}
 	// if we add any code migrations import _ "github.com/DIMO-Network/devices-api/migrations" // migrations won't work without this
 }

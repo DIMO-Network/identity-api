@@ -71,6 +71,9 @@ const (
 	// Rewards.
 	TokensTransferredForDevice           EventName = "TokensTransferredForDevice"
 	TokensTransferredForConnectionStreak EventName = "TokensTransferredForConnectionStreak"
+
+	// Developer License
+	Issued EventName = "Issued"
 )
 
 func (r EventName) String() string {
@@ -107,6 +110,7 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 	DCNResolverAddr := common.HexToAddress(c.settings.DCNResolverAddr)
 	RewardsContractAddr := common.HexToAddress(c.settings.RewardsContractAddr)
 	sacdAddr := common.HexToAddress(c.settings.SACDAddress)
+	devLicenseAddr := common.HexToAddress(c.settings.DevLicenseFactoryAddr)
 
 	var data ContractEventData
 	if err := json.Unmarshal(event.Data, &data); err != nil {
@@ -192,6 +196,11 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 			return c.handleTokensTransferredForDevice(ctx, &data)
 		case TokensTransferredForConnectionStreak:
 			return c.handleTokensTransferredForConnectionStreak(ctx, &data)
+		}
+	case devLicenseAddr:
+		switch eventName {
+		case Issued:
+			return c.handleDevLicenseIssued(ctx, &data)
 		}
 	}
 
@@ -745,6 +754,24 @@ func (c *ContractsEventsConsumer) handleTokensTransferredForConnectionStreak(ctx
 
 func (c *ContractsEventsConsumer) handleAftermarketDeviceAddressResetEvent(ctx context.Context, e *ContractEventData) error {
 	var args AftermarketDeviceAddressResetData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	amd, err := models.AftermarketDevices(
+		models.AftermarketDeviceWhere.ID.EQ(int(args.TokenId.Int64())),
+	).One(ctx, c.dbs.DBS().Reader)
+	if err != nil {
+		return err
+	}
+
+	amd.Address = args.AftermarketDeviceAddress.Bytes()
+	_, err = amd.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.AftermarketDeviceColumns.Address))
+	return err
+}
+
+func (c *ContractsEventsConsumer) handleDevLicenseIssued(ctx context.Context, e *ContractEventData) error {
+	var args IssuedData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
 		return err
 	}
