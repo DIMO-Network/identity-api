@@ -1,0 +1,24 @@
+# Sacd Types
+
+type DeveloperLicense {
+  """
+  Token id of the developer license as an NFT.
+  """
+  tokenId: Int
+  """
+  Address of the license owner.
+  """
+  owner: Address!
+  """
+  OAuth client id of the license, which is also an Ethereum address.
+  """
+  clientId: Address!
+  """
+  The block timestamp at which this license was minted.
+  """
+  mintedAt: Time!
+  """
+  An optional, unique alias for this license.
+  """
+  alias: String
+}

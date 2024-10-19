@@ -73,7 +73,8 @@ const (
 	TokensTransferredForConnectionStreak EventName = "TokensTransferredForConnectionStreak"
 
 	// Developer License
-	Issued EventName = "Issued"
+	Issued          EventName = "Issued"
+	LicenseAliasSet EventName = "LicenseAliasSet"
 )
 
 func (r EventName) String() string {
@@ -201,6 +202,8 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 		switch eventName {
 		case Issued:
 			return c.handleDevLicenseIssued(ctx, &data)
+		case LicenseAliasSet:
+			return c.handleDevLicenseAliasSet(ctx, &data)
 		}
 	}
 
@@ -784,4 +787,19 @@ func (c *ContractsEventsConsumer) handleDevLicenseIssued(ctx context.Context, e 
 	}
 
 	return dl.Upsert(ctx, c.dbs.DBS().Writer, false, []string{models.DeveloperLicenseColumns.TokenID}, boil.None(), boil.Infer())
+}
+
+func (c *ContractsEventsConsumer) handleDevLicenseAliasSet(ctx context.Context, e *ContractEventData) error {
+	var args LicenseAliasSetData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	dl := models.DeveloperLicense{
+		TokenID: int(args.TokenId.Int64()),
+		Alias:   null.StringFrom(args.LicenseAlias),
+	}
+
+	_, err := dl.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.DeveloperLicenseColumns.Alias))
+	return err
 }

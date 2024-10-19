@@ -164,6 +164,11 @@ type IssuedData struct {
 	ClientId common.Address
 }
 
+type LicenseAliasSetData struct {
+	TokenId      *big.Int
+	LicenseAlias string
+}
+
 type ManufacturerTableSetData struct {
 	ManufacturerId *big.Int
 	TableId        *big.Int
