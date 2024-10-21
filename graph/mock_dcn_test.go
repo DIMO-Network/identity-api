@@ -21,6 +21,7 @@ import (
 type MockDCNRepository struct {
 	ctrl     *gomock.Controller
 	recorder *MockDCNRepositoryMockRecorder
+	isgomock struct{}
 }
 
 // MockDCNRepositoryMockRecorder is the mock recorder for MockDCNRepository.
@@ -41,61 +42,61 @@ func (m *MockDCNRepository) EXPECT() *MockDCNRepositoryMockRecorder {
 }
 
 // GetDCN mocks base method.
-func (m *MockDCNRepository) GetDCN(arg0 context.Context, arg1 model.DCNBy) (*model.Dcn, error) {
+func (m *MockDCNRepository) GetDCN(ctx context.Context, by model.DCNBy) (*model.Dcn, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetDCN", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetDCN", ctx, by)
 	ret0, _ := ret[0].(*model.Dcn)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetDCN indicates an expected call of GetDCN.
-func (mr *MockDCNRepositoryMockRecorder) GetDCN(arg0, arg1 any) *gomock.Call {
+func (mr *MockDCNRepositoryMockRecorder) GetDCN(ctx, by any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDCN", reflect.TypeOf((*MockDCNRepository)(nil).GetDCN), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDCN", reflect.TypeOf((*MockDCNRepository)(nil).GetDCN), ctx, by)
 }
 
 // GetDCNByName mocks base method.
-func (m *MockDCNRepository) GetDCNByName(arg0 context.Context, arg1 string) (*model.Dcn, error) {
+func (m *MockDCNRepository) GetDCNByName(ctx context.Context, name string) (*model.Dcn, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetDCNByName", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetDCNByName", ctx, name)
 	ret0, _ := ret[0].(*model.Dcn)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetDCNByName indicates an expected call of GetDCNByName.
-func (mr *MockDCNRepositoryMockRecorder) GetDCNByName(arg0, arg1 any) *gomock.Call {
+func (mr *MockDCNRepositoryMockRecorder) GetDCNByName(ctx, name any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDCNByName", reflect.TypeOf((*MockDCNRepository)(nil).GetDCNByName), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDCNByName", reflect.TypeOf((*MockDCNRepository)(nil).GetDCNByName), ctx, name)
 }
 
 // GetDCNByNode mocks base method.
-func (m *MockDCNRepository) GetDCNByNode(arg0 context.Context, arg1 []byte) (*model.Dcn, error) {
+func (m *MockDCNRepository) GetDCNByNode(ctx context.Context, node []byte) (*model.Dcn, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetDCNByNode", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetDCNByNode", ctx, node)
 	ret0, _ := ret[0].(*model.Dcn)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetDCNByNode indicates an expected call of GetDCNByNode.
-func (mr *MockDCNRepositoryMockRecorder) GetDCNByNode(arg0, arg1 any) *gomock.Call {
+func (mr *MockDCNRepositoryMockRecorder) GetDCNByNode(ctx, node any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDCNByNode", reflect.TypeOf((*MockDCNRepository)(nil).GetDCNByNode), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDCNByNode", reflect.TypeOf((*MockDCNRepository)(nil).GetDCNByNode), ctx, node)
 }
 
 // GetDCNs mocks base method.
-func (m *MockDCNRepository) GetDCNs(arg0 context.Context, arg1 *int, arg2 *string, arg3 *int, arg4 *string, arg5 *model.DCNFilter) (*model.DCNConnection, error) {
+func (m *MockDCNRepository) GetDCNs(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.DCNFilter) (*model.DCNConnection, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetDCNs", arg0, arg1, arg2, arg3, arg4, arg5)
+	ret := m.ctrl.Call(m, "GetDCNs", ctx, first, after, last, before, filterBy)
 	ret0, _ := ret[0].(*model.DCNConnection)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetDCNs indicates an expected call of GetDCNs.
-func (mr *MockDCNRepositoryMockRecorder) GetDCNs(arg0, arg1, arg2, arg3, arg4, arg5 any) *gomock.Call {
+func (mr *MockDCNRepositoryMockRecorder) GetDCNs(ctx, first, after, last, before, filterBy any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDCNs", reflect.TypeOf((*MockDCNRepository)(nil).GetDCNs), arg0, arg1, arg2, arg3, arg4, arg5)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDCNs", reflect.TypeOf((*MockDCNRepository)(nil).GetDCNs), ctx, first, after, last, before, filterBy)
 }

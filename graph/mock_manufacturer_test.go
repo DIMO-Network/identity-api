@@ -21,6 +21,7 @@ import (
 type MockManufacturerRepository struct {
 	ctrl     *gomock.Controller
 	recorder *MockManufacturerRepositoryMockRecorder
+	isgomock struct{}
 }
 
 // MockManufacturerRepositoryMockRecorder is the mock recorder for MockManufacturerRepository.
@@ -41,16 +42,16 @@ func (m *MockManufacturerRepository) EXPECT() *MockManufacturerRepositoryMockRec
 }
 
 // GetManufacturer mocks base method.
-func (m *MockManufacturerRepository) GetManufacturer(arg0 context.Context, arg1 model.ManufacturerBy) (*model.Manufacturer, error) {
+func (m *MockManufacturerRepository) GetManufacturer(ctx context.Context, by model.ManufacturerBy) (*model.Manufacturer, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetManufacturer", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetManufacturer", ctx, by)
 	ret0, _ := ret[0].(*model.Manufacturer)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetManufacturer indicates an expected call of GetManufacturer.
-func (mr *MockManufacturerRepositoryMockRecorder) GetManufacturer(arg0, arg1 any) *gomock.Call {
+func (mr *MockManufacturerRepositoryMockRecorder) GetManufacturer(ctx, by any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetManufacturer", reflect.TypeOf((*MockManufacturerRepository)(nil).GetManufacturer), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetManufacturer", reflect.TypeOf((*MockManufacturerRepository)(nil).GetManufacturer), ctx, by)
 }
