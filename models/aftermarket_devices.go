@@ -36,6 +36,7 @@ type AftermarketDevice struct {
 	ClaimedAt        null.Time   `boil:"claimed_at" json:"claimed_at,omitempty" toml:"claimed_at" yaml:"claimed_at,omitempty"`
 	DevEui           null.String `boil:"dev_eui" json:"dev_eui,omitempty" toml:"dev_eui" yaml:"dev_eui,omitempty"`
 	HardwareRevision null.String `boil:"hardware_revision" json:"hardware_revision,omitempty" toml:"hardware_revision" yaml:"hardware_revision,omitempty"`
+	PairedAt         null.Time   `boil:"paired_at" json:"paired_at,omitempty" toml:"paired_at" yaml:"paired_at,omitempty"`
 
 	R *aftermarketDeviceR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L aftermarketDeviceL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -54,6 +55,7 @@ var AftermarketDeviceColumns = struct {
 	ClaimedAt        string
 	DevEui           string
 	HardwareRevision string
+	PairedAt         string
 }{
 	ID:               "id",
 	Address:          "address",
@@ -67,6 +69,7 @@ var AftermarketDeviceColumns = struct {
 	ClaimedAt:        "claimed_at",
 	DevEui:           "dev_eui",
 	HardwareRevision: "hardware_revision",
+	PairedAt:         "paired_at",
 }
 
 var AftermarketDeviceTableColumns = struct {
@@ -82,6 +85,7 @@ var AftermarketDeviceTableColumns = struct {
 	ClaimedAt        string
 	DevEui           string
 	HardwareRevision string
+	PairedAt         string
 }{
 	ID:               "aftermarket_devices.id",
 	Address:          "aftermarket_devices.address",
@@ -95,6 +99,7 @@ var AftermarketDeviceTableColumns = struct {
 	ClaimedAt:        "aftermarket_devices.claimed_at",
 	DevEui:           "aftermarket_devices.dev_eui",
 	HardwareRevision: "aftermarket_devices.hardware_revision",
+	PairedAt:         "aftermarket_devices.paired_at",
 }
 
 // Generated where
@@ -277,6 +282,7 @@ var AftermarketDeviceWhere = struct {
 	ClaimedAt        whereHelpernull_Time
 	DevEui           whereHelpernull_String
 	HardwareRevision whereHelpernull_String
+	PairedAt         whereHelpernull_Time
 }{
 	ID:               whereHelperint{field: "\"identity_api\".\"aftermarket_devices\".\"id\""},
 	Address:          whereHelper__byte{field: "\"identity_api\".\"aftermarket_devices\".\"address\""},
@@ -290,6 +296,7 @@ var AftermarketDeviceWhere = struct {
 	ClaimedAt:        whereHelpernull_Time{field: "\"identity_api\".\"aftermarket_devices\".\"claimed_at\""},
 	DevEui:           whereHelpernull_String{field: "\"identity_api\".\"aftermarket_devices\".\"dev_eui\""},
 	HardwareRevision: whereHelpernull_String{field: "\"identity_api\".\"aftermarket_devices\".\"hardware_revision\""},
+	PairedAt:         whereHelpernull_Time{field: "\"identity_api\".\"aftermarket_devices\".\"paired_at\""},
 }
 
 // AftermarketDeviceRels is where relationship names are stored.
@@ -340,9 +347,9 @@ func (r *aftermarketDeviceR) GetAftermarketTokenRewards() RewardSlice {
 type aftermarketDeviceL struct{}
 
 var (
-	aftermarketDeviceAllColumns            = []string{"id", "address", "owner", "serial", "imei", "minted_at", "vehicle_id", "beneficiary", "manufacturer_id", "claimed_at", "dev_eui", "hardware_revision"}
+	aftermarketDeviceAllColumns            = []string{"id", "address", "owner", "serial", "imei", "minted_at", "vehicle_id", "beneficiary", "manufacturer_id", "claimed_at", "dev_eui", "hardware_revision", "paired_at"}
 	aftermarketDeviceColumnsWithoutDefault = []string{"id", "address", "owner", "minted_at", "beneficiary", "manufacturer_id"}
-	aftermarketDeviceColumnsWithDefault    = []string{"serial", "imei", "vehicle_id", "claimed_at", "dev_eui", "hardware_revision"}
+	aftermarketDeviceColumnsWithDefault    = []string{"serial", "imei", "vehicle_id", "claimed_at", "dev_eui", "hardware_revision", "paired_at"}
 	aftermarketDevicePrimaryKeyColumns     = []string{"id"}
 	aftermarketDeviceGeneratedColumns      = []string{}
 )

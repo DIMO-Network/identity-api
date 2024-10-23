@@ -574,9 +574,10 @@ func (c *ContractsEventsConsumer) handleAftermarketDevicePairedEvent(ctx context
 	ad := models.AftermarketDevice{
 		ID:        int(args.AftermarketDeviceNode.Int64()),
 		VehicleID: null.IntFrom(int(args.VehicleNode.Int64())),
+		PairedAt:  null.TimeFrom(e.Block.Time),
 	}
 
-	_, err := ad.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.AftermarketDeviceColumns.VehicleID))
+	_, err := ad.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.AftermarketDeviceColumns.VehicleID, models.AftermarketDeviceColumns.PairedAt))
 	return err
 }
 
@@ -588,7 +589,7 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceUnpairedEvent(ctx conte
 
 	ad := models.AftermarketDevice{ID: int(args.AftermarketDeviceNode.Int64())}
 
-	_, err := ad.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.AftermarketDeviceColumns.VehicleID))
+	_, err := ad.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.AftermarketDeviceColumns.VehicleID, models.AftermarketDeviceColumns.PairedAt))
 	return err
 }
 
