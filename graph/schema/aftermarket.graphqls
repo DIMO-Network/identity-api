@@ -86,6 +86,10 @@ type AftermarketDevice implements Node {
   The earnings attached to the aftermarket device
   """
   earnings: AftermarketDeviceEarnings
+  """
+  The block timestamp at which this device was paired, if it is presently paired.
+  """
+  pairedAt: Time
 }
 
 """
