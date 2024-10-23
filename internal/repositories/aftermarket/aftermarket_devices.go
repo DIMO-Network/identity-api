@@ -241,7 +241,7 @@ func IDToToken(b []byte) (int, error) {
 	return pk.TokenID, nil
 }
 
-func (r *Repository) GetAftermarketDevicesForManufacturer(ctx context.Context, obj *model.Manufacturer, first *int, after *string, last *int, before *string, filterBy *model.AftermarketDevicesFilter) (*gmodel.AftermarketDeviceConnection, error) {
+func (r *Repository) GetAftermarketDevicesForManufacturer(ctx context.Context, obj *gmodel.Manufacturer, first *int, after *string, last *int, before *string, filterBy *model.AftermarketDevicesFilter) (*gmodel.AftermarketDeviceConnection, error) {
 	if filterBy != nil {
 		if filterBy.ManufacturerID != nil {
 			if filterBy.ManufacturerID != &obj.TokenID {
@@ -252,7 +252,7 @@ func (r *Repository) GetAftermarketDevicesForManufacturer(ctx context.Context, o
 		return r.GetAftermarketDevices(ctx, first, after, last, before, filterBy)
 	}
 
-	filterBy = &model.AftermarketDevicesFilter{
+	filterBy = &gmodel.AftermarketDevicesFilter{
 		ManufacturerID: &obj.TokenID,
 	}
 	return r.GetAftermarketDevices(ctx, first, after, last, before, filterBy)
