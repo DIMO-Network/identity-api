@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/DIMO-Network/identity-api/graph/model"
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
@@ -241,7 +240,7 @@ func IDToToken(b []byte) (int, error) {
 	return pk.TokenID, nil
 }
 
-func (r *Repository) GetAftermarketDevicesForManufacturer(ctx context.Context, obj *gmodel.Manufacturer, first *int, after *string, last *int, before *string, filterBy *model.AftermarketDevicesFilter) (*gmodel.AftermarketDeviceConnection, error) {
+func (r *Repository) GetAftermarketDevicesForManufacturer(ctx context.Context, obj *gmodel.Manufacturer, first *int, after *string, last *int, before *string, filterBy *gmodel.AftermarketDevicesFilter) (*gmodel.AftermarketDeviceConnection, error) {
 	if filterBy != nil {
 		if filterBy.ManufacturerID != nil {
 			if filterBy.ManufacturerID != &obj.TokenID {
