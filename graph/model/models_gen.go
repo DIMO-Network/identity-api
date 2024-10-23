@@ -49,9 +49,11 @@ type AftermarketDevice struct {
 	// The Image Url of the device
 	Image string `json:"image"`
 	// The earnings attached to the aftermarket device
-	Earnings       *AftermarketDeviceEarnings `json:"earnings,omitempty"`
-	ManufacturerID int                        `json:"-"`
-	VehicleID      *int                       `json:"-"`
+	Earnings *AftermarketDeviceEarnings `json:"earnings,omitempty"`
+	// The block timestamp at which this device was paired, if it is presently paired.
+	PairedAt       *time.Time `json:"pairedAt,omitempty"`
+	ManufacturerID int        `json:"-"`
+	VehicleID      *int       `json:"-"`
 }
 
 func (AftermarketDevice) IsNode()            {}

@@ -221,6 +221,7 @@ func ToAPI(d *models.AftermarketDevice, imageURL string) (*gmodel.AftermarketDev
 		Name:             name,
 		Image:            imageURL,
 		HardwareRevision: d.HardwareRevision.Ptr(),
+		PairedAt:         d.PairedAt.Ptr(),
 	}, nil
 }
 
