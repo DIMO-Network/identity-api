@@ -57,6 +57,7 @@ const (
 	VehicleNodeMinted                     EventName = "VehicleNodeMinted"
 	VehicleAttributeSet                   EventName = "VehicleAttributeSet"
 	VehicleNodeMintedWithDeviceDefinition EventName = "VehicleNodeMintedWithDeviceDefinition"
+	DeviceDefinitionIdSet                 EventName = "DeviceDefinitionIdSet"
 
 	// Synthetic devices.
 	SyntheticDeviceNodeMinted EventName = "SyntheticDeviceNodeMinted"
@@ -133,6 +134,8 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 			return c.handleVehicleNodeMintedWithDeviceDefinitionEvent(ctx, &data)
 		case VehicleAttributeSet:
 			return c.handleVehicleAttributeSetEvent(ctx, &data)
+		case DeviceDefinitionIdSet:
+			return c.handleDeviceDefinitionIdSet(ctx, &data)
 
 		case AftermarketDeviceNodeMinted:
 			return c.handleAftermarketDeviceMintedEvent(ctx, &data)
@@ -382,6 +385,30 @@ func (c *ContractsEventsConsumer) handleVehicleAttributeSetEvent(ctx context.Con
 	default:
 		return fmt.Errorf("unrecognized vehicle attribute %q", args.Attribute)
 	}
+}
+
+func (c *ContractsEventsConsumer) handleDeviceDefinitionIdSet(ctx context.Context, e *ContractEventData) error {
+	logger := c.log.With().Str("EventName", Transfer.String()).Logger()
+
+	var args DeviceDefinitionIdSetData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	vehicle := models.Vehicle{
+		ID:                 int(args.VehicleId.Int64()),
+		DeviceDefinitionID: null.StringFrom(args.DDID),
+	}
+
+	// TODO(elffjs): Should we try to update the MMY fields using Tableland?
+	_, err := vehicle.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.VehicleColumns.DeviceDefinitionID))
+	if err != nil {
+		return err
+	}
+
+	logger.Info().Int64("vehicleId", args.VehicleId.Int64()).Msgf("Vehicle definition updated to %s.", args.DDID)
+
+	return nil
 }
 
 func (c *ContractsEventsConsumer) handleVehicleTransferEvent(ctx context.Context, e *ContractEventData) error {

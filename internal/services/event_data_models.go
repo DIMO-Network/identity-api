@@ -177,3 +177,8 @@ type PermissionsSetData struct {
 	Expiration  *big.Int
 	Source      string
 }
+
+type DeviceDefinitionIdSetData struct {
+	VehicleId *big.Int
+	DDID      string
+}
