@@ -401,6 +401,7 @@ func (c *ContractsEventsConsumer) handleDeviceDefinitionIdSet(ctx context.Contex
 	}
 
 	// TODO(elffjs): Should we try to update the MMY fields using Tableland?
+	// TODO(elffjs): Maybe it's interesting if the update count is zero?
 	_, err := vehicle.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.VehicleColumns.DeviceDefinitionID))
 	if err != nil {
 		return err
