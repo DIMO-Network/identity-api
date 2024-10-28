@@ -182,3 +182,19 @@ type DeviceDefinitionIdSetData struct {
 	VehicleId *big.Int
 	DDID      string
 }
+
+type IssuedData struct {
+	TokenID  *big.Int
+	Owner    common.Address
+	ClientID common.Address
+}
+
+type RedirectUriEnabledData struct {
+	TokenID *big.Int
+	URI     string
+}
+
+type RedirectUriDisabledData struct {
+	TokenID *big.Int
+	URI     string
+}
