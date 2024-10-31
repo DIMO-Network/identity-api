@@ -81,13 +81,16 @@ var DeveloperLicenseWhere = struct {
 // DeveloperLicenseRels is where relationship names are stored.
 var DeveloperLicenseRels = struct {
 	RedirectUris string
+	Signers      string
 }{
 	RedirectUris: "RedirectUris",
+	Signers:      "Signers",
 }
 
 // developerLicenseR is where relationships are stored.
 type developerLicenseR struct {
 	RedirectUris RedirectURISlice `boil:"RedirectUris" json:"RedirectUris" toml:"RedirectUris" yaml:"RedirectUris"`
+	Signers      SignerSlice      `boil:"Signers" json:"Signers" toml:"Signers" yaml:"Signers"`
 }
 
 // NewStruct creates a new relationship struct
@@ -100,6 +103,13 @@ func (r *developerLicenseR) GetRedirectUris() RedirectURISlice {
 		return nil
 	}
 	return r.RedirectUris
+}
+
+func (r *developerLicenseR) GetSigners() SignerSlice {
+	if r == nil {
+		return nil
+	}
+	return r.Signers
 }
 
 // developerLicenseL is where Load methods for each relationship are stored.
@@ -432,6 +442,20 @@ func (o *DeveloperLicense) RedirectUris(mods ...qm.QueryMod) redirectURIQuery {
 	return RedirectUris(queryMods...)
 }
 
+// Signers retrieves all the signer's Signers with an executor.
+func (o *DeveloperLicense) Signers(mods ...qm.QueryMod) signerQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"identity_api\".\"signers\".\"developer_license_id\"=?", o.ID),
+	)
+
+	return Signers(queryMods...)
+}
+
 // LoadRedirectUris allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for a 1-M or N-M relationship.
 func (developerLicenseL) LoadRedirectUris(ctx context.Context, e boil.ContextExecutor, singular bool, maybeDeveloperLicense interface{}, mods queries.Applicator) error {
@@ -545,6 +569,119 @@ func (developerLicenseL) LoadRedirectUris(ctx context.Context, e boil.ContextExe
 	return nil
 }
 
+// LoadSigners allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (developerLicenseL) LoadSigners(ctx context.Context, e boil.ContextExecutor, singular bool, maybeDeveloperLicense interface{}, mods queries.Applicator) error {
+	var slice []*DeveloperLicense
+	var object *DeveloperLicense
+
+	if singular {
+		var ok bool
+		object, ok = maybeDeveloperLicense.(*DeveloperLicense)
+		if !ok {
+			object = new(DeveloperLicense)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeDeveloperLicense)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeDeveloperLicense))
+			}
+		}
+	} else {
+		s, ok := maybeDeveloperLicense.(*[]*DeveloperLicense)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeDeveloperLicense)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeDeveloperLicense))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &developerLicenseR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &developerLicenseR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`identity_api.signers`),
+		qm.WhereIn(`identity_api.signers.developer_license_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load signers")
+	}
+
+	var resultSlice []*Signer
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice signers")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on signers")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for signers")
+	}
+
+	if len(signerAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.Signers = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &signerR{}
+			}
+			foreign.R.DeveloperLicense = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.DeveloperLicenseID {
+				local.R.Signers = append(local.R.Signers, foreign)
+				if foreign.R == nil {
+					foreign.R = &signerR{}
+				}
+				foreign.R.DeveloperLicense = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
 // AddRedirectUris adds the given related objects to the existing relationships
 // of the developer_license, optionally inserting them as new records.
 // Appends related to o.R.RedirectUris.
@@ -589,6 +726,59 @@ func (o *DeveloperLicense) AddRedirectUris(ctx context.Context, exec boil.Contex
 	for _, rel := range related {
 		if rel.R == nil {
 			rel.R = &redirectURIR{
+				DeveloperLicense: o,
+			}
+		} else {
+			rel.R.DeveloperLicense = o
+		}
+	}
+	return nil
+}
+
+// AddSigners adds the given related objects to the existing relationships
+// of the developer_license, optionally inserting them as new records.
+// Appends related to o.R.Signers.
+// Sets related.R.DeveloperLicense appropriately.
+func (o *DeveloperLicense) AddSigners(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Signer) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.DeveloperLicenseID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"identity_api\".\"signers\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"developer_license_id"}),
+				strmangle.WhereClause("\"", "\"", 2, signerPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.DeveloperLicenseID, rel.Signer}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.DeveloperLicenseID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &developerLicenseR{
+			Signers: related,
+		}
+	} else {
+		o.R.Signers = append(o.R.Signers, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &signerR{
 				DeveloperLicense: o,
 			}
 		} else {

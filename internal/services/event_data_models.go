@@ -198,3 +198,13 @@ type RedirectUriDisabledData struct {
 	TokenID *big.Int
 	URI     string
 }
+
+type SignerEnabledData struct {
+	TokenID *big.Int
+	Signer  common.Address
+}
+
+type SignerDisabledData struct {
+	TokenID *big.Int
+	Signer  common.Address
+}

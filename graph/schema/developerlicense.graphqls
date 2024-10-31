@@ -1,0 +1,36 @@
+# DeviceDefinition related types
+
+extend type Query {
+  """
+  View a particular device definition.
+  """
+  developerLicenses(
+    first: Int
+    after: String
+    last: Int
+    before: String
+  ): DeveloperLicenseConnection!
+}
+
+"""
+Represents a Device Definition.
+"""
+type DeveloperLicense {
+  tokenId: Int!
+  owner: Address!
+  clientId: Address!
+  alias: String
+  mintedAt: Time!
+}
+
+type DeveloperLicenseConnection {
+  totalCount: Int!
+  edges: [DeveloperLicenseEdge!]!
+  nodes: [DeveloperLicense!]!
+  pageInfo: PageInfo!
+}
+
+type DeveloperLicenseEdge {
+  node: DeveloperLicense!
+  cursor: String!
+}

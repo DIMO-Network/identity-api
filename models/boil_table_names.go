@@ -11,6 +11,7 @@ var TableNames = struct {
 	Privileges         string
 	RedirectUris       string
 	Rewards            string
+	Signers            string
 	SyntheticDevices   string
 	VehicleSacds       string
 	Vehicles           string
@@ -22,6 +23,7 @@ var TableNames = struct {
 	Privileges:         "privileges",
 	RedirectUris:       "redirect_uris",
 	Rewards:            "rewards",
+	Signers:            "signers",
 	SyntheticDevices:   "synthetic_devices",
 	VehicleSacds:       "vehicle_sacds",
 	Vehicles:           "vehicles",

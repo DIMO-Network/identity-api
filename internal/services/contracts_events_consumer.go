@@ -77,6 +77,8 @@ const (
 	Issued              EventName = "Issued"
 	RedirectUriEnabled  EventName = "RedirectUriEnabled"
 	RedirectUriDisabled EventName = "RedirectUriDisabled"
+	SignerEnabled       EventName = "SignerEnabled"
+	SignerDisabled      EventName = "SignerDisabled"
 )
 
 func (r EventName) String() string {
@@ -210,6 +212,10 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 			return c.handleRedirectEnabled(ctx, &data)
 		case RedirectUriDisabled:
 			return c.handleRedirectDisabled(ctx, &data)
+		case SignerEnabled:
+			return c.handleSignerEnabled(ctx, &data)
+		case SignerDisabled:
+			return c.handleSignerDisabled(ctx, &data)
 		}
 	}
 
@@ -858,5 +864,40 @@ func (c *ContractsEventsConsumer) handleRedirectDisabled(ctx context.Context, e 
 	}
 
 	_, err := ru.Delete(ctx, c.dbs.DBS().Writer)
+	return err
+}
+
+func (c *ContractsEventsConsumer) handleSignerEnabled(ctx context.Context, e *ContractEventData) error {
+	var args SignerEnabledData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	s := models.Signer{
+		DeveloperLicenseID: int(args.TokenID.Int64()),
+		Signer:             args.Signer.Bytes(),
+		EnabledAt:          e.Block.Time,
+	}
+
+	err := s.Upsert(ctx, c.dbs.DBS().Writer, false, []string{models.SignerColumns.DeveloperLicenseID, models.SignerColumns.Signer}, boil.Blacklist(), boil.Infer())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *ContractsEventsConsumer) handleSignerDisabled(ctx context.Context, e *ContractEventData) error {
+	var args SignerDisabledData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	s := models.Signer{
+		DeveloperLicenseID: int(args.TokenID.Int64()),
+		Signer:             args.Signer.Bytes(),
+	}
+
+	_, err := s.Delete(ctx, c.dbs.DBS().Writer)
 	return err
 }

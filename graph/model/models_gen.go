@@ -166,6 +166,27 @@ type Definition struct {
 }
 
 // Represents a Device Definition.
+type DeveloperLicense struct {
+	TokenID  int            `json:"tokenId"`
+	Owner    common.Address `json:"owner"`
+	ClientID common.Address `json:"clientId"`
+	Alias    *string        `json:"alias,omitempty"`
+	MintedAt time.Time      `json:"mintedAt"`
+}
+
+type DeveloperLicenseConnection struct {
+	TotalCount int                     `json:"totalCount"`
+	Edges      []*DeveloperLicenseEdge `json:"edges"`
+	Nodes      []*DeveloperLicense     `json:"nodes"`
+	PageInfo   *PageInfo               `json:"pageInfo"`
+}
+
+type DeveloperLicenseEdge struct {
+	Node   *DeveloperLicense `json:"node"`
+	Cursor string            `json:"cursor"`
+}
+
+// Represents a Device Definition.
 type DeviceDefinition struct {
 	// Device definition id for this device definition.
 	DeviceDefinitionID string `json:"deviceDefinitionId"`
