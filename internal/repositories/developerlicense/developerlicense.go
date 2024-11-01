@@ -60,7 +60,7 @@ func (r *Repository) GetDeveloperLicenses(ctx context.Context, first *int, after
 		)
 	}
 
-	totalCount, err := models.DeveloperLicenses().Count(ctx, r.PDB.DBS().Reader)
+	totalCount, err := models.DeveloperLicenses(queryMods...).Count(ctx, r.PDB.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}
