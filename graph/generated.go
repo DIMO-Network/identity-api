@@ -47,6 +47,7 @@ type ResolverRoot interface {
 	AftermarketDevice() AftermarketDeviceResolver
 	AftermarketDeviceEarnings() AftermarketDeviceEarningsResolver
 	DCN() DCNResolver
+	DeveloperLicense() DeveloperLicenseResolver
 	Earning() EarningResolver
 	Manufacturer() ManufacturerResolver
 	Query() QueryResolver
@@ -129,11 +130,13 @@ type ComplexityRoot struct {
 	}
 
 	DeveloperLicense struct {
-		Alias    func(childComplexity int) int
-		ClientID func(childComplexity int) int
-		MintedAt func(childComplexity int) int
-		Owner    func(childComplexity int) int
-		TokenID  func(childComplexity int) int
+		Alias        func(childComplexity int) int
+		ClientID     func(childComplexity int) int
+		MintedAt     func(childComplexity int) int
+		Owner        func(childComplexity int) int
+		RedirectURIs func(childComplexity int, first *int, after *string, last *int, before *string) int
+		Signers      func(childComplexity int, first *int, after *string, last *int, before *string) int
+		TokenID      func(childComplexity int) int
 	}
 
 	DeveloperLicenseConnection struct {
@@ -254,6 +257,23 @@ type ComplexityRoot struct {
 		Vehicles           func(childComplexity int, first *int, after *string, last *int, before *string, filterBy *model.VehiclesFilter) int
 	}
 
+	RedirectURI struct {
+		EnabledAt func(childComplexity int) int
+		URI       func(childComplexity int) int
+	}
+
+	RedirectURIConnection struct {
+		Edges      func(childComplexity int) int
+		Nodes      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	RedirectURIEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
 	Sacd struct {
 		CreatedAt   func(childComplexity int) int
 		ExpiresAt   func(childComplexity int) int
@@ -270,6 +290,23 @@ type ComplexityRoot struct {
 	}
 
 	SacdEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	Signer struct {
+		Address   func(childComplexity int) int
+		EnabledAt func(childComplexity int) int
+	}
+
+	SignerConnection struct {
+		Edges      func(childComplexity int) int
+		Nodes      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	SignerEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
 	}
@@ -350,6 +387,10 @@ type AftermarketDeviceEarningsResolver interface {
 }
 type DCNResolver interface {
 	Vehicle(ctx context.Context, obj *model.Dcn) (*model.Vehicle, error)
+}
+type DeveloperLicenseResolver interface {
+	Signers(ctx context.Context, obj *model.DeveloperLicense, first *int, after *string, last *int, before *string) (*model.SignerConnection, error)
+	RedirectURIs(ctx context.Context, obj *model.DeveloperLicense, first *int, after *string, last *int, before *string) (*model.RedirectURIConnection, error)
 }
 type EarningResolver interface {
 	AftermarketDevice(ctx context.Context, obj *model.Earning) (*model.AftermarketDevice, error)
@@ -751,6 +792,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.DeveloperLicense.Owner(childComplexity), true
+
+	case "DeveloperLicense.redirectURIs":
+		if e.complexity.DeveloperLicense.RedirectURIs == nil {
+			break
+		}
+
+		args, err := ec.field_DeveloperLicense_redirectURIs_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.DeveloperLicense.RedirectURIs(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
+
+	case "DeveloperLicense.signers":
+		if e.complexity.DeveloperLicense.Signers == nil {
+			break
+		}
+
+		args, err := ec.field_DeveloperLicense_signers_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.DeveloperLicense.Signers(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
 
 	case "DeveloperLicense.tokenId":
 		if e.complexity.DeveloperLicense.TokenID == nil {
@@ -1345,6 +1410,62 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Vehicles(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["filterBy"].(*model.VehiclesFilter)), true
 
+	case "RedirectURI.enabledAt":
+		if e.complexity.RedirectURI.EnabledAt == nil {
+			break
+		}
+
+		return e.complexity.RedirectURI.EnabledAt(childComplexity), true
+
+	case "RedirectURI.uri":
+		if e.complexity.RedirectURI.URI == nil {
+			break
+		}
+
+		return e.complexity.RedirectURI.URI(childComplexity), true
+
+	case "RedirectURIConnection.edges":
+		if e.complexity.RedirectURIConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.RedirectURIConnection.Edges(childComplexity), true
+
+	case "RedirectURIConnection.nodes":
+		if e.complexity.RedirectURIConnection.Nodes == nil {
+			break
+		}
+
+		return e.complexity.RedirectURIConnection.Nodes(childComplexity), true
+
+	case "RedirectURIConnection.pageInfo":
+		if e.complexity.RedirectURIConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.RedirectURIConnection.PageInfo(childComplexity), true
+
+	case "RedirectURIConnection.totalCount":
+		if e.complexity.RedirectURIConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.RedirectURIConnection.TotalCount(childComplexity), true
+
+	case "RedirectURIEdge.cursor":
+		if e.complexity.RedirectURIEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.RedirectURIEdge.Cursor(childComplexity), true
+
+	case "RedirectURIEdge.node":
+		if e.complexity.RedirectURIEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.RedirectURIEdge.Node(childComplexity), true
+
 	case "Sacd.createdAt":
 		if e.complexity.Sacd.CreatedAt == nil {
 			break
@@ -1421,6 +1542,62 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.SacdEdge.Node(childComplexity), true
+
+	case "Signer.address":
+		if e.complexity.Signer.Address == nil {
+			break
+		}
+
+		return e.complexity.Signer.Address(childComplexity), true
+
+	case "Signer.enabledAt":
+		if e.complexity.Signer.EnabledAt == nil {
+			break
+		}
+
+		return e.complexity.Signer.EnabledAt(childComplexity), true
+
+	case "SignerConnection.edges":
+		if e.complexity.SignerConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.SignerConnection.Edges(childComplexity), true
+
+	case "SignerConnection.nodes":
+		if e.complexity.SignerConnection.Nodes == nil {
+			break
+		}
+
+		return e.complexity.SignerConnection.Nodes(childComplexity), true
+
+	case "SignerConnection.pageInfo":
+		if e.complexity.SignerConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.SignerConnection.PageInfo(childComplexity), true
+
+	case "SignerConnection.totalCount":
+		if e.complexity.SignerConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.SignerConnection.TotalCount(childComplexity), true
+
+	case "SignerEdge.cursor":
+		if e.complexity.SignerEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.SignerEdge.Cursor(childComplexity), true
+
+	case "SignerEdge.node":
+		if e.complexity.SignerEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.SignerEdge.Node(childComplexity), true
 
 	case "SyntheticDevice.address":
 		if e.complexity.SyntheticDevice.Address == nil {
@@ -1937,6 +2114,232 @@ func (ec *executionContext) field_AftermarketDeviceEarnings_history_argsLast(
 }
 
 func (ec *executionContext) field_AftermarketDeviceEarnings_history_argsBefore(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["before"]
+	if !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+	if tmp, ok := rawArgs["before"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_DeveloperLicense_redirectURIs_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_DeveloperLicense_redirectURIs_argsFirst(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := ec.field_DeveloperLicense_redirectURIs_argsAfter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := ec.field_DeveloperLicense_redirectURIs_argsLast(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := ec.field_DeveloperLicense_redirectURIs_argsBefore(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
+	return args, nil
+}
+func (ec *executionContext) field_DeveloperLicense_redirectURIs_argsFirst(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*int, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["first"]
+	if !ok {
+		var zeroVal *int
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+	if tmp, ok := rawArgs["first"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_DeveloperLicense_redirectURIs_argsAfter(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["after"]
+	if !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+	if tmp, ok := rawArgs["after"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_DeveloperLicense_redirectURIs_argsLast(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*int, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["last"]
+	if !ok {
+		var zeroVal *int
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+	if tmp, ok := rawArgs["last"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_DeveloperLicense_redirectURIs_argsBefore(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["before"]
+	if !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+	if tmp, ok := rawArgs["before"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_DeveloperLicense_signers_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_DeveloperLicense_signers_argsFirst(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := ec.field_DeveloperLicense_signers_argsAfter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := ec.field_DeveloperLicense_signers_argsLast(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := ec.field_DeveloperLicense_signers_argsBefore(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
+	return args, nil
+}
+func (ec *executionContext) field_DeveloperLicense_signers_argsFirst(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*int, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["first"]
+	if !ok {
+		var zeroVal *int
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+	if tmp, ok := rawArgs["first"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_DeveloperLicense_signers_argsAfter(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["after"]
+	if !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+	if tmp, ok := rawArgs["after"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_DeveloperLicense_signers_argsLast(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*int, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["last"]
+	if !ok {
+		var zeroVal *int
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+	if tmp, ok := rawArgs["last"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_DeveloperLicense_signers_argsBefore(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (*string, error) {
@@ -6067,6 +6470,136 @@ func (ec *executionContext) fieldContext_DeveloperLicense_mintedAt(_ context.Con
 	return fc, nil
 }
 
+func (ec *executionContext) _DeveloperLicense_signers(ctx context.Context, field graphql.CollectedField, obj *model.DeveloperLicense) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeveloperLicense_signers(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.DeveloperLicense().Signers(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.SignerConnection)
+	fc.Result = res
+	return ec.marshalNSignerConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSignerConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DeveloperLicense_signers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeveloperLicense",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_SignerConnection_totalCount(ctx, field)
+			case "edges":
+				return ec.fieldContext_SignerConnection_edges(ctx, field)
+			case "nodes":
+				return ec.fieldContext_SignerConnection_nodes(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_SignerConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SignerConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_DeveloperLicense_signers_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DeveloperLicense_redirectURIs(ctx context.Context, field graphql.CollectedField, obj *model.DeveloperLicense) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeveloperLicense_redirectURIs(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.DeveloperLicense().RedirectURIs(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.RedirectURIConnection)
+	fc.Result = res
+	return ec.marshalNRedirectURIConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐRedirectURIConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DeveloperLicense_redirectURIs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeveloperLicense",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_RedirectURIConnection_totalCount(ctx, field)
+			case "edges":
+				return ec.fieldContext_RedirectURIConnection_edges(ctx, field)
+			case "nodes":
+				return ec.fieldContext_RedirectURIConnection_nodes(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_RedirectURIConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type RedirectURIConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_DeveloperLicense_redirectURIs_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _DeveloperLicenseConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.DeveloperLicenseConnection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_DeveloperLicenseConnection_totalCount(ctx, field)
 	if err != nil {
@@ -6210,6 +6743,10 @@ func (ec *executionContext) fieldContext_DeveloperLicenseConnection_nodes(_ cont
 				return ec.fieldContext_DeveloperLicense_alias(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_DeveloperLicense_mintedAt(ctx, field)
+			case "signers":
+				return ec.fieldContext_DeveloperLicense_signers(ctx, field)
+			case "redirectURIs":
+				return ec.fieldContext_DeveloperLicense_redirectURIs(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type DeveloperLicense", field.Name)
 		},
@@ -6320,6 +6857,10 @@ func (ec *executionContext) fieldContext_DeveloperLicenseEdge_node(_ context.Con
 				return ec.fieldContext_DeveloperLicense_alias(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_DeveloperLicense_mintedAt(ctx, field)
+			case "signers":
+				return ec.fieldContext_DeveloperLicense_signers(ctx, field)
+			case "redirectURIs":
+				return ec.fieldContext_DeveloperLicense_redirectURIs(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type DeveloperLicense", field.Name)
 		},
@@ -10048,6 +10589,386 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _RedirectURI_uri(ctx context.Context, field graphql.CollectedField, obj *model.RedirectURI) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RedirectURI_uri(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.URI, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RedirectURI_uri(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RedirectURI",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RedirectURI_enabledAt(ctx context.Context, field graphql.CollectedField, obj *model.RedirectURI) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RedirectURI_enabledAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.EnabledAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RedirectURI_enabledAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RedirectURI",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RedirectURIConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.RedirectURIConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RedirectURIConnection_totalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RedirectURIConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RedirectURIConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RedirectURIConnection_edges(ctx context.Context, field graphql.CollectedField, obj *model.RedirectURIConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RedirectURIConnection_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.RedirectURIEdge)
+	fc.Result = res
+	return ec.marshalNRedirectURIEdge2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐRedirectURIEdgeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RedirectURIConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RedirectURIConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "node":
+				return ec.fieldContext_RedirectURIEdge_node(ctx, field)
+			case "cursor":
+				return ec.fieldContext_RedirectURIEdge_cursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type RedirectURIEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RedirectURIConnection_nodes(ctx context.Context, field graphql.CollectedField, obj *model.RedirectURIConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RedirectURIConnection_nodes(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Nodes, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.RedirectURI)
+	fc.Result = res
+	return ec.marshalNRedirectURI2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐRedirectURIᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RedirectURIConnection_nodes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RedirectURIConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "uri":
+				return ec.fieldContext_RedirectURI_uri(ctx, field)
+			case "enabledAt":
+				return ec.fieldContext_RedirectURI_enabledAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type RedirectURI", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RedirectURIConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.RedirectURIConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RedirectURIConnection_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RedirectURIConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RedirectURIConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RedirectURIEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.RedirectURIEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RedirectURIEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.RedirectURI)
+	fc.Result = res
+	return ec.marshalNRedirectURI2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐRedirectURI(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RedirectURIEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RedirectURIEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "uri":
+				return ec.fieldContext_RedirectURI_uri(ctx, field)
+			case "enabledAt":
+				return ec.fieldContext_RedirectURI_enabledAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type RedirectURI", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RedirectURIEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.RedirectURIEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RedirectURIEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RedirectURIEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RedirectURIEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Sacd_grantee(ctx context.Context, field graphql.CollectedField, obj *model.Sacd) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Sacd_grantee(ctx, field)
 	if err != nil {
@@ -10562,6 +11483,386 @@ func (ec *executionContext) _SacdEdge_cursor(ctx context.Context, field graphql.
 func (ec *executionContext) fieldContext_SacdEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SacdEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Signer_address(ctx context.Context, field graphql.CollectedField, obj *model.Signer) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Signer_address(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Address, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(common.Address)
+	fc.Result = res
+	return ec.marshalNAddress2githubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Signer_address(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Signer",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Address does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Signer_enabledAt(ctx context.Context, field graphql.CollectedField, obj *model.Signer) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Signer_enabledAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.EnabledAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Signer_enabledAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Signer",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SignerConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.SignerConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SignerConnection_totalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SignerConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SignerConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SignerConnection_edges(ctx context.Context, field graphql.CollectedField, obj *model.SignerConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SignerConnection_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.SignerEdge)
+	fc.Result = res
+	return ec.marshalNSignerEdge2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSignerEdgeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SignerConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SignerConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "node":
+				return ec.fieldContext_SignerEdge_node(ctx, field)
+			case "cursor":
+				return ec.fieldContext_SignerEdge_cursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SignerEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SignerConnection_nodes(ctx context.Context, field graphql.CollectedField, obj *model.SignerConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SignerConnection_nodes(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Nodes, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Signer)
+	fc.Result = res
+	return ec.marshalNSigner2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSignerᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SignerConnection_nodes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SignerConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "address":
+				return ec.fieldContext_Signer_address(ctx, field)
+			case "enabledAt":
+				return ec.fieldContext_Signer_enabledAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Signer", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SignerConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.SignerConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SignerConnection_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SignerConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SignerConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SignerEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.SignerEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SignerEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Signer)
+	fc.Result = res
+	return ec.marshalNSigner2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSigner(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SignerEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SignerEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "address":
+				return ec.fieldContext_Signer_address(ctx, field)
+			case "enabledAt":
+				return ec.fieldContext_Signer_enabledAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Signer", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SignerEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.SignerEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SignerEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SignerEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SignerEdge",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -15692,25 +16993,97 @@ func (ec *executionContext) _DeveloperLicense(ctx context.Context, sel ast.Selec
 		case "tokenId":
 			out.Values[i] = ec._DeveloperLicense_tokenId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "owner":
 			out.Values[i] = ec._DeveloperLicense_owner(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "clientId":
 			out.Values[i] = ec._DeveloperLicense_clientId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "alias":
 			out.Values[i] = ec._DeveloperLicense_alias(ctx, field, obj)
 		case "mintedAt":
 			out.Values[i] = ec._DeveloperLicense_mintedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "signers":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._DeveloperLicense_signers(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "redirectURIs":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._DeveloperLicense_redirectURIs(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -16962,6 +18335,148 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 	return out
 }
 
+var redirectURIImplementors = []string{"RedirectURI"}
+
+func (ec *executionContext) _RedirectURI(ctx context.Context, sel ast.SelectionSet, obj *model.RedirectURI) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, redirectURIImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RedirectURI")
+		case "uri":
+			out.Values[i] = ec._RedirectURI_uri(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "enabledAt":
+			out.Values[i] = ec._RedirectURI_enabledAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var redirectURIConnectionImplementors = []string{"RedirectURIConnection"}
+
+func (ec *executionContext) _RedirectURIConnection(ctx context.Context, sel ast.SelectionSet, obj *model.RedirectURIConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, redirectURIConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RedirectURIConnection")
+		case "totalCount":
+			out.Values[i] = ec._RedirectURIConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "edges":
+			out.Values[i] = ec._RedirectURIConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "nodes":
+			out.Values[i] = ec._RedirectURIConnection_nodes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._RedirectURIConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var redirectURIEdgeImplementors = []string{"RedirectURIEdge"}
+
+func (ec *executionContext) _RedirectURIEdge(ctx context.Context, sel ast.SelectionSet, obj *model.RedirectURIEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, redirectURIEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RedirectURIEdge")
+		case "node":
+			out.Values[i] = ec._RedirectURIEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cursor":
+			out.Values[i] = ec._RedirectURIEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var sacdImplementors = []string{"Sacd"}
 
 func (ec *executionContext) _Sacd(ctx context.Context, sel ast.SelectionSet, obj *model.Sacd) graphql.Marshaler {
@@ -17093,6 +18608,148 @@ func (ec *executionContext) _SacdEdge(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "cursor":
 			out.Values[i] = ec._SacdEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var signerImplementors = []string{"Signer"}
+
+func (ec *executionContext) _Signer(ctx context.Context, sel ast.SelectionSet, obj *model.Signer) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, signerImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Signer")
+		case "address":
+			out.Values[i] = ec._Signer_address(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "enabledAt":
+			out.Values[i] = ec._Signer_enabledAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var signerConnectionImplementors = []string{"SignerConnection"}
+
+func (ec *executionContext) _SignerConnection(ctx context.Context, sel ast.SelectionSet, obj *model.SignerConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, signerConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SignerConnection")
+		case "totalCount":
+			out.Values[i] = ec._SignerConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "edges":
+			out.Values[i] = ec._SignerConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "nodes":
+			out.Values[i] = ec._SignerConnection_nodes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._SignerConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var signerEdgeImplementors = []string{"SignerEdge"}
+
+func (ec *executionContext) _SignerEdge(ctx context.Context, sel ast.SelectionSet, obj *model.SignerEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, signerEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SignerEdge")
+		case "node":
+			out.Values[i] = ec._SignerEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cursor":
+			out.Values[i] = ec._SignerEdge_cursor(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -19172,6 +20829,128 @@ func (ec *executionContext) marshalNPrivilegesConnection2ᚖgithubᚗcomᚋDIMO�
 	return ec._PrivilegesConnection(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNRedirectURI2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐRedirectURIᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.RedirectURI) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNRedirectURI2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐRedirectURI(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNRedirectURI2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐRedirectURI(ctx context.Context, sel ast.SelectionSet, v *model.RedirectURI) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RedirectURI(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNRedirectURIConnection2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐRedirectURIConnection(ctx context.Context, sel ast.SelectionSet, v model.RedirectURIConnection) graphql.Marshaler {
+	return ec._RedirectURIConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNRedirectURIConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐRedirectURIConnection(ctx context.Context, sel ast.SelectionSet, v *model.RedirectURIConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RedirectURIConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNRedirectURIEdge2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐRedirectURIEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.RedirectURIEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNRedirectURIEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐRedirectURIEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNRedirectURIEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐRedirectURIEdge(ctx context.Context, sel ast.SelectionSet, v *model.RedirectURIEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RedirectURIEdge(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNSacd2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSacdᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Sacd) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -19292,6 +21071,128 @@ func (ec *executionContext) marshalNSacdEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋ
 		return graphql.Null
 	}
 	return ec._SacdEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNSigner2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSignerᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Signer) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNSigner2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSigner(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNSigner2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSigner(ctx context.Context, sel ast.SelectionSet, v *model.Signer) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Signer(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNSignerConnection2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSignerConnection(ctx context.Context, sel ast.SelectionSet, v model.SignerConnection) graphql.Marshaler {
+	return ec._SignerConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNSignerConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSignerConnection(ctx context.Context, sel ast.SelectionSet, v *model.SignerConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SignerConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNSignerEdge2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSignerEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SignerEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNSignerEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSignerEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNSignerEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSignerEdge(ctx context.Context, sel ast.SelectionSet, v *model.SignerEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SignerEdge(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {

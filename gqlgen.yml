@@ -183,3 +183,9 @@ models:
         type: "*int"
       VehicleID:
         type: "int"
+  DeveloperLicense:
+    fields:
+      redirectURIs:
+        resolver: true
+      signers:
+        resolver: true

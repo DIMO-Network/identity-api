@@ -165,13 +165,14 @@ type Definition struct {
 	Year  *int    `json:"year,omitempty"`
 }
 
-// Represents a Device Definition.
 type DeveloperLicense struct {
-	TokenID  int            `json:"tokenId"`
-	Owner    common.Address `json:"owner"`
-	ClientID common.Address `json:"clientId"`
-	Alias    *string        `json:"alias,omitempty"`
-	MintedAt time.Time      `json:"mintedAt"`
+	TokenID      int                    `json:"tokenId"`
+	Owner        common.Address         `json:"owner"`
+	ClientID     common.Address         `json:"clientId"`
+	Alias        *string                `json:"alias,omitempty"`
+	MintedAt     time.Time              `json:"mintedAt"`
+	Signers      *SignerConnection      `json:"signers"`
+	RedirectURIs *RedirectURIConnection `json:"redirectURIs"`
 }
 
 type DeveloperLicenseConnection struct {
@@ -353,6 +354,23 @@ type PrivilegesConnection struct {
 type Query struct {
 }
 
+type RedirectURI struct {
+	URI       string    `json:"uri"`
+	EnabledAt time.Time `json:"enabledAt"`
+}
+
+type RedirectURIConnection struct {
+	TotalCount int                `json:"totalCount"`
+	Edges      []*RedirectURIEdge `json:"edges"`
+	Nodes      []*RedirectURI     `json:"nodes"`
+	PageInfo   *PageInfo          `json:"pageInfo"`
+}
+
+type RedirectURIEdge struct {
+	Node   *RedirectURI `json:"node"`
+	Cursor string       `json:"cursor"`
+}
+
 type Sacd struct {
 	// Recipient of sacd permission grant
 	Grantee common.Address `json:"grantee"`
@@ -377,6 +395,23 @@ type SacdConnection struct {
 type SacdEdge struct {
 	Node   *Sacd  `json:"node"`
 	Cursor string `json:"cursor"`
+}
+
+type Signer struct {
+	Address   common.Address `json:"address"`
+	EnabledAt time.Time      `json:"enabledAt"`
+}
+
+type SignerConnection struct {
+	TotalCount int           `json:"totalCount"`
+	Edges      []*SignerEdge `json:"edges"`
+	Nodes      []*Signer     `json:"nodes"`
+	PageInfo   *PageInfo     `json:"pageInfo"`
+}
+
+type SignerEdge struct {
+	Node   *Signer `json:"node"`
+	Cursor string  `json:"cursor"`
 }
 
 // The SyntheticDevice is a software connection established to connect the vehicle to the DIMO network.

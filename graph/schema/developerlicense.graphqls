@@ -12,15 +12,14 @@ extend type Query {
   ): DeveloperLicenseConnection!
 }
 
-"""
-Represents a Device Definition.
-"""
 type DeveloperLicense {
   tokenId: Int!
   owner: Address!
   clientId: Address!
   alias: String
   mintedAt: Time!
+  signers(first: Int, after: String, last: Int, before: String): SignerConnection!
+  redirectURIs(first: Int, after: String, last: Int, before: String): RedirectURIConnection!
 }
 
 type DeveloperLicenseConnection {
@@ -32,5 +31,39 @@ type DeveloperLicenseConnection {
 
 type DeveloperLicenseEdge {
   node: DeveloperLicense!
+  cursor: String!
+}
+
+type Signer {
+  address: Address!
+  enabledAt: Time!
+}
+
+type RedirectURI {
+  uri: String!
+  enabledAt: Time!
+}
+
+type SignerConnection {
+  totalCount: Int!
+  edges: [SignerEdge!]!
+  nodes: [Signer!]!
+  pageInfo: PageInfo!
+}
+
+type SignerEdge {
+  node: Signer!
+  cursor: String!
+}
+
+type RedirectURIConnection {
+  totalCount: Int!
+  edges: [RedirectURIEdge!]!
+  nodes: [RedirectURI!]!
+  pageInfo: PageInfo!
+}
+
+type RedirectURIEdge {
+  node: RedirectURI!
   cursor: String!
 }
