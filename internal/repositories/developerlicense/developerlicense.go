@@ -166,13 +166,13 @@ func (r *Repository) GetSignersForLicense(ctx context.Context, obj *gmodel.Devel
 		return nil, err
 	}
 
-	totalCount, err := models.Signers().Count(ctx, r.PDB.DBS().Reader)
-	if err != nil {
-		return nil, err
-	}
-
 	queryMods := []qm.QueryMod{
 		models.SignerWhere.DeveloperLicenseID.EQ(obj.TokenID),
+	}
+
+	totalCount, err := models.Signers(queryMods...).Count(ctx, r.PDB.DBS().Reader)
+	if err != nil {
+		return nil, err
 	}
 
 	if after != nil {
@@ -299,13 +299,13 @@ func (r *Repository) GetRedirectURIsForLicense(ctx context.Context, obj *gmodel.
 		return nil, err
 	}
 
-	totalCount, err := models.RedirectUris().Count(ctx, r.PDB.DBS().Reader)
-	if err != nil {
-		return nil, err
-	}
-
 	queryMods := []qm.QueryMod{
 		models.RedirectURIWhere.DeveloperLicenseID.EQ(obj.TokenID),
+	}
+
+	totalCount, err := models.RedirectUris(queryMods...).Count(ctx, r.PDB.DBS().Reader)
+	if err != nil {
+		return nil, err
 	}
 
 	if after != nil {
