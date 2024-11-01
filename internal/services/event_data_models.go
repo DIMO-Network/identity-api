@@ -208,3 +208,8 @@ type SignerDisabledData struct {
 	TokenID *big.Int
 	Signer  common.Address
 }
+
+type LicenseAliasSetData struct {
+	TokenID      *big.Int
+	LicenseAlias []byte
+}

@@ -1,6 +1,7 @@
 package services
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"net/http"
@@ -79,6 +80,7 @@ const (
 	RedirectUriDisabled EventName = "RedirectUriDisabled"
 	SignerEnabled       EventName = "SignerEnabled"
 	SignerDisabled      EventName = "SignerDisabled"
+	LicenseAliasSet     EventName = "LicenseAliasSet"
 )
 
 func (r EventName) String() string {
@@ -208,6 +210,8 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 		switch eventName {
 		case Issued:
 			return c.handleDevLicenseIssued(ctx, &data)
+		case LicenseAliasSet:
+			return c.handleDevLicenseAlias(ctx, &data)
 		case RedirectUriEnabled:
 			return c.handleRedirectEnabled(ctx, &data)
 		case RedirectUriDisabled:
@@ -825,6 +829,27 @@ func (c *ContractsEventsConsumer) handleDevLicenseIssued(ctx context.Context, e 
 	}
 
 	err := dl.Upsert(ctx, c.dbs.DBS().Writer, false, []string{models.DeveloperLicenseColumns.ID}, boil.Blacklist(), boil.Infer())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *ContractsEventsConsumer) handleDevLicenseAlias(ctx context.Context, e *ContractEventData) error {
+	var args LicenseAliasSetData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	alias := string(bytes.Trim(args.LicenseAlias, "\x00"))
+
+	dl := models.DeveloperLicense{
+		ID:    int(args.TokenID.Int64()),
+		Alias: null.StringFrom(alias),
+	}
+
+	_, err := dl.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.DeveloperLicenseColumns.Alias))
 	if err != nil {
 		return err
 	}
