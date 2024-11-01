@@ -246,7 +246,7 @@ type ComplexityRoot struct {
 		AftermarketDevices func(childComplexity int, first *int, after *string, last *int, before *string, filterBy *model.AftermarketDevicesFilter) int
 		Dcn                func(childComplexity int, by model.DCNBy) int
 		Dcns               func(childComplexity int, first *int, after *string, last *int, before *string, filterBy *model.DCNFilter) int
-		DeveloperLicenses  func(childComplexity int, first *int, after *string, last *int, before *string) int
+		DeveloperLicenses  func(childComplexity int, first *int, after *string, last *int, before *string, filterBy *model.DeveloperLicenseFilterBy) int
 		DeviceDefinition   func(childComplexity int, by model.DeviceDefinitionBy) int
 		Manufacturer       func(childComplexity int, by model.ManufacturerBy) int
 		Node               func(childComplexity int, id string) int
@@ -409,7 +409,7 @@ type QueryResolver interface {
 	AftermarketDevices(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.AftermarketDevicesFilter) (*model.AftermarketDeviceConnection, error)
 	Dcn(ctx context.Context, by model.DCNBy) (*model.Dcn, error)
 	Dcns(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.DCNFilter) (*model.DCNConnection, error)
-	DeveloperLicenses(ctx context.Context, first *int, after *string, last *int, before *string) (*model.DeveloperLicenseConnection, error)
+	DeveloperLicenses(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.DeveloperLicenseFilterBy) (*model.DeveloperLicenseConnection, error)
 	DeviceDefinition(ctx context.Context, by model.DeviceDefinitionBy) (*model.DeviceDefinition, error)
 	Manufacturer(ctx context.Context, by model.ManufacturerBy) (*model.Manufacturer, error)
 	Rewards(ctx context.Context, user common.Address) (*model.UserRewards, error)
@@ -1312,7 +1312,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.DeveloperLicenses(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
+		return e.complexity.Query.DeveloperLicenses(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["filterBy"].(*model.DeveloperLicenseFilterBy)), true
 
 	case "Query.deviceDefinition":
 		if e.complexity.Query.DeviceDefinition == nil {
@@ -1904,6 +1904,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputAftermarketDevicesFilter,
 		ec.unmarshalInputDCNBy,
 		ec.unmarshalInputDCNFilter,
+		ec.unmarshalInputDeveloperLicenseFilterBy,
 		ec.unmarshalInputDeviceDefinitionBy,
 		ec.unmarshalInputDeviceDefinitionFilter,
 		ec.unmarshalInputManufacturerBy,
@@ -3040,6 +3041,11 @@ func (ec *executionContext) field_Query_developerLicenses_args(ctx context.Conte
 		return nil, err
 	}
 	args["before"] = arg3
+	arg4, err := ec.field_Query_developerLicenses_argsFilterBy(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["filterBy"] = arg4
 	return args, nil
 }
 func (ec *executionContext) field_Query_developerLicenses_argsFirst(
@@ -3127,6 +3133,28 @@ func (ec *executionContext) field_Query_developerLicenses_argsBefore(
 	}
 
 	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_developerLicenses_argsFilterBy(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*model.DeveloperLicenseFilterBy, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["filterBy"]
+	if !ok {
+		var zeroVal *model.DeveloperLicenseFilterBy
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("filterBy"))
+	if tmp, ok := rawArgs["filterBy"]; ok {
+		return ec.unmarshalODeveloperLicenseFilterBy2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeveloperLicenseFilterBy(ctx, tmp)
+	}
+
+	var zeroVal *model.DeveloperLicenseFilterBy
 	return zeroVal, nil
 }
 
@@ -9915,7 +9943,7 @@ func (ec *executionContext) _Query_developerLicenses(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().DeveloperLicenses(rctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string))
+		return ec.resolvers.Query().DeveloperLicenses(rctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["filterBy"].(*model.DeveloperLicenseFilterBy))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -15979,6 +16007,33 @@ func (ec *executionContext) unmarshalInputDCNFilter(ctx context.Context, obj int
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputDeveloperLicenseFilterBy(ctx context.Context, obj interface{}) (model.DeveloperLicenseFilterBy, error) {
+	var it model.DeveloperLicenseFilterBy
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"Signer"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "Signer":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Signer"))
+			data, err := ec.unmarshalOAddress2ᚖgithubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Signer = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputDeviceDefinitionBy(ctx context.Context, obj interface{}) (model.DeviceDefinitionBy, error) {
 	var it model.DeviceDefinitionBy
 	asMap := map[string]interface{}{}
@@ -21835,6 +21890,14 @@ func (ec *executionContext) marshalODefinition2ᚖgithubᚗcomᚋDIMOᚑNetwork�
 		return graphql.Null
 	}
 	return ec._Definition(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalODeveloperLicenseFilterBy2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeveloperLicenseFilterBy(ctx context.Context, v interface{}) (*model.DeveloperLicenseFilterBy, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputDeveloperLicenseFilterBy(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalODeviceDefinitionFilter2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeviceDefinitionFilter(ctx context.Context, v interface{}) (*model.DeviceDefinitionFilter, error) {

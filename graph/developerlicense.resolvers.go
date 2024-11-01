@@ -21,8 +21,8 @@ func (r *developerLicenseResolver) RedirectURIs(ctx context.Context, obj *model.
 }
 
 // DeveloperLicenses is the resolver for the developerLicenses field.
-func (r *queryResolver) DeveloperLicenses(ctx context.Context, first *int, after *string, last *int, before *string) (*model.DeveloperLicenseConnection, error) {
-	return r.developerLicense.GetDeveloperLicenses(ctx, first, after, last, before)
+func (r *queryResolver) DeveloperLicenses(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.DeveloperLicenseFilterBy) (*model.DeveloperLicenseConnection, error) {
+	return r.developerLicense.GetDeveloperLicenses(ctx, first, after, last, before, filterBy)
 }
 
 // DeveloperLicense returns DeveloperLicenseResolver implementation.

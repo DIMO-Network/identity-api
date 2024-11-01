@@ -43,18 +43,27 @@ func RedirectToAPI(v *models.RedirectURI) *gmodel.RedirectURI {
 	}
 }
 
-func (r *Repository) GetDeveloperLicenses(ctx context.Context, first *int, after *string, last *int, before *string) (*gmodel.DeveloperLicenseConnection, error) {
+func (r *Repository) GetDeveloperLicenses(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *gmodel.DeveloperLicenseFilterBy) (*gmodel.DeveloperLicenseConnection, error) {
 	limit, err := helpers.ValidateFirstLast(first, last, base.MaxPageSize)
 	if err != nil {
 		return nil, err
+	}
+
+	var queryMods []qm.QueryMod
+
+	if filterBy != nil && filterBy.Signer != nil {
+		queryMods = append(queryMods,
+			qm.InnerJoin(
+				helpers.WithSchema(models.TableNames.Signers)+" ON "+models.DeveloperLicenseColumns.ID+" = "+models.SignerColumns.DeveloperLicenseID,
+			),
+			models.SignerWhere.Signer.EQ(filterBy.Signer.Bytes()),
+		)
 	}
 
 	totalCount, err := models.DeveloperLicenses().Count(ctx, r.PDB.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}
-
-	var queryMods []qm.QueryMod
 
 	if after != nil {
 		afterID, err := helpers.CursorToID(*after)

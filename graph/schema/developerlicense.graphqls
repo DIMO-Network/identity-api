@@ -5,10 +5,11 @@ extend type Query {
   View a particular device definition.
   """
   developerLicenses(
-    first: Int
-    after: String
-    last: Int
-    before: String
+    first: Int,
+    after: String,
+    last: Int,
+    before: String,
+    filterBy: DeveloperLicenseFilterBy
   ): DeveloperLicenseConnection!
 }
 
@@ -27,6 +28,10 @@ type DeveloperLicenseConnection {
   edges: [DeveloperLicenseEdge!]!
   nodes: [DeveloperLicense!]!
   pageInfo: PageInfo!
+}
+
+input DeveloperLicenseFilterBy {
+  Signer: Address
 }
 
 type DeveloperLicenseEdge {

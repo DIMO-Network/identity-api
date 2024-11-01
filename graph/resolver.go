@@ -78,7 +78,7 @@ type DeviceDefinitionRepository interface {
 //
 //go:generate mockgen -destination=./mock_developerlicense_test.go -package=graph github.com/DIMO-Network/identity-api/graph DeveloperLicenseRepository
 type DeveloperLicenseRepository interface {
-	GetDeveloperLicenses(ctx context.Context, first *int, after *string, last *int, before *string) (*model.DeveloperLicenseConnection, error)
+	GetDeveloperLicenses(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.DeveloperLicenseFilterBy) (*model.DeveloperLicenseConnection, error)
 	GetSignersForLicense(ctx context.Context, obj *model.DeveloperLicense, first *int, after *string, last *int, before *string) (*model.SignerConnection, error)
 	GetRedirectURIsForLicense(ctx context.Context, obj *model.DeveloperLicense, first *int, after *string, last *int, before *string) (*model.RedirectURIConnection, error)
 }

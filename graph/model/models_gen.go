@@ -187,6 +187,10 @@ type DeveloperLicenseEdge struct {
 	Cursor string            `json:"cursor"`
 }
 
+type DeveloperLicenseFilterBy struct {
+	Signer *common.Address `json:"Signer,omitempty"`
+}
+
 // Represents a Device Definition.
 type DeviceDefinition struct {
 	// Device definition id for this device definition.
