@@ -16014,15 +16014,15 @@ func (ec *executionContext) unmarshalInputDeveloperLicenseFilterBy(ctx context.C
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"Signer"}
+	fieldsInOrder := [...]string{"signer"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "Signer":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Signer"))
+		case "signer":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("signer"))
 			data, err := ec.unmarshalOAddress2ᚖgithubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, v)
 			if err != nil {
 				return it, err
