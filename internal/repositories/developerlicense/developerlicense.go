@@ -36,6 +36,13 @@ func SignerToAPI(v *models.Signer) *gmodel.Signer {
 	}
 }
 
+func RedirectToAPI(v *models.RedirectURI) *gmodel.RedirectURI {
+	return &gmodel.RedirectURI{
+		URI:       v.URI,
+		EnabledAt: v.EnabledAt,
+	}
+}
+
 func (r *Repository) GetDeveloperLicenses(ctx context.Context, first *int, after *string, last *int, before *string) (*gmodel.DeveloperLicenseConnection, error) {
 	limit, err := helpers.ValidateFirstLast(first, last, base.MaxPageSize)
 	if err != nil {
@@ -256,6 +263,139 @@ func (r *Repository) GetSignersForLicense(ctx context.Context, obj *gmodel.Devel
 	}
 
 	res := &gmodel.SignerConnection{
+		Edges: edges,
+		Nodes: nodes,
+		PageInfo: &gmodel.PageInfo{
+			EndCursor:       endCur,
+			HasNextPage:     hasNext,
+			HasPreviousPage: hasPrevious,
+			StartCursor:     startCur,
+		},
+		TotalCount: int(totalCount),
+	}
+
+	return res, nil
+}
+
+type RedirectCursor struct {
+	EnabledAt time.Time
+	URI       string
+}
+
+func (r *Repository) GetRedirectURIsForLicense(ctx context.Context, obj *gmodel.DeveloperLicense, first *int, after *string, last *int, before *string) (*gmodel.RedirectURIConnection, error) {
+	pHelp := helpers.PaginationHelper[RedirectCursor]{}
+
+	limit, err := helpers.ValidateFirstLast(first, last, base.MaxPageSize)
+	if err != nil {
+		return nil, err
+	}
+
+	totalCount, err := models.RedirectUris().Count(ctx, r.PDB.DBS().Reader)
+	if err != nil {
+		return nil, err
+	}
+
+	queryMods := []qm.QueryMod{
+		models.RedirectURIWhere.DeveloperLicenseID.EQ(obj.TokenID),
+	}
+
+	if after != nil {
+		afterCursor, err := pHelp.DecodeCursor(*after)
+		if err != nil {
+			return nil, err
+		}
+
+		queryMods = append(queryMods,
+			qm.Expr(
+				models.RedirectURIWhere.EnabledAt.EQ(afterCursor.EnabledAt),
+				models.RedirectURIWhere.URI.GT(afterCursor.URI),
+				qm.Or2(models.RedirectURIWhere.EnabledAt.LT(afterCursor.EnabledAt)),
+			),
+		)
+	}
+
+	if before != nil {
+		beforeCursor, err := pHelp.DecodeCursor(*after)
+		if err != nil {
+			return nil, err
+		}
+
+		queryMods = append(queryMods,
+			qm.Expr(
+				models.RedirectURIWhere.EnabledAt.EQ(beforeCursor.EnabledAt),
+				models.RedirectURIWhere.URI.LT(beforeCursor.URI),
+				qm.Or2(models.RedirectURIWhere.EnabledAt.GT(beforeCursor.EnabledAt)),
+			),
+		)
+	}
+
+	orderBy := fmt.Sprintf("%s DESC, %s ASC", models.RedirectURIColumns.EnabledAt, models.RedirectURIColumns.URI)
+	if last != nil {
+		orderBy = fmt.Sprintf("%s ASC, %s DESC", models.RedirectURIColumns.EnabledAt, models.RedirectURIColumns.URI)
+	}
+
+	queryMods = append(queryMods,
+		// Use limit + 1 here to check if there's another page.
+		qm.Limit(limit+1),
+		qm.OrderBy(orderBy),
+	)
+
+	all, err := models.RedirectUris(queryMods...).All(ctx, r.PDB.DBS().Reader)
+	if err != nil {
+		return nil, err
+	}
+
+	// We assume that cursors come from real elements.
+	hasNext := before != nil
+	hasPrevious := after != nil
+
+	if first != nil && len(all) == limit+1 {
+		hasNext = true
+		all = all[:limit]
+	} else if last != nil && len(all) == limit+1 {
+		hasPrevious = true
+		all = all[:limit]
+	}
+
+	if last != nil {
+		slices.Reverse(all)
+	}
+
+	var endCur, startCur *string
+	if len(all) != 0 {
+		ec, err := pHelp.EncodeCursor(RedirectCursor{all[len(all)-1].EnabledAt, all[len(all)-1].URI})
+		if err != nil {
+			return nil, err
+		}
+		endCur = &ec
+
+		sc, err := pHelp.EncodeCursor(RedirectCursor{all[0].EnabledAt, all[0].URI})
+		if err != nil {
+			return nil, err
+		}
+		startCur = &sc
+	}
+
+	edges := make([]*gmodel.RedirectURIEdge, len(all))
+	nodes := make([]*gmodel.RedirectURI, len(all))
+
+	for i, dv := range all {
+		dlv := RedirectToAPI(dv)
+
+		crs, err := pHelp.EncodeCursor(RedirectCursor{dv.EnabledAt, dv.URI})
+		if err != nil {
+			return nil, err
+		}
+
+		edges[i] = &gmodel.RedirectURIEdge{
+			Node:   dlv,
+			Cursor: crs,
+		}
+
+		nodes[i] = dlv
+	}
+
+	res := &gmodel.RedirectURIConnection{
 		Edges: edges,
 		Nodes: nodes,
 		PageInfo: &gmodel.PageInfo{

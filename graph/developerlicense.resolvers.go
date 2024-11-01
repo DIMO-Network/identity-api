@@ -6,7 +6,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
 )
@@ -18,7 +17,7 @@ func (r *developerLicenseResolver) Signers(ctx context.Context, obj *model.Devel
 
 // RedirectURIs is the resolver for the redirectURIs field.
 func (r *developerLicenseResolver) RedirectURIs(ctx context.Context, obj *model.DeveloperLicense, first *int, after *string, last *int, before *string) (*model.RedirectURIConnection, error) {
-	panic(fmt.Errorf("not implemented: RedirectURIs - redirectURIs"))
+	return r.developerLicense.GetRedirectURIsForLicense(ctx, obj, first, after, last, before)
 }
 
 // DeveloperLicenses is the resolver for the developerLicenses field.
