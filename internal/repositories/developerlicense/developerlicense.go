@@ -1,4 +1,4 @@
-package devicelicense
+package developerlicense
 
 import (
 	"context"

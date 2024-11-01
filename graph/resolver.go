@@ -7,6 +7,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/repositories/aftermarket"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/internal/repositories/dcn"
+	"github.com/DIMO-Network/identity-api/internal/repositories/developerlicense"
 	"github.com/DIMO-Network/identity-api/internal/repositories/devicedefinition"
 	"github.com/DIMO-Network/identity-api/internal/repositories/manufacturer"
 	"github.com/DIMO-Network/identity-api/internal/repositories/reward"
@@ -110,5 +111,6 @@ func NewResolver(baseRepo *base.Repository) *Resolver {
 		deviceDefinition: &devicedefinition.Repository{Repository: baseRepo,
 			TablelandApiService: tablelandApiService,
 		},
+		developerLicense: &developerlicense.Repository{Repository: baseRepo},
 	}
 }
