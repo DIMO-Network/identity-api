@@ -72,6 +72,13 @@ const (
 	// Rewards.
 	TokensTransferredForDevice           EventName = "TokensTransferredForDevice"
 	TokensTransferredForConnectionStreak EventName = "TokensTransferredForConnectionStreak"
+
+	// Developer licenses.
+	Issued              EventName = "Issued"
+	RedirectUriEnabled  EventName = "RedirectUriEnabled"
+	RedirectUriDisabled EventName = "RedirectUriDisabled"
+	SignerEnabled       EventName = "SignerEnabled"
+	SignerDisabled      EventName = "SignerDisabled"
 )
 
 func (r EventName) String() string {
@@ -108,6 +115,7 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 	DCNResolverAddr := common.HexToAddress(c.settings.DCNResolverAddr)
 	RewardsContractAddr := common.HexToAddress(c.settings.RewardsContractAddr)
 	sacdAddr := common.HexToAddress(c.settings.SACDAddress)
+	devLicenseAddr := common.HexToAddress(c.settings.DevLicenseAddr)
 
 	var data ContractEventData
 	if err := json.Unmarshal(event.Data, &data); err != nil {
@@ -195,6 +203,19 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 			return c.handleTokensTransferredForDevice(ctx, &data)
 		case TokensTransferredForConnectionStreak:
 			return c.handleTokensTransferredForConnectionStreak(ctx, &data)
+		}
+	case devLicenseAddr:
+		switch eventName {
+		case Issued:
+			return c.handleDevLicenseIssued(ctx, &data)
+		case RedirectUriEnabled:
+			return c.handleRedirectEnabled(ctx, &data)
+		case RedirectUriDisabled:
+			return c.handleRedirectDisabled(ctx, &data)
+		case SignerEnabled:
+			return c.handleSignerEnabled(ctx, &data)
+		case SignerDisabled:
+			return c.handleSignerDisabled(ctx, &data)
 		}
 	}
 
@@ -787,5 +808,96 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceAddressResetEvent(ctx c
 
 	amd.Address = args.AftermarketDeviceAddress.Bytes()
 	_, err = amd.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.AftermarketDeviceColumns.Address))
+	return err
+}
+
+func (c *ContractsEventsConsumer) handleDevLicenseIssued(ctx context.Context, e *ContractEventData) error {
+	var args IssuedData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	dl := models.DeveloperLicense{
+		ID:       int(args.TokenID.Int64()),
+		Owner:    args.Owner.Bytes(),
+		ClientID: args.ClientID.Bytes(),
+		MintedAt: e.Block.Time,
+	}
+
+	err := dl.Upsert(ctx, c.dbs.DBS().Writer, false, []string{models.DeveloperLicenseColumns.ID}, boil.Blacklist(), boil.Infer())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *ContractsEventsConsumer) handleRedirectEnabled(ctx context.Context, e *ContractEventData) error {
+	var args RedirectUriEnabledData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	ru := models.RedirectURI{
+		DeveloperLicenseID: int(args.TokenID.Int64()),
+		URI:                args.URI,
+		EnabledAt:          e.Block.Time,
+	}
+
+	err := ru.Upsert(ctx, c.dbs.DBS().Writer, false, []string{models.RedirectURIColumns.DeveloperLicenseID, models.RedirectURIColumns.URI}, boil.Blacklist(), boil.Infer())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *ContractsEventsConsumer) handleRedirectDisabled(ctx context.Context, e *ContractEventData) error {
+	var args RedirectUriDisabledData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	ru := models.RedirectURI{
+		DeveloperLicenseID: int(args.TokenID.Int64()),
+		URI:                args.URI,
+	}
+
+	_, err := ru.Delete(ctx, c.dbs.DBS().Writer)
+	return err
+}
+
+func (c *ContractsEventsConsumer) handleSignerEnabled(ctx context.Context, e *ContractEventData) error {
+	var args SignerEnabledData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	s := models.Signer{
+		DeveloperLicenseID: int(args.TokenID.Int64()),
+		Signer:             args.Signer.Bytes(),
+		EnabledAt:          e.Block.Time,
+	}
+
+	err := s.Upsert(ctx, c.dbs.DBS().Writer, false, []string{models.SignerColumns.DeveloperLicenseID, models.SignerColumns.Signer}, boil.Blacklist(), boil.Infer())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *ContractsEventsConsumer) handleSignerDisabled(ctx context.Context, e *ContractEventData) error {
+	var args SignerDisabledData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	s := models.Signer{
+		DeveloperLicenseID: int(args.TokenID.Int64()),
+		Signer:             args.Signer.Bytes(),
+	}
+
+	_, err := s.Delete(ctx, c.dbs.DBS().Writer)
 	return err
 }

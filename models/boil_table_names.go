@@ -6,18 +6,24 @@ package models
 var TableNames = struct {
 	AftermarketDevices string
 	DCNS               string
+	DeveloperLicenses  string
 	Manufacturers      string
 	Privileges         string
+	RedirectUris       string
 	Rewards            string
+	Signers            string
 	SyntheticDevices   string
 	VehicleSacds       string
 	Vehicles           string
 }{
 	AftermarketDevices: "aftermarket_devices",
 	DCNS:               "dcns",
+	DeveloperLicenses:  "developer_licenses",
 	Manufacturers:      "manufacturers",
 	Privileges:         "privileges",
+	RedirectUris:       "redirect_uris",
 	Rewards:            "rewards",
+	Signers:            "signers",
 	SyntheticDevices:   "synthetic_devices",
 	VehicleSacds:       "vehicle_sacds",
 	Vehicles:           "vehicles",

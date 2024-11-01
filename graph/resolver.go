@@ -73,6 +73,13 @@ type DeviceDefinitionRepository interface {
 	GetDeviceDefinitions(ctx context.Context, tableID, first *int, after *string, last *int, before *string, filterBy *model.DeviceDefinitionFilter) (*model.DeviceDefinitionConnection, error)
 }
 
+// DeveloperLicenseRepository interface for mocking devicedefinition.Repository.
+//
+//go:generate mockgen -destination=./mock_developerlicense_test.go -package=graph github.com/DIMO-Network/identity-api/graph DeveloperLicenseRepository
+type DeveloperLicenseRepository interface {
+	GetDeveloperLicenses(ctx context.Context, first *int, after *string, last *int, before *string) (*model.DeveloperLicenseConnection, error)
+}
+
 // Resolver holds the repositories for the graph resolvers.
 type Resolver struct {
 	aftermarket      AftermarketDeviceRepository
@@ -84,6 +91,7 @@ type Resolver struct {
 	vehicleprivilege vehicleprivilege.Repository
 	vehiclesacd      vehiclesacd.Repository
 	deviceDefinition DeviceDefinitionRepository
+	developerLicense DeveloperLicenseRepository
 }
 
 // NewResolver creates a new Resolver with allocated repositories.

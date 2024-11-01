@@ -7,3 +7,6 @@ user   = "dimo"
 pass   = "dimo"
 schema = "identity_api"
 sslmode= "disable"
+
+[inflections.irregular]
+uri = "uris"
