@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
@@ -417,4 +418,28 @@ func (r *Repository) GetRedirectURIsForLicense(ctx context.Context, obj *gmodel.
 	}
 
 	return res, nil
+}
+
+func (r *Repository) GetLicense(ctx context.Context, by *gmodel.DeveloperLicenseBy) (*gmodel.DeveloperLicense, error) {
+	if base.CountTrue(by.ClientID != nil, by.TokenID != nil, by.Alias != nil) != 1 {
+		return nil, fmt.Errorf("must specify exactly one of `clientId`, `tokenId`, or `alias`")
+	}
+
+	var mod qm.QueryMod
+
+	switch {
+	case by.ClientID != nil:
+		mod = models.DeveloperLicenseWhere.ClientID.EQ(by.ClientID.Bytes())
+	case by.TokenID != nil:
+		mod = models.DeveloperLicenseWhere.ID.EQ(*by.TokenID)
+	case by.Alias != nil:
+		mod = models.DeveloperLicenseWhere.Alias.EQ(null.StringFrom(*by.Alias))
+	}
+
+	dl, err := models.DeveloperLicenses(mod).One(ctx, r.PDB.DBS().Reader)
+	if err != nil {
+		return nil, err
+	}
+
+	return ToAPI(dl), nil
 }

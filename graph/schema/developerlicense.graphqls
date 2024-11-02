@@ -2,7 +2,7 @@
 
 extend type Query {
   """
-  View a particular device definition.
+  List developer licenses. Sorts by token id, descending.
   """
   developerLicenses(
     first: Int,
@@ -11,13 +11,33 @@ extend type Query {
     before: String,
     filterBy: DeveloperLicenseFilterBy
   ): DeveloperLicenseConnection!
+
+  """
+  Retrieve a particular developer license.
+  """
+  developerLicense(by: DeveloperLicenseBy!): DeveloperLicense!
 }
 
 type DeveloperLicense {
+  """
+  The token id of the license as an NFT.
+  """
   tokenId: Int!
+  """
+  The owner of the license. A single owner can own multiple licenses.
+  """
   owner: Address!
+  """
+  Serves as the client id for OAuth as well as the address of the associated contract.
+  """
   clientId: Address!
+  """
+  A human-readable alias for this license. Unique among all licenses if present.
+  """
   alias: String
+  """
+  The block timestamp for the transaction that minted this license.
+  """
   mintedAt: Time!
   signers(first: Int, after: String, last: Int, before: String): SignerConnection!
   redirectURIs(first: Int, after: String, last: Int, before: String): RedirectURIConnection!
@@ -32,6 +52,12 @@ type DeveloperLicenseConnection {
 
 input DeveloperLicenseFilterBy {
   signer: Address
+}
+
+input DeveloperLicenseBy {
+  clientId: Address
+  alias: String
+  tokenId: Int
 }
 
 type DeveloperLicenseEdge {
