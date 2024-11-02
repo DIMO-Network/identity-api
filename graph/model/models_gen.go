@@ -166,13 +166,24 @@ type Definition struct {
 }
 
 type DeveloperLicense struct {
-	TokenID      int                    `json:"tokenId"`
-	Owner        common.Address         `json:"owner"`
-	ClientID     common.Address         `json:"clientId"`
-	Alias        *string                `json:"alias,omitempty"`
+	// The token id of the license as an NFT.
+	TokenID int `json:"tokenId"`
+	// The owner of the license. A single owner can own multiple licenses.
+	Owner common.Address `json:"owner"`
+	// Serves as the client id for OAuth as well as the address of the associated contract.
+	ClientID common.Address `json:"clientId"`
+	// A human-readable alias for this license. Unique among all licenses if present.
+	Alias *string `json:"alias,omitempty"`
+	// The block timestamp for the transaction that minted this license.
 	MintedAt     time.Time              `json:"mintedAt"`
 	Signers      *SignerConnection      `json:"signers"`
 	RedirectURIs *RedirectURIConnection `json:"redirectURIs"`
+}
+
+type DeveloperLicenseBy struct {
+	ClientID *common.Address `json:"clientId,omitempty"`
+	Alias    *string         `json:"alias,omitempty"`
+	TokenID  *int            `json:"tokenId,omitempty"`
 }
 
 type DeveloperLicenseConnection struct {
