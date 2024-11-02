@@ -6,7 +6,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
 )
@@ -28,7 +27,7 @@ func (r *queryResolver) DeveloperLicenses(ctx context.Context, first *int, after
 
 // DeveloperLicense is the resolver for the developerLicense field.
 func (r *queryResolver) DeveloperLicense(ctx context.Context, by model.DeveloperLicenseBy) (*model.DeveloperLicense, error) {
-	panic(fmt.Errorf("not implemented: DeveloperLicense - developerLicense"))
+	return r.developerLicense.GetLicense(ctx, by)
 }
 
 // DeveloperLicense returns DeveloperLicenseResolver implementation.

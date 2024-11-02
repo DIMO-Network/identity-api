@@ -82,7 +82,7 @@ type DeveloperLicenseRepository interface {
 	GetSignersForLicense(ctx context.Context, obj *model.DeveloperLicense, first *int, after *string, last *int, before *string) (*model.SignerConnection, error)
 	GetRedirectURIsForLicense(ctx context.Context, obj *model.DeveloperLicense, first *int, after *string, last *int, before *string) (*model.RedirectURIConnection, error)
 
-	GetLicense(ctx context.Context, by *model.DeveloperLicenseBy) (*model.DeveloperLicense, error)
+	GetLicense(ctx context.Context, by model.DeveloperLicenseBy) (*model.DeveloperLicense, error)
 }
 
 // Resolver holds the repositories for the graph resolvers.

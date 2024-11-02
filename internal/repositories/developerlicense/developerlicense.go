@@ -420,7 +420,7 @@ func (r *Repository) GetRedirectURIsForLicense(ctx context.Context, obj *gmodel.
 	return res, nil
 }
 
-func (r *Repository) GetLicense(ctx context.Context, by *gmodel.DeveloperLicenseBy) (*gmodel.DeveloperLicense, error) {
+func (r *Repository) GetLicense(ctx context.Context, by gmodel.DeveloperLicenseBy) (*gmodel.DeveloperLicense, error) {
 	if base.CountTrue(by.ClientID != nil, by.TokenID != nil, by.Alias != nil) != 1 {
 		return nil, fmt.Errorf("must specify exactly one of `clientId`, `tokenId`, or `alias`")
 	}
