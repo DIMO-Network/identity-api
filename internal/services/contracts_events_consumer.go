@@ -842,12 +842,16 @@ func (c *ContractsEventsConsumer) handleDevLicenseAlias(ctx context.Context, e *
 		return err
 	}
 
+	dlID := int(args.TokenID.Int64())
+
 	alias := string(bytes.Trim(args.LicenseAlias, "\x00"))
 
 	dl := models.DeveloperLicense{
-		ID:    int(args.TokenID.Int64()),
+		ID:    dlID,
 		Alias: null.StringFrom(alias),
 	}
+
+	c.log.Info().Int("developerLicenseId", dlID).Msgf("Developer license alias set to %s.", alias)
 
 	_, err := dl.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.DeveloperLicenseColumns.Alias))
 	if err != nil {
