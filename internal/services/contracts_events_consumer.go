@@ -631,7 +631,13 @@ func (c *ContractsEventsConsumer) handleAftermarketDevicePairedEvent(ctx context
 	}
 
 	_, err := ad.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.AftermarketDeviceColumns.VehicleID, models.AftermarketDeviceColumns.PairedAt))
-	return err
+	if err != nil {
+		return err
+	}
+
+	c.log.Info().Int64("vehicleId", args.VehicleNode.Int64()).Int64("aftermarketId", args.AftermarketDeviceNode.Int64()).Msg("Aftermarket device paired.")
+
+	return nil
 }
 
 func (c *ContractsEventsConsumer) handleAftermarketDeviceUnpairedEvent(ctx context.Context, e *ContractEventData) error {
