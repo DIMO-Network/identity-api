@@ -1,6 +1,6 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE TABLE stakes(
+CREATE TABLE stakes (
     id int CONSTRAINT stakes_pkey PRIMARY KEY,
     owner bytea NOT NULL CONSTRAINT stakes_owner_check CHECK (length(owner) = 20),
     level smallint NOT NULL,
@@ -10,7 +10,7 @@ CREATE TABLE stakes(
     ends_at timestamptz NOT NULL,
     withdrawn_at timestamptz
 );
--- +goose StatementEndw
+-- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
