@@ -8,8 +8,13 @@ extend type Query {
     first: Int,
     after: String,
     last: Int,
-    before: String
+    before: String,
+    filterBy: StakeFilterBy
   ): StakeConnection!
+}
+
+input StakeFilterBy {
+  owner: Address
 }
 
 type Stake {

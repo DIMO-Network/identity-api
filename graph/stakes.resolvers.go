@@ -12,8 +12,8 @@ import (
 )
 
 // Stakes is the resolver for the stakes field.
-func (r *queryResolver) Stakes(ctx context.Context, first *int, after *string, last *int, before *string) (*model.StakeConnection, error) {
-	return r.stake.GetDeveloperStakes(ctx, first, after, last, before)
+func (r *queryResolver) Stakes(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.StakeFilterBy) (*model.StakeConnection, error) {
+	return r.stake.GetStakes(ctx, first, after, last, before, filterBy)
 }
 
 // Vehicle is the resolver for the vehicle field.

@@ -90,7 +90,7 @@ type DeveloperLicenseRepository interface {
 //
 //go:generate mockgen -destination=./mock_stake_test.go -package=graph github.com/DIMO-Network/identity-api/graph StakeRepository
 type StakeRepository interface {
-	GetDeveloperStakes(ctx context.Context, first *int, after *string, last *int, before *string) (*model.StakeConnection, error)
+	GetStakes(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.StakeFilterBy) (*model.StakeConnection, error)
 }
 
 // Resolver holds the repositories for the graph resolvers.

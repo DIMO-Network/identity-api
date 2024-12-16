@@ -41,17 +41,17 @@ func (m *MockStakeRepository) EXPECT() *MockStakeRepositoryMockRecorder {
 	return m.recorder
 }
 
-// GetDeveloperStakes mocks base method.
-func (m *MockStakeRepository) GetDeveloperStakes(ctx context.Context, first *int, after *string, last *int, before *string) (*model.StakeConnection, error) {
+// GetStakes mocks base method.
+func (m *MockStakeRepository) GetStakes(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.StakeFilterBy) (*model.StakeConnection, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetDeveloperStakes", ctx, first, after, last, before)
+	ret := m.ctrl.Call(m, "GetStakes", ctx, first, after, last, before, filterBy)
 	ret0, _ := ret[0].(*model.StakeConnection)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetDeveloperStakes indicates an expected call of GetDeveloperStakes.
-func (mr *MockStakeRepositoryMockRecorder) GetDeveloperStakes(ctx, first, after, last, before any) *gomock.Call {
+// GetStakes indicates an expected call of GetStakes.
+func (mr *MockStakeRepositoryMockRecorder) GetStakes(ctx, first, after, last, before, filterBy any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDeveloperStakes", reflect.TypeOf((*MockStakeRepository)(nil).GetDeveloperStakes), ctx, first, after, last, before)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStakes", reflect.TypeOf((*MockStakeRepository)(nil).GetStakes), ctx, first, after, last, before, filterBy)
 }

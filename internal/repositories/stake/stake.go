@@ -39,7 +39,7 @@ func ToAPI(v *models.Stake) *gmodel.Stake {
 	}
 }
 
-func (r *Repository) GetDeveloperStakes(ctx context.Context, first *int, after *string, last *int, before *string) (*gmodel.StakeConnection, error) {
+func (r *Repository) GetStakes(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *gmodel.StakeFilterBy) (*gmodel.StakeConnection, error) {
 	limit, err := helpers.ValidateFirstLast(first, last, base.MaxPageSize)
 	if err != nil {
 		return nil, err
@@ -47,6 +47,10 @@ func (r *Repository) GetDeveloperStakes(ctx context.Context, first *int, after *
 
 	// None now, but making room.
 	var queryMods []qm.QueryMod
+
+	if filterBy != nil && filterBy.Owner != nil {
+		queryMods = append(queryMods, models.StakeWhere.Owner.EQ(filterBy.Owner.Bytes()))
+	}
 
 	totalCount, err := models.Stakes(queryMods...).Count(ctx, r.PDB.DBS().Reader)
 	if err != nil {

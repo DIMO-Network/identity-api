@@ -457,6 +457,10 @@ type StakeEdge struct {
 	Cursor string `json:"cursor"`
 }
 
+type StakeFilterBy struct {
+	Owner *common.Address `json:"owner,omitempty"`
+}
+
 // The SyntheticDevice is a software connection established to connect the vehicle to the DIMO network.
 type SyntheticDevice struct {
 	// An opaque global identifier for this syntheticDevice.

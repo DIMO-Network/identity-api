@@ -253,7 +253,7 @@ type ComplexityRoot struct {
 		Manufacturer       func(childComplexity int, by model.ManufacturerBy) int
 		Node               func(childComplexity int, id string) int
 		Rewards            func(childComplexity int, user common.Address) int
-		Stakes             func(childComplexity int, first *int, after *string, last *int, before *string) int
+		Stakes             func(childComplexity int, first *int, after *string, last *int, before *string, filterBy *model.StakeFilterBy) int
 		SyntheticDevice    func(childComplexity int, by model.SyntheticDeviceBy) int
 		SyntheticDevices   func(childComplexity int, first *int, last *int, after *string, before *string, filterBy *model.SyntheticDevicesFilter) int
 		Vehicle            func(childComplexity int, tokenID int) int
@@ -442,7 +442,7 @@ type QueryResolver interface {
 	DeviceDefinition(ctx context.Context, by model.DeviceDefinitionBy) (*model.DeviceDefinition, error)
 	Manufacturer(ctx context.Context, by model.ManufacturerBy) (*model.Manufacturer, error)
 	Rewards(ctx context.Context, user common.Address) (*model.UserRewards, error)
-	Stakes(ctx context.Context, first *int, after *string, last *int, before *string) (*model.StakeConnection, error)
+	Stakes(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.StakeFilterBy) (*model.StakeConnection, error)
 	SyntheticDevice(ctx context.Context, by model.SyntheticDeviceBy) (*model.SyntheticDevice, error)
 	SyntheticDevices(ctx context.Context, first *int, last *int, after *string, before *string, filterBy *model.SyntheticDevicesFilter) (*model.SyntheticDeviceConnection, error)
 	Vehicle(ctx context.Context, tokenID int) (*model.Vehicle, error)
@@ -1419,7 +1419,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Stakes(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
+		return e.complexity.Query.Stakes(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["filterBy"].(*model.StakeFilterBy)), true
 
 	case "Query.syntheticDevice":
 		if e.complexity.Query.SyntheticDevice == nil {
@@ -2081,6 +2081,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputDeviceDefinitionFilter,
 		ec.unmarshalInputManufacturerBy,
 		ec.unmarshalInputPrivilegeFilterBy,
+		ec.unmarshalInputStakeFilterBy,
 		ec.unmarshalInputSyntheticDeviceBy,
 		ec.unmarshalInputSyntheticDevicesFilter,
 		ec.unmarshalInputVehiclesFilter,
@@ -3514,6 +3515,11 @@ func (ec *executionContext) field_Query_stakes_args(ctx context.Context, rawArgs
 		return nil, err
 	}
 	args["before"] = arg3
+	arg4, err := ec.field_Query_stakes_argsFilterBy(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["filterBy"] = arg4
 	return args, nil
 }
 func (ec *executionContext) field_Query_stakes_argsFirst(
@@ -3601,6 +3607,28 @@ func (ec *executionContext) field_Query_stakes_argsBefore(
 	}
 
 	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_stakes_argsFilterBy(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*model.StakeFilterBy, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["filterBy"]
+	if !ok {
+		var zeroVal *model.StakeFilterBy
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("filterBy"))
+	if tmp, ok := rawArgs["filterBy"]; ok {
+		return ec.unmarshalOStakeFilterBy2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐStakeFilterBy(ctx, tmp)
+	}
+
+	var zeroVal *model.StakeFilterBy
 	return zeroVal, nil
 }
 
@@ -10607,7 +10635,7 @@ func (ec *executionContext) _Query_stakes(ctx context.Context, field graphql.Col
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Stakes(rctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string))
+		return ec.resolvers.Query().Stakes(rctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["filterBy"].(*model.StakeFilterBy))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -17528,6 +17556,33 @@ func (ec *executionContext) unmarshalInputPrivilegeFilterBy(ctx context.Context,
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputStakeFilterBy(ctx context.Context, obj interface{}) (model.StakeFilterBy, error) {
+	var it model.StakeFilterBy
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"owner"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "owner":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("owner"))
+			data, err := ec.unmarshalOAddress2ᚖgithubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Owner = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputSyntheticDeviceBy(ctx context.Context, obj interface{}) (model.SyntheticDeviceBy, error) {
 	var it model.SyntheticDeviceBy
 	asMap := map[string]interface{}{}
@@ -23677,6 +23732,14 @@ func (ec *executionContext) marshalOStake2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋide
 		return graphql.Null
 	}
 	return ec._Stake(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOStakeFilterBy2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐStakeFilterBy(ctx context.Context, v interface{}) (*model.StakeFilterBy, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputStakeFilterBy(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v interface{}) (*string, error) {
