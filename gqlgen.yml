@@ -144,6 +144,8 @@ models:
         resolver: true
       earnings:
         resolver: true
+      stake:
+        resolver: true
     extraFields:
       ManufacturerID:
         type: "int"
@@ -189,3 +191,10 @@ models:
         resolver: true
       signers:
         resolver: true
+  Stake:
+    fields:
+      vehicle:
+        resolver: true
+    extraFields:
+      VehicleID:
+        type: "*int"

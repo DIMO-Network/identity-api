@@ -8,9 +8,23 @@ import (
 	"context"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
+	"github.com/DIMO-Network/identity-api/internal/loader"
 )
 
 // Stakes is the resolver for the stakes field.
 func (r *queryResolver) Stakes(ctx context.Context, first *int, after *string, last *int, before *string) (*model.StakeConnection, error) {
 	return r.stake.GetDeveloperStakes(ctx, first, after, last, before)
 }
+
+// Vehicle is the resolver for the vehicle field.
+func (r *stakeResolver) Vehicle(ctx context.Context, obj *model.Stake) (*model.Vehicle, error) {
+	if obj.VehicleID == nil {
+		return nil, nil
+	}
+	return loader.GetVehicleByID(ctx, *obj.VehicleID)
+}
+
+// Stake returns StakeResolver implementation.
+func (r *Resolver) Stake() StakeResolver { return &stakeResolver{r} }
+
+type stakeResolver struct{ *Resolver }

@@ -51,6 +51,7 @@ type ResolverRoot interface {
 	Earning() EarningResolver
 	Manufacturer() ManufacturerResolver
 	Query() QueryResolver
+	Stake() StakeResolver
 	SyntheticDevice() SyntheticDeviceResolver
 	UserRewards() UserRewardsResolver
 	Vehicle() VehicleResolver
@@ -321,6 +322,7 @@ type ComplexityRoot struct {
 		Points      func(childComplexity int) int
 		StakedAt    func(childComplexity int) int
 		TokenID     func(childComplexity int) int
+		Vehicle     func(childComplexity int) int
 		WithdrawnAt func(childComplexity int) int
 	}
 
@@ -378,6 +380,7 @@ type ComplexityRoot struct {
 		Owner             func(childComplexity int) int
 		Privileges        func(childComplexity int, first *int, after *string, last *int, before *string, filterBy *model.PrivilegeFilterBy) int
 		Sacds             func(childComplexity int, first *int, after *string, last *int, before *string) int
+		Stake             func(childComplexity int) int
 		SyntheticDevice   func(childComplexity int) int
 		TokenID           func(childComplexity int) int
 	}
@@ -445,6 +448,9 @@ type QueryResolver interface {
 	Vehicle(ctx context.Context, tokenID int) (*model.Vehicle, error)
 	Vehicles(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.VehiclesFilter) (*model.VehicleConnection, error)
 }
+type StakeResolver interface {
+	Vehicle(ctx context.Context, obj *model.Stake) (*model.Vehicle, error)
+}
 type SyntheticDeviceResolver interface {
 	Vehicle(ctx context.Context, obj *model.SyntheticDevice) (*model.Vehicle, error)
 }
@@ -462,6 +468,8 @@ type VehicleResolver interface {
 	Dcn(ctx context.Context, obj *model.Vehicle) (*model.Dcn, error)
 
 	Earnings(ctx context.Context, obj *model.Vehicle) (*model.VehicleEarnings, error)
+
+	Stake(ctx context.Context, obj *model.Vehicle) (*model.Stake, error)
 }
 type VehicleEarningsResolver interface {
 	History(ctx context.Context, obj *model.VehicleEarnings, first *int, after *string, last *int, before *string) (*model.EarningsConnection, error)
@@ -1699,6 +1707,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Stake.TokenID(childComplexity), true
 
+	case "Stake.vehicle":
+		if e.complexity.Stake.Vehicle == nil {
+			break
+		}
+
+		return e.complexity.Stake.Vehicle(childComplexity), true
+
 	case "Stake.withdrawnAt":
 		if e.complexity.Stake.WithdrawnAt == nil {
 			break
@@ -1965,6 +1980,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Vehicle.Sacds(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
+
+	case "Vehicle.stake":
+		if e.complexity.Vehicle.Stake == nil {
+			break
+		}
+
+		return e.complexity.Vehicle.Stake(childComplexity), true
 
 	case "Vehicle.syntheticDevice":
 		if e.complexity.Vehicle.SyntheticDevice == nil {
@@ -5032,6 +5054,8 @@ func (ec *executionContext) fieldContext_AftermarketDevice_vehicle(_ context.Con
 				return ec.fieldContext_Vehicle_earnings(ctx, field)
 			case "dataURI":
 				return ec.fieldContext_Vehicle_dataURI(ctx, field)
+			case "stake":
+				return ec.fieldContext_Vehicle_stake(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
 		},
@@ -6090,6 +6114,8 @@ func (ec *executionContext) fieldContext_DCN_vehicle(_ context.Context, field gr
 				return ec.fieldContext_Vehicle_earnings(ctx, field)
 			case "dataURI":
 				return ec.fieldContext_Vehicle_dataURI(ctx, field)
+			case "stake":
+				return ec.fieldContext_Vehicle_stake(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
 		},
@@ -8467,6 +8493,8 @@ func (ec *executionContext) fieldContext_Earning_vehicle(_ context.Context, fiel
 				return ec.fieldContext_Vehicle_earnings(ctx, field)
 			case "dataURI":
 				return ec.fieldContext_Vehicle_dataURI(ctx, field)
+			case "stake":
+				return ec.fieldContext_Vehicle_stake(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
 		},
@@ -10837,6 +10865,8 @@ func (ec *executionContext) fieldContext_Query_vehicle(ctx context.Context, fiel
 				return ec.fieldContext_Vehicle_earnings(ctx, field)
 			case "dataURI":
 				return ec.fieldContext_Vehicle_dataURI(ctx, field)
+			case "stake":
+				return ec.fieldContext_Vehicle_stake(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
 		},
@@ -12682,6 +12712,83 @@ func (ec *executionContext) fieldContext_Stake_withdrawnAt(_ context.Context, fi
 	return fc, nil
 }
 
+func (ec *executionContext) _Stake_vehicle(ctx context.Context, field graphql.CollectedField, obj *model.Stake) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Stake_vehicle(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Stake().Vehicle(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Vehicle)
+	fc.Result = res
+	return ec.marshalOVehicle2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐVehicle(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Stake_vehicle(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Stake",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Vehicle_id(ctx, field)
+			case "tokenId":
+				return ec.fieldContext_Vehicle_tokenId(ctx, field)
+			case "manufacturer":
+				return ec.fieldContext_Vehicle_manufacturer(ctx, field)
+			case "owner":
+				return ec.fieldContext_Vehicle_owner(ctx, field)
+			case "mintedAt":
+				return ec.fieldContext_Vehicle_mintedAt(ctx, field)
+			case "aftermarketDevice":
+				return ec.fieldContext_Vehicle_aftermarketDevice(ctx, field)
+			case "privileges":
+				return ec.fieldContext_Vehicle_privileges(ctx, field)
+			case "sacds":
+				return ec.fieldContext_Vehicle_sacds(ctx, field)
+			case "syntheticDevice":
+				return ec.fieldContext_Vehicle_syntheticDevice(ctx, field)
+			case "definition":
+				return ec.fieldContext_Vehicle_definition(ctx, field)
+			case "dcn":
+				return ec.fieldContext_Vehicle_dcn(ctx, field)
+			case "name":
+				return ec.fieldContext_Vehicle_name(ctx, field)
+			case "imageURI":
+				return ec.fieldContext_Vehicle_imageURI(ctx, field)
+			case "image":
+				return ec.fieldContext_Vehicle_image(ctx, field)
+			case "earnings":
+				return ec.fieldContext_Vehicle_earnings(ctx, field)
+			case "dataURI":
+				return ec.fieldContext_Vehicle_dataURI(ctx, field)
+			case "stake":
+				return ec.fieldContext_Vehicle_stake(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _StakeConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.StakeConnection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_StakeConnection_totalCount(ctx, field)
 	if err != nil {
@@ -12831,6 +12938,8 @@ func (ec *executionContext) fieldContext_StakeConnection_nodes(_ context.Context
 				return ec.fieldContext_Stake_endsAt(ctx, field)
 			case "withdrawnAt":
 				return ec.fieldContext_Stake_withdrawnAt(ctx, field)
+			case "vehicle":
+				return ec.fieldContext_Stake_vehicle(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Stake", field.Name)
 		},
@@ -12947,6 +13056,8 @@ func (ec *executionContext) fieldContext_StakeEdge_node(_ context.Context, field
 				return ec.fieldContext_Stake_endsAt(ctx, field)
 			case "withdrawnAt":
 				return ec.fieldContext_Stake_withdrawnAt(ctx, field)
+			case "vehicle":
+				return ec.fieldContext_Stake_vehicle(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Stake", field.Name)
 		},
@@ -13333,6 +13444,8 @@ func (ec *executionContext) fieldContext_SyntheticDevice_vehicle(_ context.Conte
 				return ec.fieldContext_Vehicle_earnings(ctx, field)
 			case "dataURI":
 				return ec.fieldContext_Vehicle_dataURI(ctx, field)
+			case "stake":
+				return ec.fieldContext_Vehicle_stake(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
 		},
@@ -14596,6 +14709,67 @@ func (ec *executionContext) fieldContext_Vehicle_dataURI(_ context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _Vehicle_stake(ctx context.Context, field graphql.CollectedField, obj *model.Vehicle) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Vehicle_stake(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Vehicle().Stake(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Stake)
+	fc.Result = res
+	return ec.marshalOStake2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐStake(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Vehicle_stake(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Vehicle",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "tokenId":
+				return ec.fieldContext_Stake_tokenId(ctx, field)
+			case "owner":
+				return ec.fieldContext_Stake_owner(ctx, field)
+			case "level":
+				return ec.fieldContext_Stake_level(ctx, field)
+			case "points":
+				return ec.fieldContext_Stake_points(ctx, field)
+			case "amount":
+				return ec.fieldContext_Stake_amount(ctx, field)
+			case "stakedAt":
+				return ec.fieldContext_Stake_stakedAt(ctx, field)
+			case "endsAt":
+				return ec.fieldContext_Stake_endsAt(ctx, field)
+			case "withdrawnAt":
+				return ec.fieldContext_Stake_withdrawnAt(ctx, field)
+			case "vehicle":
+				return ec.fieldContext_Stake_vehicle(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Stake", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _VehicleConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.VehicleConnection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_VehicleConnection_totalCount(ctx, field)
 	if err != nil {
@@ -14761,6 +14935,8 @@ func (ec *executionContext) fieldContext_VehicleConnection_nodes(_ context.Conte
 				return ec.fieldContext_Vehicle_earnings(ctx, field)
 			case "dataURI":
 				return ec.fieldContext_Vehicle_dataURI(ctx, field)
+			case "stake":
+				return ec.fieldContext_Vehicle_stake(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
 		},
@@ -15002,6 +15178,8 @@ func (ec *executionContext) fieldContext_VehicleEdge_node(_ context.Context, fie
 				return ec.fieldContext_Vehicle_earnings(ctx, field)
 			case "dataURI":
 				return ec.fieldContext_Vehicle_dataURI(ctx, field)
+			case "stake":
+				return ec.fieldContext_Vehicle_stake(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
 		},
@@ -20027,40 +20205,73 @@ func (ec *executionContext) _Stake(ctx context.Context, sel ast.SelectionSet, ob
 		case "tokenId":
 			out.Values[i] = ec._Stake_tokenId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "owner":
 			out.Values[i] = ec._Stake_owner(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "level":
 			out.Values[i] = ec._Stake_level(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "points":
 			out.Values[i] = ec._Stake_points(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "amount":
 			out.Values[i] = ec._Stake_amount(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "stakedAt":
 			out.Values[i] = ec._Stake_stakedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "endsAt":
 			out.Values[i] = ec._Stake_endsAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "withdrawnAt":
 			out.Values[i] = ec._Stake_withdrawnAt(ctx, field, obj)
+		case "vehicle":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Stake_vehicle(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -20748,6 +20959,39 @@ func (ec *executionContext) _Vehicle(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "stake":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Vehicle_stake(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -23426,6 +23670,13 @@ func (ec *executionContext) unmarshalOPrivilegeFilterBy2ᚖgithubᚗcomᚋDIMO�
 	}
 	res, err := ec.unmarshalInputPrivilegeFilterBy(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOStake2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐStake(ctx context.Context, sel ast.SelectionSet, v *model.Stake) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Stake(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v interface{}) (*string, error) {

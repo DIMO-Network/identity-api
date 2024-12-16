@@ -30,6 +30,7 @@ type Stake {
   stakedAt: Time!
   endsAt: Time!
   withdrawnAt: Time
+  vehicle: Vehicle
 }
 
 type StakeConnection {

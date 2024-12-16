@@ -70,6 +70,11 @@ func (r *vehicleResolver) Earnings(ctx context.Context, obj *model.Vehicle) (*mo
 	return r.reward.GetEarningsByVehicleID(ctx, obj.TokenID)
 }
 
+// Stake is the resolver for the stake field.
+func (r *vehicleResolver) Stake(ctx context.Context, obj *model.Vehicle) (*model.Stake, error) {
+	return loader.GetStakeByVehicleID(ctx, obj.TokenID)
+}
+
 // History is the resolver for the history field.
 func (r *vehicleEarningsResolver) History(ctx context.Context, obj *model.VehicleEarnings, first *int, after *string, last *int, before *string) (*model.EarningsConnection, error) {
 	return r.reward.PaginateVehicleEarningsByID(ctx, obj, first, after, last, before)

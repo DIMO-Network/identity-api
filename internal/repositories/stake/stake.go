@@ -35,6 +35,7 @@ func ToAPI(v *models.Stake) *gmodel.Stake {
 		StakedAt:    v.StakedAt,
 		EndsAt:      v.EndsAt,
 		WithdrawnAt: v.WithdrawnAt.Ptr(),
+		VehicleID:   v.VehicleID.Ptr(),
 	}
 }
 

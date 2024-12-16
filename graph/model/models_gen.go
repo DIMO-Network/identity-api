@@ -441,6 +441,8 @@ type Stake struct {
 	StakedAt    time.Time  `json:"stakedAt"`
 	EndsAt      time.Time  `json:"endsAt"`
 	WithdrawnAt *time.Time `json:"withdrawnAt,omitempty"`
+	Vehicle     *Vehicle   `json:"vehicle,omitempty"`
+	VehicleID   *int       `json:"-"`
 }
 
 type StakeConnection struct {
@@ -550,6 +552,7 @@ type Vehicle struct {
 	Image          string           `json:"image"`
 	Earnings       *VehicleEarnings `json:"earnings,omitempty"`
 	DataURI        string           `json:"dataURI"`
+	Stake          *Stake           `json:"stake,omitempty"`
 	ManufacturerID int              `json:"-"`
 }
 

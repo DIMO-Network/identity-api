@@ -140,6 +140,8 @@ type Vehicle implements Node {
   earnings: VehicleEarnings
 
   dataURI: String!
+
+  stake: Stake
 }
 
 type Definition {
