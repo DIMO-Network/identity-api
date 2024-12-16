@@ -7,7 +7,7 @@ CREATE TABLE stakes (
     points int NOT NULL,
     amount numeric(30, 0) NOT NULL,
     vehicle_id int CONSTRAINT stakes_vehicle_id_fkey REFERENCES vehicles (id) ON DELETE SET NULL,
-    created_at timestamptz NOT NULL, -- This is maybe a bad name. This is when the current lockup started.
+    staked_at timestamptz NOT NULL,
     ends_at timestamptz NOT NULL,
     withdrawn_at timestamptz
 );
