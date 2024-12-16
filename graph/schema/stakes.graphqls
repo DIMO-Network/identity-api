@@ -40,6 +40,6 @@ type StakeConnection {
 }
 
 type StakeEdge {
-  node: Stakge!
+  node: Stake!
   cursor: String!
 }

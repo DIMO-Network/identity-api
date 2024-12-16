@@ -11,6 +11,7 @@ import (
 
 	"github.com/DIMO-Network/identity-api/internal/config"
 	cmodels "github.com/DIMO-Network/identity-api/internal/services/models"
+	"github.com/DIMO-Network/identity-api/internal/services/staking"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared"
 	"github.com/DIMO-Network/shared/db"
@@ -23,10 +24,11 @@ import (
 )
 
 type ContractsEventsConsumer struct {
-	dbs        db.Store
-	log        *zerolog.Logger
-	settings   *config.Settings
-	httpClient *http.Client
+	dbs            db.Store
+	log            *zerolog.Logger
+	settings       *config.Settings
+	httpClient     *http.Client
+	stakingHandler *staking.Handler
 }
 
 type EventName string
@@ -98,6 +100,9 @@ func NewContractsEventsConsumer(dbs db.Store, log *zerolog.Logger, settings *con
 		httpClient: &http.Client{
 			Timeout: 10 * time.Second,
 		},
+		stakingHandler: &staking.Handler{
+			DBS: dbs,
+		},
 	}
 }
 
@@ -119,6 +124,7 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 	RewardsContractAddr := common.HexToAddress(c.settings.RewardsContractAddr)
 	sacdAddr := common.HexToAddress(c.settings.SACDAddress)
 	devLicenseAddr := common.HexToAddress(c.settings.DevLicenseAddr)
+	stakingAddr := common.HexToAddress(c.settings.StakingAddr)
 
 	var data cmodels.ContractEventData
 	if err := json.Unmarshal(event.Data, &data); err != nil {
@@ -222,6 +228,8 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 		case SignerDisabled:
 			return c.handleSignerDisabled(ctx, &data)
 		}
+	case stakingAddr:
+		return c.stakingHandler.HandleEvent(ctx, &data)
 	}
 
 	c.log.Debug().Str("event", data.EventName).Msg("Handler not provided for event.")

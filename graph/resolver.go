@@ -11,6 +11,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/repositories/devicedefinition"
 	"github.com/DIMO-Network/identity-api/internal/repositories/manufacturer"
 	"github.com/DIMO-Network/identity-api/internal/repositories/reward"
+	"github.com/DIMO-Network/identity-api/internal/repositories/stake"
 	"github.com/DIMO-Network/identity-api/internal/repositories/synthetic"
 	"github.com/DIMO-Network/identity-api/internal/repositories/vehicle"
 	"github.com/DIMO-Network/identity-api/internal/repositories/vehicleprivilege"
@@ -85,6 +86,13 @@ type DeveloperLicenseRepository interface {
 	GetLicense(ctx context.Context, by model.DeveloperLicenseBy) (*model.DeveloperLicense, error)
 }
 
+// StakeRepository interface for mocking stake.Repository.
+//
+//go:generate mockgen -destination=./mock_stake_test.go -package=graph github.com/DIMO-Network/identity-api/graph StakeRepository
+type StakeRepository interface {
+	GetDeveloperStakes(ctx context.Context, first *int, after *string, last *int, before *string) (*model.StakeConnection, error)
+}
+
 // Resolver holds the repositories for the graph resolvers.
 type Resolver struct {
 	aftermarket      AftermarketDeviceRepository
@@ -97,6 +105,7 @@ type Resolver struct {
 	vehiclesacd      vehiclesacd.Repository
 	deviceDefinition DeviceDefinitionRepository
 	developerLicense DeveloperLicenseRepository
+	stake            StakeRepository
 }
 
 // NewResolver creates a new Resolver with allocated repositories.
@@ -116,5 +125,6 @@ func NewResolver(baseRepo *base.Repository) *Resolver {
 			TablelandApiService: tablelandApiService,
 		},
 		developerLicense: &developerlicense.Repository{Repository: baseRepo},
+		stake:            &stake.Repository{Repository: baseRepo},
 	}
 }

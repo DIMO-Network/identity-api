@@ -65,41 +65,41 @@ func (h *Handler) HandleEvent(ctx context.Context, event *models.ContractEventDa
 			return err
 		}
 		return h.HandleStaked(ctx, event, &args)
-	// case WithdrawnEventID:
-	// 	var args Withdrawn
-	// 	err := json.Unmarshal(event.Arguments, &args)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	return h.HandleWithdrawn(ctx, event, &args)
-	// case StakingExtendedEventID:
-	// 	var args StakingExtended
-	// 	err := json.Unmarshal(event.Arguments, &args)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	return h.HandleStakingExtended(ctx, event, &args)
-	// case VehicleAttachedEventID:
-	// 	var args VehicleAttached
-	// 	err := json.Unmarshal(event.Arguments, &args)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	return h.HandleVehicleAttached(ctx, event, &args)
-	// case VehicleDetachedEventID:
-	// 	var args VehicleDetached
-	// 	err := json.Unmarshal(event.Arguments, &args)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	return h.HandleVehicleDetached(ctx, event, &args)
-	// case TransferEventID:
-	// 	var args Transfer
-	// 	err := json.Unmarshal(event.Arguments, &args)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	return h.HandleTransfer(ctx, event, &args)
+	case WithdrawnEventID:
+		var args Withdrawn
+		err := json.Unmarshal(event.Arguments, &args)
+		if err != nil {
+			return err
+		}
+		return h.HandleWithdrawn(ctx, event, &args)
+	case StakingExtendedEventID:
+		var args StakingExtended
+		err := json.Unmarshal(event.Arguments, &args)
+		if err != nil {
+			return err
+		}
+		return h.HandleStakingExtended(ctx, event, &args)
+	case VehicleAttachedEventID:
+		var args VehicleAttached
+		err := json.Unmarshal(event.Arguments, &args)
+		if err != nil {
+			return err
+		}
+		return h.HandleVehicleAttached(ctx, event, &args)
+	case VehicleDetachedEventID:
+		var args VehicleDetached
+		err := json.Unmarshal(event.Arguments, &args)
+		if err != nil {
+			return err
+		}
+		return h.HandleVehicleDetached(ctx, event, &args)
+	case TransferEventID:
+		var args Transfer
+		err := json.Unmarshal(event.Arguments, &args)
+		if err != nil {
+			return err
+		}
+		return h.HandleTransfer(ctx, event, &args)
 	}
 
 	return nil
