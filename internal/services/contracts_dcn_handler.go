@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	cmodels "github.com/DIMO-Network/identity-api/internal/services/models"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/goccy/go-json"
@@ -11,7 +12,7 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
-func (c *ContractsEventsConsumer) handleNewDcnNode(ctx context.Context, e *ContractEventData) error {
+func (c *ContractsEventsConsumer) handleNewDcnNode(ctx context.Context, e *cmodels.ContractEventData) error {
 	logger := c.log.With().Str("EventName", NewNode.String()).Logger()
 
 	var args NewDCNNodeData
@@ -35,7 +36,7 @@ func (c *ContractsEventsConsumer) handleNewDcnNode(ctx context.Context, e *Contr
 	return nil
 }
 
-func (c *ContractsEventsConsumer) handleNewDCNExpiration(ctx context.Context, e *ContractEventData) error {
+func (c *ContractsEventsConsumer) handleNewDCNExpiration(ctx context.Context, e *cmodels.ContractEventData) error {
 	logger := c.log.With().Str("EventName", NewExpiration.String()).Logger()
 
 	var args NewDCNExpirationData
@@ -58,7 +59,7 @@ func (c *ContractsEventsConsumer) handleNewDCNExpiration(ctx context.Context, e 
 	return nil
 }
 
-func (c *ContractsEventsConsumer) handleNameChanged(ctx context.Context, e *ContractEventData) error {
+func (c *ContractsEventsConsumer) handleNameChanged(ctx context.Context, e *cmodels.ContractEventData) error {
 	eventName := NameChanged.String()
 	logger := c.log.With().Str("EventName", eventName).Logger()
 
@@ -82,7 +83,7 @@ func (c *ContractsEventsConsumer) handleNameChanged(ctx context.Context, e *Cont
 	return nil
 }
 
-func (c *ContractsEventsConsumer) handleVehicleIdChanged(ctx context.Context, e *ContractEventData) error {
+func (c *ContractsEventsConsumer) handleVehicleIdChanged(ctx context.Context, e *cmodels.ContractEventData) error {
 	eventName := VehicleIdChanged.String()
 	logger := c.log.With().Str("EventName", eventName).Logger()
 

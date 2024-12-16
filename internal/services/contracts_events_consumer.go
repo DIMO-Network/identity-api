@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/DIMO-Network/identity-api/internal/config"
+	cmodels "github.com/DIMO-Network/identity-api/internal/services/models"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared"
 	"github.com/DIMO-Network/shared/db"
@@ -119,7 +120,7 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 	sacdAddr := common.HexToAddress(c.settings.SACDAddress)
 	devLicenseAddr := common.HexToAddress(c.settings.DevLicenseAddr)
 
-	var data ContractEventData
+	var data cmodels.ContractEventData
 	if err := json.Unmarshal(event.Data, &data); err != nil {
 		return err
 	}
@@ -228,7 +229,7 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.Clo
 	return nil
 }
 
-func (c *ContractsEventsConsumer) handleManufacturerNodeMintedEvent(ctx context.Context, e *ContractEventData) error {
+func (c *ContractsEventsConsumer) handleManufacturerNodeMintedEvent(ctx context.Context, e *cmodels.ContractEventData) error {
 	var args ManufacturerNodeMintedData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
 		return err
@@ -245,7 +246,7 @@ func (c *ContractsEventsConsumer) handleManufacturerNodeMintedEvent(ctx context.
 	return mfr.Upsert(ctx, c.dbs.DBS().Writer, false, []string{models.ManufacturerColumns.ID}, boil.None(), boil.Infer())
 }
 
-func (c *ContractsEventsConsumer) handleDeviceDefinitionTableCreated(ctx context.Context, e *ContractEventData) error {
+func (c *ContractsEventsConsumer) handleDeviceDefinitionTableCreated(ctx context.Context, e *cmodels.ContractEventData) error {
 	var args DeviceDefinitionTableCreatedData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
 		return err
@@ -260,7 +261,7 @@ func (c *ContractsEventsConsumer) handleDeviceDefinitionTableCreated(ctx context
 	return err
 }
 
-func (c *ContractsEventsConsumer) handleManufacturerTableSet(ctx context.Context, e *ContractEventData) error {
+func (c *ContractsEventsConsumer) handleManufacturerTableSet(ctx context.Context, e *cmodels.ContractEventData) error {
 	var args ManufacturerTableSetData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
 		return err
@@ -275,7 +276,7 @@ func (c *ContractsEventsConsumer) handleManufacturerTableSet(ctx context.Context
 	return err
 }
 
-func (c *ContractsEventsConsumer) handleVehicleNodeMintedEvent(ctx context.Context, e *ContractEventData) error {
+func (c *ContractsEventsConsumer) handleVehicleNodeMintedEvent(ctx context.Context, e *cmodels.ContractEventData) error {
 	var args VehicleNodeMintedData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
 		return err
@@ -300,7 +301,7 @@ func (c *ContractsEventsConsumer) handleVehicleNodeMintedEvent(ctx context.Conte
 	)
 }
 
-func (c *ContractsEventsConsumer) handleVehicleNodeMintedWithDeviceDefinitionEvent(ctx context.Context, e *ContractEventData) error {
+func (c *ContractsEventsConsumer) handleVehicleNodeMintedWithDeviceDefinitionEvent(ctx context.Context, e *cmodels.ContractEventData) error {
 	var args VehicleNodeMintedWithDeviceDefinitionData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
 		return err
@@ -326,7 +327,7 @@ func (c *ContractsEventsConsumer) handleVehicleNodeMintedWithDeviceDefinitionEve
 	)
 }
 
-func (c *ContractsEventsConsumer) handleAftermarketDeviceMintedEvent(ctx context.Context, e *ContractEventData) error {
+func (c *ContractsEventsConsumer) handleAftermarketDeviceMintedEvent(ctx context.Context, e *cmodels.ContractEventData) error {
 	var args AftermarketDeviceNodeMintedData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
 		return err
@@ -353,7 +354,7 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceMintedEvent(ctx context
 	)
 }
 
-func (c *ContractsEventsConsumer) handleVehicleAttributeSetEvent(ctx context.Context, e *ContractEventData) error {
+func (c *ContractsEventsConsumer) handleVehicleAttributeSetEvent(ctx context.Context, e *cmodels.ContractEventData) error {
 	var args VehicleAttributeSetData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
 		return err
@@ -412,7 +413,7 @@ func (c *ContractsEventsConsumer) handleVehicleAttributeSetEvent(ctx context.Con
 	}
 }
 
-func (c *ContractsEventsConsumer) handleDeviceDefinitionIdSet(ctx context.Context, e *ContractEventData) error {
+func (c *ContractsEventsConsumer) handleDeviceDefinitionIdSet(ctx context.Context, e *cmodels.ContractEventData) error {
 	logger := c.log.With().Str("EventName", Transfer.String()).Logger()
 
 	var args DeviceDefinitionIdSetData
@@ -437,7 +438,7 @@ func (c *ContractsEventsConsumer) handleDeviceDefinitionIdSet(ctx context.Contex
 	return nil
 }
 
-func (c *ContractsEventsConsumer) handleVehicleTransferEvent(ctx context.Context, e *ContractEventData) error {
+func (c *ContractsEventsConsumer) handleVehicleTransferEvent(ctx context.Context, e *cmodels.ContractEventData) error {
 	logger := c.log.With().Str("EventName", Transfer.String()).Logger()
 
 	var args TransferData
@@ -480,7 +481,7 @@ func (c *ContractsEventsConsumer) handleVehicleTransferEvent(ctx context.Context
 	return nil
 }
 
-func (c *ContractsEventsConsumer) handleAftermarketDeviceAttributeSetEvent(ctx context.Context, e *ContractEventData) error {
+func (c *ContractsEventsConsumer) handleAftermarketDeviceAttributeSetEvent(ctx context.Context, e *cmodels.ContractEventData) error {
 	var args AftermarketDeviceAttributeSetData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
 		return err
@@ -528,7 +529,7 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceAttributeSetEvent(ctx c
 	return nil
 }
 
-func (c *ContractsEventsConsumer) handlePermissionsSetEvent(ctx context.Context, e *ContractEventData) error {
+func (c *ContractsEventsConsumer) handlePermissionsSetEvent(ctx context.Context, e *cmodels.ContractEventData) error {
 	logger := c.log.With().Str("EventName", PermissionsSetEvent.String()).Logger()
 
 	var args PermissionsSetData
@@ -568,7 +569,7 @@ func (c *ContractsEventsConsumer) handlePermissionsSetEvent(ctx context.Context,
 	return nil
 }
 
-func (c *ContractsEventsConsumer) handlePrivilegeSetEvent(ctx context.Context, e *ContractEventData) error {
+func (c *ContractsEventsConsumer) handlePrivilegeSetEvent(ctx context.Context, e *cmodels.ContractEventData) error {
 	logger := c.log.With().Str("EventName", PrivilegeSet.String()).Logger()
 
 	var args PrivilegeSetData
@@ -603,7 +604,7 @@ func (c *ContractsEventsConsumer) handlePrivilegeSetEvent(ctx context.Context, e
 	return nil
 }
 
-func (c *ContractsEventsConsumer) handleAftermarketDeviceClaimedEvent(ctx context.Context, e *ContractEventData) error {
+func (c *ContractsEventsConsumer) handleAftermarketDeviceClaimedEvent(ctx context.Context, e *cmodels.ContractEventData) error {
 	var args AftermarketDeviceClaimedData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
 		return err
@@ -618,7 +619,7 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceClaimedEvent(ctx contex
 	return err
 }
 
-func (c *ContractsEventsConsumer) handleAftermarketDevicePairedEvent(ctx context.Context, e *ContractEventData) error {
+func (c *ContractsEventsConsumer) handleAftermarketDevicePairedEvent(ctx context.Context, e *cmodels.ContractEventData) error {
 	var args AftermarketDevicePairData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
 		return err
@@ -640,7 +641,7 @@ func (c *ContractsEventsConsumer) handleAftermarketDevicePairedEvent(ctx context
 	return nil
 }
 
-func (c *ContractsEventsConsumer) handleAftermarketDeviceUnpairedEvent(ctx context.Context, e *ContractEventData) error {
+func (c *ContractsEventsConsumer) handleAftermarketDeviceUnpairedEvent(ctx context.Context, e *cmodels.ContractEventData) error {
 	var args AftermarketDevicePairData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
 		return err
@@ -652,7 +653,7 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceUnpairedEvent(ctx conte
 	return err
 }
 
-func (c *ContractsEventsConsumer) handleAftermarketDeviceTransferredEvent(ctx context.Context, e *ContractEventData) error {
+func (c *ContractsEventsConsumer) handleAftermarketDeviceTransferredEvent(ctx context.Context, e *cmodels.ContractEventData) error {
 	var args TransferData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
 		return err
@@ -684,7 +685,7 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceTransferredEvent(ctx co
 	return err
 }
 
-func (c *ContractsEventsConsumer) handleBeneficiarySetEvent(ctx context.Context, e *ContractEventData) error {
+func (c *ContractsEventsConsumer) handleBeneficiarySetEvent(ctx context.Context, e *cmodels.ContractEventData) error {
 	var args BeneficiarySetData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
 		return err
@@ -717,7 +718,7 @@ func (c *ContractsEventsConsumer) handleBeneficiarySetEvent(ctx context.Context,
 	return nil
 }
 
-func (c *ContractsEventsConsumer) handleSyntheticDeviceNodeMintedEvent(ctx context.Context, e *ContractEventData) error {
+func (c *ContractsEventsConsumer) handleSyntheticDeviceNodeMintedEvent(ctx context.Context, e *cmodels.ContractEventData) error {
 	var args SyntheticDeviceNodeMintedData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
 		return err
@@ -734,7 +735,7 @@ func (c *ContractsEventsConsumer) handleSyntheticDeviceNodeMintedEvent(ctx conte
 	return sd.Insert(ctx, c.dbs.DBS().Writer, boil.Infer())
 }
 
-func (c *ContractsEventsConsumer) handleSyntheticDeviceNodeBurnedEvent(ctx context.Context, e *ContractEventData) error {
+func (c *ContractsEventsConsumer) handleSyntheticDeviceNodeBurnedEvent(ctx context.Context, e *cmodels.ContractEventData) error {
 	var args SyntheticDeviceNodeBurnedData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
 		return err
@@ -748,7 +749,7 @@ func (c *ContractsEventsConsumer) handleSyntheticDeviceNodeBurnedEvent(ctx conte
 	return err
 }
 
-func (c *ContractsEventsConsumer) handleTokensTransferredForDevice(ctx context.Context, e *ContractEventData) error {
+func (c *ContractsEventsConsumer) handleTokensTransferredForDevice(ctx context.Context, e *cmodels.ContractEventData) error {
 	var args TokensTransferredForDeviceData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
 		return err
@@ -783,7 +784,7 @@ func (c *ContractsEventsConsumer) handleTokensTransferredForDevice(ctx context.C
 	return nil
 }
 
-func (c *ContractsEventsConsumer) handleTokensTransferredForConnectionStreak(ctx context.Context, e *ContractEventData) error {
+func (c *ContractsEventsConsumer) handleTokensTransferredForConnectionStreak(ctx context.Context, e *cmodels.ContractEventData) error {
 	var args TokensTransferredForConnectionStreakData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
 		return err
@@ -803,7 +804,7 @@ func (c *ContractsEventsConsumer) handleTokensTransferredForConnectionStreak(ctx
 	return err
 }
 
-func (c *ContractsEventsConsumer) handleAftermarketDeviceAddressResetEvent(ctx context.Context, e *ContractEventData) error {
+func (c *ContractsEventsConsumer) handleAftermarketDeviceAddressResetEvent(ctx context.Context, e *cmodels.ContractEventData) error {
 	var args AftermarketDeviceAddressResetData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
 		return err
@@ -821,7 +822,7 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceAddressResetEvent(ctx c
 	return err
 }
 
-func (c *ContractsEventsConsumer) handleDevLicenseIssued(ctx context.Context, e *ContractEventData) error {
+func (c *ContractsEventsConsumer) handleDevLicenseIssued(ctx context.Context, e *cmodels.ContractEventData) error {
 	var args IssuedData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
 		return err
@@ -842,7 +843,7 @@ func (c *ContractsEventsConsumer) handleDevLicenseIssued(ctx context.Context, e 
 	return nil
 }
 
-func (c *ContractsEventsConsumer) handleDevLicenseAlias(ctx context.Context, e *ContractEventData) error {
+func (c *ContractsEventsConsumer) handleDevLicenseAlias(ctx context.Context, e *cmodels.ContractEventData) error {
 	var args LicenseAliasSetData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
 		return err
@@ -873,7 +874,7 @@ func (c *ContractsEventsConsumer) handleDevLicenseAlias(ctx context.Context, e *
 	return nil
 }
 
-func (c *ContractsEventsConsumer) handleRedirectEnabled(ctx context.Context, e *ContractEventData) error {
+func (c *ContractsEventsConsumer) handleRedirectEnabled(ctx context.Context, e *cmodels.ContractEventData) error {
 	var args RedirectUriEnabledData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
 		return err
@@ -893,7 +894,7 @@ func (c *ContractsEventsConsumer) handleRedirectEnabled(ctx context.Context, e *
 	return nil
 }
 
-func (c *ContractsEventsConsumer) handleRedirectDisabled(ctx context.Context, e *ContractEventData) error {
+func (c *ContractsEventsConsumer) handleRedirectDisabled(ctx context.Context, e *cmodels.ContractEventData) error {
 	var args RedirectUriDisabledData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
 		return err
@@ -908,7 +909,7 @@ func (c *ContractsEventsConsumer) handleRedirectDisabled(ctx context.Context, e 
 	return err
 }
 
-func (c *ContractsEventsConsumer) handleSignerEnabled(ctx context.Context, e *ContractEventData) error {
+func (c *ContractsEventsConsumer) handleSignerEnabled(ctx context.Context, e *cmodels.ContractEventData) error {
 	var args SignerEnabledData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
 		return err
@@ -928,7 +929,7 @@ func (c *ContractsEventsConsumer) handleSignerEnabled(ctx context.Context, e *Co
 	return nil
 }
 
-func (c *ContractsEventsConsumer) handleSignerDisabled(ctx context.Context, e *ContractEventData) error {
+func (c *ContractsEventsConsumer) handleSignerDisabled(ctx context.Context, e *cmodels.ContractEventData) error {
 	var args SignerDisabledData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
 		return err
