@@ -27,8 +27,12 @@ func (h *Handler) HandleStaked(ctx context.Context, event *cmodels.ContractEvent
 		EndsAt:   time.Unix(args.LockEndTime.Int64(), 0),
 	}
 
-	// TODO(elffjs): Figure out the column story here. Figure out upsert.
-	return stake.Insert(ctx, h.DBS.DBS().Writer, boil.Infer())
+	cols := models.StakeColumns
+
+	return stake.Upsert(ctx, h.DBS.DBS().Writer, true, []string{models.StakeColumns.ID},
+		boil.Whitelist(cols.Level, cols.Points, cols.Amount, cols.StakedAt, cols.EndsAt), // Updating. This happens when the stake is upgraded. Definitely don't want to touch the vehicle attachment.
+		boil.Infer(), // Inserting. Could omit the vehicle here.
+	)
 }
 
 func (h *Handler) HandleWithdrawn(ctx context.Context, event *cmodels.ContractEventData, args *Withdrawn) error {
@@ -42,7 +46,6 @@ func (h *Handler) HandleWithdrawn(ctx context.Context, event *cmodels.ContractEv
 }
 
 func (h *Handler) HandleStakingExtended(ctx context.Context, event *cmodels.ContractEventData, args *StakingExtended) error {
-
 	stake := models.Stake{
 		ID:     int(args.StakeId.Int64()),
 		EndsAt: time.Unix(args.NewLockEndTime.Int64(), 0),
