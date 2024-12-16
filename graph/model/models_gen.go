@@ -429,6 +429,34 @@ type SignerEdge struct {
 	Cursor string  `json:"cursor"`
 }
 
+type Stake struct {
+	// The token id of the license as an NFT.
+	TokenID int `json:"tokenId"`
+	// The owner of the license. A single owner can own multiple licenses.
+	Owner  common.Address `json:"owner"`
+	Level  int            `json:"level"`
+	Points int            `json:"points"`
+	Amount *decimal.Big   `json:"amount"`
+	// The block timestamp for the transaction that minted this stake.
+	StakedAt    time.Time  `json:"stakedAt"`
+	EndsAt      time.Time  `json:"endsAt"`
+	WithdrawnAt *time.Time `json:"withdrawnAt,omitempty"`
+	Vehicle     *Vehicle   `json:"vehicle,omitempty"`
+	VehicleID   *int       `json:"-"`
+}
+
+type StakeConnection struct {
+	TotalCount int          `json:"totalCount"`
+	Edges      []*StakeEdge `json:"edges"`
+	Nodes      []*Stake     `json:"nodes"`
+	PageInfo   *PageInfo    `json:"pageInfo"`
+}
+
+type StakeEdge struct {
+	Node   *Stake `json:"node"`
+	Cursor string `json:"cursor"`
+}
+
 // The SyntheticDevice is a software connection established to connect the vehicle to the DIMO network.
 type SyntheticDevice struct {
 	// An opaque global identifier for this syntheticDevice.
@@ -524,6 +552,7 @@ type Vehicle struct {
 	Image          string           `json:"image"`
 	Earnings       *VehicleEarnings `json:"earnings,omitempty"`
 	DataURI        string           `json:"dataURI"`
+	Stake          *Stake           `json:"stake,omitempty"`
 	ManufacturerID int              `json:"-"`
 }
 

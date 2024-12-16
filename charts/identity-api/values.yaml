@@ -44,6 +44,7 @@ env:
   TABLELAND_API_GATEWAY: https://tableland-node.dev.dimo.zone/
   SACD_ADDRESS: '0x4E5F9320b1c7cB3DE5ebDD760aD67375B66cF8a3'
   DEV_LICENSE_ADDR: '0xdb6c0dBbaf48b9D9Bcf5ca3C45cFF3811D70eD96'
+  STAKING_ADDR: '0xA010a42DE263592E631d3DCDC621ae7BFfCca338'
 service:
   type: ClusterIP
   ports:

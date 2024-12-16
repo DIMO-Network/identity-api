@@ -1,0 +1,46 @@
+# DeviceDefinition related types
+
+extend type Query {
+  """
+  List developer licenses. Sorts by token id, descending.
+  """
+  stakes(
+    first: Int,
+    after: String,
+    last: Int,
+    before: String
+  ): StakeConnection!
+}
+
+type Stake {
+  """
+  The token id of the license as an NFT.
+  """
+  tokenId: Int!
+  """
+  The owner of the license. A single owner can own multiple licenses.
+  """
+  owner: Address!
+  level: Int!
+  points: Int!
+  amount: BigDecimal!
+  """
+  The block timestamp for the transaction that minted this stake.
+  """
+  stakedAt: Time!
+  endsAt: Time!
+  withdrawnAt: Time
+  vehicle: Vehicle
+}
+
+type StakeConnection {
+  totalCount: Int!
+  edges: [StakeEdge!]!
+  nodes: [Stake!]!
+  pageInfo: PageInfo!
+}
+
+type StakeEdge {
+  node: Stake!
+  cursor: String!
+}

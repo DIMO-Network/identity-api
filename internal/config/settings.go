@@ -24,4 +24,5 @@ type Settings struct {
 	TablelandAPIGateway   string      `yaml:"TABLELAND_API_GATEWAY"`
 	EthereumRPCURL        string      `yaml:"ETHEREUM_RPC_URL"`
 	DevLicenseAddr        string      `yaml:"DEV_LICENSE_ADDR"`
+	StakingAddr           string      `yaml:"STAKING_ADDR"`
 }

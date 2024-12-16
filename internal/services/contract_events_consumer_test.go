@@ -9,6 +9,7 @@ import (
 
 	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
+	cmodels "github.com/DIMO-Network/identity-api/internal/services/models"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared"
 	"github.com/ericlagergren/decimal"
@@ -41,12 +42,12 @@ var (
 		Time:        mintedAt,
 		Type:        "zone.dimo.contract.event",
 	}
-	contractEventData = ContractEventData{
+	contractEventData = cmodels.ContractEventData{
 		ChainID:         80001,
 		Contract:        common.HexToAddress("0x4de1bcf2b7e851e31216fc07989caa902a604784"),
 		TransactionHash: common.HexToHash("0x811a85e24d0129a2018c9a6668652db63d73bc6d1c76f21b07da2162c6bfea7d"),
 		EventSignature:  common.HexToHash("0xd624fd4c3311e1803d230d97ce71fd60c4f658c30a31fbe08edcb211fd90f63f"),
-		Block: Block{
+		Block: cmodels.Block{
 			Time: mintedAt,
 		},
 	}
@@ -56,7 +57,7 @@ var (
 // into a shared.CloudEvent[json.RawMessage] like the processor expects.
 //
 // Note that this relies on the global variable cloudEvent to fill in the top level object.
-func prepareEvent(t *testing.T, contractEventData ContractEventData, args any) shared.CloudEvent[json.RawMessage] {
+func prepareEvent(t *testing.T, contractEventData cmodels.ContractEventData, args any) shared.CloudEvent[json.RawMessage] {
 	// Copy, just in case.
 	ce := cloudEvent
 	ced := contractEventData
