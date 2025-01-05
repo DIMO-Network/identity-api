@@ -15,6 +15,10 @@ extend type Query {
 
 input StakeFilterBy {
   owner: Address
+  """
+  Filter stakes based on attachability. A stake is considered attachable if it
+  is not presently attached to a vehicle and has not yet ended.
+  """
   attachable: Boolean
 }
 
