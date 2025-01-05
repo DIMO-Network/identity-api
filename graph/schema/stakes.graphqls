@@ -15,6 +15,7 @@ extend type Query {
 
 input StakeFilterBy {
   owner: Address
+  attachable: Boolean
 }
 
 type Stake {

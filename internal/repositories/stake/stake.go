@@ -3,6 +3,7 @@ package stake
 import (
 	"context"
 	"slices"
+	"time"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
@@ -48,8 +49,21 @@ func (r *Repository) GetStakes(ctx context.Context, first *int, after *string, l
 	// None now, but making room.
 	var queryMods []qm.QueryMod
 
-	if filterBy != nil && filterBy.Owner != nil {
-		queryMods = append(queryMods, models.StakeWhere.Owner.EQ(filterBy.Owner.Bytes()))
+	if filterBy != nil {
+		if filterBy.Owner != nil {
+			queryMods = append(queryMods, models.StakeWhere.Owner.EQ(filterBy.Owner.Bytes()))
+		}
+		if filterBy.Attachable != nil {
+			if *filterBy.Attachable {
+				// Shouldn't need to worry about withdrawn ones.
+				queryMods = append(queryMods, models.StakeWhere.VehicleID.IsNull(), models.StakeWhere.EndsAt.GT(time.Now()))
+			} else {
+				queryMods = append(queryMods, qm.Expr(
+					models.StakeWhere.VehicleID.IsNotNull(),
+					qm.Or2(models.StakeWhere.EndsAt.LTE(time.Now())),
+				))
+			}
+		}
 	}
 
 	totalCount, err := models.Stakes(queryMods...).Count(ctx, r.PDB.DBS().Reader)
