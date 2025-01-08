@@ -459,6 +459,9 @@ type StakeEdge struct {
 
 type StakeFilterBy struct {
 	Owner *common.Address `json:"owner,omitempty"`
+	// Filter stakes based on attachability. A stake is considered attachable if it
+	// is not presently attached to a vehicle and has not yet ended.
+	Attachable *bool `json:"attachable,omitempty"`
 }
 
 // The SyntheticDevice is a software connection established to connect the vehicle to the DIMO network.

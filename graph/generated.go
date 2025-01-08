@@ -17563,7 +17563,7 @@ func (ec *executionContext) unmarshalInputStakeFilterBy(ctx context.Context, obj
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"owner"}
+	fieldsInOrder := [...]string{"owner", "attachable"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -17577,6 +17577,13 @@ func (ec *executionContext) unmarshalInputStakeFilterBy(ctx context.Context, obj
 				return it, err
 			}
 			it.Owner = data
+		case "attachable":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attachable"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Attachable = data
 		}
 	}
 
