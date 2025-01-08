@@ -75,6 +75,7 @@ type SyntheticTestSuite struct {
 	honda      models.Manufacturer
 	vehicle1   models.Vehicle
 	vehicle2   models.Vehicle
+	vehicle3   models.Vehicle
 	synthetic1 models.SyntheticDevice
 	synthetic2 models.SyntheticDevice
 	synthetic3 models.SyntheticDevice
@@ -100,9 +101,9 @@ func (s *SyntheticTestSuite) SetupSuite() {
 	// Create test data
 	currTime := time.Now().UTC().Truncate(time.Second)
 
-	_, vehicle1Owner, err := helpers.GenerateWallet()
+	_, vehicle1And2Owner, err := helpers.GenerateWallet()
 	s.Require().NoError(err)
-	_, vehicle2Owner, err := helpers.GenerateWallet()
+	_, vehicle3Owner, err := helpers.GenerateWallet()
 	s.Require().NoError(err)
 	_, synthetic1Addr, err := helpers.GenerateWallet()
 	s.Require().NoError(err)
@@ -114,20 +115,20 @@ func (s *SyntheticTestSuite) SetupSuite() {
 	s.toyota = models.Manufacturer{
 		ID:    131,
 		Name:  "Toyota",
-		Owner: vehicle1Owner.Bytes(),
+		Owner: vehicle1And2Owner.Bytes(),
 		Slug:  "toyota",
 	}
 
 	s.honda = models.Manufacturer{
 		ID:    48,
 		Name:  "Honda",
-		Owner: vehicle2Owner.Bytes(),
+		Owner: vehicle1And2Owner.Bytes(),
 		Slug:  "honda",
 	}
 
 	s.vehicle1 = models.Vehicle{
 		ID:             1,
-		OwnerAddress:   vehicle1Owner.Bytes(),
+		OwnerAddress:   vehicle1And2Owner.Bytes(),
 		ManufacturerID: 131,
 		Make:           toyota,
 		Model:          tacoma,
@@ -138,7 +139,17 @@ func (s *SyntheticTestSuite) SetupSuite() {
 	s.vehicle2 = models.Vehicle{
 		ManufacturerID: 48,
 		ID:             2,
-		OwnerAddress:   vehicle2Owner.Bytes(),
+		OwnerAddress:   vehicle1And2Owner.Bytes(),
+		Make:           honda,
+		Model:          civic,
+		Year:           year2020,
+		MintedAt:       currTime,
+	}
+
+	s.vehicle3 = models.Vehicle{
+		ManufacturerID: 48,
+		ID:             3,
+		OwnerAddress:   vehicle3Owner.Bytes(),
 		Make:           honda,
 		Model:          civic,
 		Year:           year2020,
@@ -156,7 +167,7 @@ func (s *SyntheticTestSuite) SetupSuite() {
 	s.synthetic2 = models.SyntheticDevice{
 		ID:            2,
 		IntegrationID: 2,
-		VehicleID:     s.vehicle1.ID,
+		VehicleID:     s.vehicle2.ID,
 		DeviceAddress: synthetic2Addr.Bytes(),
 		MintedAt:      currTime,
 	}
@@ -164,7 +175,7 @@ func (s *SyntheticTestSuite) SetupSuite() {
 	s.synthetic3 = models.SyntheticDevice{
 		ID:            3,
 		IntegrationID: 1,
-		VehicleID:     s.vehicle2.ID,
+		VehicleID:     s.vehicle3.ID,
 		DeviceAddress: synthetic3Addr.Bytes(),
 		MintedAt:      currTime,
 	}
@@ -193,6 +204,8 @@ func (s *SyntheticTestSuite) Test_GetSyntheticDevices() {
 	err = s.vehicle1.Insert(ctx, s.pdb.DBS().Writer, boil.Infer())
 	s.Require().NoError(err)
 	err = s.vehicle2.Insert(ctx, s.pdb.DBS().Writer, boil.Infer())
+	s.Require().NoError(err)
+	err = s.vehicle3.Insert(ctx, s.pdb.DBS().Writer, boil.Infer())
 	s.Require().NoError(err)
 	err = s.synthetic1.Insert(ctx, s.pdb.DBS().Writer, boil.Infer())
 	s.Require().NoError(err)
@@ -250,7 +263,7 @@ func (s *SyntheticTestSuite) Test_GetSyntheticDevices() {
 			last: Ptr(2),
 		},
 		{
-			name: "Filter by vehicle",
+			name: "Filter by owner",
 			filter: &gmodel.SyntheticDevicesFilter{
 				Owner: Ptr(common.BytesToAddress(s.vehicle1.OwnerAddress)),
 			},
