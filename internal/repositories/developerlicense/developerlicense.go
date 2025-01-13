@@ -2,6 +2,8 @@ package developerlicense
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"slices"
 	"time"
@@ -12,6 +14,7 @@ import (
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
+	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/models"
 )
@@ -438,6 +441,9 @@ func (r *Repository) GetLicense(ctx context.Context, by gmodel.DeveloperLicenseB
 
 	dl, err := models.DeveloperLicenses(mod).One(ctx, r.PDB.DBS().Reader)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, repositories.ErrNotFound
+		}
 		return nil, err
 	}
 
