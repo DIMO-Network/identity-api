@@ -6,8 +6,13 @@ package graph
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/DIMO-Network/identity-api/graph/model"
+	"github.com/DIMO-Network/identity-api/internal/repositories"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 )
 
 // Signers is the resolver for the signers field.
@@ -27,7 +32,31 @@ func (r *queryResolver) DeveloperLicenses(ctx context.Context, first *int, after
 
 // DeveloperLicense is the resolver for the developerLicense field.
 func (r *queryResolver) DeveloperLicense(ctx context.Context, by model.DeveloperLicenseBy) (*model.DeveloperLicense, error) {
-	return r.developerLicense.GetLicense(ctx, by)
+	dl, err := r.developerLicense.GetLicense(ctx, by)
+	if err != nil {
+		if errors.Is(err, repositories.ErrNotFound) {
+			// In this case we really did have only one input.
+			// This is ugly, need to refactor. It's obviously brittle
+			// as more cases get added.
+			msg := "No developer license with "
+			switch {
+			case by.TokenID != nil:
+				msg += fmt.Sprintf("token id %d.", *by.TokenID)
+			case by.ClientID != nil:
+				msg += fmt.Sprintf("client id %s.", *by.ClientID)
+			case by.Alias != nil:
+				msg += fmt.Sprintf("alias %q.", *by.Alias)
+			}
+
+			return nil, graphql.ErrorOnPath(ctx, &gqlerror.Error{
+				Message: msg,
+				Extensions: map[string]interface{}{
+					"code": "NOT_FOUND",
+				},
+			})
+		}
+	}
+	return dl, err
 }
 
 // DeveloperLicense returns DeveloperLicenseResolver implementation.
