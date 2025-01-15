@@ -30,7 +30,7 @@ func ToAPI(v *models.Stake) *gmodel.Stake {
 	return &gmodel.Stake{
 		TokenID:     v.ID,
 		Owner:       common.BytesToAddress(v.Owner),
-		Level:       v.Level + 2, // TODO(elffjs): Is this what we want to do? https://docs.dimo.org/governance/amendments/dip2a4
+		Level:       v.Level, // 0 in code corresponds to Level 2 in the DIP, and so on. Unfortunate. https://docs.dimo.org/governance/improvement-proposals/dip2
 		Points:      v.Points,
 		Amount:      weiToToken(v.Amount),
 		StakedAt:    v.StakedAt,
