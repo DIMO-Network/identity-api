@@ -31,6 +31,10 @@ type Stake {
   The owner of the license. A single owner can own multiple licenses.
   """
   owner: Address!
+  """
+  Level is the level of the stake. Presently the levels are 0, 1, 2. These translate
+  to Levels 2, 3, 4 in the DIP. See https://docs.dimo.org/governance/improvement-proposals/dip2
+  """
   level: Int!
   points: Int!
   amount: BigDecimal!

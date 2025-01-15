@@ -433,10 +433,12 @@ type Stake struct {
 	// The token id of the license as an NFT.
 	TokenID int `json:"tokenId"`
 	// The owner of the license. A single owner can own multiple licenses.
-	Owner  common.Address `json:"owner"`
-	Level  int            `json:"level"`
-	Points int            `json:"points"`
-	Amount *decimal.Big   `json:"amount"`
+	Owner common.Address `json:"owner"`
+	// Level is the level of the stake. Presently the levels are 0, 1, 2. These translate
+	// to Levels 2, 3, 4 in the DIP. See https://docs.dimo.org/governance/improvement-proposals/dip2
+	Level  int          `json:"level"`
+	Points int          `json:"points"`
+	Amount *decimal.Big `json:"amount"`
 	// The block timestamp for the transaction that minted this stake.
 	StakedAt    time.Time  `json:"stakedAt"`
 	EndsAt      time.Time  `json:"endsAt"`
