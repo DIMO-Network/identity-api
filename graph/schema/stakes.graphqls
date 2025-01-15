@@ -32,18 +32,34 @@ type Stake {
   """
   owner: Address!
   """
-  Level is the level of the stake. Presently the levels are 0, 1, 2. These translate
-  to Levels 2, 3, 4 in the DIP. See https://docs.dimo.org/governance/improvement-proposals/dip2
+  The level of the stake. Presently, the levels are 0, 1, and 2. These translate
+  to Levels 2, 3, and 4 in DIP-2. See https://docs.dimo.org/governance/improvement-proposals/dip2
   """
   level: Int!
+  """
+  The number of points that the stake contributes to a vehicle's weekly total. The process
+  by which points become tokens is described in DIP-2.
+  """
   points: Int!
+  """
+  The amount of $DIMO staked.
+  """
   amount: BigDecimal!
   """
-  The block timestamp for the transaction that minted this stake.
+  The block timestamp for the transaction that created this stake.
   """
   stakedAt: Time!
+  """
+  The block timestamp after which the staked tokens will become or did become unlocked.
+  """
   endsAt: Time!
+  """
+  The block timestamp at which the tokens were withdrawn, if they have been withdrawn.
+  """
   withdrawnAt: Time
+  """
+  The vehicle to which the stake is attached, if it is attached.
+  """
   vehicle: Vehicle
 }
 

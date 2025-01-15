@@ -434,17 +434,23 @@ type Stake struct {
 	TokenID int `json:"tokenId"`
 	// The owner of the license. A single owner can own multiple licenses.
 	Owner common.Address `json:"owner"`
-	// Level is the level of the stake. Presently the levels are 0, 1, 2. These translate
-	// to Levels 2, 3, 4 in the DIP. See https://docs.dimo.org/governance/improvement-proposals/dip2
-	Level  int          `json:"level"`
-	Points int          `json:"points"`
+	// The level of the stake. Presently, the levels are 0, 1, and 2. These translate
+	// to Levels 2, 3, and 4 in DIP-2. See https://docs.dimo.org/governance/improvement-proposals/dip2
+	Level int `json:"level"`
+	// The number of points that the stake contributes to a vehicle's weekly total. The process
+	// by which points become tokens is described in DIP-2.
+	Points int `json:"points"`
+	// The amount of $DIMO staked.
 	Amount *decimal.Big `json:"amount"`
-	// The block timestamp for the transaction that minted this stake.
-	StakedAt    time.Time  `json:"stakedAt"`
-	EndsAt      time.Time  `json:"endsAt"`
+	// The block timestamp for the transaction that created this stake.
+	StakedAt time.Time `json:"stakedAt"`
+	// The block timestamp after which the staked tokens will become or did become unlocked.
+	EndsAt time.Time `json:"endsAt"`
+	// The block timestamp at which the tokens were withdrawn, if they have been withdrawn.
 	WithdrawnAt *time.Time `json:"withdrawnAt,omitempty"`
-	Vehicle     *Vehicle   `json:"vehicle,omitempty"`
-	VehicleID   *int       `json:"-"`
+	// The vehicle to which the stake is attached, if it is attached.
+	Vehicle   *Vehicle `json:"vehicle,omitempty"`
+	VehicleID *int     `json:"-"`
 }
 
 type StakeConnection struct {
