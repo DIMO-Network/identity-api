@@ -36,7 +36,7 @@ func StartContainerDatabase(ctx context.Context, t *testing.T, migrationsDirRelP
 
 	container, err = postgres.Run(
 		ctx,
-		"docker.io/postgres:14.10-alpine",
+		"docker.io/postgres:16.6-alpine",
 		postgres.WithDatabase("identity_api"),
 		postgres.WithUsername("dimo"),
 		postgres.WithPassword("dimo"),
