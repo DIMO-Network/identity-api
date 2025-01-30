@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/loader"
@@ -47,7 +46,7 @@ func (s *VehicleTestSuite) SetupSuite() {
 	resolver := NewResolver(repo)
 
 	s.consumer = services.NewContractsEventsConsumer(db, &logger, &settings)
-	s.handler = loader.Middleware(db, handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: resolver})), settings)
+	s.handler = loader.Middleware(db, NewDefaultServer(NewExecutableSchema(Config{Resolvers: resolver})), settings)
 }
 
 func (s *VehicleTestSuite) TearDownSuite() {
