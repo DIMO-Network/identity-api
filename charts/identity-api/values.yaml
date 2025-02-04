@@ -27,6 +27,7 @@ env:
   LOG_LEVEL: info
   DB_PORT: 5432
   DB_NAME: identity_api
+  DB_SSL_MODE: require
   PORT: 8080
   MON_PORT: 8888
   KAFKA_BROKERS: kafka-dev-dimo-kafka-kafka-brokers:9092
