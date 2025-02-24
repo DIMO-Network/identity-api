@@ -7,6 +7,8 @@ cronJob:
   enabled: false
   schedule: 0 0 * * 0
 env:
+  DB_MAX_OPEN_CONNECTIONS: '100'
+  DB_MAX_IDLE_CONNECTIONS: '30'
   KAFKA_BROKERS: kafka-prod-dimo-kafka-kafka-brokers:9092
   DIMO_REGISTRY_CHAIN_ID: 137
   DIMO_REGISTRY_ADDR: '0xFA8beC73cebB9D88FF88a2f75E7D7312f2Fd39EC'
