@@ -25,12 +25,6 @@ An array of byte, encoded as a lowercase hex string with 0x prefix.
 scalar Bytes
 
 """
-This directive on an input object indicates that a client must specify one of the
-fields of the object and no others. Typically used for lookups.
-"""
-directive @oneOf on INPUT_OBJECT
-
-"""
 The root query type for the GraphQL schema.
 """
 type Query {
