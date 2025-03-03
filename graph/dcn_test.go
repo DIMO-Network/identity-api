@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/99designs/gqlgen/client"
-	"github.com/99designs/gqlgen/graphql"
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
@@ -88,9 +87,6 @@ func TestDCNQuery(t *testing.T) {
 
 	require.NoError(err)
 	cfg := Config{Resolvers: resolver}
-	cfg.Directives.OneOf = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
-		return next(ctx)
-	}
 	c := client.New(loader.Middleware(pdb, NewDefaultServer(NewExecutableSchema(cfg)), settings))
 
 	type response struct {
