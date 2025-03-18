@@ -192,5 +192,5 @@ type SignerDisabledData struct {
 
 type LicenseAliasSetData struct {
 	TokenID      *big.Int
-	LicenseAlias []byte
+	LicenseAlias string
 }
