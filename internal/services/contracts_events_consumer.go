@@ -1,7 +1,6 @@
 package services
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"net/http"
@@ -859,7 +858,7 @@ func (c *ContractsEventsConsumer) handleDevLicenseAlias(ctx context.Context, e *
 
 	dlID := int(args.TokenID.Int64())
 
-	alias := string(bytes.Trim(args.LicenseAlias, "\x00"))
+	alias := args.LicenseAlias
 
 	var dbAlias null.String
 
