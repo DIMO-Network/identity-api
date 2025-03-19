@@ -55,13 +55,20 @@ func (r *Repository) GetDeveloperLicenses(ctx context.Context, first *int, after
 
 	var queryMods []qm.QueryMod
 
-	if filterBy != nil && filterBy.Signer != nil {
-		queryMods = append(queryMods,
-			qm.InnerJoin(
-				helpers.WithSchema(models.TableNames.Signers)+" ON "+models.DeveloperLicenseColumns.ID+" = "+models.SignerColumns.DeveloperLicenseID,
-			),
-			models.SignerWhere.Signer.EQ(filterBy.Signer.Bytes()),
-		)
+	if filterBy != nil {
+		if filterBy.Signer != nil {
+			queryMods = append(queryMods,
+				qm.InnerJoin(
+					helpers.WithSchema(models.TableNames.Signers)+" ON "+models.DeveloperLicenseColumns.ID+" = "+models.SignerColumns.DeveloperLicenseID,
+				),
+				models.SignerWhere.Signer.EQ(filterBy.Signer.Bytes()),
+			)
+		}
+		if filterBy.Owner != nil {
+			queryMods = append(queryMods,
+				models.DeveloperLicenseWhere.Owner.EQ(filterBy.Owner.Bytes()),
+			)
+		}
 	}
 
 	totalCount, err := models.DeveloperLicenses(queryMods...).Count(ctx, r.PDB.DBS().Reader)

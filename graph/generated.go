@@ -17148,7 +17148,7 @@ func (ec *executionContext) unmarshalInputDeveloperLicenseFilterBy(ctx context.C
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"signer"}
+	fieldsInOrder := [...]string{"signer", "owner"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -17162,6 +17162,13 @@ func (ec *executionContext) unmarshalInputDeveloperLicenseFilterBy(ctx context.C
 				return it, err
 			}
 			it.Signer = data
+		case "owner":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("owner"))
+			data, err := ec.unmarshalOAddress2ᚖgithubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Owner = data
 		}
 	}
 
