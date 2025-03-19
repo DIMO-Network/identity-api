@@ -200,6 +200,7 @@ type DeveloperLicenseEdge struct {
 
 type DeveloperLicenseFilterBy struct {
 	Signer *common.Address `json:"signer,omitempty"`
+	Owner  *common.Address `json:"owner,omitempty"`
 }
 
 // Represents a Device Definition.

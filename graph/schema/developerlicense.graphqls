@@ -52,6 +52,7 @@ type DeveloperLicenseConnection {
 
 input DeveloperLicenseFilterBy {
   signer: Address
+  owner: Address
 }
 
 input DeveloperLicenseBy {
