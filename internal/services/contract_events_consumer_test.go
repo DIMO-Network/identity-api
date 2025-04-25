@@ -7,11 +7,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/DIMO-Network/cloudevent"
 	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	cmodels "github.com/DIMO-Network/identity-api/internal/services/models"
 	"github.com/DIMO-Network/identity-api/models"
-	"github.com/DIMO-Network/shared"
 	"github.com/ericlagergren/decimal"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/goccy/go-json"
@@ -34,13 +34,15 @@ const (
 var (
 	zeroDecimal = types.NewDecimal(decimal.New(0, 0))
 	mintedAt    = time.Now()
-	cloudEvent  = shared.CloudEvent[json.RawMessage]{
-		ID:          "2SiTVhP3WBhfQQnnnpeBdMR7BSY",
-		Source:      "chain/80001",
-		SpecVersion: "1.0",
-		Subject:     "0x4de1bcf2b7e851e31216fc07989caa902a604784",
-		Time:        mintedAt,
-		Type:        "zone.dimo.contract.event",
+	cloudEvent  = cloudevent.CloudEvent[json.RawMessage]{
+		CloudEventHeader: cloudevent.CloudEventHeader{
+			ID:          "2SiTVhP3WBhfQQnnnpeBdMR7BSY",
+			Source:      "chain/80001",
+			SpecVersion: "1.0",
+			Subject:     "0x4de1bcf2b7e851e31216fc07989caa902a604784",
+			Time:        mintedAt,
+			Type:        "zone.dimo.contract.event",
+		},
 	}
 	contractEventData = cmodels.ContractEventData{
 		ChainID:         80001,
@@ -54,10 +56,10 @@ var (
 )
 
 // prepareEvent turns ContractEventData (the block time, number, etc) and the event arguments (from, to, tokenId, etc)
-// into a shared.CloudEvent[json.RawMessage] like the processor expects.
+// into a cloudevent.CloudEvent[json.RawMessage] like the processor expects.
 //
 // Note that this relies on the global variable cloudEvent to fill in the top level object.
-func prepareEvent(t *testing.T, contractEventData cmodels.ContractEventData, args any) shared.CloudEvent[json.RawMessage] {
+func prepareEvent(t *testing.T, contractEventData cmodels.ContractEventData, args any) cloudevent.CloudEvent[json.RawMessage] {
 	// Copy, just in case.
 	ce := cloudEvent
 	ced := contractEventData
@@ -1506,7 +1508,7 @@ func Test_Handle_TokensTransferredForConnectionStreak_Event(t *testing.T) {
 	for _, event := range payloads {
 		contractEventData.EventName = event.eventName
 
-		var e shared.CloudEvent[json.RawMessage]
+		var e cloudevent.CloudEvent[json.RawMessage]
 		if event.proxyAddr != nil {
 			tokensTransferredForDeviceData.Amount = event.amount
 			tokensTransferredForDeviceData.DeviceNode = event.node

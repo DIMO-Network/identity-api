@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/99designs/gqlgen/client"
+	"github.com/DIMO-Network/cloudevent"
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
@@ -17,7 +18,6 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/internal/services"
 	"github.com/DIMO-Network/identity-api/models"
-	"github.com/DIMO-Network/shared"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
@@ -71,9 +71,11 @@ func TestDCNQuery(t *testing.T) {
 
 	contractEventConsumer := services.NewContractsEventsConsumer(pdb, &logger, &settings)
 
-	err = contractEventConsumer.Process(ctx, &shared.CloudEvent[json.RawMessage]{
-		Source: "chain/137",
-		Type:   "zone.dimo.contract.event",
+	err = contractEventConsumer.Process(ctx, &cloudevent.CloudEvent[json.RawMessage]{
+		CloudEventHeader: cloudevent.CloudEventHeader{
+			Source: "chain/137",
+			Type:   "zone.dimo.contract.event",
+		},
 		Data: json.RawMessage(`
 		{
 			"contract": "0xE9F4dfE02f895DC17E2e146e578873c9095bA293",
@@ -119,9 +121,11 @@ func TestDCNQuery(t *testing.T) {
 	assert.Nil(dcnr.DCN.ExpiresAt)
 
 	currTime := time.Now().UTC().Truncate(time.Second)
-	err = contractEventConsumer.Process(ctx, &shared.CloudEvent[json.RawMessage]{
-		Source: "chain/137",
-		Type:   "zone.dimo.contract.event",
+	err = contractEventConsumer.Process(ctx, &cloudevent.CloudEvent[json.RawMessage]{
+		CloudEventHeader: cloudevent.CloudEventHeader{
+			Source: "chain/137",
+			Type:   "zone.dimo.contract.event",
+		},
 		Data: json.RawMessage(fmt.Sprintf(`
 		{
 			"contract": "0xE9F4dfE02f895DC17E2e146e578873c9095bA293",
@@ -151,9 +155,11 @@ func TestDCNQuery(t *testing.T) {
 
 	// NameChanged
 	mockName := "SomeMockName"
-	err = contractEventConsumer.Process(ctx, &shared.CloudEvent[json.RawMessage]{
-		Source: "chain/137",
-		Type:   "zone.dimo.contract.event",
+	err = contractEventConsumer.Process(ctx, &cloudevent.CloudEvent[json.RawMessage]{
+		CloudEventHeader: cloudevent.CloudEventHeader{
+			Source: "chain/137",
+			Type:   "zone.dimo.contract.event",
+		},
 		Data: json.RawMessage(fmt.Sprintf(`
 	   		{
 	   			"contract": "0x60627326F55054Ea448e0a7BC750785bD65EF757",

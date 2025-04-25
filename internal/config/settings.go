@@ -1,6 +1,6 @@
 package config
 
-import "github.com/DIMO-Network/shared/db"
+import "github.com/DIMO-Network/shared/pkg/db"
 
 // Settings contains the application config
 type Settings struct {

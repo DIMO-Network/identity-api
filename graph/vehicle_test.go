@@ -12,7 +12,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/loader"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/internal/services"
-	"github.com/DIMO-Network/shared/db"
+	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/goccy/go-json"
 	"github.com/rs/zerolog"

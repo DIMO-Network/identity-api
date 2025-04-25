@@ -6,7 +6,7 @@ import (
 
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/config"
-	"github.com/DIMO-Network/shared/db"
+	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/graph-gophers/dataloader/v7"
 )
 

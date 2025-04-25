@@ -488,7 +488,7 @@ func (e *executableSchema) Schema() *ast.Schema {
 	return parsedSchema
 }
 
-func (e *executableSchema) Complexity(typeName, field string, childComplexity int, rawArgs map[string]any) (int, bool) {
+func (e *executableSchema) Complexity(ctx context.Context, typeName, field string, childComplexity int, rawArgs map[string]any) (int, bool) {
 	ec := executionContext{nil, e, 0, 0, nil}
 	_ = ec
 	switch typeName + "." + field {
@@ -645,7 +645,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		args, err := ec.field_AftermarketDeviceEarnings_history_args(context.TODO(), rawArgs)
+		args, err := ec.field_AftermarketDeviceEarnings_history_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
@@ -832,7 +832,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		args, err := ec.field_DeveloperLicense_redirectURIs_args(context.TODO(), rawArgs)
+		args, err := ec.field_DeveloperLicense_redirectURIs_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
@@ -844,7 +844,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		args, err := ec.field_DeveloperLicense_signers_args(context.TODO(), rawArgs)
+		args, err := ec.field_DeveloperLicense_signers_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
@@ -1129,7 +1129,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		args, err := ec.field_Manufacturer_aftermarketDevices_args(context.TODO(), rawArgs)
+		args, err := ec.field_Manufacturer_aftermarketDevices_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
@@ -1141,7 +1141,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		args, err := ec.field_Manufacturer_deviceDefinitions_args(context.TODO(), rawArgs)
+		args, err := ec.field_Manufacturer_deviceDefinitions_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
@@ -1293,7 +1293,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		args, err := ec.field_Query_aftermarketDevice_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_aftermarketDevice_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
@@ -1305,7 +1305,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		args, err := ec.field_Query_aftermarketDevices_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_aftermarketDevices_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
@@ -1317,7 +1317,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		args, err := ec.field_Query_dcn_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_dcn_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
@@ -1329,7 +1329,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		args, err := ec.field_Query_dcns_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_dcns_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
@@ -1341,7 +1341,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		args, err := ec.field_Query_developerLicense_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_developerLicense_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
@@ -1353,7 +1353,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		args, err := ec.field_Query_developerLicenses_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_developerLicenses_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
@@ -1365,7 +1365,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		args, err := ec.field_Query_deviceDefinition_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_deviceDefinition_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
@@ -1377,7 +1377,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		args, err := ec.field_Query_manufacturer_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_manufacturer_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
@@ -1389,7 +1389,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		args, err := ec.field_Query_node_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_node_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
@@ -1401,7 +1401,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		args, err := ec.field_Query_rewards_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_rewards_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
@@ -1413,7 +1413,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		args, err := ec.field_Query_stakes_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_stakes_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
@@ -1425,7 +1425,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		args, err := ec.field_Query_syntheticDevice_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_syntheticDevice_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
@@ -1437,7 +1437,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		args, err := ec.field_Query_syntheticDevices_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_syntheticDevices_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
@@ -1449,7 +1449,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		args, err := ec.field_Query_vehicle_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_vehicle_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
@@ -1461,7 +1461,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		args, err := ec.field_Query_vehicles_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_vehicles_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
@@ -1858,7 +1858,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		args, err := ec.field_UserRewards_history_args(context.TODO(), rawArgs)
+		args, err := ec.field_UserRewards_history_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
@@ -1961,7 +1961,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		args, err := ec.field_Vehicle_privileges_args(context.TODO(), rawArgs)
+		args, err := ec.field_Vehicle_privileges_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
@@ -1973,7 +1973,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		args, err := ec.field_Vehicle_sacds_args(context.TODO(), rawArgs)
+		args, err := ec.field_Vehicle_sacds_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
@@ -2034,7 +2034,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		args, err := ec.field_VehicleEarnings_history_args(context.TODO(), rawArgs)
+		args, err := ec.field_VehicleEarnings_history_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}

@@ -20,9 +20,9 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/loader"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/internal/services"
-	"github.com/DIMO-Network/shared"
-	"github.com/DIMO-Network/shared/db"
-	"github.com/DIMO-Network/shared/kafka"
+	"github.com/DIMO-Network/shared/pkg/db"
+	"github.com/DIMO-Network/shared/pkg/kafka"
+	"github.com/DIMO-Network/shared/pkg/settings"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -34,7 +34,7 @@ func main() {
 	ctx := context.Background()
 	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", "identity-api").Logger()
 
-	settings, err := shared.LoadConfig[config.Settings]("settings.yaml")
+	settings, err := settings.LoadConfig[config.Settings]("settings.yaml")
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Couldn't load settings.")
 	}

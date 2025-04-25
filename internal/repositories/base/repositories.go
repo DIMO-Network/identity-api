@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/DIMO-Network/identity-api/internal/config"
-	"github.com/DIMO-Network/shared/db"
+	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/rs/zerolog"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"github.com/vmihailenco/msgpack/v5"
