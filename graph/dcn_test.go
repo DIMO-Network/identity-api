@@ -71,7 +71,7 @@ func TestDCNQuery(t *testing.T) {
 
 	contractEventConsumer := services.NewContractsEventsConsumer(pdb, &logger, &settings)
 
-	err = contractEventConsumer.Process(ctx, &cloudevent.CloudEvent[json.RawMessage]{
+	err = contractEventConsumer.Process(ctx, &cloudevent.RawEvent{
 		CloudEventHeader: cloudevent.CloudEventHeader{
 			Source: "chain/137",
 			Type:   "zone.dimo.contract.event",
@@ -121,7 +121,7 @@ func TestDCNQuery(t *testing.T) {
 	assert.Nil(dcnr.DCN.ExpiresAt)
 
 	currTime := time.Now().UTC().Truncate(time.Second)
-	err = contractEventConsumer.Process(ctx, &cloudevent.CloudEvent[json.RawMessage]{
+	err = contractEventConsumer.Process(ctx, &cloudevent.RawEvent{
 		CloudEventHeader: cloudevent.CloudEventHeader{
 			Source: "chain/137",
 			Type:   "zone.dimo.contract.event",
@@ -155,7 +155,7 @@ func TestDCNQuery(t *testing.T) {
 
 	// NameChanged
 	mockName := "SomeMockName"
-	err = contractEventConsumer.Process(ctx, &cloudevent.CloudEvent[json.RawMessage]{
+	err = contractEventConsumer.Process(ctx, &cloudevent.RawEvent{
 		CloudEventHeader: cloudevent.CloudEventHeader{
 			Source: "chain/137",
 			Type:   "zone.dimo.contract.event",

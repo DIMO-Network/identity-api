@@ -34,7 +34,7 @@ const (
 var (
 	zeroDecimal = types.NewDecimal(decimal.New(0, 0))
 	mintedAt    = time.Now()
-	cloudEvent  = cloudevent.CloudEvent[json.RawMessage]{
+	cloudEvent  = cloudevent.RawEvent{
 		CloudEventHeader: cloudevent.CloudEventHeader{
 			ID:          "2SiTVhP3WBhfQQnnnpeBdMR7BSY",
 			Source:      "chain/80001",
@@ -56,10 +56,10 @@ var (
 )
 
 // prepareEvent turns ContractEventData (the block time, number, etc) and the event arguments (from, to, tokenId, etc)
-// into a cloudevent.CloudEvent[json.RawMessage] like the processor expects.
+// into a cloudevent.RawEvent like the processor expects.
 //
 // Note that this relies on the global variable cloudEvent to fill in the top level object.
-func prepareEvent(t *testing.T, contractEventData cmodels.ContractEventData, args any) cloudevent.CloudEvent[json.RawMessage] {
+func prepareEvent(t *testing.T, contractEventData cmodels.ContractEventData, args any) cloudevent.RawEvent {
 	// Copy, just in case.
 	ce := cloudEvent
 	ced := contractEventData
@@ -1508,7 +1508,7 @@ func Test_Handle_TokensTransferredForConnectionStreak_Event(t *testing.T) {
 	for _, event := range payloads {
 		contractEventData.EventName = event.eventName
 
-		var e cloudevent.CloudEvent[json.RawMessage]
+		var e cloudevent.RawEvent
 		if event.proxyAddr != nil {
 			tokensTransferredForDeviceData.Amount = event.amount
 			tokensTransferredForDeviceData.DeviceNode = event.node
