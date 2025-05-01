@@ -8,19 +8,19 @@ import (
 	"time"
 
 	"github.com/DIMO-Network/identity-api/internal/config"
-	"github.com/DIMO-Network/shared"
+	"github.com/DIMO-Network/shared/pkg/http"
 	"github.com/rs/zerolog"
 )
 
 type TablelandApiService struct {
 	log        *zerolog.Logger
 	settings   *config.Settings
-	httpClient shared.HTTPClientWrapper
+	httpClient http.ClientWrapper
 	url        *url.URL
 }
 
 func NewTablelandApiService(log *zerolog.Logger, settings *config.Settings) *TablelandApiService {
-	httpClient, _ := shared.NewHTTPClientWrapper(settings.TablelandAPIGateway, "", 10*time.Second, nil, true)
+	httpClient, _ := http.NewClientWrapper(settings.TablelandAPIGateway, "", 10*time.Second, nil, true)
 
 	qu, _ := url.Parse(tablelandQueryPath)
 

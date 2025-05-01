@@ -8,13 +8,14 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/DIMO-Network/cloudevent"
 	"github.com/DIMO-Network/identity-api/internal/config"
 	cmodels "github.com/DIMO-Network/identity-api/internal/services/models"
 	"github.com/DIMO-Network/identity-api/internal/services/staking"
 	"github.com/DIMO-Network/identity-api/models"
-	"github.com/DIMO-Network/shared"
-	"github.com/DIMO-Network/shared/db"
-	"github.com/DIMO-Network/shared/dbtypes"
+	"github.com/DIMO-Network/shared/pkg/db"
+	"github.com/DIMO-Network/shared/pkg/dbtypes"
+	"github.com/DIMO-Network/shared/pkg/strings"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/goccy/go-json"
 	"github.com/rs/zerolog"
@@ -105,7 +106,7 @@ func NewContractsEventsConsumer(dbs db.Store, log *zerolog.Logger, settings *con
 	}
 }
 
-func (c *ContractsEventsConsumer) Process(ctx context.Context, event *shared.CloudEvent[json.RawMessage]) error {
+func (c *ContractsEventsConsumer) Process(ctx context.Context, event *cloudevent.RawEvent) error {
 	// Filter out end-of-block events.
 	if event.Type != contractEventCEType {
 		return nil
@@ -247,7 +248,7 @@ func (c *ContractsEventsConsumer) handleManufacturerNodeMintedEvent(ctx context.
 		Name:     args.Name,
 		Owner:    args.Owner.Bytes(),
 		MintedAt: e.Block.Time,
-		Slug:     shared.SlugString(args.Name), // Better hope uniqueness is never a problem!
+		Slug:     strings.SlugString(args.Name), // Better hope uniqueness is never a problem!
 	}
 
 	return mfr.Upsert(ctx, c.dbs.DBS().Writer, false, []string{models.ManufacturerColumns.ID}, boil.None(), boil.Infer())
