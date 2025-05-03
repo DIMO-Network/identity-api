@@ -20,7 +20,7 @@ env:
   REWARDS_CONTRACT_ADDRESS: '0x8129f3cd3eba82136caf5ab87e2321c958da5b63'
   BASE_IMAGE_URL: https://assets.dimo.xyz/
   BASE_VEHICLE_DATA_URI: https://device-data-api.dimo.zone/v2/vehicles/
-  TABLELAND_API_GATEWAY: https://tableland-node.dimo.zone/
+  TABLELAND_API_GATEWAY: http://tableland-node-prod.prod.svc.cluster.local:8080/
   SACD_ADDRESS: '0x3c152B5d96769661008Ff404224d6530FCAC766d'
   DEV_LICENSE_ADDR: '0x9A9D2E717bB005B240094ba761Ff074d392C7C85'
   STAKING_ADDR: '0xB4538A8D6AFab2849Ef78D08D49Dc1cc5AC2eD83'
