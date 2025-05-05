@@ -328,6 +328,7 @@ func (this Manufacturer) GetID() string { return this.ID }
 type ManufacturerBy struct {
 	Name    *string `json:"name,omitempty"`
 	TokenID *int    `json:"tokenId,omitempty"`
+	Slug    *string `json:"slug,omitempty"`
 }
 
 type PageInfo struct {
