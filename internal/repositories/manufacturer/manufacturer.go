@@ -54,8 +54,8 @@ func IDToToken(b []byte) (int, error) {
 }
 
 func (r *Repository) GetManufacturer(ctx context.Context, by gmodel.ManufacturerBy) (*gmodel.Manufacturer, error) {
-	if base.CountTrue(by.TokenID != nil, by.Name != nil) != 1 {
-		return nil, gqlerror.Errorf("Provide exactly one of `name` or `tokenID`.")
+	if base.CountTrue(by.TokenID != nil, by.Name != nil, by.Slug != nil) != 1 {
+		return nil, gqlerror.Errorf("Provide exactly one of `name`, `tokenID` or `slug`.")
 	}
 
 	var qm qm.QueryMod
