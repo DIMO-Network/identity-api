@@ -3,7 +3,7 @@ module github.com/DIMO-Network/identity-api
 go 1.24.0
 
 require (
-	github.com/99designs/gqlgen v0.17.72
+	github.com/99designs/gqlgen v0.17.73
 	github.com/DIMO-Network/cloudevent v0.0.4
 	github.com/DIMO-Network/mnemonic v0.0.0-20240611180925-eecaa65be2b9
 	github.com/DIMO-Network/shared v1.0.1
