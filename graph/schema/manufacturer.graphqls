@@ -81,4 +81,5 @@ type Manufacturer implements Node {
 input ManufacturerBy @oneOf {
   name: String
   tokenId: Int
+  slug: String
 }

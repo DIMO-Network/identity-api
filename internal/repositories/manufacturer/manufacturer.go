@@ -64,6 +64,8 @@ func (r *Repository) GetManufacturer(ctx context.Context, by gmodel.Manufacturer
 		qm = models.ManufacturerWhere.ID.EQ(*by.TokenID)
 	case by.Name != nil:
 		qm = models.ManufacturerWhere.Name.EQ(*by.Name)
+	case by.Slug != nil:
+		qm = models.ManufacturerWhere.Slug.EQ(*by.Slug)
 	}
 
 	m, err := models.Manufacturers(qm).One(ctx, r.PDB.DBS().Reader)
