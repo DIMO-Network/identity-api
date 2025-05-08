@@ -1,0 +1,4 @@
+abi: abi.json
+events:
+  - Transfer(address,address,uint256)
+  - LicenseMinted(address,uint256,address,uint256)
