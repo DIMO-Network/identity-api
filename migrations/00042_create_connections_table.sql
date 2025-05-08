@@ -6,6 +6,8 @@ CREATE TABLE IF NOT EXISTS connections (
     "owner" bytea NOT NULL CHECK (length("owner") = 20),
     minted_at timestamptz NOT NULL
 );
+-- We might think to include the "mint cost" here, but I suspect that part of the
+-- design will change.
 -- +goose StatementEnd
 
 -- +goose Down
