@@ -2,7 +2,7 @@
 
 extend type Query {
   """
-  List connection licenses. Sorts by token id, descending.
+  List connection licenses. Sorts by minting time, descending.
   """
   connections(
     first: Int,
