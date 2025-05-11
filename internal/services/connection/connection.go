@@ -52,7 +52,14 @@ func (h *Handler) HandleLicenseMinted(ctx context.Context, ev *cmodels.ContractE
 		MintedAt: ev.Block.Time,
 	}
 
-	return conn.Upsert(ctx, h.dbs.DBS().Writer, false, []string{dmodels.ConnectionColumns.Name}, boil.None(), boil.Infer())
+	err = conn.Upsert(ctx, h.dbs.DBS().Writer, false, []string{dmodels.ConnectionColumns.Name}, boil.None(), boil.Infer())
+	if err != nil {
+		return err
+	}
+
+	h.logger.Info().Msgf("New connection %q with address %s minted.", name, lm.Account.Hex())
+
+	return nil
 }
 
 func (h *Handler) HandleTransfer(ctx context.Context, ev *cmodels.ContractEventData) error {
