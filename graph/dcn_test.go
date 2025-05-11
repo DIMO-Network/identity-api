@@ -13,7 +13,6 @@ import (
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
-	test "github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/loader"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/internal/services"
@@ -43,7 +42,7 @@ func TestDCNQuery(t *testing.T) {
 	repo := base.NewRepository(pdb, settings, &logger)
 	resolver := NewResolver(repo)
 
-	_, wallet, err := test.GenerateWallet()
+	_, wallet, err := helpers.GenerateWallet()
 	assert.NoError(err)
 
 	m := models.Manufacturer{

@@ -9,7 +9,6 @@ import (
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
-	test "github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/pkg/db"
@@ -33,7 +32,7 @@ type DCNRepoTestSuite struct {
 
 func (o *DCNRepoTestSuite) SetupSuite() {
 	o.ctx = context.Background()
-	o.pdb, o.container = test.StartContainerDatabase(o.ctx, o.T(), "../../../migrations")
+	o.pdb, o.container = helpers.StartContainerDatabase(o.ctx, o.T(), "../../../migrations")
 
 	o.settings = config.Settings{
 		DIMORegistryAddr:    "0x2daeF6FF0E2B61aaBF9ADDE1aFDAfDb4f0f1E660",
@@ -63,13 +62,13 @@ func TestDCNRepoTestSuite(t *testing.T) {
 }
 
 func (o *DCNRepoTestSuite) Test_GetDCNByNode_Success() {
-	_, wallet, err := test.GenerateWallet()
+	_, wallet, err := helpers.GenerateWallet()
 	o.NoError(err)
 
-	_, wallet2, err := test.GenerateWallet()
+	_, wallet2, err := helpers.GenerateWallet()
 	o.NoError(err)
 
-	node := test.GenerateDCNNode()
+	node := helpers.GenerateDCNNode()
 	d := models.DCN{
 		Node:         node,
 		OwnerAddress: wallet.Bytes(),
@@ -109,13 +108,13 @@ func (o *DCNRepoTestSuite) Test_GetDCNByNode_Success() {
 }
 
 func (o *DCNRepoTestSuite) Test_GetDCNByName_Success() {
-	_, wallet, err := test.GenerateWallet()
+	_, wallet, err := helpers.GenerateWallet()
 	o.NoError(err)
 
-	_, wallet2, err := test.GenerateWallet()
+	_, wallet2, err := helpers.GenerateWallet()
 	o.NoError(err)
 
-	node := test.GenerateDCNNode()
+	node := helpers.GenerateDCNNode()
 	dcnName := "mockName.dimo"
 	d := models.DCN{
 		Node:         node,
@@ -162,9 +161,9 @@ func (o *DCNRepoTestSuite) Test_GetDCNs() {
 	// x1      | A     | 1          | 2023-11-10 20:46:55
 	// x2      | A     | 2          | 2023-11-08 20:46:55
 	// x3      | B     | 3          | 2023-11-08 20:46:55
-	_, walletA, err := test.GenerateWallet()
+	_, walletA, err := helpers.GenerateWallet()
 	o.NoError(err)
-	_, walletB, err := test.GenerateWallet()
+	_, walletB, err := helpers.GenerateWallet()
 	o.NoError(err)
 
 	mintedAt, err := time.Parse(time.RFC3339, "2023-11-08T20:46:55Z")
