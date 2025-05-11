@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
-	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
@@ -223,8 +222,8 @@ func (s *SyntheticTestSuite) Test_GetSyntheticDevices() {
 
 	tests := []struct {
 		name               string
-		filter             *gmodel.SyntheticDevicesFilter
-		results            []*gmodel.SyntheticDevice
+		filter             *model.SyntheticDevicesFilter
+		results            []*model.SyntheticDevice
 		expectedTotalCount *int
 		first              *int
 		last               *int
@@ -233,7 +232,7 @@ func (s *SyntheticTestSuite) Test_GetSyntheticDevices() {
 	}{
 		{
 			name: "No params",
-			results: []*gmodel.SyntheticDevice{
+			results: []*model.SyntheticDevice{
 				s3API,
 				s2API,
 				s1API,
@@ -248,7 +247,7 @@ func (s *SyntheticTestSuite) Test_GetSyntheticDevices() {
 		},
 		{
 			name: "first 2",
-			results: []*gmodel.SyntheticDevice{
+			results: []*model.SyntheticDevice{
 				s3API,
 				s2API,
 			},
@@ -256,7 +255,7 @@ func (s *SyntheticTestSuite) Test_GetSyntheticDevices() {
 		},
 		{
 			name: "last 2",
-			results: []*gmodel.SyntheticDevice{
+			results: []*model.SyntheticDevice{
 				s2API,
 				s1API,
 			},
@@ -264,10 +263,10 @@ func (s *SyntheticTestSuite) Test_GetSyntheticDevices() {
 		},
 		{
 			name: "Filter by owner",
-			filter: &gmodel.SyntheticDevicesFilter{
+			filter: &model.SyntheticDevicesFilter{
 				Owner: Ptr(common.BytesToAddress(s.vehicle1.OwnerAddress)),
 			},
-			results: []*gmodel.SyntheticDevice{
+			results: []*model.SyntheticDevice{
 				s2API,
 				s1API,
 			},
@@ -275,10 +274,10 @@ func (s *SyntheticTestSuite) Test_GetSyntheticDevices() {
 		},
 		{
 			name: "Filter by integrationID",
-			filter: &gmodel.SyntheticDevicesFilter{
+			filter: &model.SyntheticDevicesFilter{
 				IntegrationID: Ptr(1),
 			},
-			results: []*gmodel.SyntheticDevice{
+			results: []*model.SyntheticDevice{
 				s3API,
 				s1API,
 			},
@@ -286,11 +285,11 @@ func (s *SyntheticTestSuite) Test_GetSyntheticDevices() {
 		},
 		{
 			name: "Filter by owner and integrationID",
-			filter: &gmodel.SyntheticDevicesFilter{
+			filter: &model.SyntheticDevicesFilter{
 				Owner:         Ptr(common.BytesToAddress(s.vehicle1.OwnerAddress)),
 				IntegrationID: Ptr(1),
 			},
-			results: []*gmodel.SyntheticDevice{
+			results: []*model.SyntheticDevice{
 				s1API,
 			},
 			first: Ptr(10),
@@ -314,7 +313,7 @@ func Ptr[T any](t T) *T {
 }
 
 // Test_GetSyntheticDevice tests the GetSyntheticDevice method.
-func requireEqualSyntheticDevices(t *testing.T, expected, actual []*gmodel.SyntheticDevice) {
+func requireEqualSyntheticDevices(t *testing.T, expected, actual []*model.SyntheticDevice) {
 	t.Helper()
 	require.Len(t, actual, len(expected))
 	for i := range expected {
