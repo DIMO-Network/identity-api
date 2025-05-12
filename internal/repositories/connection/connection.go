@@ -106,32 +106,13 @@ func (r *Repository) GetConnections(ctx context.Context, first *int, after *stri
 		slices.Reverse(all)
 	}
 
-	var endCur, startCur *string
-	if len(all) != 0 {
-		ec, err := pageHelper.EncodeCursor(Cursor{
-			MintedAt: all[len(all)-1].MintedAt,
-			Address:  all[len(all)-1].Address,
-		})
-		if err != nil {
-			return nil, err
-		}
-		endCur = &ec
-
-		sc, err := pageHelper.EncodeCursor(Cursor{
-			MintedAt: all[0].MintedAt,
-			Address:  all[0].Address,
-		})
-		if err != nil {
-			return nil, err
-		}
-		startCur = &sc
-	}
-
-	edges := make([]*gmodel.ConnectionEdge, len(all))
 	nodes := make([]*gmodel.Connection, len(all))
+	edges := make([]*gmodel.ConnectionEdge, len(all))
 
 	for i, dv := range all {
 		dlv := ToAPI(dv)
+
+		nodes[i] = dlv
 
 		crsr, err := pageHelper.EncodeCursor(Cursor{
 			MintedAt: dv.MintedAt,
@@ -145,8 +126,13 @@ func (r *Repository) GetConnections(ctx context.Context, first *int, after *stri
 			Node:   dlv,
 			Cursor: crsr,
 		}
+	}
 
-		nodes[i] = dlv
+	var endCur, startCur *string
+
+	if len(edges) != 0 {
+		startCur = &edges[0].Cursor
+		endCur = &edges[len(edges)-1].Cursor
 	}
 
 	res := &gmodel.ConnectionConnection{
