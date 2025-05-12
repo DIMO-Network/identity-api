@@ -35,7 +35,7 @@ func (r *queryResolver) Connection(ctx context.Context, by model.ConnectionBy) (
 		}
 		return nil, graphql.ErrorOnPath(ctx, &gqlerror.Error{
 			Message: msg,
-			Extensions: map[string]interface{}{
+			Extensions: map[string]any{
 				"code": "NOT_FOUND",
 			},
 		})
