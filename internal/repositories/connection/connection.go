@@ -1,7 +1,9 @@
 package connection
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"fmt"
 	"slices"
 	"time"
@@ -11,6 +13,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/vmihailenco/msgpack/v5"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
@@ -25,13 +28,20 @@ type Cursor struct {
 
 var pageHelper = helpers.PaginationHelper[Cursor]{}
 
-func ToAPI(v *models.Connection) *gmodel.Connection {
+func (r *Repository) ToGQL(v *models.Connection) (*gmodel.Connection, error) {
 	return &gmodel.Connection{
 		Name:     v.Name,
 		Address:  common.BytesToAddress(v.Address),
 		Owner:    common.BytesToAddress(v.Owner),
 		MintedAt: v.MintedAt,
-	}
+	}, nil
+}
+
+func (r *Repository) ToCursor(v *models.Connection) (Cursor, error) {
+	return Cursor{
+		MintedAt: v.MintedAt,
+		Address:  v.Address,
+	}, nil
 }
 
 func (r *Repository) GetConnections(ctx context.Context, first *int, after *string, last *int, before *string) (*gmodel.ConnectionConnection, error) {
@@ -90,62 +100,98 @@ func (r *Repository) GetConnections(ctx context.Context, first *int, after *stri
 		return nil, err
 	}
 
-	// We assume that cursors come from real elements.
-	hasNext := before != nil
-	hasPrevious := after != nil
-
-	if first != nil && len(all) == limit+1 {
-		hasNext = true
-		all = all[:limit]
-	} else if last != nil && len(all) == limit+1 {
-		hasPrevious = true
-		all = all[:limit]
+	nodes, cursors, pi, err := ConvertConnection(all, first, after, last, before, limit, r)
+	if err != nil {
+		return nil, err
 	}
 
-	if last != nil {
-		slices.Reverse(all)
-	}
-
-	nodes := make([]*gmodel.Connection, len(all))
-	edges := make([]*gmodel.ConnectionEdge, len(all))
-
-	for i, dv := range all {
-		dlv := ToAPI(dv)
-
-		nodes[i] = dlv
-
-		crsr, err := pageHelper.EncodeCursor(Cursor{
-			MintedAt: dv.MintedAt,
-			Address:  dv.Address,
-		})
-		if err != nil {
-			return nil, err
-		}
-
+	edges := make([]*gmodel.ConnectionEdge, len(nodes))
+	for i := range nodes {
 		edges[i] = &gmodel.ConnectionEdge{
-			Node:   dlv,
-			Cursor: crsr,
+			Node:   nodes[i],
+			Cursor: cursors[i],
 		}
-	}
-
-	var endCur, startCur *string
-
-	if len(edges) != 0 {
-		startCur = &edges[0].Cursor
-		endCur = &edges[len(edges)-1].Cursor
 	}
 
 	res := &gmodel.ConnectionConnection{
-		Edges: edges,
-		Nodes: nodes,
-		PageInfo: &gmodel.PageInfo{
-			EndCursor:       endCur,
-			HasNextPage:     hasNext,
-			HasPreviousPage: hasPrevious,
-			StartCursor:     startCur,
-		},
+		Edges:      edges,
+		Nodes:      nodes,
+		PageInfo:   pi,
 		TotalCount: int(totalCount),
 	}
 
 	return res, nil
+}
+
+type ConnectionConverter[DBModel, GQLModel, Cursor any] interface {
+	ToGQL(DBModel) (GQLModel, error)
+	ToCursor(DBModel) (Cursor, error)
+}
+
+func ConvertConnection[DBModel, GQLModel, Cursor any](dbs []DBModel, first *int, after *string, last *int, before *string, limit int, cc ConnectionConverter[DBModel, GQLModel, Cursor]) ([]GQLModel, []string, *gmodel.PageInfo, error) {
+	hasNext := before != nil
+	hasPrevious := after != nil
+
+	if first != nil && len(dbs) == limit+1 {
+		hasNext = true
+		dbs = dbs[:limit]
+	} else if last != nil && len(dbs) == limit+1 {
+		hasPrevious = true
+		dbs = dbs[:limit]
+	}
+
+	if last != nil {
+		slices.Reverse(dbs)
+	}
+
+	out := make([]GQLModel, len(dbs))
+	outCur := make([]string, len(dbs))
+
+	for i, mod := range dbs {
+		outMod, err := cc.ToGQL(mod)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+
+		out[i] = outMod
+
+		cur, err := cc.ToCursor(mod)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+
+		curStr, err := EncodeCursor(cur)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+
+		outCur[i] = curStr
+	}
+
+	var startCur, endCur *string
+	if len(out) != 0 {
+		startCur = &outCur[0]
+		endCur = &outCur[len(out)-1]
+	}
+
+	pi := &gmodel.PageInfo{
+		StartCursor:     startCur,
+		EndCursor:       endCur,
+		HasPreviousPage: hasPrevious,
+		HasNextPage:     hasNext,
+	}
+
+	return out, outCur, pi, nil
+}
+
+func EncodeCursor[T any](cursor T) (string, error) {
+	var b bytes.Buffer
+	e := msgpack.NewEncoder(&b)
+	e.UseArrayEncodedStructs(true)
+
+	if err := e.Encode(cursor); err != nil {
+		return "", err
+	}
+
+	return base64.StdEncoding.EncodeToString(b.Bytes()), nil
 }
