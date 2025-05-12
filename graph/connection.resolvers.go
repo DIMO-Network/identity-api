@@ -6,8 +6,13 @@ package graph
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/DIMO-Network/identity-api/graph/model"
+	"github.com/DIMO-Network/identity-api/internal/repositories"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 )
 
 // Connections is the resolver for the connections field.
@@ -17,5 +22,24 @@ func (r *queryResolver) Connections(ctx context.Context, first *int, after *stri
 
 // Connection is the resolver for the connection field.
 func (r *queryResolver) Connection(ctx context.Context, by model.ConnectionBy) (*model.Connection, error) {
-	return r.connection.GetConnection(ctx, &by)
+	conn, err := r.connection.GetConnection(ctx, by)
+	if errors.Is(err, repositories.ErrNotFound) {
+		msg := "No connection with "
+		switch {
+		case by.Name != nil:
+			msg += fmt.Sprintf("name %q.", *by.Name)
+		case by.TokenID != nil:
+			msg += fmt.Sprintf("token id %d.", by.TokenID)
+		case by.Address != nil:
+			msg += fmt.Sprintf("address %s.", by.Address.Hex())
+		}
+		return nil, graphql.ErrorOnPath(ctx, &gqlerror.Error{
+			Message: msg,
+			Extensions: map[string]interface{}{
+				"code": "NOT_FOUND",
+			},
+		})
+	}
+
+	return conn, err
 }
