@@ -18,7 +18,9 @@ const migrationsDir = "../../../migrations"
 func TestHandleMintAndTransfer(t *testing.T) {
 	ctx := context.Background()
 
-	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDir)
+	pdb, cont := helpers.StartContainerDatabase(ctx, t, migrationsDir)
+
+	defer cont.Terminate(t.Context())
 
 	log := zerolog.Nop()
 
