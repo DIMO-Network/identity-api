@@ -18,8 +18,8 @@ import (
 )
 
 type Handler struct {
-	dbs    db.Store
-	logger *zerolog.Logger
+	DBS    db.Store
+	Logger *zerolog.Logger
 }
 
 func (h *Handler) Handle(ctx context.Context, ev *cmodels.ContractEventData) error {
@@ -52,12 +52,12 @@ func (h *Handler) HandleLicenseMinted(ctx context.Context, ev *cmodels.ContractE
 		MintedAt: ev.Block.Time,
 	}
 
-	err = conn.Upsert(ctx, h.dbs.DBS().Writer, false, []string{dmodels.ConnectionColumns.Name}, boil.None(), boil.Infer())
+	err = conn.Upsert(ctx, h.DBS.DBS().Writer, false, []string{dmodels.ConnectionColumns.Name}, boil.None(), boil.Infer())
 	if err != nil {
 		return err
 	}
 
-	h.logger.Info().Msgf("New connection %q with address %s minted.", name, lm.Account.Hex())
+	h.Logger.Info().Msgf("New connection %q with address %s minted.", name, lm.Account.Hex())
 
 	return nil
 }
@@ -84,7 +84,7 @@ func (h *Handler) HandleTransfer(ctx context.Context, ev *cmodels.ContractEventD
 		Owner: t.To.Bytes(),
 	}
 
-	_, err = conn.Update(ctx, h.dbs.DBS().Writer, boil.Whitelist(dmodels.ConnectionColumns.Owner))
+	_, err = conn.Update(ctx, h.DBS.DBS().Writer, boil.Whitelist(dmodels.ConnectionColumns.Owner))
 	return err
 }
 

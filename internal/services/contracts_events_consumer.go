@@ -10,6 +10,7 @@ import (
 
 	"github.com/DIMO-Network/cloudevent"
 	"github.com/DIMO-Network/identity-api/internal/config"
+	"github.com/DIMO-Network/identity-api/internal/services/connection"
 	cmodels "github.com/DIMO-Network/identity-api/internal/services/models"
 	"github.com/DIMO-Network/identity-api/internal/services/staking"
 	"github.com/DIMO-Network/identity-api/models"
@@ -29,6 +30,7 @@ type ContractsEventsConsumer struct {
 	settings       *config.Settings
 	httpClient     *http.Client
 	stakingHandler *staking.Handler
+	connsHandler   *connection.Handler
 }
 
 type EventName string
@@ -103,6 +105,7 @@ func NewContractsEventsConsumer(dbs db.Store, log *zerolog.Logger, settings *con
 		stakingHandler: &staking.Handler{
 			DBS: dbs,
 		},
+		connsHandler: &connection.Handler{DBS: dbs, Logger: log},
 	}
 }
 
@@ -125,6 +128,7 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *cloudevent
 	sacdAddr := common.HexToAddress(c.settings.SACDAddress)
 	devLicenseAddr := common.HexToAddress(c.settings.DevLicenseAddr)
 	stakingAddr := common.HexToAddress(c.settings.StakingAddr)
+	connAddr := common.HexToAddress(c.settings.ConnectionAddr)
 
 	var data cmodels.ContractEventData
 	if err := json.Unmarshal(event.Data, &data); err != nil {
@@ -230,6 +234,8 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *cloudevent
 		}
 	case stakingAddr:
 		return c.stakingHandler.HandleEvent(ctx, &data)
+	case connAddr:
+		c.connsHandler.Handle(ctx, &data)
 	}
 
 	c.log.Debug().Str("event", data.EventName).Msg("Handler not provided for event.")
