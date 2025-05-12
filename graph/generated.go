@@ -17954,7 +17954,7 @@ func (ec *executionContext) unmarshalInputConnectionBy(ctx context.Context, obj 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "address"}
+	fieldsInOrder := [...]string{"name", "address", "tokenId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -17975,6 +17975,13 @@ func (ec *executionContext) unmarshalInputConnectionBy(ctx context.Context, obj 
 				return it, err
 			}
 			it.Address = data
+		case "tokenId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokenId"))
+			data, err := ec.unmarshalOBigInt2ᚖmathᚋbigᚐInt(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TokenID = data
 		}
 	}
 
@@ -24627,6 +24634,24 @@ func (ec *executionContext) unmarshalOAftermarketDevicesFilter2ᚖgithubᚗcom�
 	}
 	res, err := ec.unmarshalInputAftermarketDevicesFilter(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOBigInt2ᚖmathᚋbigᚐInt(ctx context.Context, v any) (*big.Int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := types.UnmarshalBigInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOBigInt2ᚖmathᚋbigᚐInt(ctx context.Context, sel ast.SelectionSet, v *big.Int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := types.MarshalBigInt(v)
+	return res
 }
 
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v any) (bool, error) {

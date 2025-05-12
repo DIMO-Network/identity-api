@@ -1,7 +1,10 @@
 package connection
 
 import (
+	"bytes"
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"math/big"
 	"slices"
@@ -9,6 +12,7 @@ import (
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
+	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/ethereum/go-ethereum/common"
@@ -161,4 +165,37 @@ func (r *Repository) GetConnections(ctx context.Context, first *int, after *stri
 	}
 
 	return res, nil
+}
+
+func (r *Repository) GetConnection(ctx context.Context, by gmodel.ConnectionBy) (*gmodel.Connection, error) {
+	if base.CountTrue(by.Name != nil, by.Address != nil, by.TokenID != nil) != 1 {
+		return nil, fmt.Errorf("must specify exactly one of `name`, `address`, or `tokenId`")
+	}
+
+	var mod qm.QueryMod
+
+	switch {
+	case by.Name != nil:
+		mod = models.ConnectionWhere.Name.EQ(*by.Name)
+	case by.Address != nil:
+		mod = models.ConnectionWhere.Address.EQ(by.Address.Bytes())
+	case by.TokenID != nil:
+		idBytes := by.TokenID.Bytes()
+		if len(idBytes) > 32 {
+			return nil, repositories.ErrNotFound
+		}
+
+		idBytesTrimmed := bytes.TrimRight(idBytes, "\x00")
+		mod = models.ConnectionWhere.Name.EQ(string(idBytesTrimmed))
+	}
+
+	dl, err := models.Connections(mod).One(ctx, r.PDB.DBS().Reader)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, repositories.ErrNotFound
+		}
+		return nil, err
+	}
+
+	return ToAPI(dl), nil
 }

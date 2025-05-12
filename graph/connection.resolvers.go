@@ -6,17 +6,16 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
 )
 
 // Connections is the resolver for the connections field.
 func (r *queryResolver) Connections(ctx context.Context, first *int, after *string, last *int, before *string) (*model.ConnectionConnection, error) {
-	panic(fmt.Errorf("not implemented: Connections - connections"))
+	return r.connection.GetConnections(ctx, first, after, last, before)
 }
 
 // Connection is the resolver for the connection field.
 func (r *queryResolver) Connection(ctx context.Context, by model.ConnectionBy) (*model.Connection, error) {
-	panic(fmt.Errorf("not implemented: Connection - connection"))
+	return r.connection.GetConnection(ctx, &by)
 }

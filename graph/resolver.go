@@ -6,6 +6,7 @@ import (
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/repositories/aftermarket"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
+	"github.com/DIMO-Network/identity-api/internal/repositories/connection"
 	"github.com/DIMO-Network/identity-api/internal/repositories/dcn"
 	"github.com/DIMO-Network/identity-api/internal/repositories/developerlicense"
 	"github.com/DIMO-Network/identity-api/internal/repositories/devicedefinition"
@@ -93,6 +94,14 @@ type StakeRepository interface {
 	GetStakes(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.StakeFilterBy) (*model.StakeConnection, error)
 }
 
+// ConnectionRepository interface for mocking stake.Repository.
+//
+//go:generate mockgen -destination=./mock_connection_test.go -package=graph github.com/DIMO-Network/identity-api/graph ConnectionRepository
+type ConnectionRepository interface {
+	GetConnections(ctx context.Context, first *int, after *string, last *int, before *string) (*model.ConnectionConnection, error)
+	GetConnection(ctx context.Context, by model.ConnectionBy) (*model.Connection, error)
+}
+
 // Resolver holds the repositories for the graph resolvers.
 type Resolver struct {
 	aftermarket      AftermarketDeviceRepository
@@ -106,6 +115,7 @@ type Resolver struct {
 	deviceDefinition DeviceDefinitionRepository
 	developerLicense DeveloperLicenseRepository
 	stake            StakeRepository
+	connection       ConnectionRepository
 }
 
 // NewResolver creates a new Resolver with allocated repositories.
@@ -126,5 +136,6 @@ func NewResolver(baseRepo *base.Repository) *Resolver {
 		},
 		developerLicense: &developerlicense.Repository{Repository: baseRepo},
 		stake:            &stake.Repository{Repository: baseRepo},
+		connection:       &connection.Repository{Repository: baseRepo},
 	}
 }

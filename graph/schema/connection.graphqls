@@ -55,4 +55,5 @@ type ConnectionEdge {
 input ConnectionBy {
   name: String
   address: Address
+  tokenId: BigInt
 }

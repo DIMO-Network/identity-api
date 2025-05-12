@@ -118,6 +118,7 @@ type Connection struct {
 type ConnectionBy struct {
 	Name    *string         `json:"name,omitempty"`
 	Address *common.Address `json:"address,omitempty"`
+	TokenID *big.Int        `json:"tokenId,omitempty"`
 }
 
 type ConnectionConnection struct {
