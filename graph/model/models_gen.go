@@ -109,8 +109,15 @@ type Connection struct {
 	Address common.Address `json:"address"`
 	// The owner of the connection. Connections are transferable, so this may change over time.
 	Owner common.Address `json:"owner"`
+	// The token id of the connection as an NFT. This tends to be very large.
+	TokenID *big.Int `json:"tokenId"`
 	// The block timestamp for the mint of the connection.
 	MintedAt time.Time `json:"mintedAt"`
+}
+
+type ConnectionBy struct {
+	Name    *string         `json:"name,omitempty"`
+	Address *common.Address `json:"address,omitempty"`
 }
 
 type ConnectionConnection struct {

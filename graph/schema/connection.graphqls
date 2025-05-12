@@ -10,6 +10,11 @@ extend type Query {
     last: Int,
     before: String
   ): ConnectionConnection!
+
+  """
+  Retrieve a particular connection.
+  """
+  connection(by: ConnectionBy!): Connection!
 }
 
 type Connection {
@@ -26,6 +31,10 @@ type Connection {
   """
   owner: Address!
   """
+  The token id of the connection as an NFT. This tends to be very large.
+  """
+  tokenId: BigInt!
+  """
   The block timestamp for the mint of the connection.
   """
   mintedAt: Time!
@@ -41,4 +50,9 @@ type ConnectionConnection {
 type ConnectionEdge {
   node: Connection!
   cursor: String!
+}
+
+input ConnectionBy {
+  name: String
+  address: Address
 }

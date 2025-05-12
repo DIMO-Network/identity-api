@@ -104,6 +104,7 @@ type ComplexityRoot struct {
 		MintedAt func(childComplexity int) int
 		Name     func(childComplexity int) int
 		Owner    func(childComplexity int) int
+		TokenID  func(childComplexity int) int
 	}
 
 	ConnectionConnection struct {
@@ -263,6 +264,7 @@ type ComplexityRoot struct {
 	Query struct {
 		AftermarketDevice  func(childComplexity int, by model.AftermarketDeviceBy) int
 		AftermarketDevices func(childComplexity int, first *int, after *string, last *int, before *string, filterBy *model.AftermarketDevicesFilter) int
+		Connection         func(childComplexity int, by model.ConnectionBy) int
 		Connections        func(childComplexity int, first *int, after *string, last *int, before *string) int
 		Dcn                func(childComplexity int, by model.DCNBy) int
 		Dcns               func(childComplexity int, first *int, after *string, last *int, before *string, filterBy *model.DCNFilter) int
@@ -455,6 +457,7 @@ type QueryResolver interface {
 	AftermarketDevice(ctx context.Context, by model.AftermarketDeviceBy) (*model.AftermarketDevice, error)
 	AftermarketDevices(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.AftermarketDevicesFilter) (*model.AftermarketDeviceConnection, error)
 	Connections(ctx context.Context, first *int, after *string, last *int, before *string) (*model.ConnectionConnection, error)
+	Connection(ctx context.Context, by model.ConnectionBy) (*model.Connection, error)
 	Dcn(ctx context.Context, by model.DCNBy) (*model.Dcn, error)
 	Dcns(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.DCNFilter) (*model.DCNConnection, error)
 	DeveloperLicenses(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.DeveloperLicenseFilterBy) (*model.DeveloperLicenseConnection, error)
@@ -721,6 +724,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Connection.Owner(childComplexity), true
+
+	case "Connection.tokenId":
+		if e.complexity.Connection.TokenID == nil {
+			break
+		}
+
+		return e.complexity.Connection.TokenID(childComplexity), true
 
 	case "ConnectionConnection.edges":
 		if e.complexity.ConnectionConnection.Edges == nil {
@@ -1402,6 +1412,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.AftermarketDevices(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["filterBy"].(*model.AftermarketDevicesFilter)), true
+
+	case "Query.connection":
+		if e.complexity.Query.Connection == nil {
+			break
+		}
+
+		args, err := ec.field_Query_connection_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Connection(childComplexity, args["by"].(model.ConnectionBy)), true
 
 	case "Query.connections":
 		if e.complexity.Query.Connections == nil {
@@ -2175,6 +2197,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputAftermarketDeviceBy,
 		ec.unmarshalInputAftermarketDevicesFilter,
+		ec.unmarshalInputConnectionBy,
 		ec.unmarshalInputDCNBy,
 		ec.unmarshalInputDCNFilter,
 		ec.unmarshalInputDeveloperLicenseBy,
@@ -3004,6 +3027,34 @@ func (ec *executionContext) field_Query_aftermarketDevices_argsFilterBy(
 	}
 
 	var zeroVal *model.AftermarketDevicesFilter
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_connection_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Query_connection_argsBy(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["by"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Query_connection_argsBy(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (model.ConnectionBy, error) {
+	if _, ok := rawArgs["by"]; !ok {
+		var zeroVal model.ConnectionBy
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("by"))
+	if tmp, ok := rawArgs["by"]; ok {
+		return ec.unmarshalNConnectionBy2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐConnectionBy(ctx, tmp)
+	}
+
+	var zeroVal model.ConnectionBy
 	return zeroVal, nil
 }
 
@@ -5836,6 +5887,50 @@ func (ec *executionContext) fieldContext_Connection_owner(_ context.Context, fie
 	return fc, nil
 }
 
+func (ec *executionContext) _Connection_tokenId(ctx context.Context, field graphql.CollectedField, obj *model.Connection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Connection_tokenId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TokenID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*big.Int)
+	fc.Result = res
+	return ec.marshalNBigInt2ᚖmathᚋbigᚐInt(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Connection_tokenId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Connection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type BigInt does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Connection_mintedAt(ctx context.Context, field graphql.CollectedField, obj *model.Connection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Connection_mintedAt(ctx, field)
 	if err != nil {
@@ -6019,6 +6114,8 @@ func (ec *executionContext) fieldContext_ConnectionConnection_nodes(_ context.Co
 				return ec.fieldContext_Connection_address(ctx, field)
 			case "owner":
 				return ec.fieldContext_Connection_owner(ctx, field)
+			case "tokenId":
+				return ec.fieldContext_Connection_tokenId(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_Connection_mintedAt(ctx, field)
 			}
@@ -6127,6 +6224,8 @@ func (ec *executionContext) fieldContext_ConnectionEdge_node(_ context.Context, 
 				return ec.fieldContext_Connection_address(ctx, field)
 			case "owner":
 				return ec.fieldContext_Connection_owner(ctx, field)
+			case "tokenId":
+				return ec.fieldContext_Connection_tokenId(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_Connection_mintedAt(ctx, field)
 			}
@@ -10610,6 +10709,73 @@ func (ec *executionContext) fieldContext_Query_connections(ctx context.Context, 
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_connections_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_connection(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_connection(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Connection(rctx, fc.Args["by"].(model.ConnectionBy))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Connection)
+	fc.Result = res
+	return ec.marshalNConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_connection(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "name":
+				return ec.fieldContext_Connection_name(ctx, field)
+			case "address":
+				return ec.fieldContext_Connection_address(ctx, field)
+			case "owner":
+				return ec.fieldContext_Connection_owner(ctx, field)
+			case "tokenId":
+				return ec.fieldContext_Connection_tokenId(ctx, field)
+			case "mintedAt":
+				return ec.fieldContext_Connection_mintedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Connection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_connection_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -17781,6 +17947,40 @@ func (ec *executionContext) unmarshalInputAftermarketDevicesFilter(ctx context.C
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputConnectionBy(ctx context.Context, obj any) (model.ConnectionBy, error) {
+	var it model.ConnectionBy
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"name", "address"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "address":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("address"))
+			data, err := ec.unmarshalOAddress2ᚖgithubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Address = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputDCNBy(ctx context.Context, obj any) (model.DCNBy, error) {
 	var it model.DCNBy
 	asMap := map[string]any{}
@@ -18660,6 +18860,11 @@ func (ec *executionContext) _Connection(ctx context.Context, sel ast.SelectionSe
 			}
 		case "owner":
 			out.Values[i] = ec._Connection_owner(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "tokenId":
+			out.Values[i] = ec._Connection_tokenId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -20143,6 +20348,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_connections(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "connection":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_connection(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -22449,6 +22676,10 @@ func (ec *executionContext) marshalNBytes2ᚕbyte(ctx context.Context, sel ast.S
 	return res
 }
 
+func (ec *executionContext) marshalNConnection2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐConnection(ctx context.Context, sel ast.SelectionSet, v model.Connection) graphql.Marshaler {
+	return ec._Connection(ctx, sel, &v)
+}
+
 func (ec *executionContext) marshalNConnection2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐConnectionᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Connection) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -22501,6 +22732,11 @@ func (ec *executionContext) marshalNConnection2ᚖgithubᚗcomᚋDIMOᚑNetwork�
 		return graphql.Null
 	}
 	return ec._Connection(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNConnectionBy2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐConnectionBy(ctx context.Context, v any) (model.ConnectionBy, error) {
+	res, err := ec.unmarshalInputConnectionBy(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNConnectionConnection2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐConnectionConnection(ctx context.Context, sel ast.SelectionSet, v model.ConnectionConnection) graphql.Marshaler {

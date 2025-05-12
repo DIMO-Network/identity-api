@@ -15,3 +15,8 @@ import (
 func (r *queryResolver) Connections(ctx context.Context, first *int, after *string, last *int, before *string) (*model.ConnectionConnection, error) {
 	panic(fmt.Errorf("not implemented: Connections - connections"))
 }
+
+// Connection is the resolver for the connection field.
+func (r *queryResolver) Connection(ctx context.Context, by model.ConnectionBy) (*model.Connection, error) {
+	panic(fmt.Errorf("not implemented: Connection - connection"))
+}

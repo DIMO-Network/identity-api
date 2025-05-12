@@ -3,6 +3,7 @@ package connection
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"slices"
 	"time"
 
@@ -26,10 +27,22 @@ type Cursor struct {
 var pageHelper = helpers.PaginationHelper[Cursor]{}
 
 func ToAPI(v *models.Connection) *gmodel.Connection {
+	nameBytes := []byte(v.Name)
+	if len(nameBytes) > 32 {
+		// We should never have to do this.
+		nameBytes = nameBytes[:32]
+	}
+
+	nameBytesPadded := make([]byte, 32)
+	copy(nameBytesPadded[32-len(nameBytes):], nameBytes)
+
+	tokenID := new(big.Int).SetBytes(nameBytesPadded)
+
 	return &gmodel.Connection{
 		Name:     v.Name,
 		Address:  common.BytesToAddress(v.Address),
 		Owner:    common.BytesToAddress(v.Owner),
+		TokenID:  tokenID,
 		MintedAt: v.MintedAt,
 	}
 }
