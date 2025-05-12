@@ -235,7 +235,7 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *cloudevent
 	case stakingAddr:
 		return c.stakingHandler.HandleEvent(ctx, &data)
 	case connAddr:
-		c.connsHandler.Handle(ctx, &data)
+		return c.connsHandler.Handle(ctx, &data)
 	}
 
 	c.log.Debug().Str("event", data.EventName).Msg("Handler not provided for event.")

@@ -20,7 +20,7 @@ func TestHandleMintAndTransfer(t *testing.T) {
 
 	pdb, cont := helpers.StartContainerDatabase(ctx, t, migrationsDir)
 
-	defer cont.Terminate(t.Context())
+	defer cont.Terminate(t.Context()) //nolint
 
 	log := zerolog.Nop()
 
