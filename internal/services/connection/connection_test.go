@@ -15,6 +15,7 @@ import (
 
 const migrationsDir = "../../../migrations"
 
+// You could say that this test is doing too much.
 func TestHandleMintAndTransfer(t *testing.T) {
 	ctx := context.Background()
 
