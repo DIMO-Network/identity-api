@@ -25,4 +25,5 @@ type Settings struct {
 	EthereumRPCURL        string      `yaml:"ETHEREUM_RPC_URL"`
 	DevLicenseAddr        string      `yaml:"DEV_LICENSE_ADDR"`
 	StakingAddr           string      `yaml:"STAKING_ADDR"`
+	ConnectionAddr        string      `yaml:"CONNECTION_ADDR"`
 }

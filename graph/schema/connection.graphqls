@@ -1,0 +1,59 @@
+# Connection queries and types.
+
+extend type Query {
+  """
+  List connection licenses. Sorts by minting time, descending.
+  """
+  connections(
+    first: Int,
+    after: String,
+    last: Int,
+    before: String
+  ): ConnectionConnection!
+
+  """
+  Retrieve a particular connection.
+  """
+  connection(by: ConnectionBy!): Connection!
+}
+
+type Connection {
+  """
+  The name of the connection. This can be at most 32 bytes long.
+  """
+  name: String!
+  """
+  The address of the connection. This is the most commonly used identifier.
+  """
+  address: Address!
+  """
+  The owner of the connection. Connections are transferable, so this may change over time.
+  """
+  owner: Address!
+  """
+  The token id of the connection as an NFT. This tends to be very large.
+  """
+  tokenId: BigInt!
+  """
+  The block timestamp for the mint of the connection.
+  """
+  mintedAt: Time!
+}
+
+type ConnectionConnection {
+  totalCount: Int!
+  edges: [ConnectionEdge!]!
+  nodes: [Connection!]!
+  pageInfo: PageInfo!
+}
+
+type ConnectionEdge {
+  node: Connection!
+  cursor: String!
+}
+
+input ConnectionBy {
+  name: String
+  address: Address
+  tokenId: BigInt
+}

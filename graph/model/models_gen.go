@@ -102,6 +102,37 @@ type AftermarketDevicesFilter struct {
 	ManufacturerID *int            `json:"manufacturerId,omitempty"`
 }
 
+type Connection struct {
+	// The name of the connection. This can be at most 32 bytes long.
+	Name string `json:"name"`
+	// The address of the connection. This is the most commonly used identifier.
+	Address common.Address `json:"address"`
+	// The owner of the connection. Connections are transferable, so this may change over time.
+	Owner common.Address `json:"owner"`
+	// The token id of the connection as an NFT. This tends to be very large.
+	TokenID *big.Int `json:"tokenId"`
+	// The block timestamp for the mint of the connection.
+	MintedAt time.Time `json:"mintedAt"`
+}
+
+type ConnectionBy struct {
+	Name    *string         `json:"name,omitempty"`
+	Address *common.Address `json:"address,omitempty"`
+	TokenID *big.Int        `json:"tokenId,omitempty"`
+}
+
+type ConnectionConnection struct {
+	TotalCount int               `json:"totalCount"`
+	Edges      []*ConnectionEdge `json:"edges"`
+	Nodes      []*Connection     `json:"nodes"`
+	PageInfo   *PageInfo         `json:"pageInfo"`
+}
+
+type ConnectionEdge struct {
+	Node   *Connection `json:"node"`
+	Cursor string      `json:"cursor"`
+}
+
 // Represents a DIMO Canonical Name. This is a unique identifier for a vehicle.
 type Dcn struct {
 	// An opaque global identifier for this DCN.
