@@ -38,7 +38,7 @@ func ToAPI(v *models.Connection) *gmodel.Connection {
 	}
 
 	nameBytesPadded := make([]byte, 32)
-	copy(nameBytesPadded[32-len(nameBytes):], nameBytes)
+	copy(nameBytesPadded, nameBytes)
 
 	tokenID := new(big.Int).SetBytes(nameBytesPadded)
 
