@@ -362,6 +362,20 @@ type ManufacturerBy struct {
 	Slug    *string `json:"slug,omitempty"`
 }
 
+// The Connection type for Manufacturer.
+type ManufacturerConnection struct {
+	TotalCount int                 `json:"totalCount"`
+	Edges      []*ManufacturerEdge `json:"edges"`
+	Nodes      []*Manufacturer     `json:"nodes"`
+	PageInfo   *PageInfo           `json:"pageInfo"`
+}
+
+// An edge in a ManufacturerConnection.
+type ManufacturerEdge struct {
+	Node   *Manufacturer `json:"node"`
+	Cursor string        `json:"cursor"`
+}
+
 type PageInfo struct {
 	StartCursor     *string `json:"startCursor,omitempty"`
 	EndCursor       *string `json:"endCursor,omitempty"`
