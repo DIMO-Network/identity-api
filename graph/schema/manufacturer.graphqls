@@ -10,6 +10,13 @@ extend type Query {
     """
     by: ManufacturerBy!
   ): Manufacturer!
+
+  """
+  List minted manufacturers.
+
+  These are always ordered by Name in ascending order. Returns all of them
+  """
+  manufacturers: ManufacturerConnection!
 }
 
 type Manufacturer implements Node {
@@ -82,4 +89,22 @@ input ManufacturerBy @oneOf {
   name: String
   tokenId: Int
   slug: String
+}
+
+"""
+An edge in a ManufacturerConnection.
+"""
+type ManufacturerEdge {
+  node: Manufacturer!
+  cursor: String!
+}
+
+"""
+The Connection type for Manufacturer.
+"""
+type ManufacturerConnection {
+  totalCount: Int!
+  edges: [ManufacturerEdge!]!
+  nodes: [Manufacturer!]!
+  pageInfo: PageInfo!
 }

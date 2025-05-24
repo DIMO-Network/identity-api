@@ -6,7 +6,6 @@ package graph
 
 import (
 	"context"
-
 	"github.com/DIMO-Network/identity-api/graph/model"
 )
 
@@ -23,6 +22,11 @@ func (r *manufacturerResolver) DeviceDefinitions(ctx context.Context, obj *model
 // Manufacturer is the resolver for the manufacturer field.
 func (r *queryResolver) Manufacturer(ctx context.Context, by model.ManufacturerBy) (*model.Manufacturer, error) {
 	return r.manufacturer.GetManufacturer(ctx, by)
+}
+
+// Manufacturers is the resolver for the manufacturers field.
+func (r *queryResolver) Manufacturers(ctx context.Context) (*model.ManufacturerConnection, error) {
+	return r.manufacturer.GetManufacturers(ctx)
 }
 
 // Manufacturer returns ManufacturerResolver implementation.

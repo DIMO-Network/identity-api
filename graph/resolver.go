@@ -50,6 +50,7 @@ type DCNRepository interface {
 //go:generate mockgen -destination=./mock_manufacturer_test.go -package=graph github.com/DIMO-Network/identity-api/graph ManufacturerRepository
 type ManufacturerRepository interface {
 	GetManufacturer(ctx context.Context, by model.ManufacturerBy) (*model.Manufacturer, error)
+	GetManufacturers(ctx context.Context) (*model.ManufacturerConnection, error)
 }
 
 // SyntheticRepository interface for mocking synthetic.Repository.

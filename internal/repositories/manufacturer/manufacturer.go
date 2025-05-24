@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/models"
@@ -74,4 +73,33 @@ func (r *Repository) GetManufacturer(ctx context.Context, by gmodel.Manufacturer
 	}
 
 	return ToAPI(m)
+}
+
+func (r *Repository) GetManufacturers(ctx context.Context) (*gmodel.ManufacturerConnection, error) {
+	ms, err := models.Manufacturers().All(ctx, r.PDB.DBS().Reader)
+	if err != nil {
+		return nil, err
+	}
+	res := &gmodel.ManufacturerConnection{}
+	res.TotalCount = len(ms)
+	res.PageInfo = &gmodel.PageInfo{
+		StartCursor:     nil,
+		EndCursor:       nil,
+		HasPreviousPage: false,
+		HasNextPage:     false,
+	}
+	res.Nodes = make([]*gmodel.Manufacturer, len(ms))
+	res.Edges = make([]*gmodel.ManufacturerEdge, len(ms))
+	for i, m := range ms {
+		ma, err := ToAPI(m)
+		if err != nil {
+			return nil, err
+		}
+		res.Nodes[i] = ma
+
+		res.Edges[i] = &gmodel.ManufacturerEdge{
+			Node: ma,
+		}
+	}
+	return res, nil
 }

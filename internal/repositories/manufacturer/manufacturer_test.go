@@ -2,6 +2,7 @@ package manufacturer
 
 import (
 	"context"
+	"sort"
 	"testing"
 	"time"
 
@@ -53,4 +54,41 @@ func TestGetManufacturer(t *testing.T) {
 		assert.Equal(t, res.Name, manufacturers[i])
 	}
 
+}
+
+func TestGetManufacturers(t *testing.T) {
+	ctx := context.Background()
+	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDir)
+	manufacturers := []string{"ford", "tesla", "kia", "acura", "honda", "jeep"}
+	sort.Strings(manufacturers)
+
+	for i := 0; i < 6; i++ {
+		m := models.Manufacturer{
+			ID:       i,
+			Name:     manufacturers[i],
+			Owner:    common.FromHex("3232323232323232323232323232323232323232"),
+			MintedAt: time.Now(),
+			Slug:     manufacturers[i],
+		}
+
+		err := m.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+		assert.NoError(t, err)
+	}
+
+	logger := zerolog.Nop()
+	controller := Repository{base.NewRepository(pdb, config.Settings{}, &logger)}
+
+	res, err := controller.GetManufacturers(ctx)
+	assert.NoError(t, err)
+	assert.Len(t, res.Nodes, 6)
+	assert.Equal(t, res.TotalCount, 6)
+	assert.Equal(t, res.PageInfo.HasNextPage, false)
+	assert.Equal(t, res.PageInfo.HasPreviousPage, false)
+	assert.Len(t, res.Edges, 6)
+	for i := 0; i < 6; i++ {
+		assert.Equal(t, res.Nodes[i].TokenID, i)
+		assert.Equal(t, res.Nodes[i].Name, manufacturers[i])
+		assert.Equal(t, res.Edges[i].Node.TokenID, i)
+		assert.Equal(t, res.Edges[i].Node.Name, manufacturers[i])
+	}
 }
