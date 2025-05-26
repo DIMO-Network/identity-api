@@ -16,8 +16,3 @@ ALTER TABLE synthetic_devices
 ALTER TABLE connections
     DROP COLUMN integration_id;
 -- +goose StatementEnd
-
-
-
-
-
