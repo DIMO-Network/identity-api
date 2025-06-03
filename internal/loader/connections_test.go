@@ -63,5 +63,3 @@ func TestBulk(t *testing.T) {
 
 	assert.Error(t, results[3].Error)
 }
-
-// \x5465736c61000000000000000000000000000000000000000000000000000000
