@@ -5,10 +5,10 @@ extend type Query {
   List developer licenses. Sorts by token id, descending.
   """
   developerLicenses(
-    first: Int,
-    after: String,
-    last: Int,
-    before: String,
+    first: Int
+    after: String
+    last: Int
+    before: String
     filterBy: DeveloperLicenseFilterBy
   ): DeveloperLicenseConnection!
 
@@ -24,9 +24,17 @@ type DeveloperLicense {
   """
   tokenId: Int!
   """
+  The DID for this license's token ID in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+  """
+  tokenDid: String!
+  """
   The owner of the license. A single owner can own multiple licenses.
   """
   owner: Address!
+  """
+  The DID for this license's owner in the format did:ethr:<chainID>:<address>
+  """
+  ownerDid: String!
   """
   Serves as the client id for OAuth as well as the address of the associated contract.
   """
@@ -39,8 +47,18 @@ type DeveloperLicense {
   The block timestamp for the transaction that minted this license.
   """
   mintedAt: Time!
-  signers(first: Int, after: String, last: Int, before: String): SignerConnection!
-  redirectURIs(first: Int, after: String, last: Int, before: String): RedirectURIConnection!
+  signers(
+    first: Int
+    after: String
+    last: Int
+    before: String
+  ): SignerConnection!
+  redirectURIs(
+    first: Int
+    after: String
+    last: Int
+    before: String
+  ): RedirectURIConnection!
 }
 
 type DeveloperLicenseConnection {

@@ -5,10 +5,10 @@ extend type Query {
   List developer licenses. Sorts by token id, descending.
   """
   stakes(
-    first: Int,
-    after: String,
-    last: Int,
-    before: String,
+    first: Int
+    after: String
+    last: Int
+    before: String
     filterBy: StakeFilterBy
   ): StakeConnection!
 }
@@ -28,9 +28,17 @@ type Stake {
   """
   tokenId: Int!
   """
+  The DID for this stake's token ID in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+  """
+  tokenDid: String!
+  """
   The owner of the license. A single owner can own multiple licenses.
   """
   owner: Address!
+  """
+  The DID for this stake's owner in the format did:ethr:<chainID>:<address>
+  """
+  ownerDid: String!
   """
   The level of the stake. Presently, the levels are 0, 1, and 2. These translate
   to Levels 2, 3, and 4 in DIP-2. See https://docs.dimo.org/governance/improvement-proposals/dip2

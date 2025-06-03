@@ -5,12 +5,14 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"math/big"
 	"net/url"
 	"slices"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/DIMO-Network/cloudevent"
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/repositories"
@@ -28,6 +30,17 @@ const TokenPrefix = "V"
 
 type Repository struct {
 	*base.Repository
+	chainID         uint64
+	contractAddress common.Address
+}
+
+// New creates a new vehicle repository.
+func New(db *base.Repository) *Repository {
+	return &Repository{
+		Repository:      db,
+		chainID:         uint64(db.Settings.DIMORegistryChainID),
+		contractAddress: common.HexToAddress(db.Settings.VehicleNFTAddr),
+	}
 }
 
 func (r *Repository) createVehiclesResponse(totalCount int64, vehicles models.VehicleSlice, hasNext bool, hasPrevious bool) (*gmodel.VehicleConnection, error) {
@@ -65,7 +78,7 @@ func (r *Repository) createVehiclesResponse(totalCount int64, vehicles models.Ve
 			errList = append(errList, gqlerror.Wrap(wErr))
 			continue
 		}
-		gv, err := ToAPI(dv, imageURI, dataURI)
+		gv, err := r.ToAPI(dv, imageURI, dataURI)
 		if err != nil {
 			wErr := fmt.Errorf("error converting vehicle to API: %w", err)
 			errList = append(errList, gqlerror.Wrap(wErr))
@@ -208,7 +221,7 @@ func (r *Repository) GetVehicle(ctx context.Context, id int) (*gmodel.Vehicle, e
 		return nil, fmt.Errorf("error getting vehicle data uri: %w", err)
 	}
 
-	return ToAPI(v, imageURI, dataURI)
+	return r.ToAPI(v, imageURI, dataURI)
 }
 
 // queryModsFromFilters returns a slice of query mods from the given filters.
@@ -273,7 +286,7 @@ func queryModsFromFilters(filter *gmodel.VehiclesFilter) []qm.QueryMod {
 }
 
 // ToAPI converts a vehicle to a corresponding graphql model.
-func ToAPI(v *models.Vehicle, imageURI string, dataURI string) (*gmodel.Vehicle, error) {
+func (r *Repository) ToAPI(v *models.Vehicle, imageURI string, dataURI string) (*gmodel.Vehicle, error) {
 	nameList := mnemonic.FromInt32WithObfuscation(int32(v.ID))
 	name := strings.Join(nameList, " ")
 
@@ -282,10 +295,23 @@ func ToAPI(v *models.Vehicle, imageURI string, dataURI string) (*gmodel.Vehicle,
 		return nil, fmt.Errorf("error encoding vehicle id: %w", err)
 	}
 
+	tokenDid := cloudevent.ERC721DID{
+		ChainID:         r.chainID,
+		ContractAddress: r.contractAddress,
+		TokenID:         new(big.Int).SetUint64(uint64(v.ID)),
+	}.String()
+
+	ownerDid := cloudevent.EthrDID{
+		ChainID:         r.chainID,
+		ContractAddress: common.BytesToAddress(v.OwnerAddress),
+	}.String()
+
 	return &gmodel.Vehicle{
 		ID:       globalID,
 		TokenID:  v.ID,
+		TokenDid: tokenDid,
 		Owner:    common.BytesToAddress(v.OwnerAddress),
+		OwnerDid: ownerDid,
 		MintedAt: v.MintedAt,
 		Definition: &gmodel.Definition{
 			ID:    v.DeviceDefinitionID.Ptr(),

@@ -51,9 +51,17 @@ type DCN implements Node {
   """
   tokenId: BigInt!
   """
+  The DID for this DCN's token ID in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+  """
+  tokenDid: String!
+  """
   Ethereum address of domain owner.
   """
   owner: Address!
+  """
+  The DID for this DCN's owner in the format did:ethr:<chainID>:<address>
+  """
+  ownerDid: String!
   """
   The block timestamp at which the domain will cease to be valid.
   """

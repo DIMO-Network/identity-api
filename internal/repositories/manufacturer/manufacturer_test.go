@@ -39,7 +39,7 @@ func TestGetManufacturer(t *testing.T) {
 	}
 
 	logger := zerolog.Nop()
-	controller := Repository{base.NewRepository(pdb, config.Settings{}, &logger)}
+	controller := New(base.NewRepository(pdb, config.Settings{}, &logger))
 	for i := 0; i < 6; i++ {
 		tokenID := i
 		res, err := controller.GetManufacturer(ctx, model.ManufacturerBy{TokenID: &tokenID})
@@ -76,7 +76,7 @@ func TestGetManufacturers(t *testing.T) {
 	}
 
 	logger := zerolog.Nop()
-	controller := Repository{base.NewRepository(pdb, config.Settings{}, &logger)}
+	controller := New(base.NewRepository(pdb, config.Settings{}, &logger))
 
 	res, err := controller.GetManufacturers(ctx)
 	assert.NoError(t, err)

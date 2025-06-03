@@ -6,12 +6,15 @@ import (
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/repositories/stake"
 	"github.com/DIMO-Network/identity-api/models"
-	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/graph-gophers/dataloader/v7"
 )
 
 type StakeLoader struct {
-	db db.Store
+	repo *stake.Repository
+}
+
+func NewStakeLoader(repo *stake.Repository) *StakeLoader {
+	return &StakeLoader{repo: repo}
 }
 
 func GetStakeByVehicleID(ctx context.Context, vehicleID int) (*model.Stake, error) {
@@ -23,10 +26,10 @@ func GetStakeByVehicleID(ctx context.Context, vehicleID int) (*model.Stake, erro
 	return thunk()
 }
 
-func (ad *StakeLoader) BatchGetLinkedStakesByVehicleID(ctx context.Context, vehicleIDs []int) []*dataloader.Result[*model.Stake] {
+func (s *StakeLoader) BatchGetLinkedStakesByVehicleID(ctx context.Context, vehicleIDs []int) []*dataloader.Result[*model.Stake] {
 	results := make([]*dataloader.Result[*model.Stake], len(vehicleIDs))
 
-	stakes, err := models.Stakes(models.StakeWhere.VehicleID.IN(vehicleIDs)).All(ctx, ad.db.DBS().Reader)
+	stakes, err := models.Stakes(models.StakeWhere.VehicleID.IN(vehicleIDs)).All(ctx, s.repo.PDB.DBS().Reader)
 	if err != nil {
 		for i := range vehicleIDs {
 			results[i] = &dataloader.Result[*model.Stake]{Data: nil, Error: err}
@@ -43,7 +46,7 @@ func (ad *StakeLoader) BatchGetLinkedStakesByVehicleID(ctx context.Context, vehi
 	for i, vID := range vehicleIDs {
 		if am, ok := stakeByVehicleID[vID]; ok {
 			var retErr error
-			obj := stake.ToAPI(am)
+			obj := s.repo.ToAPI(am)
 			results[i] = &dataloader.Result[*model.Stake]{
 				Data:  obj,
 				Error: retErr,

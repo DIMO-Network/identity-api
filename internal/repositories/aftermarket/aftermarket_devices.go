@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"math/big"
 	"net/url"
 	"slices"
 	"strconv"
 	"strings"
 
+	"github.com/DIMO-Network/cloudevent"
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
@@ -26,6 +28,17 @@ const TokenPrefix = "AD"
 
 type Repository struct {
 	*base.Repository
+	chainID         uint64
+	contractAddress common.Address
+}
+
+// New creates a new aftermarket device repository.
+func New(db *base.Repository) *Repository {
+	return &Repository{
+		Repository:      db,
+		chainID:         uint64(db.Settings.DIMORegistryChainID),
+		contractAddress: common.HexToAddress(db.Settings.AftermarketDeviceAddr),
+	}
 }
 
 // GetOwnedAftermarketDevices godoc
@@ -116,7 +129,7 @@ func (r *Repository) GetAftermarketDevices(ctx context.Context, first *int, afte
 			errList = append(errList, gqlerror.Errorf("error getting aftermarket device image url: %v", err))
 			continue
 		}
-		ga, err := ToAPI(da, imageURL)
+		ga, err := r.ToAPI(da, imageURL)
 		if err != nil {
 			errList = append(errList, gqlerror.Errorf("error converting aftermarket device to API: %v", err))
 			continue
@@ -187,7 +200,7 @@ func (r *Repository) GetAftermarketDevice(ctx context.Context, by gmodel.Afterma
 		return nil, fmt.Errorf("failed to get image url: %w", err)
 	}
 
-	return ToAPI(ad, imageURL)
+	return r.ToAPI(ad, imageURL)
 }
 
 type aftermarketDevicePrimaryKey struct {
@@ -195,7 +208,7 @@ type aftermarketDevicePrimaryKey struct {
 }
 
 // ToAPI converts an aftermarket device to a corresponding API aftermarket device.
-func ToAPI(d *models.AftermarketDevice, imageURL string) (*gmodel.AftermarketDevice, error) {
+func (r *Repository) ToAPI(d *models.AftermarketDevice, imageURL string) (*gmodel.AftermarketDevice, error) {
 	globalID, err := base.EncodeGlobalTokenID(TokenPrefix, d.ID)
 	if err != nil {
 		return nil, fmt.Errorf("error encoding vehicle id: %w", err)
@@ -204,11 +217,30 @@ func ToAPI(d *models.AftermarketDevice, imageURL string) (*gmodel.AftermarketDev
 	nameList := mnemonic.FromInt32WithObfuscation(int32(d.ID))
 	name := strings.Join(nameList, " ")
 
+	tokenDid := cloudevent.ERC721DID{
+		ChainID:         r.chainID,
+		ContractAddress: r.contractAddress,
+		TokenID:         new(big.Int).SetUint64(uint64(d.ID)),
+	}.String()
+
+	addressDid := cloudevent.EthrDID{
+		ChainID:         r.chainID,
+		ContractAddress: common.BytesToAddress(d.Address),
+	}.String()
+
+	ownerDid := cloudevent.EthrDID{
+		ChainID:         r.chainID,
+		ContractAddress: common.BytesToAddress(d.Owner),
+	}.String()
+
 	return &gmodel.AftermarketDevice{
 		ID:               globalID,
 		TokenID:          d.ID,
+		TokenDid:         tokenDid,
 		Address:          common.BytesToAddress(d.Address),
+		AddressDid:       addressDid,
 		Owner:            common.BytesToAddress(d.Owner),
+		OwnerDid:         ownerDid,
 		Serial:           d.Serial.Ptr(),
 		Imei:             d.Imei.Ptr(),
 		DevEui:           d.DevEui.Ptr(),

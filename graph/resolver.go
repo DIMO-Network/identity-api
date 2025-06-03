@@ -124,19 +124,19 @@ func NewResolver(baseRepo *base.Repository) *Resolver {
 	tablelandApiService := services.NewTablelandApiService(baseRepo.Log, &baseRepo.Settings)
 
 	return &Resolver{
-		aftermarket:      &aftermarket.Repository{Repository: baseRepo},
-		dcn:              &dcn.Repository{Repository: baseRepo},
-		manufacturer:     &manufacturer.Repository{Repository: baseRepo},
+		aftermarket:      aftermarket.New(baseRepo),
+		dcn:              dcn.New(baseRepo),
+		manufacturer:     manufacturer.New(baseRepo),
 		reward:           reward.Repository{Repository: baseRepo},
-		synthetic:        &synthetic.Repository{Repository: baseRepo},
-		vehicle:          &vehicle.Repository{Repository: baseRepo},
+		synthetic:        synthetic.New(baseRepo),
+		vehicle:          vehicle.New(baseRepo),
 		vehicleprivilege: vehicleprivilege.Repository{Repository: baseRepo},
 		vehiclesacd:      vehiclesacd.Repository{Repository: baseRepo},
 		deviceDefinition: &devicedefinition.Repository{Repository: baseRepo,
 			TablelandApiService: tablelandApiService,
 		},
-		developerLicense: &developerlicense.Repository{Repository: baseRepo},
-		stake:            &stake.Repository{Repository: baseRepo},
-		connection:       &connection.Repository{Repository: baseRepo},
+		developerLicense: developerlicense.New(baseRepo),
+		stake:            stake.New(baseRepo),
+		connection:       connection.New(baseRepo),
 	}
 }

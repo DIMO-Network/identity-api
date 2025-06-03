@@ -6,6 +6,7 @@ import (
 
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/repositories/aftermarket"
+	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/internal/repositories/dcn"
 	"github.com/DIMO-Network/identity-api/internal/repositories/manufacturer"
 	"github.com/DIMO-Network/identity-api/internal/repositories/synthetic"
@@ -20,19 +21,26 @@ func TestQueryResolver_Node(t *testing.T) {
 	ctx := context.Background()
 	ctrl := gomock.NewController(t)
 
-	testVehicle, err := vehicle.ToAPI(&models.Vehicle{ID: 1}, "", "")
+	baseRepo := &base.Repository{}
+
+	vehicleRepo := vehicle.New(baseRepo)
+	testVehicle, err := vehicleRepo.ToAPI(&models.Vehicle{ID: 1}, "", "")
 	require.NoError(t, err)
 
-	testAfterMarket, err := aftermarket.ToAPI(&models.AftermarketDevice{ID: 1}, "")
+	aftermarketRepo := aftermarket.New(baseRepo)
+	testAfterMarket, err := aftermarketRepo.ToAPI(&models.AftermarketDevice{ID: 1}, "")
 	require.NoError(t, err)
 
-	testDCN, err := dcn.ToAPI(&models.DCN{Node: []byte{1, 2, 3, 4}})
+	dcnRepo := dcn.New(baseRepo)
+	testDCN, err := dcnRepo.ToAPI(&models.DCN{Node: []byte{1, 2, 3, 4}})
 	require.NoError(t, err)
 
-	testManufacturer, err := manufacturer.ToAPI(&models.Manufacturer{ID: 1})
+	manufacturerRepo := manufacturer.New(baseRepo)
+	testManufacturer, err := manufacturerRepo.ToAPI(&models.Manufacturer{ID: 1})
 	require.NoError(t, err)
 
-	testSynthetic, err := synthetic.ToAPI(&models.SyntheticDevice{ID: 1})
+	syntheticRepo := synthetic.New(baseRepo)
+	testSynthetic, err := syntheticRepo.ToAPI(&models.SyntheticDevice{ID: 1})
 	require.NoError(t, err)
 
 	// Define test cases

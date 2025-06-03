@@ -29,6 +29,10 @@ type Manufacturer implements Node {
   """
   tokenId: Int!
   """
+  The DID for this manufacturer's token ID in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+  """
+  tokenDid: String!
+  """
   The name of the manufacturer.
   """
   name: String!
@@ -36,6 +40,10 @@ type Manufacturer implements Node {
   The Ethereum address of the owner of this manufacturer.
   """
   owner: Address!
+  """
+  The DID for this manufacturer's owner in the format did:ethr:<chainID>:<address>
+  """
+  ownerDid: String!
   """
   Id of the Tableland table holding the manufacturer's device definitions.
   """
@@ -54,7 +62,6 @@ type Manufacturer implements Node {
     before: String
     filterBy: AftermarketDevicesFilter
   ): AftermarketDeviceConnection!
-
 
   """
   List device definitions under this manufacturer.

@@ -10,6 +10,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/DIMO-Network/cloudevent"
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/repositories"
@@ -21,6 +22,17 @@ import (
 
 type Repository struct {
 	*base.Repository
+	chainID         uint64
+	contractAddress common.Address
+}
+
+// New creates a new connection repository.
+func New(db *base.Repository) *Repository {
+	return &Repository{
+		Repository:      db,
+		chainID:         uint64(db.Settings.DIMORegistryChainID),
+		contractAddress: common.HexToAddress(db.Settings.ConnectionAddr),
+	}
 }
 
 type Cursor struct {
@@ -30,17 +42,36 @@ type Cursor struct {
 
 var pageHelper = helpers.PaginationHelper[Cursor]{}
 
-func ToAPI(v *models.Connection) *gmodel.Connection {
+func (r *Repository) ToAPI(v *models.Connection) *gmodel.Connection {
 	name := string(bytes.TrimRight(v.ID, "\x00"))
 
 	tokenID := new(big.Int).SetBytes(v.ID)
 
+	tokenDid := cloudevent.ERC721DID{
+		ChainID:         r.chainID,
+		ContractAddress: r.contractAddress,
+		TokenID:         tokenID,
+	}.String()
+
+	ownerDid := cloudevent.EthrDID{
+		ChainID:         r.chainID,
+		ContractAddress: common.BytesToAddress(v.Owner),
+	}.String()
+
+	addressDid := cloudevent.EthrDID{
+		ChainID:         r.chainID,
+		ContractAddress: common.BytesToAddress(v.Address),
+	}.String()
+
 	return &gmodel.Connection{
-		Name:     name,
-		Address:  common.BytesToAddress(v.Address),
-		Owner:    common.BytesToAddress(v.Owner),
-		TokenID:  tokenID,
-		MintedAt: v.MintedAt,
+		Name:       name,
+		Address:    common.BytesToAddress(v.Address),
+		AddressDid: addressDid,
+		Owner:      common.BytesToAddress(v.Owner),
+		OwnerDid:   ownerDid,
+		TokenID:    tokenID,
+		TokenDid:   tokenDid,
+		MintedAt:   v.MintedAt,
 	}
 }
 
@@ -120,7 +151,7 @@ func (r *Repository) GetConnections(ctx context.Context, first *int, after *stri
 	edges := make([]*gmodel.ConnectionEdge, len(all))
 
 	for i, dv := range all {
-		dlv := ToAPI(dv)
+		dlv := r.ToAPI(dv)
 
 		nodes[i] = dlv
 
@@ -196,7 +227,7 @@ func (r *Repository) GetConnection(ctx context.Context, by gmodel.ConnectionBy) 
 		return nil, err
 	}
 
-	return ToAPI(dl), nil
+	return r.ToAPI(dl), nil
 }
 
 func convertTokenIDToID(tokenID *big.Int) ([]byte, error) {

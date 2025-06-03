@@ -39,7 +39,7 @@ func (o *DCNRepoTestSuite) SetupSuite() {
 		DIMORegistryChainID: 80001,
 	}
 	logger := zerolog.Nop()
-	o.repo = &Repository{base.NewRepository(o.pdb, o.settings, &logger)}
+	o.repo = New(base.NewRepository(o.pdb, o.settings, &logger))
 }
 
 // TearDownTest after each test truncate tables

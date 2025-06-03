@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"math/big"
+
+	"github.com/DIMO-Network/cloudevent"
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/models"
@@ -18,6 +21,17 @@ const TokenPrefix = "M"
 
 type Repository struct {
 	*base.Repository
+	chainID         uint64
+	contractAddress common.Address
+}
+
+// New creates a new manufacturer repository.
+func New(db *base.Repository) *Repository {
+	return &Repository{
+		Repository:      db,
+		chainID:         uint64(db.Settings.DIMORegistryChainID),
+		contractAddress: common.HexToAddress(db.Settings.ManufacturerNFTAddr),
+	}
 }
 
 type manufacturerPrimaryKey struct {
@@ -25,16 +39,29 @@ type manufacturerPrimaryKey struct {
 }
 
 // ToAPI converts a manufacturer to a corresponding graphql model.
-func ToAPI(m *models.Manufacturer) (*gmodel.Manufacturer, error) {
+func (r *Repository) ToAPI(m *models.Manufacturer) (*gmodel.Manufacturer, error) {
 	globalID, err := base.EncodeGlobalTokenID(TokenPrefix, m.ID)
 	if err != nil {
 		return nil, fmt.Errorf("error encoding manufacturer id: %w", err)
 	}
 
+	tokenDid := cloudevent.ERC721DID{
+		ChainID:         r.chainID,
+		ContractAddress: r.contractAddress,
+		TokenID:         new(big.Int).SetUint64(uint64(m.ID)),
+	}.String()
+
+	ownerDid := cloudevent.EthrDID{
+		ChainID:         r.chainID,
+		ContractAddress: common.BytesToAddress(m.Owner),
+	}.String()
+
 	return &gmodel.Manufacturer{
 		ID:       globalID,
 		TokenID:  m.ID,
+		TokenDid: tokenDid,
 		Owner:    common.BytesToAddress(m.Owner),
+		OwnerDid: ownerDid,
 		TableID:  m.TableID.Ptr(),
 		MintedAt: m.MintedAt,
 		Name:     m.Name,
@@ -72,7 +99,7 @@ func (r *Repository) GetManufacturer(ctx context.Context, by gmodel.Manufacturer
 		return nil, err
 	}
 
-	return ToAPI(m)
+	return r.ToAPI(m)
 }
 
 func (r *Repository) GetManufacturers(ctx context.Context) (*gmodel.ManufacturerConnection, error) {
@@ -91,7 +118,7 @@ func (r *Repository) GetManufacturers(ctx context.Context) (*gmodel.Manufacturer
 	res.Nodes = make([]*gmodel.Manufacturer, len(ms))
 	res.Edges = make([]*gmodel.ManufacturerEdge, len(ms))
 	for i, m := range ms {
-		ma, err := ToAPI(m)
+		ma, err := r.ToAPI(m)
 		if err != nil {
 			return nil, err
 		}

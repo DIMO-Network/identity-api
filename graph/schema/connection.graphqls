@@ -5,9 +5,9 @@ extend type Query {
   List connection licenses. Sorts by minting time, descending.
   """
   connections(
-    first: Int,
-    after: String,
-    last: Int,
+    first: Int
+    after: String
+    last: Int
     before: String
   ): ConnectionConnection!
 
@@ -27,13 +27,25 @@ type Connection {
   """
   address: Address!
   """
+  The DID for this connection's address in the format did:ethr:<chainID>:<address>
+  """
+  addressDid: String!
+  """
   The owner of the connection. Connections are transferable, so this may change over time.
   """
   owner: Address!
   """
+  The DID for this connection's owner in the format did:ethr:<chainID>:<address>
+  """
+  ownerDid: String!
+  """
   The token id of the connection as an NFT. This tends to be very large.
   """
   tokenId: BigInt!
+  """
+  The DID for this connection's token ID in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+  """
+  tokenDid: String!
   """
   The block timestamp for the mint of the connection.
   """

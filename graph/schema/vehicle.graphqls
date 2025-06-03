@@ -94,6 +94,10 @@ type Vehicle implements Node {
   """
   tokenId: Int!
   """
+  The DID for this vehicle's token ID in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+  """
+  tokenDid: String!
+  """
   The manufacturer of this vehicle.
   """
   manufacturer: Manufacturer!
@@ -101,6 +105,10 @@ type Vehicle implements Node {
   The Ethereum address of the owner of this vehicle.
   """
   owner: Address!
+  """
+  The DID for this vehicle's owner in the format did:ethr:<chainID>:<address>
+  """
+  ownerDid: String!
   """
   The block timestamp at which this vehicle was minted.
   """
@@ -112,7 +120,13 @@ type Vehicle implements Node {
   """
   A Relay-style connection listing any active privilege grants on this vehicle.
   """
-  privileges(first: Int, after: String, last: Int, before: String, filterBy: PrivilegeFilterBy): PrivilegesConnection!
+  privileges(
+    first: Int
+    after: String
+    last: Int
+    before: String
+    filterBy: PrivilegeFilterBy
+  ): PrivilegesConnection!
   """
   A Relay-style connection listing any active SACD permission grants on this vehicle.
   """
@@ -171,5 +185,10 @@ type VehicleConnection {
 
 type VehicleEarnings {
   totalTokens: BigDecimal!
-  history(first: Int, after: String, last: Int, before: String): EarningsConnection!
+  history(
+    first: Int
+    after: String
+    last: Int
+    before: String
+  ): EarningsConnection!
 }

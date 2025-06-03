@@ -5,9 +5,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"math/big"
 	"slices"
 	"time"
 
+	"github.com/DIMO-Network/cloudevent"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -21,12 +23,36 @@ import (
 
 type Repository struct {
 	*base.Repository
+	chainID         uint64
+	contractAddress common.Address
 }
 
-func ToAPI(v *models.DeveloperLicense) *gmodel.DeveloperLicense {
+// New creates a new developer license repository.
+func New(db *base.Repository) *Repository {
+	return &Repository{
+		Repository:      db,
+		chainID:         uint64(db.Settings.DIMORegistryChainID),
+		contractAddress: common.HexToAddress(db.Settings.DevLicenseAddr),
+	}
+}
+
+func (r *Repository) ToAPI(v *models.DeveloperLicense) *gmodel.DeveloperLicense {
+	tokenDid := cloudevent.ERC721DID{
+		ChainID:         r.chainID,
+		ContractAddress: r.contractAddress,
+		TokenID:         new(big.Int).SetUint64(uint64(v.ID)),
+	}.String()
+
+	ownerDid := cloudevent.EthrDID{
+		ChainID:         r.chainID,
+		ContractAddress: common.BytesToAddress(v.Owner),
+	}.String()
+
 	return &gmodel.DeveloperLicense{
 		TokenID:  v.ID,
+		TokenDid: tokenDid,
 		Owner:    common.BytesToAddress(v.Owner),
+		OwnerDid: ownerDid,
 		ClientID: common.BytesToAddress(v.ClientID),
 		Alias:    v.Alias.Ptr(),
 		MintedAt: v.MintedAt,
@@ -139,7 +165,7 @@ func (r *Repository) GetDeveloperLicenses(ctx context.Context, first *int, after
 	nodes := make([]*gmodel.DeveloperLicense, len(all))
 
 	for i, dv := range all {
-		dlv := ToAPI(dv)
+		dlv := r.ToAPI(dv)
 
 		edges[i] = &gmodel.DeveloperLicenseEdge{
 			Node:   dlv,
@@ -454,5 +480,5 @@ func (r *Repository) GetLicense(ctx context.Context, by gmodel.DeveloperLicenseB
 		return nil, err
 	}
 
-	return ToAPI(dl), nil
+	return r.ToAPI(dl), nil
 }

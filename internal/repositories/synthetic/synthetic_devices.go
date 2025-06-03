@@ -6,9 +6,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"math/big"
 	"slices"
 	"strings"
 
+	"github.com/DIMO-Network/cloudevent"
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/repositories"
@@ -28,10 +30,21 @@ var vehicleJoin = fmt.Sprintf("%s ON %s = %s", helpers.WithSchema(models.TableNa
 // Repository is the repository for synthetic devices.
 type Repository struct {
 	*base.Repository
+	chainID         uint64
+	contractAddress common.Address
+}
+
+// New creates a new synthetic device repository.
+func New(db *base.Repository) *Repository {
+	return &Repository{
+		Repository:      db,
+		chainID:         uint64(db.Settings.DIMORegistryChainID),
+		contractAddress: common.HexToAddress(db.Settings.SyntheticDeviceAddr),
+	}
 }
 
 // ToAPI converts a synthetic device from the database to a GraphQL API model.
-func ToAPI(sd *models.SyntheticDevice) (*gmodel.SyntheticDevice, error) {
+func (r *Repository) ToAPI(sd *models.SyntheticDevice) (*gmodel.SyntheticDevice, error) {
 	globalID, err := base.EncodeGlobalTokenID(TokenPrefix, sd.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to encode synthetic device primary key: %w", err)
@@ -39,12 +52,26 @@ func ToAPI(sd *models.SyntheticDevice) (*gmodel.SyntheticDevice, error) {
 
 	nameList := mnemonic.FromInt32WithObfuscation(int32(sd.ID))
 	name := strings.Join(nameList, " ")
+
+	tokenDid := cloudevent.ERC721DID{
+		ChainID:         r.chainID,
+		ContractAddress: r.contractAddress,
+		TokenID:         new(big.Int).SetUint64(uint64(sd.ID)),
+	}.String()
+
+	addressDid := cloudevent.EthrDID{
+		ChainID:         r.chainID,
+		ContractAddress: common.BytesToAddress(sd.DeviceAddress),
+	}.String()
+
 	return &gmodel.SyntheticDevice{
 		ID:            globalID,
 		Name:          name,
 		TokenID:       sd.ID,
+		TokenDid:      tokenDid,
 		IntegrationID: sd.IntegrationID,
 		Address:       common.BytesToAddress(sd.DeviceAddress),
+		AddressDid:    addressDid,
 		MintedAt:      sd.MintedAt,
 		VehicleID:     sd.VehicleID,
 	}, nil
@@ -74,7 +101,7 @@ func (r *Repository) GetSyntheticDevice(ctx context.Context, by gmodel.Synthetic
 		return nil, base.InternalError
 	}
 
-	return ToAPI(synth)
+	return r.ToAPI(synth)
 }
 
 // GetSyntheticDevices retrieves a list of synthetic devices from the database.
@@ -142,7 +169,7 @@ func (r *Repository) GetSyntheticDevices(ctx context.Context, first *int, last *
 		slices.Reverse(all)
 	}
 
-	return createSyntheticDevicesResponse(totalCount, all, hasNext, hasPrevious)
+	return r.createSyntheticDevicesResponse(totalCount, all, hasNext, hasPrevious)
 }
 
 func queryModsFromFilters(filterBy *gmodel.SyntheticDevicesFilter) []qm.QueryMod {
@@ -164,7 +191,7 @@ func queryModsFromFilters(filterBy *gmodel.SyntheticDevicesFilter) []qm.QueryMod
 	return where
 }
 
-func createSyntheticDevicesResponse(totalCount int64, syntheticDevices models.SyntheticDeviceSlice, hasNext bool, hasPrevious bool) (*gmodel.SyntheticDeviceConnection, error) {
+func (r *Repository) createSyntheticDevicesResponse(totalCount int64, syntheticDevices models.SyntheticDeviceSlice, hasNext bool, hasPrevious bool) (*gmodel.SyntheticDeviceConnection, error) {
 	var errList gqlerror.List
 	var endCur, startCur *string
 	if len(syntheticDevices) != 0 {
@@ -179,7 +206,7 @@ func createSyntheticDevicesResponse(totalCount int64, syntheticDevices models.Sy
 	nodes := make([]*gmodel.SyntheticDevice, len(syntheticDevices))
 
 	for i, synth := range syntheticDevices {
-		synthAPI, err := ToAPI(synth)
+		synthAPI, err := r.ToAPI(synth)
 		if err != nil {
 			errList = append(errList, gqlerror.Errorf("failed to convert synthetic device to API: %v", err))
 			continue

@@ -41,11 +41,12 @@ func (s *OwnedVehiclesRepoTestSuite) SetupSuite() {
 	s.settings = config.Settings{
 		DIMORegistryAddr:    "0x4de1bcf2b7e851e31216fc07989caa902a604784",
 		DIMORegistryChainID: 80001,
+		VehicleNFTAddr:      "0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8",
 		BaseImageURL:        "https://mockUrl.com/v1",
 		BaseVehicleDataURI:  "https://dimoData/vehicles/",
 	}
 	logger := zerolog.Nop()
-	s.repo = &Repository{base.NewRepository(s.pdb, s.settings, &logger)}
+	s.repo = New(base.NewRepository(s.pdb, s.settings, &logger))
 }
 
 // TearDownTest after each test truncate tables
@@ -144,8 +145,10 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Success() {
 			Node: &gmodel.Vehicle{
 				ID:             "V_kQI=",
 				TokenID:        2,
+				TokenDid:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:2",
 				ManufacturerID: 131,
 				Owner:          common.BytesToAddress(wallet.Bytes()),
+				OwnerDid:       "did:ethr:80001:" + common.BytesToAddress(wallet.Bytes()).Hex(),
 				Definition: &gmodel.Definition{
 					Make:  &vehicles[1].Make.String,
 					Model: &vehicles[1].Model.String,
@@ -163,8 +166,10 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Success() {
 			Node: &gmodel.Vehicle{
 				ID:             "V_kQE=",
 				TokenID:        1,
+				TokenDid:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:1",
 				ManufacturerID: 131,
 				Owner:          common.BytesToAddress(wallet.Bytes()),
+				OwnerDid:       "did:ethr:80001:" + common.BytesToAddress(wallet.Bytes()).Hex(),
 				Definition: &gmodel.Definition{
 					Make:  &vehicles[0].Make.String,
 					Model: &vehicles[0].Model.String,
@@ -243,8 +248,10 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination() {
 			Node: &gmodel.Vehicle{
 				ID:             "V_kQI=",
 				TokenID:        2,
+				TokenDid:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:2",
 				ManufacturerID: 131,
 				Owner:          common.BytesToAddress(wallet.Bytes()),
+				OwnerDid:       "did:ethr:80001:" + common.BytesToAddress(wallet.Bytes()).Hex(),
 				Definition: &gmodel.Definition{
 					Make:  &vehicles[1].Make.String,
 					Model: &vehicles[1].Model.String,
@@ -326,7 +333,9 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination_NextPage()
 				ID:             "V_kQE=",
 				ManufacturerID: 131,
 				TokenID:        1,
+				TokenDid:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:1",
 				Owner:          common.BytesToAddress(wallet.Bytes()),
+				OwnerDid:       "did:ethr:80001:" + common.BytesToAddress(wallet.Bytes()).Hex(),
 				Definition: &gmodel.Definition{
 					Make:  &vehicles[0].Make.String,
 					Model: &vehicles[0].Model.String,
@@ -360,7 +369,7 @@ func Test_GetOwnedVehicles_Filters(t *testing.T) {
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDir)
 
 	logger := zerolog.Nop()
-	repo := Repository{base.NewRepository(pdb, config.Settings{}, &logger)}
+	repo := New(base.NewRepository(pdb, config.Settings{}, &logger))
 	_, walletA, err := helpers.GenerateWallet()
 	assert.NoError(err)
 	_, walletB, err := helpers.GenerateWallet()

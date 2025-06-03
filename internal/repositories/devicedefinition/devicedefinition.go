@@ -6,9 +6,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/DIMO-Network/identity-api/internal/repositories/manufacturer"
 	"slices"
 	"strings"
+
+	"github.com/DIMO-Network/identity-api/internal/repositories/manufacturer"
 
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
@@ -72,9 +73,19 @@ func (d *DeviceDefinitionTablelandModel) UnmarshalJSON(data []byte) error {
 type Repository struct {
 	*base.Repository
 	TablelandApiService *services.TablelandApiService
+	ManufacturerRepo    *manufacturer.Repository
 }
 
-func ToAPI(v *DeviceDefinitionTablelandModel, mfr *models.Manufacturer) (*gmodel.DeviceDefinition, error) {
+// New creates a new device definition repository.
+func New(db *base.Repository, tablelandAPI *services.TablelandApiService) *Repository {
+	return &Repository{
+		Repository:          db,
+		TablelandApiService: tablelandAPI,
+		ManufacturerRepo:    manufacturer.New(db),
+	}
+}
+
+func (r *Repository) ToAPI(v *DeviceDefinitionTablelandModel, mfr *models.Manufacturer) (*gmodel.DeviceDefinition, error) {
 	var result = gmodel.DeviceDefinition{
 		DeviceDefinitionID: v.ID,
 		LegacyID:           &v.KSUID,
@@ -82,7 +93,7 @@ func ToAPI(v *DeviceDefinitionTablelandModel, mfr *models.Manufacturer) (*gmodel
 		Model:              v.Model,
 	}
 	if mfr != nil {
-		gmfr, err := manufacturer.ToAPI(mfr)
+		gmfr, err := r.ManufacturerRepo.ToAPI(mfr)
 		if err != nil {
 			return nil, err
 		}
@@ -149,7 +160,7 @@ func (r *Repository) GetDeviceDefinition(ctx context.Context, by gmodel.DeviceDe
 		return nil, errors.New("no device definition found with that id")
 	}
 
-	return ToAPI(&modelTableland[0], mfr)
+	return r.ToAPI(&modelTableland[0], mfr)
 }
 
 func (r *Repository) GetDeviceDefinitions(ctx context.Context, tableID, first *int, after *string, last *int, before *string, filterBy *gmodel.DeviceDefinitionFilter) (*gmodel.DeviceDefinitionConnection, error) {
@@ -277,7 +288,7 @@ func (r *Repository) GetDeviceDefinitions(ctx context.Context, tableID, first *i
 			}
 		}
 
-		gv, err := ToAPI(&dv, mfr)
+		gv, err := r.ToAPI(&dv, mfr)
 		if err != nil {
 			errList = append(errList, gqlerror.Wrap(err))
 			continue

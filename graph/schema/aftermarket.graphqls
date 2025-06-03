@@ -29,6 +29,10 @@ type AftermarketDevice implements Node {
   """
   tokenId: Int!
   """
+  The DID for this device's token ID in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+  """
+  tokenDid: String!
+  """
   The manufacturer of this aftermarket device.
   """
   manufacturer: Manufacturer!
@@ -37,9 +41,17 @@ type AftermarketDevice implements Node {
   """
   address: Address!
   """
+  The DID for this device's address in the format did:ethr:<chainID>:<address>
+  """
+  addressDid: String!
+  """
   The Ethereum address of the owner of the device.
   """
   owner: Address!
+  """
+  The DID for this device's owner in the format did:ethr:<chainID>:<address>
+  """
+  ownerDid: String!
   """
   The serial number on the side of the device. For AutoPis this is a UUID; for Macarons it is
   a long decimal number.

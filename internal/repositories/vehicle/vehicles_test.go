@@ -56,11 +56,12 @@ func (o *AccessibleVehiclesRepoTestSuite) SetupSuite() {
 	o.settings = config.Settings{
 		DIMORegistryAddr:    "0x4de1bcf2b7e851e31216fc07989caa902a604784",
 		DIMORegistryChainID: 80001,
+		VehicleNFTAddr:      "0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8",
 		BaseImageURL:        "https://mockUrl.com/v1",
 		BaseVehicleDataURI:  "https://dimoData/vehicles/",
 	}
 	logger := zerolog.Nop()
-	o.repo = &Repository{base.NewRepository(o.pdb, o.settings, &logger)}
+	o.repo = New(base.NewRepository(o.pdb, o.settings, &logger))
 }
 
 // TearDownTest after each test truncate tables
@@ -159,7 +160,9 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Success() {
 				ID:             "V_kQI=",
 				ManufacturerID: 131,
 				TokenID:        2,
+				TokenDid:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:2",
 				Owner:          common.BytesToAddress(wallet.Bytes()),
+				OwnerDid:       "did:ethr:80001:" + common.BytesToAddress(wallet.Bytes()).Hex(),
 				MintedAt:       vehicles[1].MintedAt,
 				Definition: &gmodel.Definition{
 					Make:  &vehicles[1].Make.String,
@@ -177,7 +180,9 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Success() {
 				ID:             "V_kQE=",
 				ManufacturerID: 131,
 				TokenID:        1,
+				TokenDid:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:1",
 				Owner:          common.BytesToAddress(wallet.Bytes()),
+				OwnerDid:       "did:ethr:80001:" + common.BytesToAddress(wallet.Bytes()).Hex(),
 				MintedAt:       vehicles[0].MintedAt,
 				Definition: &gmodel.Definition{
 					Make:  &vehicles[0].Make.String,
@@ -255,8 +260,10 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination(
 			Node: &gmodel.Vehicle{
 				ID:             "V_kQI=",
 				TokenID:        2,
+				TokenDid:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:2",
 				ManufacturerID: 131,
 				Owner:          common.BytesToAddress(wallet.Bytes()),
+				OwnerDid:       "did:ethr:80001:" + common.BytesToAddress(wallet.Bytes()).Hex(),
 				MintedAt:       vehicles[1].MintedAt,
 				Definition: &gmodel.Definition{
 					Make:  &vehicles[1].Make.String,
@@ -335,8 +342,10 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 			Node: &gmodel.Vehicle{
 				ID:             "V_kQE=",
 				TokenID:        1,
+				TokenDid:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:1",
 				ManufacturerID: 131,
 				Owner:          common.BytesToAddress(wallet.Bytes()),
+				OwnerDid:       "did:ethr:80001:" + common.BytesToAddress(wallet.Bytes()).Hex(),
 				MintedAt:       vehicles[0].MintedAt,
 				Definition: &gmodel.Definition{
 					Make:  &vehicles[0].Make.String,
@@ -433,7 +442,9 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_OwnedByUser
 			Node: &gmodel.Vehicle{
 				ID:             "V_kQI=",
 				TokenID:        2,
+				TokenDid:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:2",
 				Owner:          common.BytesToAddress(wallet2.Bytes()),
+				OwnerDid:       "did:ethr:80001:" + common.BytesToAddress(wallet2.Bytes()).Hex(),
 				ManufacturerID: 131,
 				MintedAt:       vehicles[1].MintedAt,
 				Definition: &gmodel.Definition{
@@ -451,8 +462,10 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_OwnedByUser
 			Node: &gmodel.Vehicle{
 				ID:             "V_kQE=",
 				TokenID:        1,
+				TokenDid:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:1",
 				ManufacturerID: 131,
 				Owner:          common.BytesToAddress(wallet.Bytes()),
+				OwnerDid:       "did:ethr:80001:" + common.BytesToAddress(wallet.Bytes()).Hex(),
 				MintedAt:       vehicles[0].MintedAt,
 				Definition: &gmodel.Definition{
 					Make:  &vehicles[0].Make.String,
@@ -555,8 +568,10 @@ func (o *AccessibleVehiclesRepoTestSuite) TestVehiclesMultiplePrivsOnOne() {
 			Node: &gmodel.Vehicle{
 				ID:             "V_kQI=",
 				TokenID:        2,
+				TokenDid:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:2",
 				ManufacturerID: 131,
 				Owner:          common.BytesToAddress(wallet2.Bytes()),
+				OwnerDid:       "did:ethr:80001:" + common.BytesToAddress(wallet2.Bytes()).Hex(),
 				MintedAt:       vehicles[1].MintedAt,
 				Definition: &gmodel.Definition{
 					Make:  &vehicles[1].Make.String,
@@ -573,8 +588,10 @@ func (o *AccessibleVehiclesRepoTestSuite) TestVehiclesMultiplePrivsOnOne() {
 			Node: &gmodel.Vehicle{
 				ID:             "V_kQE=",
 				TokenID:        1,
+				TokenDid:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:1",
 				ManufacturerID: 131,
 				Owner:          common.BytesToAddress(wallet.Bytes()),
+				OwnerDid:       "did:ethr:80001:" + common.BytesToAddress(wallet.Bytes()).Hex(),
 				MintedAt:       vehicles[0].MintedAt,
 				Definition: &gmodel.Definition{
 					Make:  &vehicles[0].Make.String,
@@ -678,7 +695,9 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 				ID:                "V_kQM=",
 				ManufacturerID:    131,
 				TokenID:           3,
+				TokenDid:          "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:3",
 				Owner:             common.BytesToAddress(wallet.Bytes()),
+				OwnerDid:          "did:ethr:80001:" + common.BytesToAddress(wallet.Bytes()).Hex(),
 				MintedAt:          vehicles[2].MintedAt,
 				AftermarketDevice: nil,
 				Privileges:        nil,
@@ -699,7 +718,9 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 				ID:                "V_kQI=",
 				ManufacturerID:    131,
 				TokenID:           2,
+				TokenDid:          "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:2",
 				Owner:             common.BytesToAddress(wallet.Bytes()),
+				OwnerDid:          "did:ethr:80001:" + common.BytesToAddress(wallet.Bytes()).Hex(),
 				MintedAt:          vehicles[1].MintedAt,
 				AftermarketDevice: nil,
 				Privileges:        nil,
@@ -810,7 +831,9 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 			Node: &gmodel.Vehicle{
 				ID:                "V_kQI=",
 				TokenID:           2,
+				TokenDid:          "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:2",
 				Owner:             common.BytesToAddress(wallet.Bytes()),
+				OwnerDid:          "did:ethr:80001:" + common.BytesToAddress(wallet.Bytes()).Hex(),
 				MintedAt:          vehicles[0].MintedAt,
 				AftermarketDevice: nil,
 				ManufacturerID:    131,
@@ -916,8 +939,10 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 			Node: &gmodel.Vehicle{
 				ID:             "V_kQI=",
 				TokenID:        2,
+				TokenDid:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:2",
 				ManufacturerID: 131,
 				Owner:          common.BytesToAddress(wallet.Bytes()),
+				OwnerDid:       "did:ethr:80001:" + common.BytesToAddress(wallet.Bytes()).Hex(),
 				MintedAt:       vehicles[1].MintedAt,
 				Definition: &gmodel.Definition{
 					Make:  &vehicles[1].Make.String,
@@ -934,7 +959,9 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 			Node: &gmodel.Vehicle{
 				ID:             "V_kQE=",
 				TokenID:        1,
+				TokenDid:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:1",
 				Owner:          common.BytesToAddress(wallet.Bytes()),
+				OwnerDid:       "did:ethr:80001:" + common.BytesToAddress(wallet.Bytes()).Hex(),
 				MintedAt:       vehicles[0].MintedAt,
 				ManufacturerID: 131,
 				Definition: &gmodel.Definition{
@@ -1037,7 +1064,9 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 			Node: &gmodel.Vehicle{
 				ID:                "V_kQQ=",
 				TokenID:           4,
+				TokenDid:          "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:4",
 				Owner:             common.BytesToAddress(wallet.Bytes()),
+				OwnerDid:          "did:ethr:80001:" + common.BytesToAddress(wallet.Bytes()).Hex(),
 				MintedAt:          vehicles[3].MintedAt,
 				ManufacturerID:    131,
 				AftermarketDevice: nil,
@@ -1058,7 +1087,9 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 			Node: &gmodel.Vehicle{
 				ID:                "V_kQM=",
 				TokenID:           3,
+				TokenDid:          "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:3",
 				Owner:             common.BytesToAddress(wallet.Bytes()),
+				OwnerDid:          "did:ethr:80001:" + common.BytesToAddress(wallet.Bytes()).Hex(),
 				MintedAt:          vehicles[2].MintedAt,
 				ManufacturerID:    131,
 				AftermarketDevice: nil,
@@ -1129,7 +1160,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 	o.Require().NoError(err)
 	vehicle1DataURI, err := GetVehicleDataURI(o.settings.BaseVehicleDataURI, testVehicle1.ID)
 	o.Require().NoError(err)
-	vehicle1AsAPI, err := ToAPI(&testVehicle1, vehicle1ImageURL, vehicle1DataURI)
+	vehicle1AsAPI, err := o.repo.ToAPI(&testVehicle1, vehicle1ImageURL, vehicle1DataURI)
 	o.NoError(err)
 
 	testVehicle2 := models.Vehicle{
@@ -1146,7 +1177,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 	o.Require().NoError(err)
 	vehicle2DataURI, err := GetVehicleDataURI(o.settings.BaseVehicleDataURI, testVehicle2.ID)
 	o.Require().NoError(err)
-	vehicle2AsAPI, err := ToAPI(&testVehicle2, vehicle2ImageURL, vehicle2DataURI)
+	vehicle2AsAPI, err := o.repo.ToAPI(&testVehicle2, vehicle2ImageURL, vehicle2DataURI)
 	o.NoError(err)
 
 	testVehicle3 := models.Vehicle{
@@ -1163,7 +1194,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 	o.Require().NoError(err)
 	vehicle3DataURI, err := GetVehicleDataURI(o.settings.BaseVehicleDataURI, testVehicle3.ID)
 	o.Require().NoError(err)
-	vehicle3AsAPI, err := ToAPI(&testVehicle3, vehicle3ImageURL, vehicle3DataURI)
+	vehicle3AsAPI, err := o.repo.ToAPI(&testVehicle3, vehicle3ImageURL, vehicle3DataURI)
 	o.NoError(err)
 
 	testVehicle4 := models.Vehicle{
@@ -1180,7 +1211,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 	o.Require().NoError(err)
 	vehicle4DataURI, err := GetVehicleDataURI(o.settings.BaseVehicleDataURI, testVehicle4.ID)
 	o.Require().NoError(err)
-	vehicle4AsAPI, err := ToAPI(&testVehicle4, vehicle4ImageURL, vehicle4DataURI)
+	vehicle4AsAPI, err := o.repo.ToAPI(&testVehicle4, vehicle4ImageURL, vehicle4DataURI)
 	o.Require().NoError(err)
 
 	vehicles := []models.Vehicle{testVehicle1, testVehicle2, testVehicle3, testVehicle4}

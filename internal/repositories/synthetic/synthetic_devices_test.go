@@ -45,7 +45,10 @@ func Test_SyntheticDeviceToAPI(t *testing.T) {
 		MintedAt:      currTime,
 	}
 
-	res, err := ToAPI(sd)
+	logger := zerolog.New(os.Stderr)
+	repo := New(base.NewRepository(db.Store{}, config.Settings{}, &logger))
+
+	res, err := repo.ToAPI(sd)
 	require.NoError(t, err)
 
 	encodedID, err := base.EncodeGlobalTokenID(TokenPrefix, sd.ID)
@@ -55,8 +58,10 @@ func Test_SyntheticDeviceToAPI(t *testing.T) {
 		ID:            encodedID,
 		Name:          "learn island zoo",
 		TokenID:       1,
+		TokenDid:      "did:erc721:0:0x0000000000000000000000000000000000000000:1",
 		IntegrationID: 2,
 		Address:       *wallet,
+		AddressDid:    "did:ethr:0:" + common.BytesToAddress(wallet.Bytes()).Hex(),
 		MintedAt:      currTime,
 		VehicleID:     sd.VehicleID,
 	}, res)
@@ -95,7 +100,7 @@ func (s *SyntheticTestSuite) SetupSuite() {
 		BaseVehicleDataURI:  "https://dimoData/vehicles/",
 	}
 	logger := zerolog.New(os.Stderr)
-	s.repo = &Repository{base.NewRepository(s.pdb, s.settings, &logger)}
+	s.repo = New(base.NewRepository(s.pdb, s.settings, &logger))
 
 	// Create test data
 	currTime := time.Now().UTC().Truncate(time.Second)
@@ -213,11 +218,11 @@ func (s *SyntheticTestSuite) Test_GetSyntheticDevices() {
 	err = s.synthetic3.Insert(ctx, s.pdb.DBS().Writer, boil.Infer())
 	s.Require().NoError(err)
 
-	s1API, err := ToAPI(&s.synthetic1)
+	s1API, err := s.repo.ToAPI(&s.synthetic1)
 	s.Require().NoError(err)
-	s2API, err := ToAPI(&s.synthetic2)
+	s2API, err := s.repo.ToAPI(&s.synthetic2)
 	s.Require().NoError(err)
-	s3API, err := ToAPI(&s.synthetic3)
+	s3API, err := s.repo.ToAPI(&s.synthetic3)
 	s.Require().NoError(err)
 
 	tests := []struct {

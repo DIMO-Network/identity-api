@@ -3,6 +3,9 @@ package devicedefinition
 import (
 	"context"
 	"encoding/json"
+	"net/http"
+	"testing"
+
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
@@ -16,8 +19,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
-	"net/http"
-	"testing"
 )
 
 const migrationsDir = "../../../migrations"
@@ -56,7 +57,7 @@ func Test_GetDeviceDefinitions_Query(t *testing.T) {
 		TablelandAPIGateway: baseURL,
 	})
 
-	adController := Repository{Repository: repo, TablelandApiService: tablelandAPI}
+	adController := New(repo, tablelandAPI)
 	last := 2
 	before := "MQ=="
 
@@ -172,7 +173,7 @@ func Test_GetDeviceDefinition_Query(t *testing.T) {
 		TablelandAPIGateway: baseURL,
 	})
 
-	adController := Repository{Repository: repo, TablelandApiService: tablelandAPI}
+	adController := New(repo, tablelandAPI)
 
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
