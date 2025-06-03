@@ -77,6 +77,10 @@ input DeveloperLicenseBy {
   clientId: Address
   alias: String
   tokenId: Int
+  """
+  The DID of the developer license in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+  """
+  tokenDID: String @goField(name: "TokenDID")
 }
 
 type DeveloperLicenseEdge {

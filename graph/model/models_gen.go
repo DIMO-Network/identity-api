@@ -69,6 +69,8 @@ func (this AftermarketDevice) GetID() string { return this.ID }
 type AftermarketDeviceBy struct {
 	// token id of the aftermarket device NFT
 	TokenID *int `json:"tokenId,omitempty"`
+	// The DID of the aftermarket device in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+	TokenDID *string `json:"tokenDID,omitempty"`
 	// address of the aftermarket device
 	Address *common.Address `json:"address,omitempty"`
 	// serial number of the aftermarket device
@@ -131,6 +133,8 @@ type ConnectionBy struct {
 	Name    *string         `json:"name,omitempty"`
 	Address *common.Address `json:"address,omitempty"`
 	TokenID *big.Int        `json:"tokenId,omitempty"`
+	// The DID of the connection in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+	TokenDID *string `json:"tokenDID,omitempty"`
 }
 
 type ConnectionConnection struct {
@@ -175,8 +179,10 @@ func (this Dcn) GetID() string { return this.ID }
 
 // Input used to specify a unique DCN to query.
 type DCNBy struct {
-	Node []byte  `json:"node,omitempty"`
-	Name *string `json:"name,omitempty"`
+	Node []byte `json:"node,omitempty"`
+	// The DID of the DCN in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+	TokenDID *string `json:"tokenDID,omitempty"`
+	Name     *string `json:"name,omitempty"`
 }
 
 // The Connection type for DCN.
@@ -235,6 +241,8 @@ type DeveloperLicenseBy struct {
 	ClientID *common.Address `json:"clientId,omitempty"`
 	Alias    *string         `json:"alias,omitempty"`
 	TokenID  *int            `json:"tokenId,omitempty"`
+	// The DID of the developer license in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+	TokenDID *string `json:"tokenDID,omitempty"`
 }
 
 type DeveloperLicenseConnection struct {
@@ -384,6 +392,8 @@ type ManufacturerBy struct {
 	Name    *string `json:"name,omitempty"`
 	TokenID *int    `json:"tokenId,omitempty"`
 	Slug    *string `json:"slug,omitempty"`
+	// The DID of the manufacturer in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+	TokenDid *string `json:"tokenDid,omitempty"`
 }
 
 // The Connection type for Manufacturer.
@@ -577,6 +587,8 @@ func (this SyntheticDevice) GetID() string { return this.ID }
 type SyntheticDeviceBy struct {
 	// The token id for the synthetic device.
 	TokenID *int `json:"tokenId,omitempty"`
+	// The DID of the synthetic device in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+	TokenDID *string `json:"tokenDID,omitempty"`
 	// The Ethereum address for the synthetic device.
 	Address *common.Address `json:"address,omitempty"`
 }
@@ -685,6 +697,8 @@ type VehiclesFilter struct {
 	Privileged *common.Address `json:"privileged,omitempty"`
 	// Owner filters for vehicles that this address owns.
 	Owner *common.Address `json:"owner,omitempty"`
+	// Filter vehicles by their owner's DID in the format did:ethr:<chainID>:<address>
+	OwnerDid *string `json:"ownerDid,omitempty"`
 	// Make filters for vehicles that are of the given make.
 	Make *string `json:"make,omitempty"`
 	// Model filters for vehicles that are of the given model.

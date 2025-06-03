@@ -137,6 +137,12 @@ input SyntheticDeviceBy @oneOf {
   The token id for the synthetic device.
   """
   tokenId: Int
+
+  """
+  The DID of the synthetic device in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+  """
+  tokenDID: String @goField(name: "TokenDID")
+
   """
   The Ethereum address for the synthetic device.
   """

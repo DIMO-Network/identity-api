@@ -114,6 +114,11 @@ input AftermarketDeviceBy @oneOf {
   tokenId: Int
 
   """
+  The DID of the aftermarket device in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+  """
+  tokenDID: String @goField(name: "TokenDID")
+
+  """
   address of the aftermarket device
   """
   address: Address

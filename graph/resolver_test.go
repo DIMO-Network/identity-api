@@ -160,6 +160,40 @@ func TestResolver(t *testing.T) {
 			`{"vehicles":{"edges":[{"node":{"tokenId":11,"owner":"0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4","syntheticDevice":{"tokenId":1}}}]}}`,
 			string(b))
 	})
+
+	t.Run("vehicle query with tokenId", func(t *testing.T) {
+		var resp interface{}
+		c.MustPost(`{vehicle(tokenId: 11) {tokenId owner}}`, &resp)
+		b, _ := json.Marshal(resp)
+		fmt.Println(string(b))
+		assert.JSONEq(
+			`{"vehicle":{"tokenId":11,"owner":"0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"}}`,
+			string(b))
+	})
+
+	t.Run("vehicle query with tokenDid", func(t *testing.T) {
+		var resp interface{}
+		c.MustPost(`{vehicle(tokenDid: "did:erc721:1:0x4e:11") {tokenId owner}}`, &resp)
+		b, _ := json.Marshal(resp)
+		fmt.Println(string(b))
+		assert.JSONEq(
+			`{"vehicle":{"tokenId":11,"owner":"0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"}}`,
+			string(b))
+	})
+
+	t.Run("vehicle query with both tokenId and tokenDid should fail", func(t *testing.T) {
+		var resp interface{}
+		err := c.Post(`{vehicle(tokenId: 11, tokenDid: "did:erc721:1:0x4e:11") {tokenId owner}}`, &resp)
+		assert.NotNil(t, err)
+		assert.Contains(t, err.Error(), "exactly one of the fields")
+	})
+
+	t.Run("vehicle query with no parameters should fail", func(t *testing.T) {
+		var resp interface{}
+		err := c.Post(`{vehicle {tokenId owner}}`, &resp)
+		assert.NotNil(t, err)
+		assert.Contains(t, err.Error(), "exactly one of the fields")
+	})
 }
 
 func NewDefaultServer(es graphql.ExecutableSchema) *handler.Server {

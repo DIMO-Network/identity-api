@@ -8,7 +8,11 @@ extend type Query {
     """
     The token ID of the vehicle.
     """
-    tokenId: Int!
+    tokenId: Int
+    """
+    The DID of the vehicle.
+    """
+    tokenDid: String
   ): Vehicle!
 
   """
@@ -57,6 +61,11 @@ input VehiclesFilter {
   Owner filters for vehicles that this address owns.
   """
   owner: Address
+
+  """
+  Filter vehicles by their owner's DID in the format did:ethr:<chainID>:<address>
+  """
+  ownerDid: String
 
   """
   Make filters for vehicles that are of the given make.

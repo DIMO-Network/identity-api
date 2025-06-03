@@ -302,7 +302,7 @@ type ComplexityRoot struct {
 		Stakes             func(childComplexity int, first *int, after *string, last *int, before *string, filterBy *model.StakeFilterBy) int
 		SyntheticDevice    func(childComplexity int, by model.SyntheticDeviceBy) int
 		SyntheticDevices   func(childComplexity int, first *int, last *int, after *string, before *string, filterBy *model.SyntheticDevicesFilter) int
-		Vehicle            func(childComplexity int, tokenID int) int
+		Vehicle            func(childComplexity int, tokenID *int, tokenDid *string) int
 		Vehicles           func(childComplexity int, first *int, after *string, last *int, before *string, filterBy *model.VehiclesFilter) int
 	}
 
@@ -500,7 +500,7 @@ type QueryResolver interface {
 	Stakes(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.StakeFilterBy) (*model.StakeConnection, error)
 	SyntheticDevice(ctx context.Context, by model.SyntheticDeviceBy) (*model.SyntheticDevice, error)
 	SyntheticDevices(ctx context.Context, first *int, last *int, after *string, before *string, filterBy *model.SyntheticDevicesFilter) (*model.SyntheticDeviceConnection, error)
-	Vehicle(ctx context.Context, tokenID int) (*model.Vehicle, error)
+	Vehicle(ctx context.Context, tokenID *int, tokenDid *string) (*model.Vehicle, error)
 	Vehicles(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.VehiclesFilter) (*model.VehicleConnection, error)
 }
 type StakeResolver interface {
@@ -1744,7 +1744,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.Vehicle(childComplexity, args["tokenId"].(int)), true
+		return e.complexity.Query.Vehicle(childComplexity, args["tokenId"].(*int), args["tokenDid"].(*string)), true
 
 	case "Query.vehicles":
 		if e.complexity.Query.Vehicles == nil {
@@ -4046,23 +4046,46 @@ func (ec *executionContext) field_Query_vehicle_args(ctx context.Context, rawArg
 		return nil, err
 	}
 	args["tokenId"] = arg0
+	arg1, err := ec.field_Query_vehicle_argsTokenDid(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["tokenDid"] = arg1
 	return args, nil
 }
 func (ec *executionContext) field_Query_vehicle_argsTokenID(
 	ctx context.Context,
 	rawArgs map[string]any,
-) (int, error) {
+) (*int, error) {
 	if _, ok := rawArgs["tokenId"]; !ok {
-		var zeroVal int
+		var zeroVal *int
 		return zeroVal, nil
 	}
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("tokenId"))
 	if tmp, ok := rawArgs["tokenId"]; ok {
-		return ec.unmarshalNInt2int(ctx, tmp)
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
 	}
 
-	var zeroVal int
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_vehicle_argsTokenDid(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*string, error) {
+	if _, ok := rawArgs["tokenDid"]; !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("tokenDid"))
+	if tmp, ok := rawArgs["tokenDid"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
 	return zeroVal, nil
 }
 
@@ -12686,7 +12709,7 @@ func (ec *executionContext) _Query_vehicle(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Vehicle(rctx, fc.Args["tokenId"].(int))
+		return ec.resolvers.Query().Vehicle(rctx, fc.Args["tokenId"].(*int), fc.Args["tokenDid"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -19391,7 +19414,7 @@ func (ec *executionContext) unmarshalInputAftermarketDeviceBy(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"tokenId", "address", "serial", "imei", "devEUI"}
+	fieldsInOrder := [...]string{"tokenId", "tokenDID", "address", "serial", "imei", "devEUI"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -19405,6 +19428,13 @@ func (ec *executionContext) unmarshalInputAftermarketDeviceBy(ctx context.Contex
 				return it, err
 			}
 			it.TokenID = data
+		case "tokenDID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokenDID"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TokenDID = data
 		case "address":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("address"))
 			data, err := ec.unmarshalOAddress2ᚖgithubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, v)
@@ -19487,7 +19517,7 @@ func (ec *executionContext) unmarshalInputConnectionBy(ctx context.Context, obj 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "address", "tokenId"}
+	fieldsInOrder := [...]string{"name", "address", "tokenId", "tokenDID"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -19515,6 +19545,13 @@ func (ec *executionContext) unmarshalInputConnectionBy(ctx context.Context, obj 
 				return it, err
 			}
 			it.TokenID = data
+		case "tokenDID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokenDID"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TokenDID = data
 		}
 	}
 
@@ -19528,7 +19565,7 @@ func (ec *executionContext) unmarshalInputDCNBy(ctx context.Context, obj any) (m
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"node", "name"}
+	fieldsInOrder := [...]string{"node", "tokenDID", "name"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -19542,6 +19579,13 @@ func (ec *executionContext) unmarshalInputDCNBy(ctx context.Context, obj any) (m
 				return it, err
 			}
 			it.Node = data
+		case "tokenDID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokenDID"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TokenDID = data
 		case "name":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -19589,7 +19633,7 @@ func (ec *executionContext) unmarshalInputDeveloperLicenseBy(ctx context.Context
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"clientId", "alias", "tokenId"}
+	fieldsInOrder := [...]string{"clientId", "alias", "tokenId", "tokenDID"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -19617,6 +19661,13 @@ func (ec *executionContext) unmarshalInputDeveloperLicenseBy(ctx context.Context
 				return it, err
 			}
 			it.TokenID = data
+		case "tokenDID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokenDID"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TokenDID = data
 		}
 	}
 
@@ -19725,7 +19776,7 @@ func (ec *executionContext) unmarshalInputManufacturerBy(ctx context.Context, ob
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "tokenId", "slug"}
+	fieldsInOrder := [...]string{"name", "tokenId", "slug", "tokenDid"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -19753,6 +19804,13 @@ func (ec *executionContext) unmarshalInputManufacturerBy(ctx context.Context, ob
 				return it, err
 			}
 			it.Slug = data
+		case "tokenDid":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokenDid"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TokenDid = data
 		}
 	}
 
@@ -19834,7 +19892,7 @@ func (ec *executionContext) unmarshalInputSyntheticDeviceBy(ctx context.Context,
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"tokenId", "address"}
+	fieldsInOrder := [...]string{"tokenId", "tokenDID", "address"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -19848,6 +19906,13 @@ func (ec *executionContext) unmarshalInputSyntheticDeviceBy(ctx context.Context,
 				return it, err
 			}
 			it.TokenID = data
+		case "tokenDID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokenDID"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TokenDID = data
 		case "address":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("address"))
 			data, err := ec.unmarshalOAddress2ᚖgithubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, v)
@@ -19902,7 +19967,7 @@ func (ec *executionContext) unmarshalInputVehiclesFilter(ctx context.Context, ob
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"privileged", "owner", "make", "model", "year", "manufacturerTokenId", "deviceDefinitionId"}
+	fieldsInOrder := [...]string{"privileged", "owner", "ownerDid", "make", "model", "year", "manufacturerTokenId", "deviceDefinitionId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -19923,6 +19988,13 @@ func (ec *executionContext) unmarshalInputVehiclesFilter(ctx context.Context, ob
 				return it, err
 			}
 			it.Owner = data
+		case "ownerDid":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerDid"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerDid = data
 		case "make":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("make"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)

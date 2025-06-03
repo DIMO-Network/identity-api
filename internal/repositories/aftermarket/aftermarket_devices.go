@@ -171,8 +171,8 @@ func (r *Repository) GetAftermarketDevices(ctx context.Context, first *int, afte
 }
 
 func (r *Repository) GetAftermarketDevice(ctx context.Context, by gmodel.AftermarketDeviceBy) (*gmodel.AftermarketDevice, error) {
-	if base.CountTrue(by.Address != nil, by.TokenID != nil, by.Serial != nil, by.Imei != nil, by.DevEui != nil) != 1 {
-		return nil, gqlerror.Errorf("Pass in exactly one of `address`, `id`, `serial`, `imei` or `devEUI`.")
+	if base.CountTrue(by.Address != nil, by.TokenID != nil, by.TokenDID != nil, by.Serial != nil, by.Imei != nil, by.DevEui != nil) != 1 {
+		return nil, gqlerror.Errorf("Pass in exactly one of `address`, `tokenId`, `tokenDid`, `serial`, `imei` or `devEUI`.")
 	}
 
 	var qm qm.QueryMod
@@ -182,12 +182,26 @@ func (r *Repository) GetAftermarketDevice(ctx context.Context, by gmodel.Afterma
 		qm = models.AftermarketDeviceWhere.Address.EQ(by.Address.Bytes())
 	case by.TokenID != nil:
 		qm = models.AftermarketDeviceWhere.ID.EQ(*by.TokenID)
+	case by.TokenDID != nil:
+		did, err := cloudevent.DecodeERC721DID(*by.TokenDID)
+		if err != nil {
+			return nil, fmt.Errorf("error decoding token did: %w", err)
+		}
+		if did.ChainID != r.chainID {
+			return nil, fmt.Errorf("unknown chain id %d in token did", did.ChainID)
+		}
+		if did.ContractAddress != r.contractAddress {
+			return nil, fmt.Errorf("invalid contract address '%s' in token did", did.ContractAddress.Hex())
+		}
+		qm = models.AftermarketDeviceWhere.ID.EQ(int(did.TokenID.Int64()))
 	case by.Serial != nil:
 		qm = models.AftermarketDeviceWhere.Serial.EQ(null.StringFrom(*by.Serial))
 	case by.Imei != nil:
 		qm = models.AftermarketDeviceWhere.Imei.EQ(null.StringFrom(*by.Imei))
 	case by.DevEui != nil:
 		qm = models.AftermarketDeviceWhere.DevEui.EQ(null.StringFrom(*by.DevEui))
+	default:
+		return nil, fmt.Errorf("invalid filter")
 	}
 
 	ad, err := models.AftermarketDevices(qm).One(ctx, r.PDB.DBS().Reader)

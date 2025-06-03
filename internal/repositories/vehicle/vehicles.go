@@ -124,7 +124,10 @@ func (r *Repository) GetVehicles(ctx context.Context, first *int, after *string,
 	}
 
 	var totalCount int64
-	queryMods := queryModsFromFilters(filterBy)
+	queryMods, err := r.queryModsFromFilters(filterBy)
+	if err != nil {
+		return nil, err
+	}
 	if filterBy != nil && filterBy.Privileged != nil {
 		totalCount, err = models.Vehicles(
 			// We're performing this because SQLBoiler doesn't understand DISTINCT ON. If we use
@@ -195,7 +198,24 @@ func (r *Repository) GetVehicles(ctx context.Context, first *int, after *string,
 	return r.createVehiclesResponse(totalCount, all, hasNext, hasPrevious)
 }
 
-func (r *Repository) GetVehicle(ctx context.Context, id int) (*gmodel.Vehicle, error) {
+func (r *Repository) GetVehicle(ctx context.Context, tokenID *int, tokenDid *string) (*gmodel.Vehicle, error) {
+	if base.CountTrue(tokenID != nil, tokenDid != nil) != 1 {
+		return nil, fmt.Errorf("provide exactly one of `tokenID` or `tokenDid`")
+	}
+
+	var id int
+	switch {
+	case tokenID != nil:
+		id = *tokenID
+	case tokenDid != nil:
+		did, err := cloudevent.DecodeERC721DID(*tokenDid)
+		if err != nil {
+			return nil, fmt.Errorf("error decoding tokenDid: %w", err)
+		}
+		id = int(did.TokenID.Int64())
+	default:
+		return nil, fmt.Errorf("invalid filter")
+	}
 	v, err := models.FindVehicle(ctx, r.PDB.DBS().Reader, id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -225,10 +245,10 @@ func (r *Repository) GetVehicle(ctx context.Context, id int) (*gmodel.Vehicle, e
 }
 
 // queryModsFromFilters returns a slice of query mods from the given filters.
-func queryModsFromFilters(filter *gmodel.VehiclesFilter) []qm.QueryMod {
+func (r *Repository) queryModsFromFilters(filter *gmodel.VehiclesFilter) ([]qm.QueryMod, error) {
 	var queryMods []qm.QueryMod
 	if filter == nil {
-		return queryMods
+		return queryMods, nil
 	}
 
 	// To maintain correct count behavior the privilege filter must be the first filter added to the query.
@@ -282,7 +302,21 @@ func queryModsFromFilters(filter *gmodel.VehiclesFilter) []qm.QueryMod {
 		queryMods = append(queryMods, models.VehicleWhere.DeviceDefinitionID.EQ(null.StringFrom(*filter.DeviceDefinitionID)))
 	}
 
-	return queryMods
+	if filter.OwnerDid != nil {
+		did, err := cloudevent.DecodeEthrDID(*filter.OwnerDid)
+		if err != nil {
+			return nil, fmt.Errorf("error decoding owner did: %w", err)
+		}
+		if did.ChainID != r.chainID {
+			return nil, fmt.Errorf("unknown chain id %d in owner did", did.ChainID)
+		}
+		if did.ContractAddress != r.contractAddress {
+			return nil, fmt.Errorf("invalid contract address '%s' in owner did", did.ContractAddress.Hex())
+		}
+		queryMods = append(queryMods, models.VehicleWhere.OwnerAddress.EQ(did.ContractAddress.Bytes()))
+	}
+
+	return queryMods, nil
 }
 
 // ToAPI converts a vehicle to a corresponding graphql model.

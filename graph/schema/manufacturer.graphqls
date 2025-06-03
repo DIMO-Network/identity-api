@@ -96,6 +96,10 @@ input ManufacturerBy @oneOf {
   name: String
   tokenId: Int
   slug: String
+  """
+  The DID of the manufacturer in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+  """
+  tokenDid: String
 }
 
 """

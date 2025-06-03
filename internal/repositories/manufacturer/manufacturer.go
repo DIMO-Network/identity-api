@@ -80,8 +80,8 @@ func IDToToken(b []byte) (int, error) {
 }
 
 func (r *Repository) GetManufacturer(ctx context.Context, by gmodel.ManufacturerBy) (*gmodel.Manufacturer, error) {
-	if base.CountTrue(by.TokenID != nil, by.Name != nil, by.Slug != nil) != 1 {
-		return nil, gqlerror.Errorf("Provide exactly one of `name`, `tokenID` or `slug`.")
+	if base.CountTrue(by.TokenID != nil, by.Name != nil, by.Slug != nil, by.TokenDid != nil) != 1 {
+		return nil, gqlerror.Errorf("Provide exactly one of `name`, `tokenID`, `slug`, or `tokenDid`.")
 	}
 
 	var qm qm.QueryMod
@@ -92,6 +92,20 @@ func (r *Repository) GetManufacturer(ctx context.Context, by gmodel.Manufacturer
 		qm = models.ManufacturerWhere.Name.EQ(*by.Name)
 	case by.Slug != nil:
 		qm = models.ManufacturerWhere.Slug.EQ(*by.Slug)
+	case by.TokenDid != nil:
+		did, err := cloudevent.DecodeERC721DID(*by.TokenDid)
+		if err != nil {
+			return nil, fmt.Errorf("error decoding token did: %w", err)
+		}
+		if did.ChainID != r.chainID {
+			return nil, fmt.Errorf("unknown chain id %d in token did", did.ChainID)
+		}
+		if did.ContractAddress != r.contractAddress {
+			return nil, fmt.Errorf("invalid contract address '%s' in token did", did.ContractAddress.Hex())
+		}
+		qm = models.ManufacturerWhere.ID.EQ(int(did.TokenID.Int64()))
+	default:
+		return nil, fmt.Errorf("invalid filter")
 	}
 
 	m, err := models.Manufacturers(qm).One(ctx, r.PDB.DBS().Reader)

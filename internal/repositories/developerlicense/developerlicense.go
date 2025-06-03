@@ -11,6 +11,7 @@ import (
 
 	"github.com/DIMO-Network/cloudevent"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
@@ -457,8 +458,8 @@ func (r *Repository) GetRedirectURIsForLicense(ctx context.Context, obj *gmodel.
 }
 
 func (r *Repository) GetLicense(ctx context.Context, by gmodel.DeveloperLicenseBy) (*gmodel.DeveloperLicense, error) {
-	if base.CountTrue(by.ClientID != nil, by.TokenID != nil, by.Alias != nil) != 1 {
-		return nil, fmt.Errorf("must specify exactly one of `clientId`, `tokenId`, or `alias`")
+	if base.CountTrue(by.ClientID != nil, by.Alias != nil, by.TokenID != nil, by.TokenDID != nil) != 1 {
+		return nil, gqlerror.Errorf("must specify exactly one of `clientId`, `alias`, `tokenId`, or `tokenDID`")
 	}
 
 	var mod qm.QueryMod
@@ -466,10 +467,24 @@ func (r *Repository) GetLicense(ctx context.Context, by gmodel.DeveloperLicenseB
 	switch {
 	case by.ClientID != nil:
 		mod = models.DeveloperLicenseWhere.ClientID.EQ(by.ClientID.Bytes())
-	case by.TokenID != nil:
-		mod = models.DeveloperLicenseWhere.ID.EQ(*by.TokenID)
 	case by.Alias != nil:
 		mod = models.DeveloperLicenseWhere.Alias.EQ(null.StringFrom(*by.Alias))
+	case by.TokenID != nil:
+		mod = models.DeveloperLicenseWhere.ID.EQ(*by.TokenID)
+	case by.TokenDID != nil:
+		did, err := cloudevent.DecodeERC721DID(*by.TokenDID)
+		if err != nil {
+			return nil, fmt.Errorf("error decoding token did: %w", err)
+		}
+		if did.ChainID != r.chainID {
+			return nil, fmt.Errorf("unknown chain id %d in token did", did.ChainID)
+		}
+		if did.ContractAddress != r.contractAddress {
+			return nil, fmt.Errorf("invalid contract address '%s' in token did", did.ContractAddress.Hex())
+		}
+		mod = models.DeveloperLicenseWhere.ID.EQ(int(did.TokenID.Int64()))
+	default:
+		return nil, fmt.Errorf("invalid filter")
 	}
 
 	dl, err := models.DeveloperLicenses(mod).One(ctx, r.PDB.DBS().Reader)

@@ -131,5 +131,10 @@ Input used to specify a unique DCN to query.
 """
 input DCNBy @oneOf {
   node: Bytes
+
+  """
+  The DID of the DCN in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+  """
+  tokenDID: String @goField(name: "TokenDID")
   name: String
 }

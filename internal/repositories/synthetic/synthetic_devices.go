@@ -79,8 +79,8 @@ func (r *Repository) ToAPI(sd *models.SyntheticDevice) (*gmodel.SyntheticDevice,
 
 // GetSyntheticDevice Device retrieves a synthetic device by either its address or tokenID from the database.
 func (r *Repository) GetSyntheticDevice(ctx context.Context, by gmodel.SyntheticDeviceBy) (*gmodel.SyntheticDevice, error) {
-	if base.CountTrue(by.Address != nil, by.TokenID != nil) != 1 {
-		return nil, gqlerror.Errorf("Pass in exactly one of `address` or `id`.")
+	if base.CountTrue(by.Address != nil, by.TokenID != nil, by.TokenDID != nil) != 1 {
+		return nil, gqlerror.Errorf("Pass in exactly one of `address`, `tokenId`, or `tokenDID`.")
 	}
 
 	var mod qm.QueryMod
@@ -90,6 +90,18 @@ func (r *Repository) GetSyntheticDevice(ctx context.Context, by gmodel.Synthetic
 		mod = models.SyntheticDeviceWhere.DeviceAddress.EQ(by.Address.Bytes())
 	case by.TokenID != nil:
 		mod = models.SyntheticDeviceWhere.ID.EQ(*by.TokenID)
+	case by.TokenDID != nil:
+		did, err := cloudevent.DecodeERC721DID(*by.TokenDID)
+		if err != nil {
+			return nil, fmt.Errorf("error decoding token did: %w", err)
+		}
+		if did.ChainID != r.chainID {
+			return nil, fmt.Errorf("unknown chain id %d in token did", did.ChainID)
+		}
+		if did.ContractAddress != r.contractAddress {
+			return nil, fmt.Errorf("invalid contract address '%s' in token did", did.ContractAddress.Hex())
+		}
+		mod = models.SyntheticDeviceWhere.ID.EQ(int(did.TokenID.Int64()))
 	}
 
 	synth, err := models.SyntheticDevices(mod).One(ctx, r.PDB.DBS().Reader)

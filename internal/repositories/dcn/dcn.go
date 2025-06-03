@@ -76,15 +76,30 @@ func (r *Repository) ToAPI(d *models.DCN) (*gmodel.Dcn, error) {
 }
 
 func (r *Repository) GetDCN(ctx context.Context, by gmodel.DCNBy) (*gmodel.Dcn, error) {
-	if base.CountTrue(len(by.Node) != 0, by.Name != nil) != 1 {
-		return nil, gqlerror.Errorf("Provide exactly one of `name` or `node`.")
+	if base.CountTrue(len(by.Node) != 0, by.Name != nil, by.TokenDID != nil) != 1 {
+		return nil, gqlerror.Errorf("Provide exactly one of `name`, `node`, or `tokenDID`.")
 	}
 
-	if len(by.Node) != 0 {
+	switch {
+	case len(by.Node) != 0:
 		return r.GetDCNByNode(ctx, by.Node)
+	case by.Name != nil:
+		return r.GetDCNByName(ctx, *by.Name)
+	case by.TokenDID != nil:
+		did, err := cloudevent.DecodeERC721DID(*by.TokenDID)
+		if err != nil {
+			return nil, fmt.Errorf("error decoding token did: %w", err)
+		}
+		if did.ChainID != r.chainID {
+			return nil, fmt.Errorf("unknown chain id %d in token did", did.ChainID)
+		}
+		if did.ContractAddress != r.contractAddress {
+			return nil, fmt.Errorf("invalid contract address '%s' in token did", did.ContractAddress.Hex())
+		}
+		return r.GetDCNByNode(ctx, did.TokenID.Bytes())
+	default:
+		return nil, fmt.Errorf("invalid filter")
 	}
-
-	return r.GetDCNByName(ctx, *by.Name)
 }
 
 func (r *Repository) GetDCNByNode(ctx context.Context, node []byte) (*gmodel.Dcn, error) {

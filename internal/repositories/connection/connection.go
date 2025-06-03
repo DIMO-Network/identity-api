@@ -17,6 +17,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
@@ -192,8 +193,8 @@ func (r *Repository) GetConnections(ctx context.Context, first *int, after *stri
 }
 
 func (r *Repository) GetConnection(ctx context.Context, by gmodel.ConnectionBy) (*gmodel.Connection, error) {
-	if base.CountTrue(by.Name != nil, by.Address != nil, by.TokenID != nil) != 1 {
-		return nil, fmt.Errorf("must specify exactly one of `name`, `address`, or `tokenId`")
+	if base.CountTrue(by.Name != nil, by.Address != nil, by.TokenID != nil, by.TokenDID != nil) != 1 {
+		return nil, gqlerror.Errorf("must specify exactly one of `name`, `address`, `tokenId`, or `tokenDID`")
 	}
 
 	var mod qm.QueryMod
@@ -212,6 +213,24 @@ func (r *Repository) GetConnection(ctx context.Context, by gmodel.ConnectionBy) 
 		mod = models.ConnectionWhere.Address.EQ(by.Address.Bytes())
 	case by.TokenID != nil:
 		id, err := convertTokenIDToID(by.TokenID)
+		if err != nil {
+			return nil, err
+		}
+
+		mod = models.ConnectionWhere.ID.EQ(id)
+	case by.TokenDID != nil:
+		did, err := cloudevent.DecodeERC721DID(*by.TokenDID)
+		if err != nil {
+			return nil, fmt.Errorf("error decoding token did: %w", err)
+		}
+		if did.ChainID != r.chainID {
+			return nil, fmt.Errorf("unknown chain id %d in token did", did.ChainID)
+		}
+		if did.ContractAddress != r.contractAddress {
+			return nil, fmt.Errorf("invalid contract address '%s' in token did", did.ContractAddress.Hex())
+		}
+
+		id, err := convertTokenIDToID(did.TokenID)
 		if err != nil {
 			return nil, err
 		}
