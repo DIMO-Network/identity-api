@@ -39,22 +39,16 @@ func weiToToken(wei types.Decimal) *decimal.Big {
 }
 
 func (r *Repository) ToAPI(v *models.Stake) *gmodel.Stake {
-	tokenDid := cloudevent.ERC721DID{
+	tokenDID := cloudevent.ERC721DID{
 		ChainID:         r.chainID,
 		ContractAddress: r.contractAddress,
 		TokenID:         new(big.Int).SetUint64(uint64(v.ID)),
 	}.String()
 
-	ownerDid := cloudevent.EthrDID{
-		ChainID:         r.chainID,
-		ContractAddress: common.BytesToAddress(v.Owner),
-	}.String()
-
 	return &gmodel.Stake{
 		TokenID:     v.ID,
-		TokenDid:    tokenDid,
+		TokenDID:    tokenDID,
 		Owner:       common.BytesToAddress(v.Owner),
-		OwnerDid:    ownerDid,
 		Level:       v.Level, // 0 in code corresponds to Level 2 in the DIP, and so on. Unfortunate. https://docs.dimo.org/governance/improvement-proposals/dip2
 		Points:      v.Points,
 		Amount:      weiToToken(v.Amount),

@@ -145,10 +145,9 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Success() {
 			Node: &gmodel.Vehicle{
 				ID:             "V_kQI=",
 				TokenID:        2,
-				TokenDid:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:2",
+				TokenDID:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:2",
 				ManufacturerID: 131,
 				Owner:          common.BytesToAddress(wallet.Bytes()),
-				OwnerDid:       "did:ethr:80001:" + common.BytesToAddress(wallet.Bytes()).Hex(),
 				Definition: &gmodel.Definition{
 					Make:  &vehicles[1].Make.String,
 					Model: &vehicles[1].Model.String,
@@ -166,10 +165,9 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Success() {
 			Node: &gmodel.Vehicle{
 				ID:             "V_kQE=",
 				TokenID:        1,
-				TokenDid:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:1",
+				TokenDID:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:1",
 				ManufacturerID: 131,
 				Owner:          common.BytesToAddress(wallet.Bytes()),
-				OwnerDid:       "did:ethr:80001:" + common.BytesToAddress(wallet.Bytes()).Hex(),
 				Definition: &gmodel.Definition{
 					Make:  &vehicles[0].Make.String,
 					Model: &vehicles[0].Model.String,
@@ -248,10 +246,9 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination() {
 			Node: &gmodel.Vehicle{
 				ID:             "V_kQI=",
 				TokenID:        2,
-				TokenDid:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:2",
+				TokenDID:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:2",
 				ManufacturerID: 131,
 				Owner:          common.BytesToAddress(wallet.Bytes()),
-				OwnerDid:       "did:ethr:80001:" + common.BytesToAddress(wallet.Bytes()).Hex(),
 				Definition: &gmodel.Definition{
 					Make:  &vehicles[1].Make.String,
 					Model: &vehicles[1].Model.String,
@@ -333,9 +330,8 @@ func (s *OwnedVehiclesRepoTestSuite) Test_GetOwnedVehicles_Pagination_NextPage()
 				ID:             "V_kQE=",
 				ManufacturerID: 131,
 				TokenID:        1,
-				TokenDid:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:1",
+				TokenDID:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:1",
 				Owner:          common.BytesToAddress(wallet.Bytes()),
-				OwnerDid:       "did:ethr:80001:" + common.BytesToAddress(wallet.Bytes()).Hex(),
 				Definition: &gmodel.Definition{
 					Make:  &vehicles[0].Make.String,
 					Model: &vehicles[0].Model.String,

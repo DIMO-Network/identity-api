@@ -45,23 +45,17 @@ func (r *Repository) ToAPI(m *models.Manufacturer) (*gmodel.Manufacturer, error)
 		return nil, fmt.Errorf("error encoding manufacturer id: %w", err)
 	}
 
-	tokenDid := cloudevent.ERC721DID{
+	tokenDID := cloudevent.ERC721DID{
 		ChainID:         r.chainID,
 		ContractAddress: r.contractAddress,
 		TokenID:         new(big.Int).SetUint64(uint64(m.ID)),
 	}.String()
 
-	ownerDid := cloudevent.EthrDID{
-		ChainID:         r.chainID,
-		ContractAddress: common.BytesToAddress(m.Owner),
-	}.String()
-
 	return &gmodel.Manufacturer{
 		ID:       globalID,
 		TokenID:  m.ID,
-		TokenDid: tokenDid,
+		TokenDID: tokenDID,
 		Owner:    common.BytesToAddress(m.Owner),
-		OwnerDid: ownerDid,
 		TableID:  m.TableID.Ptr(),
 		MintedAt: m.MintedAt,
 		Name:     m.Name,

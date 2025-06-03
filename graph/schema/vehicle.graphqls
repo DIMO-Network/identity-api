@@ -12,7 +12,7 @@ extend type Query {
     """
     The DID of the vehicle.
     """
-    tokenDid: String
+    tokenDID: String
   ): Vehicle!
 
   """
@@ -63,11 +63,6 @@ input VehiclesFilter {
   owner: Address
 
   """
-  Filter vehicles by their owner's DID in the format did:ethr:<chainID>:<address>
-  """
-  ownerDid: String
-
-  """
   Make filters for vehicles that are of the given make.
   """
   make: String
@@ -105,7 +100,7 @@ type Vehicle implements Node {
   """
   The DID for this vehicle's token ID in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
   """
-  tokenDid: String!
+  tokenDID: String! @goField(name: "TokenDID")
   """
   The manufacturer of this vehicle.
   """
@@ -114,10 +109,6 @@ type Vehicle implements Node {
   The Ethereum address of the owner of this vehicle.
   """
   owner: Address!
-  """
-  The DID for this vehicle's owner in the format did:ethr:<chainID>:<address>
-  """
-  ownerDid: String!
   """
   The block timestamp at which this vehicle was minted.
   """

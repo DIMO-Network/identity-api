@@ -160,9 +160,8 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Success() {
 				ID:             "V_kQI=",
 				ManufacturerID: 131,
 				TokenID:        2,
-				TokenDid:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:2",
+				TokenDID:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:2",
 				Owner:          common.BytesToAddress(wallet.Bytes()),
-				OwnerDid:       "did:ethr:80001:" + common.BytesToAddress(wallet.Bytes()).Hex(),
 				MintedAt:       vehicles[1].MintedAt,
 				Definition: &gmodel.Definition{
 					Make:  &vehicles[1].Make.String,
@@ -180,9 +179,8 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Success() {
 				ID:             "V_kQE=",
 				ManufacturerID: 131,
 				TokenID:        1,
-				TokenDid:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:1",
+				TokenDID:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:1",
 				Owner:          common.BytesToAddress(wallet.Bytes()),
-				OwnerDid:       "did:ethr:80001:" + common.BytesToAddress(wallet.Bytes()).Hex(),
 				MintedAt:       vehicles[0].MintedAt,
 				Definition: &gmodel.Definition{
 					Make:  &vehicles[0].Make.String,
@@ -260,10 +258,9 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination(
 			Node: &gmodel.Vehicle{
 				ID:             "V_kQI=",
 				TokenID:        2,
-				TokenDid:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:2",
+				TokenDID:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:2",
 				ManufacturerID: 131,
 				Owner:          common.BytesToAddress(wallet.Bytes()),
-				OwnerDid:       "did:ethr:80001:" + common.BytesToAddress(wallet.Bytes()).Hex(),
 				MintedAt:       vehicles[1].MintedAt,
 				Definition: &gmodel.Definition{
 					Make:  &vehicles[1].Make.String,
@@ -342,10 +339,9 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 			Node: &gmodel.Vehicle{
 				ID:             "V_kQE=",
 				TokenID:        1,
-				TokenDid:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:1",
+				TokenDID:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:1",
 				ManufacturerID: 131,
 				Owner:          common.BytesToAddress(wallet.Bytes()),
-				OwnerDid:       "did:ethr:80001:" + common.BytesToAddress(wallet.Bytes()).Hex(),
 				MintedAt:       vehicles[0].MintedAt,
 				Definition: &gmodel.Definition{
 					Make:  &vehicles[0].Make.String,
@@ -442,9 +438,8 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_OwnedByUser
 			Node: &gmodel.Vehicle{
 				ID:             "V_kQI=",
 				TokenID:        2,
-				TokenDid:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:2",
+				TokenDID:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:2",
 				Owner:          common.BytesToAddress(wallet2.Bytes()),
-				OwnerDid:       "did:ethr:80001:" + common.BytesToAddress(wallet2.Bytes()).Hex(),
 				ManufacturerID: 131,
 				MintedAt:       vehicles[1].MintedAt,
 				Definition: &gmodel.Definition{
@@ -462,10 +457,9 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_OwnedByUser
 			Node: &gmodel.Vehicle{
 				ID:             "V_kQE=",
 				TokenID:        1,
-				TokenDid:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:1",
+				TokenDID:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:1",
 				ManufacturerID: 131,
 				Owner:          common.BytesToAddress(wallet.Bytes()),
-				OwnerDid:       "did:ethr:80001:" + common.BytesToAddress(wallet.Bytes()).Hex(),
 				MintedAt:       vehicles[0].MintedAt,
 				Definition: &gmodel.Definition{
 					Make:  &vehicles[0].Make.String,
@@ -568,10 +562,9 @@ func (o *AccessibleVehiclesRepoTestSuite) TestVehiclesMultiplePrivsOnOne() {
 			Node: &gmodel.Vehicle{
 				ID:             "V_kQI=",
 				TokenID:        2,
-				TokenDid:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:2",
+				TokenDID:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:2",
 				ManufacturerID: 131,
 				Owner:          common.BytesToAddress(wallet2.Bytes()),
-				OwnerDid:       "did:ethr:80001:" + common.BytesToAddress(wallet2.Bytes()).Hex(),
 				MintedAt:       vehicles[1].MintedAt,
 				Definition: &gmodel.Definition{
 					Make:  &vehicles[1].Make.String,
@@ -588,10 +581,9 @@ func (o *AccessibleVehiclesRepoTestSuite) TestVehiclesMultiplePrivsOnOne() {
 			Node: &gmodel.Vehicle{
 				ID:             "V_kQE=",
 				TokenID:        1,
-				TokenDid:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:1",
+				TokenDID:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:1",
 				ManufacturerID: 131,
 				Owner:          common.BytesToAddress(wallet.Bytes()),
-				OwnerDid:       "did:ethr:80001:" + common.BytesToAddress(wallet.Bytes()).Hex(),
 				MintedAt:       vehicles[0].MintedAt,
 				Definition: &gmodel.Definition{
 					Make:  &vehicles[0].Make.String,
@@ -695,9 +687,8 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 				ID:                "V_kQM=",
 				ManufacturerID:    131,
 				TokenID:           3,
-				TokenDid:          "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:3",
+				TokenDID:          "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:3",
 				Owner:             common.BytesToAddress(wallet.Bytes()),
-				OwnerDid:          "did:ethr:80001:" + common.BytesToAddress(wallet.Bytes()).Hex(),
 				MintedAt:          vehicles[2].MintedAt,
 				AftermarketDevice: nil,
 				Privileges:        nil,
@@ -718,9 +709,8 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 				ID:                "V_kQI=",
 				ManufacturerID:    131,
 				TokenID:           2,
-				TokenDid:          "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:2",
+				TokenDID:          "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:2",
 				Owner:             common.BytesToAddress(wallet.Bytes()),
-				OwnerDid:          "did:ethr:80001:" + common.BytesToAddress(wallet.Bytes()).Hex(),
 				MintedAt:          vehicles[1].MintedAt,
 				AftermarketDevice: nil,
 				Privileges:        nil,
@@ -831,9 +821,8 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 			Node: &gmodel.Vehicle{
 				ID:                "V_kQI=",
 				TokenID:           2,
-				TokenDid:          "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:2",
+				TokenDID:          "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:2",
 				Owner:             common.BytesToAddress(wallet.Bytes()),
-				OwnerDid:          "did:ethr:80001:" + common.BytesToAddress(wallet.Bytes()).Hex(),
 				MintedAt:          vehicles[0].MintedAt,
 				AftermarketDevice: nil,
 				ManufacturerID:    131,
@@ -939,10 +928,9 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 			Node: &gmodel.Vehicle{
 				ID:             "V_kQI=",
 				TokenID:        2,
-				TokenDid:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:2",
+				TokenDID:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:2",
 				ManufacturerID: 131,
 				Owner:          common.BytesToAddress(wallet.Bytes()),
-				OwnerDid:       "did:ethr:80001:" + common.BytesToAddress(wallet.Bytes()).Hex(),
 				MintedAt:       vehicles[1].MintedAt,
 				Definition: &gmodel.Definition{
 					Make:  &vehicles[1].Make.String,
@@ -959,9 +947,8 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 			Node: &gmodel.Vehicle{
 				ID:             "V_kQE=",
 				TokenID:        1,
-				TokenDid:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:1",
+				TokenDID:       "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:1",
 				Owner:          common.BytesToAddress(wallet.Bytes()),
-				OwnerDid:       "did:ethr:80001:" + common.BytesToAddress(wallet.Bytes()).Hex(),
 				MintedAt:       vehicles[0].MintedAt,
 				ManufacturerID: 131,
 				Definition: &gmodel.Definition{
@@ -1064,9 +1051,8 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 			Node: &gmodel.Vehicle{
 				ID:                "V_kQQ=",
 				TokenID:           4,
-				TokenDid:          "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:4",
+				TokenDID:          "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:4",
 				Owner:             common.BytesToAddress(wallet.Bytes()),
-				OwnerDid:          "did:ethr:80001:" + common.BytesToAddress(wallet.Bytes()).Hex(),
 				MintedAt:          vehicles[3].MintedAt,
 				ManufacturerID:    131,
 				AftermarketDevice: nil,
@@ -1087,9 +1073,8 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehicles_Pagination_
 			Node: &gmodel.Vehicle{
 				ID:                "V_kQM=",
 				TokenID:           3,
-				TokenDid:          "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:3",
+				TokenDID:          "did:erc721:80001:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:3",
 				Owner:             common.BytesToAddress(wallet.Bytes()),
-				OwnerDid:          "did:ethr:80001:" + common.BytesToAddress(wallet.Bytes()).Hex(),
 				MintedAt:          vehicles[2].MintedAt,
 				ManufacturerID:    131,
 				AftermarketDevice: nil,

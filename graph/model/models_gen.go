@@ -20,18 +20,14 @@ type AftermarketDevice struct {
 	ID string `json:"id"`
 	// The ERC-721 token id for the device.
 	TokenID int `json:"tokenId"`
-	// The DID for this device's token ID in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
-	TokenDid string `json:"tokenDid"`
+	// The DID for this aftermarket device's token ID in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+	TokenDID string `json:"tokenDID"`
 	// The manufacturer of this aftermarket device.
 	Manufacturer *Manufacturer `json:"manufacturer"`
 	// The Ethereum address for the device.
 	Address common.Address `json:"address"`
-	// The DID for this device's address in the format did:ethr:<chainID>:<address>
-	AddressDid string `json:"addressDid"`
 	// The Ethereum address of the owner of the device.
 	Owner common.Address `json:"owner"`
-	// The DID for this device's owner in the format did:ethr:<chainID>:<address>
-	OwnerDid string `json:"ownerDid"`
 	// The serial number on the side of the device. For AutoPis this is a UUID; for Macarons it is
 	// a long decimal number.
 	Serial *string `json:"serial,omitempty"`
@@ -115,16 +111,12 @@ type Connection struct {
 	Name string `json:"name"`
 	// The address of the connection. This is the most commonly used identifier.
 	Address common.Address `json:"address"`
-	// The DID for this connection's address in the format did:ethr:<chainID>:<address>
-	AddressDid string `json:"addressDid"`
 	// The owner of the connection. Connections are transferable, so this may change over time.
 	Owner common.Address `json:"owner"`
-	// The DID for this connection's owner in the format did:ethr:<chainID>:<address>
-	OwnerDid string `json:"ownerDid"`
 	// The token id of the connection as an NFT. This tends to be very large.
 	TokenID *big.Int `json:"tokenId"`
 	// The DID for this connection's token ID in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
-	TokenDid string `json:"tokenDid"`
+	TokenDID string `json:"tokenDID"`
 	// The block timestamp for the mint of the connection.
 	MintedAt time.Time `json:"mintedAt"`
 }
@@ -158,11 +150,9 @@ type Dcn struct {
 	// The token id for the domain. This is simply the node reinterpreted as a uint256.
 	TokenID *big.Int `json:"tokenId"`
 	// The DID for this DCN's token ID in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
-	TokenDid string `json:"tokenDid"`
+	TokenDID string `json:"tokenDID"`
 	// Ethereum address of domain owner.
 	Owner common.Address `json:"owner"`
-	// The DID for this DCN's owner in the format did:ethr:<chainID>:<address>
-	OwnerDid string `json:"ownerDid"`
 	// The block timestamp at which the domain will cease to be valid.
 	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
 	// The block timestamp at which the domain was created.
@@ -222,11 +212,9 @@ type DeveloperLicense struct {
 	// The token id of the license as an NFT.
 	TokenID int `json:"tokenId"`
 	// The DID for this license's token ID in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
-	TokenDid string `json:"tokenDid"`
+	TokenDID string `json:"tokenDID"`
 	// The owner of the license. A single owner can own multiple licenses.
 	Owner common.Address `json:"owner"`
-	// The DID for this license's owner in the format did:ethr:<chainID>:<address>
-	OwnerDid string `json:"ownerDid"`
 	// Serves as the client id for OAuth as well as the address of the associated contract.
 	ClientID common.Address `json:"clientId"`
 	// A human-readable alias for this license. Unique among all licenses if present.
@@ -368,13 +356,11 @@ type Manufacturer struct {
 	// The ERC-721 token id for the manufacturer.
 	TokenID int `json:"tokenId"`
 	// The DID for this manufacturer's token ID in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
-	TokenDid string `json:"tokenDid"`
+	TokenDID string `json:"tokenDID"`
 	// The name of the manufacturer.
 	Name string `json:"name"`
 	// The Ethereum address of the owner of this manufacturer.
 	Owner common.Address `json:"owner"`
-	// The DID for this manufacturer's owner in the format did:ethr:<chainID>:<address>
-	OwnerDid string `json:"ownerDid"`
 	// Id of the Tableland table holding the manufacturer's device definitions.
 	TableID *int `json:"tableId,omitempty"`
 	// The block timestamp at which this manufacturer was minted.
@@ -393,7 +379,7 @@ type ManufacturerBy struct {
 	TokenID *int    `json:"tokenId,omitempty"`
 	Slug    *string `json:"slug,omitempty"`
 	// The DID of the manufacturer in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
-	TokenDid *string `json:"tokenDid,omitempty"`
+	TokenDid *string `json:"tokenDID,omitempty"`
 }
 
 // The Connection type for Manufacturer.
@@ -514,11 +500,9 @@ type Stake struct {
 	// The token id of the license as an NFT.
 	TokenID int `json:"tokenId"`
 	// The DID for this stake's token ID in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
-	TokenDid string `json:"tokenDid"`
+	TokenDID string `json:"tokenDID"`
 	// The owner of the license. A single owner can own multiple licenses.
 	Owner common.Address `json:"owner"`
-	// The DID for this stake's owner in the format did:ethr:<chainID>:<address>
-	OwnerDid string `json:"ownerDid"`
 	// The level of the stake. Presently, the levels are 0, 1, and 2. These translate
 	// to Levels 2, 3, and 4 in DIP-2. See https://docs.dimo.org/governance/improvement-proposals/dip2
 	Level int `json:"level"`
@@ -565,14 +549,12 @@ type SyntheticDevice struct {
 	Name string `json:"name"`
 	// The ERC-721 token id for the device.
 	TokenID int `json:"tokenId"`
-	// The DID for this device's token ID in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
-	TokenDid string `json:"tokenDid"`
+	// The DID for this synthetic device's token ID in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+	TokenDID string `json:"tokenDID"`
 	// Type of integration for the synthetic device.
 	IntegrationID int `json:"integrationId"`
 	// The Ethereum address for the device.
 	Address common.Address `json:"address"`
-	// The DID for this device's address in the format did:ethr:<chainID>:<address>
-	AddressDid string `json:"addressDid"`
 	// The block timestamp at which this device was minted.
 	MintedAt time.Time `json:"mintedAt"`
 	// The vehicle with which the synthetic device is paired.
@@ -634,13 +616,11 @@ type Vehicle struct {
 	// The ERC-721 token id for the vehicle.
 	TokenID int `json:"tokenId"`
 	// The DID for this vehicle's token ID in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
-	TokenDid string `json:"tokenDid"`
+	TokenDID string `json:"tokenDID"`
 	// The manufacturer of this vehicle.
 	Manufacturer *Manufacturer `json:"manufacturer"`
 	// The Ethereum address of the owner of this vehicle.
 	Owner common.Address `json:"owner"`
-	// The DID for this vehicle's owner in the format did:ethr:<chainID>:<address>
-	OwnerDid string `json:"ownerDid"`
 	// The block timestamp at which this vehicle was minted.
 	MintedAt time.Time `json:"mintedAt"`
 	// The paired aftermarket device, if any.
@@ -697,8 +677,6 @@ type VehiclesFilter struct {
 	Privileged *common.Address `json:"privileged,omitempty"`
 	// Owner filters for vehicles that this address owns.
 	Owner *common.Address `json:"owner,omitempty"`
-	// Filter vehicles by their owner's DID in the format did:ethr:<chainID>:<address>
-	OwnerDid *string `json:"ownerDid,omitempty"`
 	// Make filters for vehicles that are of the given make.
 	Make *string `json:"make,omitempty"`
 	// Model filters for vehicles that are of the given model.

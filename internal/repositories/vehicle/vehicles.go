@@ -302,20 +302,6 @@ func (r *Repository) queryModsFromFilters(filter *gmodel.VehiclesFilter) ([]qm.Q
 		queryMods = append(queryMods, models.VehicleWhere.DeviceDefinitionID.EQ(null.StringFrom(*filter.DeviceDefinitionID)))
 	}
 
-	if filter.OwnerDid != nil {
-		did, err := cloudevent.DecodeEthrDID(*filter.OwnerDid)
-		if err != nil {
-			return nil, fmt.Errorf("error decoding owner did: %w", err)
-		}
-		if did.ChainID != r.chainID {
-			return nil, fmt.Errorf("unknown chain id %d in owner did", did.ChainID)
-		}
-		if did.ContractAddress != r.contractAddress {
-			return nil, fmt.Errorf("invalid contract address '%s' in owner did", did.ContractAddress.Hex())
-		}
-		queryMods = append(queryMods, models.VehicleWhere.OwnerAddress.EQ(did.ContractAddress.Bytes()))
-	}
-
 	return queryMods, nil
 }
 
@@ -329,23 +315,17 @@ func (r *Repository) ToAPI(v *models.Vehicle, imageURI string, dataURI string) (
 		return nil, fmt.Errorf("error encoding vehicle id: %w", err)
 	}
 
-	tokenDid := cloudevent.ERC721DID{
+	tokenDID := cloudevent.ERC721DID{
 		ChainID:         r.chainID,
 		ContractAddress: r.contractAddress,
 		TokenID:         new(big.Int).SetUint64(uint64(v.ID)),
 	}.String()
 
-	ownerDid := cloudevent.EthrDID{
-		ChainID:         r.chainID,
-		ContractAddress: common.BytesToAddress(v.OwnerAddress),
-	}.String()
-
 	return &gmodel.Vehicle{
 		ID:       globalID,
 		TokenID:  v.ID,
-		TokenDid: tokenDid,
+		TokenDID: tokenDID,
 		Owner:    common.BytesToAddress(v.OwnerAddress),
-		OwnerDid: ownerDid,
 		MintedAt: v.MintedAt,
 		Definition: &gmodel.Definition{
 			ID:    v.DeviceDefinitionID.Ptr(),

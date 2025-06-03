@@ -38,22 +38,16 @@ func New(db *base.Repository) *Repository {
 }
 
 func (r *Repository) ToAPI(v *models.DeveloperLicense) *gmodel.DeveloperLicense {
-	tokenDid := cloudevent.ERC721DID{
+	tokenDID := cloudevent.ERC721DID{
 		ChainID:         r.chainID,
 		ContractAddress: r.contractAddress,
 		TokenID:         new(big.Int).SetUint64(uint64(v.ID)),
 	}.String()
 
-	ownerDid := cloudevent.EthrDID{
-		ChainID:         r.chainID,
-		ContractAddress: common.BytesToAddress(v.Owner),
-	}.String()
-
 	return &gmodel.DeveloperLicense{
 		TokenID:  v.ID,
-		TokenDid: tokenDid,
+		TokenDID: tokenDID,
 		Owner:    common.BytesToAddress(v.Owner),
-		OwnerDid: ownerDid,
 		ClientID: common.BytesToAddress(v.ClientID),
 		Alias:    v.Alias.Ptr(),
 		MintedAt: v.MintedAt,

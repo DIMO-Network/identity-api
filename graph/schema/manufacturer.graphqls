@@ -31,7 +31,7 @@ type Manufacturer implements Node {
   """
   The DID for this manufacturer's token ID in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
   """
-  tokenDid: String!
+  tokenDID: String! @goField(name: "TokenDID")
   """
   The name of the manufacturer.
   """
@@ -40,10 +40,6 @@ type Manufacturer implements Node {
   The Ethereum address of the owner of this manufacturer.
   """
   owner: Address!
-  """
-  The DID for this manufacturer's owner in the format did:ethr:<chainID>:<address>
-  """
-  ownerDid: String!
   """
   Id of the Tableland table holding the manufacturer's device definitions.
   """
@@ -99,7 +95,7 @@ input ManufacturerBy @oneOf {
   """
   The DID of the manufacturer in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
   """
-  tokenDid: String
+  tokenDID: String
 }
 
 """

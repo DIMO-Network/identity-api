@@ -2,6 +2,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
@@ -55,7 +56,7 @@ func TestQueryResolver_Node(t *testing.T) {
 			name: "vehicle",
 			id:   testVehicle.ID,
 			setupMocks: func(m *mockResolver) {
-				m.mockVehicle.EXPECT().GetVehicle(ctx, testVehicle.TokenID).Return(testVehicle, nil)
+				m.mockVehicle.EXPECT().GetVehicle(ctx, RefMatcher[int]{Val: testVehicle.TokenID}, nil).Return(testVehicle, nil)
 			},
 			expectedNode: testVehicle,
 		},
@@ -143,4 +144,20 @@ func (m *mockResolver) Resolver() *Resolver {
 		vehicle:      m.mockVehicle,
 		synthetic:    m.mockSynthetic,
 	}
+}
+
+type RefMatcher[T comparable] struct {
+	Val T
+}
+
+func (t RefMatcher[T]) Matches(x interface{}) bool {
+	xValue, ok := x.(*T)
+	if !ok {
+		return false
+	}
+	return *xValue == t.Val
+}
+
+func (t RefMatcher[T]) String() string {
+	return fmt.Sprintf("val: %v", t.Val)
 }

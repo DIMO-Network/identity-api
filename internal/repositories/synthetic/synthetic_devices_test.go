@@ -58,10 +58,9 @@ func Test_SyntheticDeviceToAPI(t *testing.T) {
 		ID:            encodedID,
 		Name:          "learn island zoo",
 		TokenID:       1,
-		TokenDid:      "did:erc721:0:0x0000000000000000000000000000000000000000:1",
+		TokenDID:      "did:erc721:0:0x0000000000000000000000000000000000000000:1",
 		IntegrationID: 2,
 		Address:       *wallet,
-		AddressDid:    "did:ethr:0:" + common.BytesToAddress(wallet.Bytes()).Hex(),
 		MintedAt:      currTime,
 		VehicleID:     sd.VehicleID,
 	}, res)

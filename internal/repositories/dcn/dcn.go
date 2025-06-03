@@ -50,23 +50,17 @@ func (r *Repository) ToAPI(d *models.DCN) (*gmodel.Dcn, error) {
 		return nil, fmt.Errorf("error encoding dcn id: %w", err)
 	}
 
-	tokenDid := cloudevent.ERC721DID{
+	tokenDID := cloudevent.ERC721DID{
 		ChainID:         r.chainID,
 		ContractAddress: r.contractAddress,
 		TokenID:         tokenID,
 	}.String()
 
-	ownerDid := cloudevent.EthrDID{
-		ChainID:         r.chainID,
-		ContractAddress: common.BytesToAddress(d.OwnerAddress),
-	}.String()
-
 	return &gmodel.Dcn{
 		ID:        globalID,
 		Owner:     common.BytesToAddress(d.OwnerAddress),
-		OwnerDid:  ownerDid,
 		TokenID:   tokenID,
-		TokenDid:  tokenDid,
+		TokenDID:  tokenDID,
 		Node:      d.Node,
 		ExpiresAt: d.Expiration.Ptr(),
 		Name:      d.Name.Ptr(),

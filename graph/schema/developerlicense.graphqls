@@ -26,15 +26,11 @@ type DeveloperLicense {
   """
   The DID for this license's token ID in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
   """
-  tokenDid: String!
+  tokenDID: String! @goField(name: "TokenDID")
   """
   The owner of the license. A single owner can own multiple licenses.
   """
   owner: Address!
-  """
-  The DID for this license's owner in the format did:ethr:<chainID>:<address>
-  """
-  ownerDid: String!
   """
   Serves as the client id for OAuth as well as the address of the associated contract.
   """

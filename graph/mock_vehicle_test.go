@@ -21,7 +21,6 @@ import (
 type MockVehicleRepository struct {
 	ctrl     *gomock.Controller
 	recorder *MockVehicleRepositoryMockRecorder
-	isgomock struct{}
 }
 
 // MockVehicleRepositoryMockRecorder is the mock recorder for MockVehicleRepository.
@@ -42,31 +41,31 @@ func (m *MockVehicleRepository) EXPECT() *MockVehicleRepositoryMockRecorder {
 }
 
 // GetVehicle mocks base method.
-func (m *MockVehicleRepository) GetVehicle(ctx context.Context, id int) (*model.Vehicle, error) {
+func (m *MockVehicleRepository) GetVehicle(arg0 context.Context, arg1 *int, arg2 *string) (*model.Vehicle, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetVehicle", ctx, id)
+	ret := m.ctrl.Call(m, "GetVehicle", arg0, arg1, arg2)
 	ret0, _ := ret[0].(*model.Vehicle)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetVehicle indicates an expected call of GetVehicle.
-func (mr *MockVehicleRepositoryMockRecorder) GetVehicle(ctx, id any) *gomock.Call {
+func (mr *MockVehicleRepositoryMockRecorder) GetVehicle(arg0, arg1, arg2 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVehicle", reflect.TypeOf((*MockVehicleRepository)(nil).GetVehicle), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVehicle", reflect.TypeOf((*MockVehicleRepository)(nil).GetVehicle), arg0, arg1, arg2)
 }
 
 // GetVehicles mocks base method.
-func (m *MockVehicleRepository) GetVehicles(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.VehiclesFilter) (*model.VehicleConnection, error) {
+func (m *MockVehicleRepository) GetVehicles(arg0 context.Context, arg1 *int, arg2 *string, arg3 *int, arg4 *string, arg5 *model.VehiclesFilter) (*model.VehicleConnection, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetVehicles", ctx, first, after, last, before, filterBy)
+	ret := m.ctrl.Call(m, "GetVehicles", arg0, arg1, arg2, arg3, arg4, arg5)
 	ret0, _ := ret[0].(*model.VehicleConnection)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetVehicles indicates an expected call of GetVehicles.
-func (mr *MockVehicleRepositoryMockRecorder) GetVehicles(ctx, first, after, last, before, filterBy any) *gomock.Call {
+func (mr *MockVehicleRepositoryMockRecorder) GetVehicles(arg0, arg1, arg2, arg3, arg4, arg5 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVehicles", reflect.TypeOf((*MockVehicleRepository)(nil).GetVehicles), ctx, first, after, last, before, filterBy)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVehicles", reflect.TypeOf((*MockVehicleRepository)(nil).GetVehicles), arg0, arg1, arg2, arg3, arg4, arg5)
 }

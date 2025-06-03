@@ -21,7 +21,6 @@ import (
 type MockAftermarketDeviceRepository struct {
 	ctrl     *gomock.Controller
 	recorder *MockAftermarketDeviceRepositoryMockRecorder
-	isgomock struct{}
 }
 
 // MockAftermarketDeviceRepositoryMockRecorder is the mock recorder for MockAftermarketDeviceRepository.
@@ -42,46 +41,46 @@ func (m *MockAftermarketDeviceRepository) EXPECT() *MockAftermarketDeviceReposit
 }
 
 // GetAftermarketDevice mocks base method.
-func (m *MockAftermarketDeviceRepository) GetAftermarketDevice(ctx context.Context, by model.AftermarketDeviceBy) (*model.AftermarketDevice, error) {
+func (m *MockAftermarketDeviceRepository) GetAftermarketDevice(arg0 context.Context, arg1 model.AftermarketDeviceBy) (*model.AftermarketDevice, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAftermarketDevice", ctx, by)
+	ret := m.ctrl.Call(m, "GetAftermarketDevice", arg0, arg1)
 	ret0, _ := ret[0].(*model.AftermarketDevice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetAftermarketDevice indicates an expected call of GetAftermarketDevice.
-func (mr *MockAftermarketDeviceRepositoryMockRecorder) GetAftermarketDevice(ctx, by any) *gomock.Call {
+func (mr *MockAftermarketDeviceRepositoryMockRecorder) GetAftermarketDevice(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAftermarketDevice", reflect.TypeOf((*MockAftermarketDeviceRepository)(nil).GetAftermarketDevice), ctx, by)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAftermarketDevice", reflect.TypeOf((*MockAftermarketDeviceRepository)(nil).GetAftermarketDevice), arg0, arg1)
 }
 
 // GetAftermarketDevices mocks base method.
-func (m *MockAftermarketDeviceRepository) GetAftermarketDevices(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.AftermarketDevicesFilter) (*model.AftermarketDeviceConnection, error) {
+func (m *MockAftermarketDeviceRepository) GetAftermarketDevices(arg0 context.Context, arg1 *int, arg2 *string, arg3 *int, arg4 *string, arg5 *model.AftermarketDevicesFilter) (*model.AftermarketDeviceConnection, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAftermarketDevices", ctx, first, after, last, before, filterBy)
+	ret := m.ctrl.Call(m, "GetAftermarketDevices", arg0, arg1, arg2, arg3, arg4, arg5)
 	ret0, _ := ret[0].(*model.AftermarketDeviceConnection)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetAftermarketDevices indicates an expected call of GetAftermarketDevices.
-func (mr *MockAftermarketDeviceRepositoryMockRecorder) GetAftermarketDevices(ctx, first, after, last, before, filterBy any) *gomock.Call {
+func (mr *MockAftermarketDeviceRepositoryMockRecorder) GetAftermarketDevices(arg0, arg1, arg2, arg3, arg4, arg5 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAftermarketDevices", reflect.TypeOf((*MockAftermarketDeviceRepository)(nil).GetAftermarketDevices), ctx, first, after, last, before, filterBy)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAftermarketDevices", reflect.TypeOf((*MockAftermarketDeviceRepository)(nil).GetAftermarketDevices), arg0, arg1, arg2, arg3, arg4, arg5)
 }
 
 // GetAftermarketDevicesForManufacturer mocks base method.
-func (m *MockAftermarketDeviceRepository) GetAftermarketDevicesForManufacturer(ctx context.Context, obj *model.Manufacturer, first *int, after *string, last *int, before *string, filterBy *model.AftermarketDevicesFilter) (*model.AftermarketDeviceConnection, error) {
+func (m *MockAftermarketDeviceRepository) GetAftermarketDevicesForManufacturer(arg0 context.Context, arg1 *model.Manufacturer, arg2 *int, arg3 *string, arg4 *int, arg5 *string, arg6 *model.AftermarketDevicesFilter) (*model.AftermarketDeviceConnection, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAftermarketDevicesForManufacturer", ctx, obj, first, after, last, before, filterBy)
+	ret := m.ctrl.Call(m, "GetAftermarketDevicesForManufacturer", arg0, arg1, arg2, arg3, arg4, arg5, arg6)
 	ret0, _ := ret[0].(*model.AftermarketDeviceConnection)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetAftermarketDevicesForManufacturer indicates an expected call of GetAftermarketDevicesForManufacturer.
-func (mr *MockAftermarketDeviceRepositoryMockRecorder) GetAftermarketDevicesForManufacturer(ctx, obj, first, after, last, before, filterBy any) *gomock.Call {
+func (mr *MockAftermarketDeviceRepositoryMockRecorder) GetAftermarketDevicesForManufacturer(arg0, arg1, arg2, arg3, arg4, arg5, arg6 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAftermarketDevicesForManufacturer", reflect.TypeOf((*MockAftermarketDeviceRepository)(nil).GetAftermarketDevicesForManufacturer), ctx, obj, first, after, last, before, filterBy)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAftermarketDevicesForManufacturer", reflect.TypeOf((*MockAftermarketDeviceRepository)(nil).GetAftermarketDevicesForManufacturer), arg0, arg1, arg2, arg3, arg4, arg5, arg6)
 }

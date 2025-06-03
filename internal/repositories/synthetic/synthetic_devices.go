@@ -53,25 +53,19 @@ func (r *Repository) ToAPI(sd *models.SyntheticDevice) (*gmodel.SyntheticDevice,
 	nameList := mnemonic.FromInt32WithObfuscation(int32(sd.ID))
 	name := strings.Join(nameList, " ")
 
-	tokenDid := cloudevent.ERC721DID{
+	tokenDID := cloudevent.ERC721DID{
 		ChainID:         r.chainID,
 		ContractAddress: r.contractAddress,
 		TokenID:         new(big.Int).SetUint64(uint64(sd.ID)),
-	}.String()
-
-	addressDid := cloudevent.EthrDID{
-		ChainID:         r.chainID,
-		ContractAddress: common.BytesToAddress(sd.DeviceAddress),
 	}.String()
 
 	return &gmodel.SyntheticDevice{
 		ID:            globalID,
 		Name:          name,
 		TokenID:       sd.ID,
-		TokenDid:      tokenDid,
+		TokenDID:      tokenDID,
 		IntegrationID: sd.IntegrationID,
 		Address:       common.BytesToAddress(sd.DeviceAddress),
-		AddressDid:    addressDid,
 		MintedAt:      sd.MintedAt,
 		VehicleID:     sd.VehicleID,
 	}, nil

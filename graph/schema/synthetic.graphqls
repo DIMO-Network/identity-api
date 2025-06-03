@@ -53,9 +53,9 @@ type SyntheticDevice implements Node {
   """
   tokenId: Int!
   """
-  The DID for this device's token ID in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+  The DID for this synthetic device's token ID in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
   """
-  tokenDid: String!
+  tokenDID: String! @goField(name: "TokenDID")
   """
   Type of integration for the synthetic device.
   """
@@ -64,10 +64,6 @@ type SyntheticDevice implements Node {
   The Ethereum address for the device.
   """
   address: Address!
-  """
-  The DID for this device's address in the format did:ethr:<chainID>:<address>
-  """
-  addressDid: String!
   """
   The block timestamp at which this device was minted.
   """

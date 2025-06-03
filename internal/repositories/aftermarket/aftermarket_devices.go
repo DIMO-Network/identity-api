@@ -231,30 +231,18 @@ func (r *Repository) ToAPI(d *models.AftermarketDevice, imageURL string) (*gmode
 	nameList := mnemonic.FromInt32WithObfuscation(int32(d.ID))
 	name := strings.Join(nameList, " ")
 
-	tokenDid := cloudevent.ERC721DID{
+	tokenDID := cloudevent.ERC721DID{
 		ChainID:         r.chainID,
 		ContractAddress: r.contractAddress,
 		TokenID:         new(big.Int).SetUint64(uint64(d.ID)),
 	}.String()
 
-	addressDid := cloudevent.EthrDID{
-		ChainID:         r.chainID,
-		ContractAddress: common.BytesToAddress(d.Address),
-	}.String()
-
-	ownerDid := cloudevent.EthrDID{
-		ChainID:         r.chainID,
-		ContractAddress: common.BytesToAddress(d.Owner),
-	}.String()
-
 	return &gmodel.AftermarketDevice{
 		ID:               globalID,
 		TokenID:          d.ID,
-		TokenDid:         tokenDid,
+		TokenDID:         tokenDID,
 		Address:          common.BytesToAddress(d.Address),
-		AddressDid:       addressDid,
 		Owner:            common.BytesToAddress(d.Owner),
-		OwnerDid:         ownerDid,
 		Serial:           d.Serial.Ptr(),
 		Imei:             d.Imei.Ptr(),
 		DevEui:           d.DevEui.Ptr(),

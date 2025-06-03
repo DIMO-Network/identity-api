@@ -54,25 +54,13 @@ func (r *Repository) ToAPI(v *models.Connection) *gmodel.Connection {
 		TokenID:         tokenID,
 	}.String()
 
-	ownerDid := cloudevent.EthrDID{
-		ChainID:         r.chainID,
-		ContractAddress: common.BytesToAddress(v.Owner),
-	}.String()
-
-	addressDid := cloudevent.EthrDID{
-		ChainID:         r.chainID,
-		ContractAddress: common.BytesToAddress(v.Address),
-	}.String()
-
 	return &gmodel.Connection{
-		Name:       name,
-		Address:    common.BytesToAddress(v.Address),
-		AddressDid: addressDid,
-		Owner:      common.BytesToAddress(v.Owner),
-		OwnerDid:   ownerDid,
-		TokenID:    tokenID,
-		TokenDid:   tokenDid,
-		MintedAt:   v.MintedAt,
+		Name:     name,
+		Address:  common.BytesToAddress(v.Address),
+		Owner:    common.BytesToAddress(v.Owner),
+		TokenID:  tokenID,
+		TokenDID: tokenDid,
+		MintedAt: v.MintedAt,
 	}
 }
 
