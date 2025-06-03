@@ -33,16 +33,18 @@ func TestHandleMintAndTransfer(t *testing.T) {
 	// Case taken from
 	// https://amoy.polygonscan.com/tx/0x344a769602df87e9c46f6f7f8752f6bb13ce6f9ae53e7598513af6c280c007a7
 	err := h.Handle(t.Context(), &models.ContractEventData{
-		EventSignature: common.HexToHash("0x4bce7eaeb5f9b0163fdd057deb2a52eefcf77f28f50703ef59a20ddcd4751067"),
+		EventSignature: common.HexToHash("0xb751dcd57d7731ef1af0a7e83d4062bf65bff8bfe40b39d8d5039fcae7f8db92"),
 		Block: models.Block{
 			Time: time.Date(2025, 5, 4, 9, 0, 0, 0, time.UTC),
 		},
 		Arguments: []byte(`
 {
-	"account": "0xc008ef40b0b42aad7e34879eb024385024f753ea",
-	"licenseId": 35025012972284307078409909351199105568725376826249000437555291297665349844992,
-	"licenseAddr": "0x5879b43d88fa93ce8072d6612cbc8de93e98ce5d",
-	"licenseCostInDimo": 90692000000000000000000
+	"account": "0xC008EF40B0b42AAD7e34879EB024385024f753ea",
+	"connectionId": 37747592896913129884346430642309039154630403646040022073469559591247189901312,
+	"connectionAddr": "0xb83DE952D389f9A6806819434450324197712FDA",
+	"connectionName": "Staex",
+	"connectionCostInDimo": 90692000000000000000000,
+	"points": 2000
 }`),
 	})
 
@@ -55,11 +57,11 @@ func TestHandleMintAndTransfer(t *testing.T) {
 		t.Fatalf("unexpected error %v", err)
 	}
 
-	if c.Name != "Motorq" {
-		t.Errorf("Expected name Motorq, got %q", c.Name)
+	if string(c.ID[:5]) != "Staex" {
+		t.Errorf("Expected name Staex, got %q", string(bytes.TrimRight(c.ID, "\x00")))
 	}
 
-	if !bytes.Equal(c.Address, common.FromHex("0x5879b43d88fa93ce8072d6612cbc8de93e98ce5d")) {
+	if !bytes.Equal(c.Address, common.FromHex("0xb83DE952D389f9A6806819434450324197712FDA")) {
 		t.Errorf("Unexpected address %q", c.Address)
 	}
 
@@ -67,8 +69,8 @@ func TestHandleMintAndTransfer(t *testing.T) {
 		t.Errorf("Unexpected mint time %q", c.MintedAt)
 	}
 
-	if !bytes.Equal(c.Owner, common.FromHex("0xc008ef40b0b42aad7e34879eb024385024f753ea")) {
-		t.Errorf("Unexpected address %q", c.Address)
+	if !bytes.Equal(c.Owner, common.FromHex("0xC008EF40B0b42AAD7e34879EB024385024f753ea")) {
+		t.Errorf("Unexpected owner %q", c.Owner)
 	}
 
 	err = h.Handle(t.Context(), &models.ContractEventData{
@@ -80,7 +82,7 @@ func TestHandleMintAndTransfer(t *testing.T) {
 {
 	"from": "0xc008ef40b0b42aad7e34879eb024385024f753ea",
 	"to": "0x41799E9Dc893722844E771a1C1cAf3BBc2876132",
-	"tokenId": 35025012972284307078409909351199105568725376826249000437555291297665349844992
+	"tokenId": 37747592896913129884346430642309039154630403646040022073469559591247189901312
 }`),
 	})
 

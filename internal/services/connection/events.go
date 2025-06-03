@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	TransferEventID      = common.HexToHash("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef")
-	LicenseMintedEventID = common.HexToHash("0x4bce7eaeb5f9b0163fdd057deb2a52eefcf77f28f50703ef59a20ddcd4751067")
+	TransferEventID         = common.HexToHash("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef")
+	ConnectionMintedEventID = common.HexToHash("0xb751dcd57d7731ef1af0a7e83d4062bf65bff8bfe40b39d8d5039fcae7f8db92")
 )
 
 type Transfer struct {
@@ -18,9 +18,11 @@ type Transfer struct {
 	TokenId *big.Int       `json:"tokenId"`
 }
 
-type LicenseMinted struct {
-	Account           common.Address `json:"account"`
-	LicenseId         *big.Int       `json:"licenseId"`
-	LicenseAddr       common.Address `json:"licenseAddr"`
-	LicenseCostInDimo *big.Int       `json:"licenseCostInDimo"`
+type ConnectionMinted struct {
+	Account              common.Address `json:"account"`
+	ConnectionId         *big.Int       `json:"connectionId"`
+	ConnectionAddr       common.Address `json:"connectionAddr"`
+	ConnectionName       string         `json:"connectionName"`
+	ConnectionCostInDimo *big.Int       `json:"connectionCostInDimo"`
+	Points               *big.Int       `json:"points"`
 }
