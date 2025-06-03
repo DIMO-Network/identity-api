@@ -31,19 +31,12 @@ type Cursor struct {
 var pageHelper = helpers.PaginationHelper[Cursor]{}
 
 func ToAPI(v *models.Connection) *gmodel.Connection {
-	nameBytes := []byte(v.Name)
-	if len(nameBytes) > 32 {
-		// We should never have to do this.
-		nameBytes = nameBytes[:32]
-	}
+	name := string(bytes.TrimRight(v.ID, "\x00"))
 
-	nameBytesPadded := make([]byte, 32)
-	copy(nameBytesPadded, nameBytes)
-
-	tokenID := new(big.Int).SetBytes(nameBytesPadded)
+	tokenID := new(big.Int).SetBytes(v.ID)
 
 	return &gmodel.Connection{
-		Name:     v.Name,
+		Name:     name,
 		Address:  common.BytesToAddress(v.Address),
 		Owner:    common.BytesToAddress(v.Owner),
 		TokenID:  tokenID,
@@ -176,17 +169,23 @@ func (r *Repository) GetConnection(ctx context.Context, by gmodel.ConnectionBy) 
 
 	switch {
 	case by.Name != nil:
-		mod = models.ConnectionWhere.Name.EQ(*by.Name)
-	case by.Address != nil:
-		mod = models.ConnectionWhere.Address.EQ(by.Address.Bytes())
-	case by.TokenID != nil:
-		idBytes := by.TokenID.Bytes()
-		if len(idBytes) > 32 {
+		nbs := []byte(*by.Name)
+		if len(nbs) > 32 {
 			return nil, repositories.ErrNotFound
 		}
 
-		idBytesTrimmed := bytes.TrimRight(idBytes, "\x00")
-		mod = models.ConnectionWhere.Name.EQ(string(idBytesTrimmed))
+		nb32 := make([]byte, 32)
+		copy(nb32, nbs)
+		mod = models.ConnectionWhere.ID.EQ(nb32)
+	case by.Address != nil:
+		mod = models.ConnectionWhere.Address.EQ(by.Address.Bytes())
+	case by.TokenID != nil:
+		id, err := convertTokenIDToID(by.TokenID)
+		if err != nil {
+			return nil, err
+		}
+
+		mod = models.ConnectionWhere.ID.EQ(id)
 	}
 
 	dl, err := models.Connections(mod).One(ctx, r.PDB.DBS().Reader)
@@ -198,4 +197,25 @@ func (r *Repository) GetConnection(ctx context.Context, by gmodel.ConnectionBy) 
 	}
 
 	return ToAPI(dl), nil
+}
+
+func convertTokenIDToID(tokenID *big.Int) ([]byte, error) {
+	if tokenID.Sign() < 0 {
+		return nil, errors.New("token id cannot be negative")
+	}
+
+	tbs := tokenID.Bytes()
+	if len(tbs) > 32 {
+		return nil, errors.New("token id too large")
+	}
+
+	if len(tbs) == 32 {
+		// This should almost always be the case.
+		return tbs, nil
+	}
+
+	tb32 := make([]byte, 32)
+	copy(tb32[32-len(tbs):], tbs)
+
+	return tb32, nil
 }

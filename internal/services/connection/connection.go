@@ -24,7 +24,7 @@ type Handler struct {
 
 func (h *Handler) Handle(ctx context.Context, ev *cmodels.ContractEventData) error {
 	switch ev.EventSignature {
-	case LicenseMintedEventID:
+	case ConnectionMintedEventID:
 		return h.HandleLicenseMinted(ctx, ev)
 	case TransferEventID:
 		return h.HandleTransfer(ctx, ev)
@@ -34,30 +34,30 @@ func (h *Handler) Handle(ctx context.Context, ev *cmodels.ContractEventData) err
 }
 
 func (h *Handler) HandleLicenseMinted(ctx context.Context, ev *cmodels.ContractEventData) error {
-	var lm LicenseMinted
+	var lm ConnectionMinted
 	err := json.Unmarshal(ev.Arguments, &lm)
 	if err != nil {
 		return err
 	}
 
-	name, err := convertTokenIDToName(lm.LicenseId)
+	cb, err := convertTokenIDToID(lm.ConnectionId)
 	if err != nil {
 		return err
 	}
 
 	conn := dmodels.Connection{
-		Name:     name,
-		Address:  lm.LicenseAddr.Bytes(),
+		ID:       cb,
+		Address:  lm.ConnectionAddr.Bytes(),
 		Owner:    lm.Account.Bytes(),
 		MintedAt: ev.Block.Time,
 	}
 
-	err = conn.Upsert(ctx, h.DBS.DBS().Writer, false, []string{dmodels.ConnectionColumns.Name}, boil.None(), boil.Infer())
+	err = conn.Upsert(ctx, h.DBS.DBS().Writer, false, []string{dmodels.ConnectionColumns.ID}, boil.None(), boil.Infer())
 	if err != nil {
 		return err
 	}
 
-	h.Logger.Info().Msgf("New connection %q with address %s minted.", name, lm.Account.Hex())
+	h.Logger.Info().Msgf("New connection %q with address %s minted.", convertIDToName(cb), lm.Account.Hex())
 
 	return nil
 }
@@ -70,17 +70,17 @@ func (h *Handler) HandleTransfer(ctx context.Context, ev *cmodels.ContractEventD
 	}
 
 	if t.From == zeroAddr {
-		// Handle LicenseMinted instead.
+		// Handle ConnectionMinted instead.
 		return nil
 	}
 
-	name, err := convertTokenIDToName(t.TokenId)
+	id, err := convertTokenIDToID(t.TokenId)
 	if err != nil {
 		return err
 	}
 
 	conn := dmodels.Connection{
-		Name:  name,
+		ID:    id,
 		Owner: t.To.Bytes(),
 	}
 
@@ -88,16 +88,29 @@ func (h *Handler) HandleTransfer(ctx context.Context, ev *cmodels.ContractEventD
 	return err
 }
 
-var zeroAddr common.Address
-
-func convertTokenIDToName(tokenID *big.Int) (string, error) {
-	idBytes := tokenID.Bytes()
-	if len(idBytes) > 32 {
-		return "", errors.New("token id is more than 32 bytes")
+func convertTokenIDToID(tokenID *big.Int) ([]byte, error) {
+	if tokenID.Sign() < 0 {
+		return nil, errors.New("token id cannot be negative")
 	}
 
-	// TODO(elffjs): What if this isn't valid UTF-8?
-	idBytesTrimmed := bytes.TrimRight(idBytes, "\x00")
+	tbs := tokenID.Bytes()
+	if len(tbs) > 32 {
+		return nil, errors.New("token id too large")
+	}
 
-	return string(idBytesTrimmed), nil
+	if len(tbs) == 32 {
+		// This should almost always be the case.
+		return tbs, nil
+	}
+
+	tb32 := make([]byte, 32)
+	copy(tb32[32-len(tbs):], tbs)
+
+	return tb32, nil
 }
+
+func convertIDToName(id []byte) string {
+	return string(bytes.TrimRight(id, "\x00"))
+}
+
+var zeroAddr common.Address

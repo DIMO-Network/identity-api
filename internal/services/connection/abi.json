@@ -11,23 +11,35 @@
             {
                 "indexed": true,
                 "internalType": "uint256",
-                "name": "licenseId",
+                "name": "connectionId",
                 "type": "uint256"
             },
             {
                 "indexed": true,
                 "internalType": "address",
-                "name": "licenseAddr",
+                "name": "connectionAddr",
                 "type": "address"
             },
             {
                 "indexed": false,
+                "internalType": "string",
+                "name": "connectionName",
+                "type": "string"
+            },
+            {
+                "indexed": false,
                 "internalType": "uint256",
-                "name": "licenseCostInDimo",
+                "name": "connectionCostInDimo",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "points",
                 "type": "uint256"
             }
         ],
-        "name": "LicenseMinted",
+        "name": "ConnectionMinted",
         "type": "event"
     },
     {

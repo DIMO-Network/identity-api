@@ -76,6 +76,7 @@ type BeneficiarySetData struct {
 
 type SyntheticDeviceNodeMintedData struct {
 	IntegrationNode        *big.Int
+	ConnectionNode         *big.Int // Note that we've never had a Solidity event that has both this and IntegrationNode. This is purely for a smooth transition.
 	SyntheticDeviceNode    *big.Int
 	VehicleNode            *big.Int
 	SyntheticDeviceAddress common.Address
