@@ -27,8 +27,6 @@ func GetConnectionByID(ctx context.Context, id [32]byte) (*model.Connection, err
 	return thunk()
 }
 
-var zeroID [32]byte
-
 func (ad *ConnectionLoader) BatchGetConnectionsByIDs(ctx context.Context, ids [][32]byte) []*dataloader.Result[*model.Connection] {
 	boil.DebugMode = true
 
