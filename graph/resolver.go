@@ -66,7 +66,7 @@ type SyntheticRepository interface {
 //go:generate mockgen -destination=./mock_vehicle_test.go -package=graph github.com/DIMO-Network/identity-api/graph VehicleRepository
 type VehicleRepository interface {
 	GetVehicles(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.VehiclesFilter) (*model.VehicleConnection, error)
-	GetVehicle(ctx context.Context, tokenID *int, tokenDid *string) (*model.Vehicle, error)
+	GetVehicle(ctx context.Context, tokenID *int, tokenDID *string) (*model.Vehicle, error)
 }
 
 // DeviceDefinitionRepository interface for mocking devicedefinition.Repository.

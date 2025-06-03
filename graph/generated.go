@@ -19200,7 +19200,7 @@ func (ec *executionContext) unmarshalInputManufacturerBy(ctx context.Context, ob
 			if err != nil {
 				return it, err
 			}
-			it.TokenDid = data
+			it.TokenDID = data
 		}
 	}
 

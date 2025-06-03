@@ -172,7 +172,7 @@ func (r *Repository) GetAftermarketDevices(ctx context.Context, first *int, afte
 
 func (r *Repository) GetAftermarketDevice(ctx context.Context, by gmodel.AftermarketDeviceBy) (*gmodel.AftermarketDevice, error) {
 	if base.CountTrue(by.Address != nil, by.TokenID != nil, by.TokenDID != nil, by.Serial != nil, by.Imei != nil, by.DevEui != nil) != 1 {
-		return nil, gqlerror.Errorf("Pass in exactly one of `address`, `tokenId`, `tokenDid`, `serial`, `imei` or `devEUI`.")
+		return nil, gqlerror.Errorf("Pass in exactly one of `address`, `tokenId`, `tokenDID`, `serial`, `imei` or `devEUI`.")
 	}
 
 	var qm qm.QueryMod

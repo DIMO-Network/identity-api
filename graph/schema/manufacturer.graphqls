@@ -95,7 +95,7 @@ input ManufacturerBy @oneOf {
   """
   The DID of the manufacturer in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
   """
-  tokenDID: String
+  tokenDID: String @goField(name: "TokenDID")
 }
 
 """

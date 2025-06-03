@@ -198,19 +198,19 @@ func (r *Repository) GetVehicles(ctx context.Context, first *int, after *string,
 	return r.createVehiclesResponse(totalCount, all, hasNext, hasPrevious)
 }
 
-func (r *Repository) GetVehicle(ctx context.Context, tokenID *int, tokenDid *string) (*gmodel.Vehicle, error) {
-	if base.CountTrue(tokenID != nil, tokenDid != nil) != 1 {
-		return nil, fmt.Errorf("provide exactly one of `tokenID` or `tokenDid`")
+func (r *Repository) GetVehicle(ctx context.Context, tokenID *int, tokenDID *string) (*gmodel.Vehicle, error) {
+	if base.CountTrue(tokenID != nil, tokenDID != nil) != 1 {
+		return nil, fmt.Errorf("provide exactly one of `tokenID` or `tokenDID`")
 	}
 
 	var id int
 	switch {
 	case tokenID != nil:
 		id = *tokenID
-	case tokenDid != nil:
-		did, err := cloudevent.DecodeERC721DID(*tokenDid)
+	case tokenDID != nil:
+		did, err := cloudevent.DecodeERC721DID(*tokenDID)
 		if err != nil {
-			return nil, fmt.Errorf("error decoding tokenDid: %w", err)
+			return nil, fmt.Errorf("error decoding tokenDID: %w", err)
 		}
 		id = int(did.TokenID.Int64())
 	default:

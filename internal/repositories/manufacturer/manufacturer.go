@@ -74,8 +74,8 @@ func IDToToken(b []byte) (int, error) {
 }
 
 func (r *Repository) GetManufacturer(ctx context.Context, by gmodel.ManufacturerBy) (*gmodel.Manufacturer, error) {
-	if base.CountTrue(by.TokenID != nil, by.Name != nil, by.Slug != nil, by.TokenDid != nil) != 1 {
-		return nil, gqlerror.Errorf("Provide exactly one of `name`, `tokenID`, `slug`, or `tokenDid`.")
+	if base.CountTrue(by.TokenID != nil, by.Name != nil, by.Slug != nil, by.TokenDID != nil) != 1 {
+		return nil, gqlerror.Errorf("Provide exactly one of `name`, `tokenID`, `slug`, or `tokenDID`.")
 	}
 
 	var qm qm.QueryMod
@@ -86,8 +86,8 @@ func (r *Repository) GetManufacturer(ctx context.Context, by gmodel.Manufacturer
 		qm = models.ManufacturerWhere.Name.EQ(*by.Name)
 	case by.Slug != nil:
 		qm = models.ManufacturerWhere.Slug.EQ(*by.Slug)
-	case by.TokenDid != nil:
-		did, err := cloudevent.DecodeERC721DID(*by.TokenDid)
+	case by.TokenDID != nil:
+		did, err := cloudevent.DecodeERC721DID(*by.TokenDID)
 		if err != nil {
 			return nil, fmt.Errorf("error decoding token did: %w", err)
 		}

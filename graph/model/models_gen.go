@@ -379,7 +379,7 @@ type ManufacturerBy struct {
 	TokenID *int    `json:"tokenId,omitempty"`
 	Slug    *string `json:"slug,omitempty"`
 	// The DID of the manufacturer in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
-	TokenDid *string `json:"tokenDID,omitempty"`
+	TokenDID *string `json:"tokenDID,omitempty"`
 }
 
 // The Connection type for Manufacturer.

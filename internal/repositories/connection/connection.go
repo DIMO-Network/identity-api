@@ -48,7 +48,7 @@ func (r *Repository) ToAPI(v *models.Connection) *gmodel.Connection {
 
 	tokenID := new(big.Int).SetBytes(v.ID)
 
-	tokenDid := cloudevent.ERC721DID{
+	tokenDID := cloudevent.ERC721DID{
 		ChainID:         r.chainID,
 		ContractAddress: r.contractAddress,
 		TokenID:         tokenID,
@@ -59,7 +59,7 @@ func (r *Repository) ToAPI(v *models.Connection) *gmodel.Connection {
 		Address:  common.BytesToAddress(v.Address),
 		Owner:    common.BytesToAddress(v.Owner),
 		TokenID:  tokenID,
-		TokenDID: tokenDid,
+		TokenDID: tokenDID,
 		MintedAt: v.MintedAt,
 	}
 }
