@@ -131,7 +131,7 @@ models:
       VehicleID:
         type: "int"
       ConnectionID:
-        type: "[]byte"
+        type: "[]byte" # Can't use [32]byte here.
   Vehicle:
     fields:
       manufacturer:

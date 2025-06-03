@@ -54,6 +54,7 @@ func (r *syntheticDeviceResolver) Vehicle(ctx context.Context, obj *model.Synthe
 // Connection is the resolver for the connection field.
 func (r *syntheticDeviceResolver) Connection(ctx context.Context, obj *model.SyntheticDevice) (*model.Connection, error) {
 	if len(obj.ConnectionID) != 32 {
+		// Need to fill these in or we get null errors.
 		return &model.Connection{
 			TokenID:  big.NewInt(0),
 			MintedAt: time.Unix(0, 0),

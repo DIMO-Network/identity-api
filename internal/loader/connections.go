@@ -10,7 +10,6 @@ import (
 	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/graph-gophers/dataloader/v7"
 	"github.com/lib/pq"
-	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
@@ -28,8 +27,6 @@ func GetConnectionByID(ctx context.Context, id [32]byte) (*model.Connection, err
 }
 
 func (ad *ConnectionLoader) BatchGetConnectionsByIDs(ctx context.Context, ids [][32]byte) []*dataloader.Result[*model.Connection] {
-	boil.DebugMode = true
-
 	results := make([]*dataloader.Result[*model.Connection], len(ids))
 
 	uniqIDs := make(map[[32]byte]struct{})
