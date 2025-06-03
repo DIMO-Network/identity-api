@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+
 	"github.com/DIMO-Network/identity-api/graph/model"
 )
 

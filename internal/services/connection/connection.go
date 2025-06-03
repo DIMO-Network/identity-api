@@ -4,9 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
-	"math/big"
 
+	"github.com/DIMO-Network/identity-api/internal/helpers"
 	cmodels "github.com/DIMO-Network/identity-api/internal/services/models"
 	dmodels "github.com/DIMO-Network/identity-api/models"
 	"github.com/ethereum/go-ethereum/common"
@@ -40,7 +39,7 @@ func (h *Handler) HandleLicenseMinted(ctx context.Context, ev *cmodels.ContractE
 		return err
 	}
 
-	cb, err := convertTokenIDToID(lm.ConnectionId)
+	cb, err := helpers.ConvertTokenIDToID(lm.ConnectionId)
 	if err != nil {
 		return err
 	}
@@ -74,7 +73,7 @@ func (h *Handler) HandleTransfer(ctx context.Context, ev *cmodels.ContractEventD
 		return nil
 	}
 
-	id, err := convertTokenIDToID(t.TokenId)
+	id, err := helpers.ConvertTokenIDToID(t.TokenId)
 	if err != nil {
 		return err
 	}
@@ -86,27 +85,6 @@ func (h *Handler) HandleTransfer(ctx context.Context, ev *cmodels.ContractEventD
 
 	_, err = conn.Update(ctx, h.DBS.DBS().Writer, boil.Whitelist(dmodels.ConnectionColumns.Owner))
 	return err
-}
-
-func convertTokenIDToID(tokenID *big.Int) ([]byte, error) {
-	if tokenID.Sign() < 0 {
-		return nil, errors.New("token id cannot be negative")
-	}
-
-	tbs := tokenID.Bytes()
-	if len(tbs) > 32 {
-		return nil, errors.New("token id too large")
-	}
-
-	if len(tbs) == 32 {
-		// This should almost always be the case.
-		return tbs, nil
-	}
-
-	tb32 := make([]byte, 32)
-	copy(tb32[32-len(tbs):], tbs)
-
-	return tb32, nil
 }
 
 func convertIDToName(id []byte) string {

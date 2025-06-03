@@ -125,9 +125,13 @@ models:
     fields:
       vehicle:
         resolver: true
+      connection:
+        resolver: true
     extraFields:
       VehicleID:
         type: "int"
+      ConnectionID:
+        type: "[]byte"
   Vehicle:
     fields:
       manufacturer:
