@@ -8,6 +8,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/big"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/DIMO-Network/identity-api/graph/model"
@@ -51,7 +53,14 @@ func (r *syntheticDeviceResolver) Vehicle(ctx context.Context, obj *model.Synthe
 
 // Connection is the resolver for the connection field.
 func (r *syntheticDeviceResolver) Connection(ctx context.Context, obj *model.SyntheticDevice) (*model.Connection, error) {
-	panic(fmt.Errorf("not implemented: Connection - connection"))
+	if len(obj.ConnectionID) != 32 {
+		return &model.Connection{
+			TokenID:  big.NewInt(0),
+			MintedAt: time.Unix(0, 0),
+		}, nil
+	}
+
+	return loader.GetConnectionByID(ctx, [32]byte(obj.ConnectionID))
 }
 
 // SyntheticDevice returns SyntheticDeviceResolver implementation.

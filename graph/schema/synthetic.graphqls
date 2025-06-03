@@ -69,7 +69,7 @@ type SyntheticDevice implements Node {
   """
   vehicle: Vehicle!
 
-  connection: Connection
+  connection: Connection!
 }
 
 """

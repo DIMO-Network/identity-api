@@ -47,6 +47,7 @@ func ToAPI(sd *models.SyntheticDevice) (*gmodel.SyntheticDevice, error) {
 		Address:       common.BytesToAddress(sd.DeviceAddress),
 		MintedAt:      sd.MintedAt,
 		VehicleID:     sd.VehicleID,
+		ConnectionID:  sd.ConnectionID.Bytes,
 	}, nil
 }
 

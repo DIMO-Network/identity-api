@@ -535,7 +535,7 @@ type SyntheticDevice struct {
 	MintedAt time.Time `json:"mintedAt"`
 	// The vehicle with which the synthetic device is paired.
 	Vehicle      *Vehicle    `json:"vehicle"`
-	Connection   *Connection `json:"connection,omitempty"`
+	Connection   *Connection `json:"connection"`
 	ConnectionID []byte      `json:"-"`
 	VehicleID    int         `json:"-"`
 }
