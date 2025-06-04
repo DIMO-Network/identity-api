@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -23,51 +24,58 @@ import (
 
 // Connection is an object representing the database table.
 type Connection struct {
-	Address  []byte    `boil:"address" json:"address" toml:"address" yaml:"address"`
-	Owner    []byte    `boil:"owner" json:"owner" toml:"owner" yaml:"owner"`
-	MintedAt time.Time `boil:"minted_at" json:"minted_at" toml:"minted_at" yaml:"minted_at"`
-	ID       []byte    `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Address         []byte    `boil:"address" json:"address" toml:"address" yaml:"address"`
+	Owner           []byte    `boil:"owner" json:"owner" toml:"owner" yaml:"owner"`
+	MintedAt        time.Time `boil:"minted_at" json:"minted_at" toml:"minted_at" yaml:"minted_at"`
+	ID              []byte    `boil:"id" json:"id" toml:"id" yaml:"id"`
+	IntegrationNode null.Int  `boil:"integration_node" json:"integration_node,omitempty" toml:"integration_node" yaml:"integration_node,omitempty"`
 
 	R *connectionR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L connectionL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var ConnectionColumns = struct {
-	Address  string
-	Owner    string
-	MintedAt string
-	ID       string
+	Address         string
+	Owner           string
+	MintedAt        string
+	ID              string
+	IntegrationNode string
 }{
-	Address:  "address",
-	Owner:    "owner",
-	MintedAt: "minted_at",
-	ID:       "id",
+	Address:         "address",
+	Owner:           "owner",
+	MintedAt:        "minted_at",
+	ID:              "id",
+	IntegrationNode: "integration_node",
 }
 
 var ConnectionTableColumns = struct {
-	Address  string
-	Owner    string
-	MintedAt string
-	ID       string
+	Address         string
+	Owner           string
+	MintedAt        string
+	ID              string
+	IntegrationNode string
 }{
-	Address:  "connections.address",
-	Owner:    "connections.owner",
-	MintedAt: "connections.minted_at",
-	ID:       "connections.id",
+	Address:         "connections.address",
+	Owner:           "connections.owner",
+	MintedAt:        "connections.minted_at",
+	ID:              "connections.id",
+	IntegrationNode: "connections.integration_node",
 }
 
 // Generated where
 
 var ConnectionWhere = struct {
-	Address  whereHelper__byte
-	Owner    whereHelper__byte
-	MintedAt whereHelpertime_Time
-	ID       whereHelper__byte
+	Address         whereHelper__byte
+	Owner           whereHelper__byte
+	MintedAt        whereHelpertime_Time
+	ID              whereHelper__byte
+	IntegrationNode whereHelpernull_Int
 }{
-	Address:  whereHelper__byte{field: "\"identity_api\".\"connections\".\"address\""},
-	Owner:    whereHelper__byte{field: "\"identity_api\".\"connections\".\"owner\""},
-	MintedAt: whereHelpertime_Time{field: "\"identity_api\".\"connections\".\"minted_at\""},
-	ID:       whereHelper__byte{field: "\"identity_api\".\"connections\".\"id\""},
+	Address:         whereHelper__byte{field: "\"identity_api\".\"connections\".\"address\""},
+	Owner:           whereHelper__byte{field: "\"identity_api\".\"connections\".\"owner\""},
+	MintedAt:        whereHelpertime_Time{field: "\"identity_api\".\"connections\".\"minted_at\""},
+	ID:              whereHelper__byte{field: "\"identity_api\".\"connections\".\"id\""},
+	IntegrationNode: whereHelpernull_Int{field: "\"identity_api\".\"connections\".\"integration_node\""},
 }
 
 // ConnectionRels is where relationship names are stored.
@@ -107,9 +115,9 @@ func (r *connectionR) GetSyntheticDevices() SyntheticDeviceSlice {
 type connectionL struct{}
 
 var (
-	connectionAllColumns            = []string{"address", "owner", "minted_at", "id"}
+	connectionAllColumns            = []string{"address", "owner", "minted_at", "id", "integration_node"}
 	connectionColumnsWithoutDefault = []string{"address", "owner", "minted_at", "id"}
-	connectionColumnsWithDefault    = []string{}
+	connectionColumnsWithDefault    = []string{"integration_node"}
 	connectionPrimaryKeyColumns     = []string{"id"}
 	connectionGeneratedColumns      = []string{}
 )

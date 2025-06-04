@@ -17,30 +17,53 @@ type ConnectionLoader struct {
 	db db.Store
 }
 
-func GetConnectionByID(ctx context.Context, id [32]byte) (*model.Connection, error) {
+type ConnectionQueryKey struct {
+	IntegrationNode int
+	ConnectionID    [32]byte
+}
+
+func GetConnectionByID(ctx context.Context, integrationNode int, connectionID []byte) (*model.Connection, error) {
 	// read loader from context
 	loaders := ctx.Value(dataLoadersKey).(*Loaders)
+
+	query := ConnectionQueryKey{
+		IntegrationNode: integrationNode,
+	}
+
+	if len(connectionID) == 32 {
+		query.ConnectionID = [32]byte(connectionID)
+	}
+
 	// invoke and get thunk
-	thunk := loaders.ConnectionByID.Load(ctx, id)
+	thunk := loaders.ConnectionByID.Load(ctx, query)
 	// read value from thunk
 	return thunk()
 }
 
-func (ad *ConnectionLoader) BatchGetConnectionsByIDs(ctx context.Context, ids [][32]byte) []*dataloader.Result[*model.Connection] {
+func (ad *ConnectionLoader) BatchGetConnectionsByIDs(ctx context.Context, ids []ConnectionQueryKey) []*dataloader.Result[*model.Connection] {
 	results := make([]*dataloader.Result[*model.Connection], len(ids))
 
-	uniqIDs := make(map[[32]byte]struct{})
+	uniqKeys := make(map[ConnectionQueryKey]struct{})
 
 	for _, id := range ids {
-		uniqIDs[id] = struct{}{}
+		uniqKeys[id] = struct{}{}
 	}
 
-	queryIDs := make([][]byte, 0, len(uniqIDs))
-	for id := range uniqIDs {
-		queryIDs = append(queryIDs, id[:])
+	connectionIDs := make([][]byte, 0)
+	integrationNodes := make([]int32, 0)
+
+	for id := range uniqKeys {
+		if id.IntegrationNode == 0 {
+			connectionIDs = append(connectionIDs, id.ConnectionID[:])
+		} else {
+			integrationNodes = append(integrationNodes, int32(id.IntegrationNode))
+		}
 	}
 
-	connections, err := models.Connections(qm.Where(models.ConnectionTableColumns.ID+" = ANY(?)", pq.ByteaArray(queryIDs))).All(ctx, ad.db.DBS().Reader)
+	connections, err := models.Connections(
+		qm.Where(models.ConnectionTableColumns.ID+" = ANY(?)", pq.ByteaArray(connectionIDs)),
+		qm.Or(models.ConnectionTableColumns.IntegrationNode+" = ANY(?)", pq.Int32Array(integrationNodes)),
+	).All(ctx, ad.db.DBS().Reader)
 	if err != nil {
 		for i := range ids {
 			results[i] = &dataloader.Result[*model.Connection]{Data: nil, Error: err}
@@ -48,22 +71,38 @@ func (ad *ConnectionLoader) BatchGetConnectionsByIDs(ctx context.Context, ids []
 		return results
 	}
 
-	connectionByID := map[[32]byte]*models.Connection{}
+	connectionByConnectionID := map[[32]byte]*models.Connection{}
+	connectionByIntegrationNode := map[int]*models.Connection{}
 
 	for _, d := range connections {
-		connectionByID[[32]byte(d.ID)] = d
+		connectionByConnectionID[[32]byte(d.ID)] = d
+		if d.IntegrationNode.Valid {
+			connectionByIntegrationNode[d.IntegrationNode.Int] = d
+		}
 	}
 
 	for i, vID := range ids {
-		// We're okay with the missing case here. We just want to return something for now.
-		am, ok := connectionByID[vID]
-		if ok {
-			results[i] = &dataloader.Result[*model.Connection]{
-				Data: connection.ToAPI(am),
+		if vID.IntegrationNode == 0 {
+			am, ok := connectionByConnectionID[vID.ConnectionID]
+			if ok {
+				results[i] = &dataloader.Result[*model.Connection]{
+					Data: connection.ToAPI(am),
+				}
+			} else {
+				results[i] = &dataloader.Result[*model.Connection]{
+					Error: errors.New("couldn't find a connection with that id"),
+				}
 			}
 		} else {
-			results[i] = &dataloader.Result[*model.Connection]{
-				Error: errors.New("couldn't find a connection with that id"),
+			am, ok := connectionByIntegrationNode[vID.IntegrationNode]
+			if ok {
+				results[i] = &dataloader.Result[*model.Connection]{
+					Data: connection.ToAPI(am),
+				}
+			} else {
+				results[i] = &dataloader.Result[*model.Connection]{
+					Error: errors.New("couldn't find a connection corresponding to that integration node"),
+				}
 			}
 		}
 	}

@@ -25,7 +25,7 @@ type Loaders struct {
 	AftermarketDeviceByID        dataloader.Interface[int, *model.AftermarketDevice]
 	SyntheticDeviceByID          dataloader.Interface[int, *model.SyntheticDevice]
 	StakeByVehicleID             dataloader.Interface[int, *model.Stake]
-	ConnectionByID               dataloader.Interface[[32]byte, *model.Connection]
+	ConnectionByID               dataloader.Interface[ConnectionQueryKey, *model.Connection]
 }
 
 // NewDataLoader returns the instantiated Loaders struct for use in a request
@@ -74,7 +74,7 @@ func NewDataLoader(dbs db.Store, settings config.Settings) *Loaders {
 		),
 		ConnectionByID: dataloader.NewBatchedLoader(
 			connection.BatchGetConnectionsByIDs,
-			dataloader.WithClearCacheOnBatch[[32]byte, *model.Connection](),
+			dataloader.WithClearCacheOnBatch[ConnectionQueryKey, *model.Connection](),
 		),
 	}
 }

@@ -61,7 +61,7 @@ func (r *syntheticDeviceResolver) Connection(ctx context.Context, obj *model.Syn
 		}, nil
 	}
 
-	return loader.GetConnectionByID(ctx, [32]byte(obj.ConnectionID))
+	return loader.GetConnectionByID(ctx, obj.IntegrationID, obj.ConnectionID)
 }
 
 // SyntheticDevice returns SyntheticDeviceResolver implementation.
