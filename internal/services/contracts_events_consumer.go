@@ -734,8 +734,12 @@ func (c *ContractsEventsConsumer) handleBeneficiarySetEvent(ctx context.Context,
 	return nil
 }
 
-// Nothing above this would be an old-style integration.
-var integrationLimit = big.NewInt(100)
+func takeFirst(x, y *big.Int) *big.Int {
+	if x != nil {
+		return x
+	}
+	return y
+}
 
 func (c *ContractsEventsConsumer) handleSyntheticDeviceNodeMintedEvent(ctx context.Context, e *cmodels.ContractEventData) error {
 	var args SyntheticDeviceNodeMintedData
@@ -746,14 +750,15 @@ func (c *ContractsEventsConsumer) handleSyntheticDeviceNodeMintedEvent(ctx conte
 	var integrationID int
 	var connectionID null.Bytes
 
-	if args.IntegrationNode.Cmp(integrationLimit) < 0 {
-		integrationID = int(args.IntegrationNode.Int64())
+	rightID := takeFirst(args.ConnectionID, args.IntegrationNode) // Both fields being nil would be very bad.
+
+	if rightID.IsInt64() {
+		integrationID = int(rightID.Int64())
 	} else {
-		id, err := helpers.ConvertTokenIDToID(args.IntegrationNode)
+		id, err := helpers.ConvertTokenIDToID(rightID)
 		if err != nil {
 			return err
 		}
-
 		connectionID = null.BytesFrom(id)
 	}
 

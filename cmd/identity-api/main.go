@@ -81,7 +81,6 @@ func main() {
 
 	logger.Info().Msgf("Server started on port: %d", settings.Port)
 
-	// time.Sleep(30 * time.Second)
 	logger.Fatal().Err(http.ListenAndServe(fmt.Sprintf(":%d", settings.Port), nil)).Msg("Server shut down.")
 }
 
