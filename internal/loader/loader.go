@@ -6,6 +6,14 @@ import (
 
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/config"
+	"github.com/DIMO-Network/identity-api/internal/repositories/aftermarket"
+	"github.com/DIMO-Network/identity-api/internal/repositories/base"
+	"github.com/DIMO-Network/identity-api/internal/repositories/connection"
+	"github.com/DIMO-Network/identity-api/internal/repositories/dcn"
+	"github.com/DIMO-Network/identity-api/internal/repositories/manufacturer"
+	"github.com/DIMO-Network/identity-api/internal/repositories/stake"
+	"github.com/DIMO-Network/identity-api/internal/repositories/synthetic"
+	"github.com/DIMO-Network/identity-api/internal/repositories/vehicle"
 	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/graph-gophers/dataloader/v7"
 )
@@ -31,13 +39,15 @@ type Loaders struct {
 // NewDataLoader returns the instantiated Loaders struct for use in a request
 func NewDataLoader(dbs db.Store, settings config.Settings) *Loaders {
 	// instantiate the user dataloader
-	vehicle := &VehicleLoader{db: dbs, settings: settings}
-	aftermarketDevice := &AftermarketDeviceLoader{db: dbs, settings: settings}
-	syntheticDevice := &SyntheticDeviceLoader{db: dbs}
-	dcn := &DCNLoader{db: dbs}
-	manufacturer := &ManufacturerLoader{db: dbs}
-	stake := &StakeLoader{db: dbs}
-	connection := &ConnectionLoader{db: dbs}
+	baseRepo := &base.Repository{PDB: dbs, Settings: settings}
+	vehicle := NewVehicleLoader(vehicle.New(baseRepo))
+	aftermarketDevice := NewAftermarketDeviceLoader(aftermarket.New(baseRepo))
+	syntheticDevice := NewSyntheticDeviceLoader(synthetic.New(baseRepo))
+	dcn := NewDCNLoader(dcn.New(baseRepo))
+	manufacturer := NewManufacturerLoader(manufacturer.New(baseRepo))
+	stake := NewStakeLoader(stake.New(baseRepo))
+	connection := ConnectionLoader{repo: connection.New(baseRepo)}
+
 	// return the DataLoader
 	return &Loaders{
 		VehicleByID: dataloader.NewBatchedLoader(

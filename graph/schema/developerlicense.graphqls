@@ -5,10 +5,10 @@ extend type Query {
   List developer licenses. Sorts by token id, descending.
   """
   developerLicenses(
-    first: Int,
-    after: String,
-    last: Int,
-    before: String,
+    first: Int
+    after: String
+    last: Int
+    before: String
     filterBy: DeveloperLicenseFilterBy
   ): DeveloperLicenseConnection!
 
@@ -23,6 +23,10 @@ type DeveloperLicense {
   The token id of the license as an NFT.
   """
   tokenId: Int!
+  """
+  The DID for this license's token ID in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+  """
+  tokenDID: String! @goField(name: "TokenDID")
   """
   The owner of the license. A single owner can own multiple licenses.
   """
@@ -39,8 +43,18 @@ type DeveloperLicense {
   The block timestamp for the transaction that minted this license.
   """
   mintedAt: Time!
-  signers(first: Int, after: String, last: Int, before: String): SignerConnection!
-  redirectURIs(first: Int, after: String, last: Int, before: String): RedirectURIConnection!
+  signers(
+    first: Int
+    after: String
+    last: Int
+    before: String
+  ): SignerConnection!
+  redirectURIs(
+    first: Int
+    after: String
+    last: Int
+    before: String
+  ): RedirectURIConnection!
 }
 
 type DeveloperLicenseConnection {
@@ -59,6 +73,10 @@ input DeveloperLicenseBy {
   clientId: Address
   alias: String
   tokenId: Int
+  """
+  The DID of the developer license in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+  """
+  tokenDID: String @goField(name: "TokenDID")
 }
 
 type DeveloperLicenseEdge {

@@ -6,12 +6,15 @@ import (
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/repositories/synthetic"
 	"github.com/DIMO-Network/identity-api/models"
-	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/graph-gophers/dataloader/v7"
 )
 
 type SyntheticDeviceLoader struct {
-	db db.Store
+	repo *synthetic.Repository
+}
+
+func NewSyntheticDeviceLoader(repo *synthetic.Repository) *SyntheticDeviceLoader {
+	return &SyntheticDeviceLoader{repo: repo}
 }
 
 func GetSyntheticDeviceByVehicleID(ctx context.Context, vehicleID int) (*gmodel.SyntheticDevice, error) {
@@ -34,10 +37,10 @@ func GetSyntheticDeviceByID(ctx context.Context, vehicleID int) (*gmodel.Synthet
 
 // BatchGetSyntheticDeviceByVehicleID implements the dataloader for finding synthetic devices linked to vehicles and returns
 // them in the order requested
-func (sd *SyntheticDeviceLoader) BatchGetSyntheticDeviceByVehicleID(ctx context.Context, vehicleIDs []int) []*dataloader.Result[*gmodel.SyntheticDevice] {
+func (s *SyntheticDeviceLoader) BatchGetSyntheticDeviceByVehicleID(ctx context.Context, vehicleIDs []int) []*dataloader.Result[*gmodel.SyntheticDevice] {
 	results := make([]*dataloader.Result[*gmodel.SyntheticDevice], len(vehicleIDs))
 
-	devices, err := models.SyntheticDevices(models.SyntheticDeviceWhere.VehicleID.IN(vehicleIDs)).All(ctx, sd.db.DBS().Reader)
+	devices, err := models.SyntheticDevices(models.SyntheticDeviceWhere.VehicleID.IN(vehicleIDs)).All(ctx, s.repo.PDB.DBS().Reader)
 	if err != nil {
 		for i := range vehicleIDs {
 			results[i] = &dataloader.Result[*gmodel.SyntheticDevice]{Data: nil, Error: err}
@@ -53,23 +56,22 @@ func (sd *SyntheticDeviceLoader) BatchGetSyntheticDeviceByVehicleID(ctx context.
 
 	for idx, vid := range vehicleIDs {
 		if sdv, ok := sdByVehicleID[vid]; ok {
-			synthAPI, err := synthetic.ToAPI(sdv)
+			synthAPI, err := s.repo.ToAPI(sdv)
 			results[idx] = &dataloader.Result[*gmodel.SyntheticDevice]{Data: synthAPI, Error: err}
 		} else {
 			results[idx] = &dataloader.Result[*gmodel.SyntheticDevice]{}
 		}
-
 	}
 
 	return results
 }
 
-// BatchGetSyntheticDeviceByVehicleID implements the dataloader for finding synthetic devices by their ids and returns
+// BatchGetSyntheticDeviceByID implements the dataloader for finding synthetic devices by their ids and returns
 // them in the order requested
-func (sd *SyntheticDeviceLoader) BatchGetSyntheticDeviceByID(ctx context.Context, syntheticDeviceIDs []int) []*dataloader.Result[*gmodel.SyntheticDevice] {
+func (s *SyntheticDeviceLoader) BatchGetSyntheticDeviceByID(ctx context.Context, syntheticDeviceIDs []int) []*dataloader.Result[*gmodel.SyntheticDevice] {
 	results := make([]*dataloader.Result[*gmodel.SyntheticDevice], len(syntheticDeviceIDs))
 
-	sds, err := models.SyntheticDevices(models.SyntheticDeviceWhere.ID.IN(syntheticDeviceIDs)).All(ctx, sd.db.DBS().Reader)
+	sds, err := models.SyntheticDevices(models.SyntheticDeviceWhere.ID.IN(syntheticDeviceIDs)).All(ctx, s.repo.PDB.DBS().Reader)
 	if err != nil {
 		for i := range results {
 			results[i] = &dataloader.Result[*gmodel.SyntheticDevice]{Error: err}
@@ -84,7 +86,7 @@ func (sd *SyntheticDeviceLoader) BatchGetSyntheticDeviceByID(ctx context.Context
 
 	for i, sdID := range syntheticDeviceIDs {
 		if sdv, ok := sdByID[sdID]; ok {
-			synthAPI, err := synthetic.ToAPI(sdv)
+			synthAPI, err := s.repo.ToAPI(sdv)
 			results[i] = &dataloader.Result[*gmodel.SyntheticDevice]{Data: synthAPI, Error: err}
 		} else {
 			results[i] = &dataloader.Result[*gmodel.SyntheticDevice]{}

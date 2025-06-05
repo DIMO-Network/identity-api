@@ -66,7 +66,7 @@ type SyntheticRepository interface {
 //go:generate mockgen -destination=./mock_vehicle_test.go -package=graph github.com/DIMO-Network/identity-api/graph VehicleRepository
 type VehicleRepository interface {
 	GetVehicles(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.VehiclesFilter) (*model.VehicleConnection, error)
-	GetVehicle(ctx context.Context, id int) (*model.Vehicle, error)
+	GetVehicle(ctx context.Context, tokenID *int, tokenDID *string) (*model.Vehicle, error)
 }
 
 // DeviceDefinitionRepository interface for mocking devicedefinition.Repository.
@@ -124,19 +124,19 @@ func NewResolver(baseRepo *base.Repository) *Resolver {
 	tablelandApiService := services.NewTablelandApiService(baseRepo.Log, &baseRepo.Settings)
 
 	return &Resolver{
-		aftermarket:      &aftermarket.Repository{Repository: baseRepo},
-		dcn:              &dcn.Repository{Repository: baseRepo},
-		manufacturer:     &manufacturer.Repository{Repository: baseRepo},
+		aftermarket:      aftermarket.New(baseRepo),
+		dcn:              dcn.New(baseRepo),
+		manufacturer:     manufacturer.New(baseRepo),
 		reward:           reward.Repository{Repository: baseRepo},
-		synthetic:        &synthetic.Repository{Repository: baseRepo},
-		vehicle:          &vehicle.Repository{Repository: baseRepo},
+		synthetic:        synthetic.New(baseRepo),
+		vehicle:          vehicle.New(baseRepo),
 		vehicleprivilege: vehicleprivilege.Repository{Repository: baseRepo},
 		vehiclesacd:      vehiclesacd.Repository{Repository: baseRepo},
 		deviceDefinition: &devicedefinition.Repository{Repository: baseRepo,
 			TablelandApiService: tablelandApiService,
 		},
-		developerLicense: &developerlicense.Repository{Repository: baseRepo},
-		stake:            &stake.Repository{Repository: baseRepo},
-		connection:       &connection.Repository{Repository: baseRepo},
+		developerLicense: developerlicense.New(baseRepo),
+		stake:            stake.New(baseRepo),
+		connection:       connection.New(baseRepo),
 	}
 }

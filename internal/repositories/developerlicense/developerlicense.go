@@ -5,10 +5,13 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"math/big"
 	"slices"
 	"time"
 
+	"github.com/DIMO-Network/cloudevent"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
@@ -21,11 +24,29 @@ import (
 
 type Repository struct {
 	*base.Repository
+	chainID         uint64
+	contractAddress common.Address
 }
 
-func ToAPI(v *models.DeveloperLicense) *gmodel.DeveloperLicense {
+// New creates a new developer license repository.
+func New(db *base.Repository) *Repository {
+	return &Repository{
+		Repository:      db,
+		chainID:         uint64(db.Settings.DIMORegistryChainID),
+		contractAddress: common.HexToAddress(db.Settings.DevLicenseAddr),
+	}
+}
+
+func (r *Repository) ToAPI(v *models.DeveloperLicense) *gmodel.DeveloperLicense {
+	tokenDID := cloudevent.ERC721DID{
+		ChainID:         r.chainID,
+		ContractAddress: r.contractAddress,
+		TokenID:         new(big.Int).SetUint64(uint64(v.ID)),
+	}.String()
+
 	return &gmodel.DeveloperLicense{
 		TokenID:  v.ID,
+		TokenDID: tokenDID,
 		Owner:    common.BytesToAddress(v.Owner),
 		ClientID: common.BytesToAddress(v.ClientID),
 		Alias:    v.Alias.Ptr(),
@@ -139,7 +160,7 @@ func (r *Repository) GetDeveloperLicenses(ctx context.Context, first *int, after
 	nodes := make([]*gmodel.DeveloperLicense, len(all))
 
 	for i, dv := range all {
-		dlv := ToAPI(dv)
+		dlv := r.ToAPI(dv)
 
 		edges[i] = &gmodel.DeveloperLicenseEdge{
 			Node:   dlv,
@@ -431,8 +452,8 @@ func (r *Repository) GetRedirectURIsForLicense(ctx context.Context, obj *gmodel.
 }
 
 func (r *Repository) GetLicense(ctx context.Context, by gmodel.DeveloperLicenseBy) (*gmodel.DeveloperLicense, error) {
-	if base.CountTrue(by.ClientID != nil, by.TokenID != nil, by.Alias != nil) != 1 {
-		return nil, fmt.Errorf("must specify exactly one of `clientId`, `tokenId`, or `alias`")
+	if base.CountTrue(by.ClientID != nil, by.Alias != nil, by.TokenID != nil, by.TokenDID != nil) != 1 {
+		return nil, gqlerror.Errorf("must specify exactly one of `clientId`, `alias`, `tokenId`, or `tokenDID`")
 	}
 
 	var mod qm.QueryMod
@@ -440,10 +461,27 @@ func (r *Repository) GetLicense(ctx context.Context, by gmodel.DeveloperLicenseB
 	switch {
 	case by.ClientID != nil:
 		mod = models.DeveloperLicenseWhere.ClientID.EQ(by.ClientID.Bytes())
-	case by.TokenID != nil:
-		mod = models.DeveloperLicenseWhere.ID.EQ(*by.TokenID)
 	case by.Alias != nil:
 		mod = models.DeveloperLicenseWhere.Alias.EQ(null.StringFrom(*by.Alias))
+	case by.TokenID != nil:
+		mod = models.DeveloperLicenseWhere.ID.EQ(*by.TokenID)
+	case by.TokenDID != nil:
+		did, err := cloudevent.DecodeERC721DID(*by.TokenDID)
+		if err != nil {
+			return nil, fmt.Errorf("error decoding token did: %w", err)
+		}
+		if did.ChainID != r.chainID {
+			return nil, fmt.Errorf("unknown chain id %d in token did", did.ChainID)
+		}
+		if did.ContractAddress != r.contractAddress {
+			return nil, fmt.Errorf("invalid contract address '%s' in token did", did.ContractAddress.Hex())
+		}
+		if !did.TokenID.IsInt64() {
+			return nil, fmt.Errorf("token id is too large")
+		}
+		mod = models.DeveloperLicenseWhere.ID.EQ(int(did.TokenID.Int64()))
+	default:
+		return nil, fmt.Errorf("invalid filter")
 	}
 
 	dl, err := models.DeveloperLicenses(mod).One(ctx, r.PDB.DBS().Reader)
@@ -454,5 +492,5 @@ func (r *Repository) GetLicense(ctx context.Context, by gmodel.DeveloperLicenseB
 		return nil, err
 	}
 
-	return ToAPI(dl), nil
+	return r.ToAPI(dl), nil
 }

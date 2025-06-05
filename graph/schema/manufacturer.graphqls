@@ -29,6 +29,10 @@ type Manufacturer implements Node {
   """
   tokenId: Int!
   """
+  The DID for this manufacturer's token ID in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+  """
+  tokenDID: String! @goField(name: "TokenDID")
+  """
   The name of the manufacturer.
   """
   name: String!
@@ -54,7 +58,6 @@ type Manufacturer implements Node {
     before: String
     filterBy: AftermarketDevicesFilter
   ): AftermarketDeviceConnection!
-
 
   """
   List device definitions under this manufacturer.
@@ -89,6 +92,10 @@ input ManufacturerBy @oneOf {
   name: String
   tokenId: Int
   slug: String
+  """
+  The DID of the manufacturer in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+  """
+  tokenDID: String @goField(name: "TokenDID")
 }
 
 """

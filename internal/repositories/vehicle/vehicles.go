@@ -5,12 +5,14 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"math/big"
 	"net/url"
 	"slices"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/DIMO-Network/cloudevent"
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/repositories"
@@ -28,6 +30,17 @@ const TokenPrefix = "V"
 
 type Repository struct {
 	*base.Repository
+	chainID         uint64
+	contractAddress common.Address
+}
+
+// New creates a new vehicle repository.
+func New(db *base.Repository) *Repository {
+	return &Repository{
+		Repository:      db,
+		chainID:         uint64(db.Settings.DIMORegistryChainID),
+		contractAddress: common.HexToAddress(db.Settings.VehicleNFTAddr),
+	}
 }
 
 func (r *Repository) createVehiclesResponse(totalCount int64, vehicles models.VehicleSlice, hasNext bool, hasPrevious bool) (*gmodel.VehicleConnection, error) {
@@ -65,7 +78,7 @@ func (r *Repository) createVehiclesResponse(totalCount int64, vehicles models.Ve
 			errList = append(errList, gqlerror.Wrap(wErr))
 			continue
 		}
-		gv, err := ToAPI(dv, imageURI, dataURI)
+		gv, err := r.ToAPI(dv, imageURI, dataURI)
 		if err != nil {
 			wErr := fmt.Errorf("error converting vehicle to API: %w", err)
 			errList = append(errList, gqlerror.Wrap(wErr))
@@ -111,7 +124,10 @@ func (r *Repository) GetVehicles(ctx context.Context, first *int, after *string,
 	}
 
 	var totalCount int64
-	queryMods := queryModsFromFilters(filterBy)
+	queryMods, err := r.queryModsFromFilters(filterBy)
+	if err != nil {
+		return nil, err
+	}
 	if filterBy != nil && filterBy.Privileged != nil {
 		totalCount, err = models.Vehicles(
 			// We're performing this because SQLBoiler doesn't understand DISTINCT ON. If we use
@@ -182,7 +198,27 @@ func (r *Repository) GetVehicles(ctx context.Context, first *int, after *string,
 	return r.createVehiclesResponse(totalCount, all, hasNext, hasPrevious)
 }
 
-func (r *Repository) GetVehicle(ctx context.Context, id int) (*gmodel.Vehicle, error) {
+func (r *Repository) GetVehicle(ctx context.Context, tokenID *int, tokenDID *string) (*gmodel.Vehicle, error) {
+	if base.CountTrue(tokenID != nil, tokenDID != nil) != 1 {
+		return nil, fmt.Errorf("provide exactly one of `tokenID` or `tokenDID`")
+	}
+
+	var id int
+	switch {
+	case tokenID != nil:
+		id = *tokenID
+	case tokenDID != nil:
+		did, err := cloudevent.DecodeERC721DID(*tokenDID)
+		if err != nil {
+			return nil, fmt.Errorf("error decoding tokenDID: %w", err)
+		}
+		if !did.TokenID.IsInt64() {
+			return nil, fmt.Errorf("token id is too large")
+		}
+		id = int(did.TokenID.Int64())
+	default:
+		return nil, fmt.Errorf("invalid filter")
+	}
 	v, err := models.FindVehicle(ctx, r.PDB.DBS().Reader, id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -208,14 +244,14 @@ func (r *Repository) GetVehicle(ctx context.Context, id int) (*gmodel.Vehicle, e
 		return nil, fmt.Errorf("error getting vehicle data uri: %w", err)
 	}
 
-	return ToAPI(v, imageURI, dataURI)
+	return r.ToAPI(v, imageURI, dataURI)
 }
 
 // queryModsFromFilters returns a slice of query mods from the given filters.
-func queryModsFromFilters(filter *gmodel.VehiclesFilter) []qm.QueryMod {
+func (r *Repository) queryModsFromFilters(filter *gmodel.VehiclesFilter) ([]qm.QueryMod, error) {
 	var queryMods []qm.QueryMod
 	if filter == nil {
-		return queryMods
+		return queryMods, nil
 	}
 
 	// To maintain correct count behavior the privilege filter must be the first filter added to the query.
@@ -269,11 +305,11 @@ func queryModsFromFilters(filter *gmodel.VehiclesFilter) []qm.QueryMod {
 		queryMods = append(queryMods, models.VehicleWhere.DeviceDefinitionID.EQ(null.StringFrom(*filter.DeviceDefinitionID)))
 	}
 
-	return queryMods
+	return queryMods, nil
 }
 
 // ToAPI converts a vehicle to a corresponding graphql model.
-func ToAPI(v *models.Vehicle, imageURI string, dataURI string) (*gmodel.Vehicle, error) {
+func (r *Repository) ToAPI(v *models.Vehicle, imageURI string, dataURI string) (*gmodel.Vehicle, error) {
 	nameList := mnemonic.FromInt32WithObfuscation(int32(v.ID))
 	name := strings.Join(nameList, " ")
 
@@ -282,9 +318,16 @@ func ToAPI(v *models.Vehicle, imageURI string, dataURI string) (*gmodel.Vehicle,
 		return nil, fmt.Errorf("error encoding vehicle id: %w", err)
 	}
 
+	tokenDID := cloudevent.ERC721DID{
+		ChainID:         r.chainID,
+		ContractAddress: r.contractAddress,
+		TokenID:         new(big.Int).SetInt64(int64(v.ID)),
+	}.String()
+
 	return &gmodel.Vehicle{
 		ID:       globalID,
 		TokenID:  v.ID,
+		TokenDID: tokenDID,
 		Owner:    common.BytesToAddress(v.OwnerAddress),
 		MintedAt: v.MintedAt,
 		Definition: &gmodel.Definition{

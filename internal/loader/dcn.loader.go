@@ -6,12 +6,15 @@ import (
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/repositories/dcn"
 	"github.com/DIMO-Network/identity-api/models"
-	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/graph-gophers/dataloader/v7"
 )
 
 type DCNLoader struct {
-	db db.Store
+	repo *dcn.Repository
+}
+
+func NewDCNLoader(repo *dcn.Repository) *DCNLoader {
+	return &DCNLoader{repo: repo}
 }
 
 func GetDCNByVehicleID(ctx context.Context, vehicleID int) (*gmodel.Dcn, error) {
@@ -27,7 +30,7 @@ func GetDCNByVehicleID(ctx context.Context, vehicleID int) (*gmodel.Dcn, error) 
 // them in the order requested
 func (d *DCNLoader) BatchGetDCNByVehicleID(ctx context.Context, vehicleIDs []int) []*dataloader.Result[*gmodel.Dcn] {
 	results := make([]*dataloader.Result[*gmodel.Dcn], len(vehicleIDs))
-	dcns, err := models.DCNS(models.DCNWhere.VehicleID.IN(vehicleIDs)).All(ctx, d.db.DBS().Reader)
+	dcns, err := models.DCNS(models.DCNWhere.VehicleID.IN(vehicleIDs)).All(ctx, d.repo.PDB.DBS().Reader)
 	if err != nil {
 		for i := range vehicleIDs {
 			results[i] = &dataloader.Result[*gmodel.Dcn]{Data: nil, Error: err}
@@ -42,7 +45,7 @@ func (d *DCNLoader) BatchGetDCNByVehicleID(ctx context.Context, vehicleIDs []int
 
 	for idx, vid := range vehicleIDs {
 		if dcnModel, ok := dcnByVehicleID[vid]; ok {
-			dcnAPI, err := dcn.ToAPI(dcnModel)
+			dcnAPI, err := d.repo.ToAPI(dcnModel)
 			results[idx] = &dataloader.Result[*gmodel.Dcn]{
 				Data:  dcnAPI,
 				Error: err,
@@ -50,7 +53,6 @@ func (d *DCNLoader) BatchGetDCNByVehicleID(ctx context.Context, vehicleIDs []int
 		} else {
 			results[idx] = &dataloader.Result[*gmodel.Dcn]{}
 		}
-
 	}
 
 	return results

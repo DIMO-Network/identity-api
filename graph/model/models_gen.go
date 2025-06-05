@@ -20,6 +20,8 @@ type AftermarketDevice struct {
 	ID string `json:"id"`
 	// The ERC-721 token id for the device.
 	TokenID int `json:"tokenId"`
+	// The DID for this aftermarket device's token ID in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+	TokenDID string `json:"tokenDID"`
 	// The manufacturer of this aftermarket device.
 	Manufacturer *Manufacturer `json:"manufacturer"`
 	// The Ethereum address for the device.
@@ -63,6 +65,8 @@ func (this AftermarketDevice) GetID() string { return this.ID }
 type AftermarketDeviceBy struct {
 	// token id of the aftermarket device NFT
 	TokenID *int `json:"tokenId,omitempty"`
+	// The DID of the aftermarket device in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+	TokenDID *string `json:"tokenDID,omitempty"`
 	// address of the aftermarket device
 	Address *common.Address `json:"address,omitempty"`
 	// serial number of the aftermarket device
@@ -111,6 +115,8 @@ type Connection struct {
 	Owner common.Address `json:"owner"`
 	// The token id of the connection as an NFT. This tends to be very large.
 	TokenID *big.Int `json:"tokenId"`
+	// The DID for this connection's token ID in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+	TokenDID string `json:"tokenDID"`
 	// The block timestamp for the mint of the connection.
 	MintedAt time.Time `json:"mintedAt"`
 }
@@ -119,6 +125,8 @@ type ConnectionBy struct {
 	Name    *string         `json:"name,omitempty"`
 	Address *common.Address `json:"address,omitempty"`
 	TokenID *big.Int        `json:"tokenId,omitempty"`
+	// The DID of the connection in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+	TokenDID *string `json:"tokenDID,omitempty"`
 }
 
 type ConnectionConnection struct {
@@ -141,6 +149,8 @@ type Dcn struct {
 	Node []byte `json:"node"`
 	// The token id for the domain. This is simply the node reinterpreted as a uint256.
 	TokenID *big.Int `json:"tokenId"`
+	// The DID for this DCN's token ID in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+	TokenDID string `json:"tokenDID"`
 	// Ethereum address of domain owner.
 	Owner common.Address `json:"owner"`
 	// The block timestamp at which the domain will cease to be valid.
@@ -159,8 +169,10 @@ func (this Dcn) GetID() string { return this.ID }
 
 // Input used to specify a unique DCN to query.
 type DCNBy struct {
-	Node []byte  `json:"node,omitempty"`
-	Name *string `json:"name,omitempty"`
+	Node []byte `json:"node,omitempty"`
+	// The DID of the DCN in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+	TokenDID *string `json:"tokenDID,omitempty"`
+	Name     *string `json:"name,omitempty"`
 }
 
 // The Connection type for DCN.
@@ -199,6 +211,8 @@ type Definition struct {
 type DeveloperLicense struct {
 	// The token id of the license as an NFT.
 	TokenID int `json:"tokenId"`
+	// The DID for this license's token ID in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+	TokenDID string `json:"tokenDID"`
 	// The owner of the license. A single owner can own multiple licenses.
 	Owner common.Address `json:"owner"`
 	// Serves as the client id for OAuth as well as the address of the associated contract.
@@ -215,6 +229,8 @@ type DeveloperLicenseBy struct {
 	ClientID *common.Address `json:"clientId,omitempty"`
 	Alias    *string         `json:"alias,omitempty"`
 	TokenID  *int            `json:"tokenId,omitempty"`
+	// The DID of the developer license in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+	TokenDID *string `json:"tokenDID,omitempty"`
 }
 
 type DeveloperLicenseConnection struct {
@@ -339,6 +355,8 @@ type Manufacturer struct {
 	ID string `json:"id"`
 	// The ERC-721 token id for the manufacturer.
 	TokenID int `json:"tokenId"`
+	// The DID for this manufacturer's token ID in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+	TokenDID string `json:"tokenDID"`
 	// The name of the manufacturer.
 	Name string `json:"name"`
 	// The Ethereum address of the owner of this manufacturer.
@@ -360,6 +378,8 @@ type ManufacturerBy struct {
 	Name    *string `json:"name,omitempty"`
 	TokenID *int    `json:"tokenId,omitempty"`
 	Slug    *string `json:"slug,omitempty"`
+	// The DID of the manufacturer in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+	TokenDID *string `json:"tokenDID,omitempty"`
 }
 
 // The Connection type for Manufacturer.
@@ -479,6 +499,8 @@ type SignerEdge struct {
 type Stake struct {
 	// The token id of the license as an NFT.
 	TokenID int `json:"tokenId"`
+	// The DID for this stake's token ID in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+	TokenDID string `json:"tokenDID"`
 	// The owner of the license. A single owner can own multiple licenses.
 	Owner common.Address `json:"owner"`
 	// The level of the stake. Presently, the levels are 0, 1, and 2. These translate
@@ -527,6 +549,8 @@ type SyntheticDevice struct {
 	Name string `json:"name"`
 	// The ERC-721 token id for the device.
 	TokenID int `json:"tokenId"`
+	// The DID for this synthetic device's token ID in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+	TokenDID string `json:"tokenDID"`
 	// Type of integration for the synthetic device.
 	IntegrationID int `json:"integrationId"`
 	// The Ethereum address for the device.
@@ -548,6 +572,8 @@ func (this SyntheticDevice) GetID() string { return this.ID }
 type SyntheticDeviceBy struct {
 	// The token id for the synthetic device.
 	TokenID *int `json:"tokenId,omitempty"`
+	// The DID of the synthetic device in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+	TokenDID *string `json:"tokenDID,omitempty"`
 	// The Ethereum address for the synthetic device.
 	Address *common.Address `json:"address,omitempty"`
 }
@@ -592,6 +618,8 @@ type Vehicle struct {
 	ID string `json:"id"`
 	// The ERC-721 token id for the vehicle.
 	TokenID int `json:"tokenId"`
+	// The DID for this vehicle's token ID in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+	TokenDID string `json:"tokenDID"`
 	// The manufacturer of this vehicle.
 	Manufacturer *Manufacturer `json:"manufacturer"`
 	// The Ethereum address of the owner of this vehicle.

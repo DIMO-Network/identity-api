@@ -7,12 +7,15 @@ import (
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/repositories/manufacturer"
 	"github.com/DIMO-Network/identity-api/models"
-	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/graph-gophers/dataloader/v7"
 )
 
 type ManufacturerLoader struct {
-	db db.Store
+	repo *manufacturer.Repository
+}
+
+func NewManufacturerLoader(repo *manufacturer.Repository) *ManufacturerLoader {
+	return &ManufacturerLoader{repo: repo}
 }
 
 func GetManufacturerID(ctx context.Context, manufacturerID int) (*model.Manufacturer, error) {
@@ -24,10 +27,10 @@ func GetManufacturerID(ctx context.Context, manufacturerID int) (*model.Manufact
 	return thunk()
 }
 
-func (v *ManufacturerLoader) BatchGetManufacturerByID(ctx context.Context, manufacturerIDs []int) []*dataloader.Result[*model.Manufacturer] {
+func (m *ManufacturerLoader) BatchGetManufacturerByID(ctx context.Context, manufacturerIDs []int) []*dataloader.Result[*model.Manufacturer] {
 	results := make([]*dataloader.Result[*model.Manufacturer], len(manufacturerIDs))
 
-	manufacturers, err := models.Manufacturers(models.ManufacturerWhere.ID.IN(manufacturerIDs)).All(ctx, v.db.DBS().Reader)
+	manufacturers, err := models.Manufacturers(models.ManufacturerWhere.ID.IN(manufacturerIDs)).All(ctx, m.repo.PDB.DBS().Reader)
 	if err != nil {
 		for i := range results {
 			results[i] = &dataloader.Result[*model.Manufacturer]{Error: err}
@@ -43,7 +46,7 @@ func (v *ManufacturerLoader) BatchGetManufacturerByID(ctx context.Context, manuf
 
 	for i, k := range manufacturerIDs {
 		if v, ok := manufacturerByID[k]; ok {
-			obj, err := manufacturer.ToAPI(v)
+			obj, err := m.repo.ToAPI(v)
 			results[i] = &dataloader.Result[*model.Manufacturer]{
 				Data:  obj,
 				Error: err,

@@ -27,7 +27,7 @@ func (r *queryResolver) Node(ctx context.Context, id string) (model.Node, error)
 	}
 	switch prefix {
 	case vehicle.TokenPrefix:
-		return r.vehicle.GetVehicle(ctx, objID)
+		return r.vehicle.GetVehicle(ctx, &objID, nil)
 	case aftermarket.TokenPrefix:
 		return r.aftermarket.GetAftermarketDevice(ctx, model.AftermarketDeviceBy{TokenID: &objID})
 	case manufacturer.TokenPrefix:

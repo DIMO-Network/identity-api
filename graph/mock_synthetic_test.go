@@ -21,7 +21,6 @@ import (
 type MockSyntheticRepository struct {
 	ctrl     *gomock.Controller
 	recorder *MockSyntheticRepositoryMockRecorder
-	isgomock struct{}
 }
 
 // MockSyntheticRepositoryMockRecorder is the mock recorder for MockSyntheticRepository.
@@ -42,31 +41,31 @@ func (m *MockSyntheticRepository) EXPECT() *MockSyntheticRepositoryMockRecorder 
 }
 
 // GetSyntheticDevice mocks base method.
-func (m *MockSyntheticRepository) GetSyntheticDevice(ctx context.Context, by model.SyntheticDeviceBy) (*model.SyntheticDevice, error) {
+func (m *MockSyntheticRepository) GetSyntheticDevice(arg0 context.Context, arg1 model.SyntheticDeviceBy) (*model.SyntheticDevice, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSyntheticDevice", ctx, by)
+	ret := m.ctrl.Call(m, "GetSyntheticDevice", arg0, arg1)
 	ret0, _ := ret[0].(*model.SyntheticDevice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetSyntheticDevice indicates an expected call of GetSyntheticDevice.
-func (mr *MockSyntheticRepositoryMockRecorder) GetSyntheticDevice(ctx, by any) *gomock.Call {
+func (mr *MockSyntheticRepositoryMockRecorder) GetSyntheticDevice(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSyntheticDevice", reflect.TypeOf((*MockSyntheticRepository)(nil).GetSyntheticDevice), ctx, by)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSyntheticDevice", reflect.TypeOf((*MockSyntheticRepository)(nil).GetSyntheticDevice), arg0, arg1)
 }
 
 // GetSyntheticDevices mocks base method.
-func (m *MockSyntheticRepository) GetSyntheticDevices(ctx context.Context, first, last *int, after, before *string, filterBy *model.SyntheticDevicesFilter) (*model.SyntheticDeviceConnection, error) {
+func (m *MockSyntheticRepository) GetSyntheticDevices(arg0 context.Context, arg1, arg2 *int, arg3, arg4 *string, arg5 *model.SyntheticDevicesFilter) (*model.SyntheticDeviceConnection, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSyntheticDevices", ctx, first, last, after, before, filterBy)
+	ret := m.ctrl.Call(m, "GetSyntheticDevices", arg0, arg1, arg2, arg3, arg4, arg5)
 	ret0, _ := ret[0].(*model.SyntheticDeviceConnection)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetSyntheticDevices indicates an expected call of GetSyntheticDevices.
-func (mr *MockSyntheticRepositoryMockRecorder) GetSyntheticDevices(ctx, first, last, after, before, filterBy any) *gomock.Call {
+func (mr *MockSyntheticRepositoryMockRecorder) GetSyntheticDevices(arg0, arg1, arg2, arg3, arg4, arg5 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSyntheticDevices", reflect.TypeOf((*MockSyntheticRepository)(nil).GetSyntheticDevices), ctx, first, last, after, before, filterBy)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSyntheticDevices", reflect.TypeOf((*MockSyntheticRepository)(nil).GetSyntheticDevices), arg0, arg1, arg2, arg3, arg4, arg5)
 }

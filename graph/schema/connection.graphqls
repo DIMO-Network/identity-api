@@ -5,9 +5,9 @@ extend type Query {
   List connection licenses. Sorts by minting time, descending.
   """
   connections(
-    first: Int,
-    after: String,
-    last: Int,
+    first: Int
+    after: String
+    last: Int
     before: String
   ): ConnectionConnection!
 
@@ -35,6 +35,10 @@ type Connection {
   """
   tokenId: BigInt!
   """
+  The DID for this connection's token ID in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+  """
+  tokenDID: String! @goField(name: "TokenDID")
+  """
   The block timestamp for the mint of the connection.
   """
   mintedAt: Time!
@@ -56,4 +60,8 @@ input ConnectionBy {
   name: String
   address: Address
   tokenId: BigInt
+  """
+  The DID of the connection in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+  """
+  tokenDID: String @goField(name: "TokenDID")
 }

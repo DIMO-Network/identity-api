@@ -8,6 +8,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/DIMO-Network/cloudevent"
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
@@ -23,6 +24,17 @@ const TokenPrefix = "D"
 
 type Repository struct {
 	*base.Repository
+	chainID         uint64
+	contractAddress common.Address
+}
+
+// New creates a new DCN repository.
+func New(db *base.Repository) *Repository {
+	return &Repository{
+		Repository:      db,
+		chainID:         uint64(db.Settings.DIMORegistryChainID),
+		contractAddress: common.HexToAddress(db.Settings.DCNRegistryAddr),
+	}
 }
 
 type DCNCursor struct {
@@ -31,16 +43,24 @@ type DCNCursor struct {
 }
 
 // ToAPI converts a DCN database row to a DCN API model.
-func ToAPI(d *models.DCN) (*gmodel.Dcn, error) {
+func (r *Repository) ToAPI(d *models.DCN) (*gmodel.Dcn, error) {
 	tokenID := new(big.Int).SetBytes(d.Node)
 	globalID, err := base.EncodeGlobalTokenID(TokenPrefix, int(tokenID.Int64()))
 	if err != nil {
 		return nil, fmt.Errorf("error encoding dcn id: %w", err)
 	}
+
+	tokenDID := cloudevent.ERC721DID{
+		ChainID:         r.chainID,
+		ContractAddress: r.contractAddress,
+		TokenID:         tokenID,
+	}.String()
+
 	return &gmodel.Dcn{
 		ID:        globalID,
 		Owner:     common.BytesToAddress(d.OwnerAddress),
 		TokenID:   tokenID,
+		TokenDID:  tokenDID,
 		Node:      d.Node,
 		ExpiresAt: d.Expiration.Ptr(),
 		Name:      d.Name.Ptr(),
@@ -50,15 +70,34 @@ func ToAPI(d *models.DCN) (*gmodel.Dcn, error) {
 }
 
 func (r *Repository) GetDCN(ctx context.Context, by gmodel.DCNBy) (*gmodel.Dcn, error) {
-	if base.CountTrue(len(by.Node) != 0, by.Name != nil) != 1 {
-		return nil, gqlerror.Errorf("Provide exactly one of `name` or `node`.")
+	if base.CountTrue(len(by.Node) != 0, by.Name != nil, by.TokenDID != nil) != 1 {
+		return nil, gqlerror.Errorf("Provide exactly one of `name`, `node`, or `tokenDID`.")
 	}
 
-	if len(by.Node) != 0 {
+	switch {
+	case len(by.Node) != 0:
 		return r.GetDCNByNode(ctx, by.Node)
+	case by.Name != nil:
+		return r.GetDCNByName(ctx, *by.Name)
+	case by.TokenDID != nil:
+		did, err := cloudevent.DecodeERC721DID(*by.TokenDID)
+		if err != nil {
+			return nil, fmt.Errorf("error decoding token did: %w", err)
+		}
+		if did.ChainID != r.chainID {
+			return nil, fmt.Errorf("unknown chain id %d in token did", did.ChainID)
+		}
+		if did.ContractAddress != r.contractAddress {
+			return nil, fmt.Errorf("invalid contract address '%s' in token did", did.ContractAddress.Hex())
+		}
+		id, err := helpers.ConvertTokenIDToID(did.TokenID)
+		if err != nil {
+			return nil, fmt.Errorf("error converting token id to id: %w", err)
+		}
+		return r.GetDCNByNode(ctx, id)
+	default:
+		return nil, fmt.Errorf("invalid filter")
 	}
-
-	return r.GetDCNByName(ctx, *by.Name)
 }
 
 func (r *Repository) GetDCNByNode(ctx context.Context, node []byte) (*gmodel.Dcn, error) {
@@ -73,7 +112,7 @@ func (r *Repository) GetDCNByNode(ctx context.Context, node []byte) (*gmodel.Dcn
 		return nil, err
 	}
 
-	return ToAPI(dcn)
+	return r.ToAPI(dcn)
 }
 
 func (r *Repository) GetDCNByName(ctx context.Context, name string) (*gmodel.Dcn, error) {
@@ -84,7 +123,7 @@ func (r *Repository) GetDCNByName(ctx context.Context, name string) (*gmodel.Dcn
 		return nil, err
 	}
 
-	return ToAPI(dcn)
+	return r.ToAPI(dcn)
 }
 
 var dcnCursorColumnsTuple = "(" + models.DCNColumns.MintedAt + ", " + models.DCNColumns.Node + ")"
@@ -162,7 +201,7 @@ func (r *Repository) GetDCNs(ctx context.Context, first *int, after *string, las
 		if err != nil {
 			return nil, err
 		}
-		apiDCN, err := ToAPI(dcn)
+		apiDCN, err := r.ToAPI(dcn)
 		if err != nil {
 			errList = append(errList, gqlerror.Errorf("error converting dcn to api: %v", err))
 			continue

@@ -5,9 +5,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
+	"github.com/DIMO-Network/identity-api/internal/repositories/base"
+	"github.com/DIMO-Network/identity-api/internal/repositories/connection"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/volatiletech/null/v8"
@@ -30,9 +34,9 @@ func TestBulk(t *testing.T) {
 
 	defer cont.Terminate(t.Context()) //nolint
 
-	// log := zerolog.Nop()
+	log := zerolog.Nop()
 
-	cl := ConnectionLoader{db: pdb}
+	cl := ConnectionLoader{repo: connection.New(base.NewRepository(pdb, config.Settings{}, &log))}
 
 	staexConnID := nameToConnID("Staex")
 	teslaConnID := nameToConnID("Tesla")

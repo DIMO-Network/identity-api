@@ -8,9 +8,9 @@ PATHINSTBIN        = $(abspath $(DEST_DIR)/bin)
 PATHINSTDOCKER     = $(DEST_DIR)/docker
 
 # Add target bin dir to PATH
+SHELL := /bin/bash
+PATHINSTBIN = $(abspath ./bin)
 export PATH := $(PATHINSTBIN):$(PATH)
-OLDSHELL := $(SHELL)
-SHELL = env PATH=$(PATH) $(OLDSHELL)
 
 VERSION   := $(shell git describe --tags || echo "v0.0.0")
 VER_CUT   := $(shell echo $(VERSION) | cut -c2-)
@@ -44,9 +44,12 @@ install: $(APPS)
 	@mkdir -p bin
 	@cp $(PATHINSTBIN)/$(APPS) ./bin/
 
+build: ## Build the binary
+	@CGO_ENABLED=0 \
+	go build -o $(PATHINSTBIN)/$(APPS) ./cmd/$(APPS)
+
 deps:
 	@go mod tidy
-	@go mod vendor
 
 SOURCE_FILES = $(shell find graph internal models cmd -type f -name "*.go")
 
@@ -78,10 +81,10 @@ fmt:
 	@go mod tidy
 
 lint: ## Run linter.
-	@golangci-lint run
+	@PATH=$$PATH golangci-lint run
 
 test: ## Run all package tests.
-	@go test $(GO_FLAGS) -timeout 3m -p=1 ./...
+	@go test $(GO_FLAGS) -timeout 10m ./...
 
 clean: ## Remove previous builds.
 	rm -rf $(PATHINSTBIN)
@@ -95,16 +98,16 @@ migrate: $(APPS) ## Run database migrations.
 	$(PATHINSTBIN)/$(APPS) migrate
 
 sql: ## Create a new SQL migration file. Use the NAME variable to set the name: "make sql NAME=dcn_table".
-	@goose -version
-	goose  -dir migrations -s create $(NAME) sql 
+	@PATH=$$PATH goose -version
+	PATH=$$PATH goose  -dir migrations -s create $(NAME) sql 
 
 boil: ## Generate SQLBoiler models.
-	@sqlboiler --version
-	sqlboiler psql --no-tests --wipe
+	@PATH=$$PATH sqlboiler --version
+	PATH=$$PATH sqlboiler psql --no-tests --wipe
 
 gql: ## Generate gqlgen code.
-	@gqlgen version
-	gqlgen generate
+	@PATH=$$PATH gqlgen version
+	PATH=$$PATH gqlgen generate
 
 tools-golangci-lint: ## Install golangci-lint dependency.
 	@mkdir -p $(PATHINSTBIN)

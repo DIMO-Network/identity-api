@@ -17,8 +17,8 @@ import (
 )
 
 // Vehicle is the resolver for the vehicle field.
-func (r *queryResolver) Vehicle(ctx context.Context, tokenID int) (*model.Vehicle, error) {
-	v, err := r.vehicle.GetVehicle(ctx, tokenID)
+func (r *queryResolver) Vehicle(ctx context.Context, tokenID *int, tokenDid *string) (*model.Vehicle, error) {
+	v, err := r.vehicle.GetVehicle(ctx, tokenID, tokenDid)
 	if errors.Is(err, repositories.ErrNotFound) {
 		return nil, graphql.ErrorOnPath(ctx, &gqlerror.Error{
 			Message: fmt.Sprintf("No vehicle with token id %d.", tokenID),

@@ -5,10 +5,10 @@ extend type Query {
   List developer licenses. Sorts by token id, descending.
   """
   stakes(
-    first: Int,
-    after: String,
-    last: Int,
-    before: String,
+    first: Int
+    after: String
+    last: Int
+    before: String
     filterBy: StakeFilterBy
   ): StakeConnection!
 }
@@ -27,6 +27,10 @@ type Stake {
   The token id of the license as an NFT.
   """
   tokenId: Int!
+  """
+  The DID for this stake's token ID in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+  """
+  tokenDID: String! @goField(name: "TokenDID")
   """
   The owner of the license. A single owner can own multiple licenses.
   """

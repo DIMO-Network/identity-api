@@ -51,3 +51,9 @@ type PageInfo {
   hasPreviousPage: Boolean!
   hasNextPage: Boolean!
 }
+
+directive @goField(
+  forceResolver: Boolean
+  name: String
+  omittable: Boolean
+) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION

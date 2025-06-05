@@ -7,14 +7,19 @@ import (
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/repositories/connection"
 	"github.com/DIMO-Network/identity-api/models"
-	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/graph-gophers/dataloader/v7"
 	"github.com/lib/pq"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
 type ConnectionLoader struct {
-	db db.Store
+	repo *connection.Repository
+}
+
+func NewConnectionLoader(repo *connection.Repository) *ConnectionLoader {
+	return &ConnectionLoader{
+		repo: repo,
+	}
 }
 
 type ConnectionQueryKey struct {
@@ -41,7 +46,7 @@ func GetConnection(ctx context.Context, integrationNode int, connectionID []byte
 	return thunk()
 }
 
-func (ad *ConnectionLoader) BatchGetConnectionsByIDs(ctx context.Context, queryKeys []ConnectionQueryKey) []*dataloader.Result[*model.Connection] {
+func (c *ConnectionLoader) BatchGetConnectionsByIDs(ctx context.Context, queryKeys []ConnectionQueryKey) []*dataloader.Result[*model.Connection] {
 	uniqKeys := make(map[ConnectionQueryKey]struct{})
 
 	for _, id := range queryKeys {
@@ -74,7 +79,7 @@ func (ad *ConnectionLoader) BatchGetConnectionsByIDs(ctx context.Context, queryK
 	connections, err := models.Connections(
 		qm.Where(models.ConnectionTableColumns.ID+" = ANY(?)", pq.ByteaArray(connectionIDSlice)),
 		qm.Or(models.ConnectionTableColumns.IntegrationNode+" = ANY(?)", pq.Int32Array(integrationNodeSlice)),
-	).All(ctx, ad.db.DBS().Reader)
+	).All(ctx, c.repo.PDB.DBS().Reader)
 	if err != nil {
 		for i := range queryKeys {
 			results[i] = &dataloader.Result[*model.Connection]{Data: nil, Error: err}
@@ -97,7 +102,7 @@ func (ad *ConnectionLoader) BatchGetConnectionsByIDs(ctx context.Context, queryK
 			am, ok := connectionByIntegrationNode[queryKey.IntegrationNode]
 			if ok {
 				results[i] = &dataloader.Result[*model.Connection]{
-					Data: connection.ToAPI(am),
+					Data: c.repo.ToAPI(am),
 				}
 			} else {
 				results[i] = &dataloader.Result[*model.Connection]{
@@ -108,7 +113,7 @@ func (ad *ConnectionLoader) BatchGetConnectionsByIDs(ctx context.Context, queryK
 			am, ok := connectionByConnectionID[queryKey.ConnectionID]
 			if ok {
 				results[i] = &dataloader.Result[*model.Connection]{
-					Data: connection.ToAPI(am),
+					Data: c.repo.ToAPI(am),
 				}
 			} else {
 				results[i] = &dataloader.Result[*model.Connection]{

@@ -6,16 +6,17 @@ import (
 	"fmt"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
-	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/identity-api/internal/repositories/vehicle"
 	"github.com/DIMO-Network/identity-api/models"
-	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/graph-gophers/dataloader/v7"
 )
 
 type VehicleLoader struct {
-	db       db.Store
-	settings config.Settings
+	repo *vehicle.Repository
+}
+
+func NewVehicleLoader(repo *vehicle.Repository) *VehicleLoader {
+	return &VehicleLoader{repo: repo}
 }
 
 func GetVehicleByID(ctx context.Context, vehicleID int) (*model.Vehicle, error) {
@@ -31,7 +32,7 @@ func GetVehicleByID(ctx context.Context, vehicleID int) (*model.Vehicle, error) 
 func (v *VehicleLoader) BatchGetVehicleByID(ctx context.Context, vehicleIDs []int) []*dataloader.Result[*model.Vehicle] {
 	results := make([]*dataloader.Result[*model.Vehicle], len(vehicleIDs))
 
-	vehicles, err := models.Vehicles(models.VehicleWhere.ID.IN(vehicleIDs)).All(ctx, v.db.DBS().Reader)
+	vehicles, err := models.Vehicles(models.VehicleWhere.ID.IN(vehicleIDs)).All(ctx, v.repo.PDB.DBS().Reader)
 	if err != nil {
 		for i := range results {
 			results[i] = &dataloader.Result[*model.Vehicle]{Error: err}
@@ -55,17 +56,17 @@ func (v *VehicleLoader) BatchGetVehicleByID(ctx context.Context, vehicleIDs []in
 				imageURI = veh.ImageURI.String
 			} else {
 				var err error
-				imageURI, err = vehicle.DefaultImageURI(v.settings.BaseImageURL, veh.ID)
+				imageURI, err = vehicle.DefaultImageURI(v.repo.Settings.BaseImageURL, veh.ID)
 				if err != nil {
 					retErr = errors.Join(retErr, fmt.Errorf("error getting vehicle image url: %w", err))
 				}
 			}
 
-			dataURI, err := vehicle.GetVehicleDataURI(v.settings.BaseVehicleDataURI, veh.ID)
+			dataURI, err := vehicle.GetVehicleDataURI(v.repo.Settings.BaseVehicleDataURI, veh.ID)
 			if err != nil {
 				retErr = errors.Join(retErr, fmt.Errorf("error getting vehicle data uri: %w", err))
 			}
-			obj, err := vehicle.ToAPI(veh, imageURI, dataURI)
+			obj, err := v.repo.ToAPI(veh, imageURI, dataURI)
 			if err != nil {
 				retErr = errors.Join(retErr, fmt.Errorf("error converting vehicle to API: %w", err))
 			}
