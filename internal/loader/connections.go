@@ -3,7 +3,6 @@ package loader
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/repositories/connection"
@@ -11,7 +10,6 @@ import (
 	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/graph-gophers/dataloader/v7"
 	"github.com/lib/pq"
-	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
@@ -33,7 +31,7 @@ func GetConnection(ctx context.Context, integrationNode int, connectionID []byte
 		IntegrationNode: integrationNode,
 	}
 
-	if len(connectionID) == 32 {
+	if integrationNode == 0 {
 		queryKey.ConnectionID = [32]byte(connectionID)
 	}
 
@@ -50,8 +48,6 @@ func (ad *ConnectionLoader) BatchGetConnectionsByIDs(ctx context.Context, queryK
 		uniqKeys[id] = struct{}{}
 	}
 
-	fmt.Println("XDD", queryKeys)
-
 	uniqueConnectionIDs := make(map[[32]byte]struct{})
 	uniqueIntegrationNodes := make(map[int]struct{})
 
@@ -63,7 +59,6 @@ func (ad *ConnectionLoader) BatchGetConnectionsByIDs(ctx context.Context, queryK
 		}
 	}
 
-	boil.DebugMode = true
 	results := make([]*dataloader.Result[*model.Connection], len(queryKeys))
 
 	connectionIDSlice := make([][]byte, 0, len(uniqueConnectionIDs))
@@ -86,8 +81,6 @@ func (ad *ConnectionLoader) BatchGetConnectionsByIDs(ctx context.Context, queryK
 		}
 		return results
 	}
-
-	fmt.Println(connections)
 
 	connectionByConnectionID := map[[32]byte]*models.Connection{}
 	connectionByIntegrationNode := map[int]*models.Connection{}
