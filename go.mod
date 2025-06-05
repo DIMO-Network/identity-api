@@ -3,17 +3,17 @@ module github.com/DIMO-Network/identity-api
 go 1.24.0
 
 require (
-	github.com/99designs/gqlgen v0.17.73
+	github.com/99designs/gqlgen v0.17.74
 	github.com/DIMO-Network/cloudevent v0.1.0
 	github.com/DIMO-Network/mnemonic v0.0.0-20240611180925-eecaa65be2b9
-	github.com/DIMO-Network/shared v1.0.2
+	github.com/DIMO-Network/shared v1.0.3
 	github.com/docker/go-connections v0.5.0
 	github.com/doug-martin/goqu/v9 v9.19.0
-	github.com/ericlagergren/decimal v0.0.0-20190420051523-6335edbaa640 // Do not touch.
+	github.com/ericlagergren/decimal v0.0.0-20190420051523-6335edbaa640 // Held in place by a replace directive.
 	github.com/ethereum/go-ethereum v1.15.11
 	github.com/friendsofgo/errors v0.9.2
 	github.com/goccy/go-json v0.10.5
-	github.com/gofiber/fiber/v2 v2.52.6
+	github.com/gofiber/fiber/v2 v2.52.8
 	github.com/graph-gophers/dataloader/v7 v7.1.0
 	github.com/jarcoal/httpmock v1.4.0
 	github.com/pressly/goose/v3 v3.24.3
@@ -162,3 +162,5 @@ require (
 )
 
 tool github.com/DIMO-Network/eventgen
+
+replace github.com/ericlagergren/decimal => github.com/ericlagergren/decimal v0.0.0-20190420051523-6335edbaa640
