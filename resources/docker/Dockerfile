@@ -7,7 +7,6 @@ COPY . /go/src/github.com/DIMO-Network/identity-api/
 
 ENV CGO_ENABLED=0
 ENV GOOS=linux
-ENV GOFLAGS=-mod=vendor
 
 RUN ls
 RUN go mod tidy

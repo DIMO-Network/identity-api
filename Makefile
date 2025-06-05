@@ -46,11 +46,10 @@ install: $(APPS)
 
 build: ## Build the binary
 	@CGO_ENABLED=0 \
-	go build -o $(PATHINSTBIN)/$(BIN_NAME) ./cmd/$(BIN_NAME)
+	go build -o $(PATHINSTBIN)/$(APPS) ./cmd/$(APPS)
 
 deps:
 	@go mod tidy
-	@go mod vendor
 
 SOURCE_FILES = $(shell find graph internal models cmd -type f -name "*.go")
 
