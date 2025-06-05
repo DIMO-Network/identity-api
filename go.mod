@@ -28,9 +28,8 @@ require (
 	github.com/volatiletech/sqlboiler/v4 v4.19.1
 	github.com/volatiletech/strmangle v0.0.8
 	go.uber.org/mock v0.5.2
+	github.com/lib/pq v1.10.9
 )
-
-require github.com/lib/pq v1.10.9
 
 require (
 	dario.cat/mergo v1.0.1 // indirect
