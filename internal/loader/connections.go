@@ -2,7 +2,8 @@ package loader
 
 import (
 	"context"
-	"errors"
+	"math/big"
+	"time"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/repositories/connection"
@@ -106,7 +107,10 @@ func (c *ConnectionLoader) BatchGetConnectionsByIDs(ctx context.Context, queryKe
 				}
 			} else {
 				results[i] = &dataloader.Result[*model.Connection]{
-					Error: errors.New("couldn't find a connection corresponding to that integration node"),
+					Data: &model.Connection{
+						TokenID:  big.NewInt(0),
+						MintedAt: time.Unix(0, 0),
+					},
 				}
 			}
 		} else {
@@ -117,7 +121,10 @@ func (c *ConnectionLoader) BatchGetConnectionsByIDs(ctx context.Context, queryKe
 				}
 			} else {
 				results[i] = &dataloader.Result[*model.Connection]{
-					Error: errors.New("couldn't find a connection with that id"),
+					Data: &model.Connection{
+						TokenID:  big.NewInt(0),
+						MintedAt: time.Unix(0, 0),
+					},
 				}
 			}
 		}
