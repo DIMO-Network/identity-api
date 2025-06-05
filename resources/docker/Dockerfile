@@ -11,8 +11,7 @@ ENV GOFLAGS=-mod=vendor
 
 RUN ls
 RUN go mod tidy
-RUN go mod vendor
-RUN make install
+RUN make build
 
 FROM gcr.io/distroless/static-debian12 AS package
 
@@ -22,7 +21,7 @@ WORKDIR /
 
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=build /etc/passwd /etc/passwd
-COPY --from=build /go/src/github.com/DIMO-Network/identity-api/target/bin/identity-api .
+COPY --from=build /build/bin/identity-api /identity-api
 COPY --from=build /go/src/github.com/DIMO-Network/identity-api/migrations /migrations
 
 USER dimo
