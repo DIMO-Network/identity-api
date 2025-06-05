@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -23,59 +24,70 @@ import (
 
 // Connection is an object representing the database table.
 type Connection struct {
-	Address  []byte    `boil:"address" json:"address" toml:"address" yaml:"address"`
-	Owner    []byte    `boil:"owner" json:"owner" toml:"owner" yaml:"owner"`
-	MintedAt time.Time `boil:"minted_at" json:"minted_at" toml:"minted_at" yaml:"minted_at"`
-	ID       []byte    `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Address         []byte    `boil:"address" json:"address" toml:"address" yaml:"address"`
+	Owner           []byte    `boil:"owner" json:"owner" toml:"owner" yaml:"owner"`
+	MintedAt        time.Time `boil:"minted_at" json:"minted_at" toml:"minted_at" yaml:"minted_at"`
+	ID              []byte    `boil:"id" json:"id" toml:"id" yaml:"id"`
+	IntegrationNode null.Int  `boil:"integration_node" json:"integration_node,omitempty" toml:"integration_node" yaml:"integration_node,omitempty"`
 
 	R *connectionR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L connectionL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var ConnectionColumns = struct {
-	Address  string
-	Owner    string
-	MintedAt string
-	ID       string
+	Address         string
+	Owner           string
+	MintedAt        string
+	ID              string
+	IntegrationNode string
 }{
-	Address:  "address",
-	Owner:    "owner",
-	MintedAt: "minted_at",
-	ID:       "id",
+	Address:         "address",
+	Owner:           "owner",
+	MintedAt:        "minted_at",
+	ID:              "id",
+	IntegrationNode: "integration_node",
 }
 
 var ConnectionTableColumns = struct {
-	Address  string
-	Owner    string
-	MintedAt string
-	ID       string
+	Address         string
+	Owner           string
+	MintedAt        string
+	ID              string
+	IntegrationNode string
 }{
-	Address:  "connections.address",
-	Owner:    "connections.owner",
-	MintedAt: "connections.minted_at",
-	ID:       "connections.id",
+	Address:         "connections.address",
+	Owner:           "connections.owner",
+	MintedAt:        "connections.minted_at",
+	ID:              "connections.id",
+	IntegrationNode: "connections.integration_node",
 }
 
 // Generated where
 
 var ConnectionWhere = struct {
-	Address  whereHelper__byte
-	Owner    whereHelper__byte
-	MintedAt whereHelpertime_Time
-	ID       whereHelper__byte
+	Address         whereHelper__byte
+	Owner           whereHelper__byte
+	MintedAt        whereHelpertime_Time
+	ID              whereHelper__byte
+	IntegrationNode whereHelpernull_Int
 }{
-	Address:  whereHelper__byte{field: "\"identity_api\".\"connections\".\"address\""},
-	Owner:    whereHelper__byte{field: "\"identity_api\".\"connections\".\"owner\""},
-	MintedAt: whereHelpertime_Time{field: "\"identity_api\".\"connections\".\"minted_at\""},
-	ID:       whereHelper__byte{field: "\"identity_api\".\"connections\".\"id\""},
+	Address:         whereHelper__byte{field: "\"identity_api\".\"connections\".\"address\""},
+	Owner:           whereHelper__byte{field: "\"identity_api\".\"connections\".\"owner\""},
+	MintedAt:        whereHelpertime_Time{field: "\"identity_api\".\"connections\".\"minted_at\""},
+	ID:              whereHelper__byte{field: "\"identity_api\".\"connections\".\"id\""},
+	IntegrationNode: whereHelpernull_Int{field: "\"identity_api\".\"connections\".\"integration_node\""},
 }
 
 // ConnectionRels is where relationship names are stored.
 var ConnectionRels = struct {
-}{}
+	SyntheticDevices string
+}{
+	SyntheticDevices: "SyntheticDevices",
+}
 
 // connectionR is where relationships are stored.
 type connectionR struct {
+	SyntheticDevices SyntheticDeviceSlice `boil:"SyntheticDevices" json:"SyntheticDevices" toml:"SyntheticDevices" yaml:"SyntheticDevices"`
 }
 
 // NewStruct creates a new relationship struct
@@ -83,13 +95,29 @@ func (*connectionR) NewStruct() *connectionR {
 	return &connectionR{}
 }
 
+func (o *Connection) GetSyntheticDevices() SyntheticDeviceSlice {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetSyntheticDevices()
+}
+
+func (r *connectionR) GetSyntheticDevices() SyntheticDeviceSlice {
+	if r == nil {
+		return nil
+	}
+
+	return r.SyntheticDevices
+}
+
 // connectionL is where Load methods for each relationship are stored.
 type connectionL struct{}
 
 var (
-	connectionAllColumns            = []string{"address", "owner", "minted_at", "id"}
+	connectionAllColumns            = []string{"address", "owner", "minted_at", "id", "integration_node"}
 	connectionColumnsWithoutDefault = []string{"address", "owner", "minted_at", "id"}
-	connectionColumnsWithDefault    = []string{}
+	connectionColumnsWithDefault    = []string{"integration_node"}
 	connectionPrimaryKeyColumns     = []string{"id"}
 	connectionGeneratedColumns      = []string{}
 )
@@ -397,6 +425,260 @@ func (q connectionQuery) Exists(ctx context.Context, exec boil.ContextExecutor) 
 	}
 
 	return count > 0, nil
+}
+
+// SyntheticDevices retrieves all the synthetic_device's SyntheticDevices with an executor.
+func (o *Connection) SyntheticDevices(mods ...qm.QueryMod) syntheticDeviceQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"identity_api\".\"synthetic_devices\".\"connection_id\"=?", o.ID),
+	)
+
+	return SyntheticDevices(queryMods...)
+}
+
+// LoadSyntheticDevices allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (connectionL) LoadSyntheticDevices(ctx context.Context, e boil.ContextExecutor, singular bool, maybeConnection interface{}, mods queries.Applicator) error {
+	var slice []*Connection
+	var object *Connection
+
+	if singular {
+		var ok bool
+		object, ok = maybeConnection.(*Connection)
+		if !ok {
+			object = new(Connection)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeConnection)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeConnection))
+			}
+		}
+	} else {
+		s, ok := maybeConnection.(*[]*Connection)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeConnection)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeConnection))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &connectionR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &connectionR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`identity_api.synthetic_devices`),
+		qm.WhereIn(`identity_api.synthetic_devices.connection_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load synthetic_devices")
+	}
+
+	var resultSlice []*SyntheticDevice
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice synthetic_devices")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on synthetic_devices")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for synthetic_devices")
+	}
+
+	if len(syntheticDeviceAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.SyntheticDevices = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &syntheticDeviceR{}
+			}
+			foreign.R.Connection = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if queries.Equal(local.ID, foreign.ConnectionID) {
+				local.R.SyntheticDevices = append(local.R.SyntheticDevices, foreign)
+				if foreign.R == nil {
+					foreign.R = &syntheticDeviceR{}
+				}
+				foreign.R.Connection = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// AddSyntheticDevices adds the given related objects to the existing relationships
+// of the connection, optionally inserting them as new records.
+// Appends related to o.R.SyntheticDevices.
+// Sets related.R.Connection appropriately.
+func (o *Connection) AddSyntheticDevices(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*SyntheticDevice) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			queries.Assign(&rel.ConnectionID, o.ID)
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"identity_api\".\"synthetic_devices\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"connection_id"}),
+				strmangle.WhereClause("\"", "\"", 2, syntheticDevicePrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			queries.Assign(&rel.ConnectionID, o.ID)
+		}
+	}
+
+	if o.R == nil {
+		o.R = &connectionR{
+			SyntheticDevices: related,
+		}
+	} else {
+		o.R.SyntheticDevices = append(o.R.SyntheticDevices, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &syntheticDeviceR{
+				Connection: o,
+			}
+		} else {
+			rel.R.Connection = o
+		}
+	}
+	return nil
+}
+
+// SetSyntheticDevices removes all previously related items of the
+// connection replacing them completely with the passed
+// in related items, optionally inserting them as new records.
+// Sets o.R.Connection's SyntheticDevices accordingly.
+// Replaces o.R.SyntheticDevices with related.
+// Sets related.R.Connection's SyntheticDevices accordingly.
+func (o *Connection) SetSyntheticDevices(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*SyntheticDevice) error {
+	query := "update \"identity_api\".\"synthetic_devices\" set \"connection_id\" = null where \"connection_id\" = $1"
+	values := []interface{}{o.ID}
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, query)
+		fmt.Fprintln(writer, values)
+	}
+	_, err := exec.ExecContext(ctx, query, values...)
+	if err != nil {
+		return errors.Wrap(err, "failed to remove relationships before set")
+	}
+
+	if o.R != nil {
+		for _, rel := range o.R.SyntheticDevices {
+			queries.SetScanner(&rel.ConnectionID, nil)
+			if rel.R == nil {
+				continue
+			}
+
+			rel.R.Connection = nil
+		}
+		o.R.SyntheticDevices = nil
+	}
+
+	return o.AddSyntheticDevices(ctx, exec, insert, related...)
+}
+
+// RemoveSyntheticDevices relationships from objects passed in.
+// Removes related items from R.SyntheticDevices (uses pointer comparison, removal does not keep order)
+// Sets related.R.Connection.
+func (o *Connection) RemoveSyntheticDevices(ctx context.Context, exec boil.ContextExecutor, related ...*SyntheticDevice) error {
+	if len(related) == 0 {
+		return nil
+	}
+
+	var err error
+	for _, rel := range related {
+		queries.SetScanner(&rel.ConnectionID, nil)
+		if rel.R != nil {
+			rel.R.Connection = nil
+		}
+		if _, err = rel.Update(ctx, exec, boil.Whitelist("connection_id")); err != nil {
+			return err
+		}
+	}
+	if o.R == nil {
+		return nil
+	}
+
+	for _, rel := range related {
+		for i, ri := range o.R.SyntheticDevices {
+			if rel != ri {
+				continue
+			}
+
+			ln := len(o.R.SyntheticDevices)
+			if ln > 1 && i < ln-1 {
+				o.R.SyntheticDevices[i] = o.R.SyntheticDevices[ln-1]
+			}
+			o.R.SyntheticDevices = o.R.SyntheticDevices[:ln-1]
+			break
+		}
+	}
+
+	return nil
 }
 
 // Connections retrieves all the records using an executor.

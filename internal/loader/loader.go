@@ -8,6 +8,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/identity-api/internal/repositories/aftermarket"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
+	"github.com/DIMO-Network/identity-api/internal/repositories/connection"
 	"github.com/DIMO-Network/identity-api/internal/repositories/dcn"
 	"github.com/DIMO-Network/identity-api/internal/repositories/manufacturer"
 	"github.com/DIMO-Network/identity-api/internal/repositories/stake"
@@ -32,6 +33,7 @@ type Loaders struct {
 	AftermarketDeviceByID        dataloader.Interface[int, *model.AftermarketDevice]
 	SyntheticDeviceByID          dataloader.Interface[int, *model.SyntheticDevice]
 	StakeByVehicleID             dataloader.Interface[int, *model.Stake]
+	ConnectionByID               dataloader.Interface[ConnectionQueryKey, *model.Connection]
 }
 
 // NewDataLoader returns the instantiated Loaders struct for use in a request
@@ -44,6 +46,8 @@ func NewDataLoader(dbs db.Store, settings config.Settings) *Loaders {
 	dcn := NewDCNLoader(dcn.New(baseRepo))
 	manufacturer := NewManufacturerLoader(manufacturer.New(baseRepo))
 	stake := NewStakeLoader(stake.New(baseRepo))
+	connection := ConnectionLoader{repo: connection.New(baseRepo)}
+
 	// return the DataLoader
 	return &Loaders{
 		VehicleByID: dataloader.NewBatchedLoader(
@@ -77,6 +81,10 @@ func NewDataLoader(dbs db.Store, settings config.Settings) *Loaders {
 		StakeByVehicleID: dataloader.NewBatchedLoader(
 			stake.BatchGetLinkedStakesByVehicleID,
 			dataloader.WithClearCacheOnBatch[int, *model.Stake](),
+		),
+		ConnectionByID: dataloader.NewBatchedLoader(
+			connection.BatchGetConnectionsByIDs,
+			dataloader.WithClearCacheOnBatch[ConnectionQueryKey, *model.Connection](),
 		),
 	}
 }

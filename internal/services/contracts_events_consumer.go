@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/DIMO-Network/cloudevent"
 	"github.com/DIMO-Network/identity-api/internal/config"
+	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/services/connection"
 	cmodels "github.com/DIMO-Network/identity-api/internal/services/models"
 	"github.com/DIMO-Network/identity-api/internal/services/staking"
@@ -732,18 +734,41 @@ func (c *ContractsEventsConsumer) handleBeneficiarySetEvent(ctx context.Context,
 	return nil
 }
 
+func takeFirst(x, y *big.Int) *big.Int {
+	if x != nil {
+		return x
+	}
+	return y
+}
+
 func (c *ContractsEventsConsumer) handleSyntheticDeviceNodeMintedEvent(ctx context.Context, e *cmodels.ContractEventData) error {
 	var args SyntheticDeviceNodeMintedData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
 		return err
 	}
 
+	var integrationID int
+	var connectionID null.Bytes
+
+	rightID := takeFirst(args.ConnectionID, args.IntegrationNode) // Both fields being nil would be very bad.
+
+	if rightID.IsInt64() {
+		integrationID = int(rightID.Int64())
+	} else {
+		id, err := helpers.ConvertTokenIDToID(rightID)
+		if err != nil {
+			return err
+		}
+		connectionID = null.BytesFrom(id)
+	}
+
 	sd := models.SyntheticDevice{
 		ID:            int(args.SyntheticDeviceNode.Int64()),
-		IntegrationID: int(args.IntegrationNode.Int64()),
+		IntegrationID: integrationID,
 		VehicleID:     int(args.VehicleNode.Int64()),
 		DeviceAddress: args.SyntheticDeviceAddress.Bytes(),
 		MintedAt:      e.Block.Time,
+		ConnectionID:  connectionID,
 	}
 
 	return sd.Insert(ctx, c.dbs.DBS().Writer, boil.Infer())

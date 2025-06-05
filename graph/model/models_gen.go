@@ -558,8 +558,11 @@ type SyntheticDevice struct {
 	// The block timestamp at which this device was minted.
 	MintedAt time.Time `json:"mintedAt"`
 	// The vehicle with which the synthetic device is paired.
-	Vehicle   *Vehicle `json:"vehicle"`
-	VehicleID int      `json:"-"`
+	Vehicle *Vehicle `json:"vehicle"`
+	// The parent connection for the synthetic device.
+	Connection   *Connection `json:"connection"`
+	ConnectionID []byte      `json:"-"`
+	VehicleID    int         `json:"-"`
 }
 
 func (SyntheticDevice) IsNode()            {}

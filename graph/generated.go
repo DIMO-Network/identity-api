@@ -380,6 +380,7 @@ type ComplexityRoot struct {
 
 	SyntheticDevice struct {
 		Address       func(childComplexity int) int
+		Connection    func(childComplexity int) int
 		ID            func(childComplexity int) int
 		IntegrationID func(childComplexity int) int
 		MintedAt      func(childComplexity int) int
@@ -498,6 +499,7 @@ type StakeResolver interface {
 }
 type SyntheticDeviceResolver interface {
 	Vehicle(ctx context.Context, obj *model.SyntheticDevice) (*model.Vehicle, error)
+	Connection(ctx context.Context, obj *model.SyntheticDevice) (*model.Connection, error)
 }
 type UserRewardsResolver interface {
 	History(ctx context.Context, obj *model.UserRewards, first *int, after *string, last *int, before *string) (*model.EarningsConnection, error)
@@ -2006,6 +2008,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.SyntheticDevice.Address(childComplexity), true
+
+	case "SyntheticDevice.connection":
+		if e.complexity.SyntheticDevice.Connection == nil {
+			break
+		}
+
+		return e.complexity.SyntheticDevice.Connection(childComplexity), true
 
 	case "SyntheticDevice.id":
 		if e.complexity.SyntheticDevice.ID == nil {
@@ -9263,6 +9272,8 @@ func (ec *executionContext) fieldContext_Earning_syntheticDevice(_ context.Conte
 				return ec.fieldContext_SyntheticDevice_mintedAt(ctx, field)
 			case "vehicle":
 				return ec.fieldContext_SyntheticDevice_vehicle(ctx, field)
+			case "connection":
+				return ec.fieldContext_SyntheticDevice_connection(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SyntheticDevice", field.Name)
 		},
@@ -12164,6 +12175,8 @@ func (ec *executionContext) fieldContext_Query_syntheticDevice(ctx context.Conte
 				return ec.fieldContext_SyntheticDevice_mintedAt(ctx, field)
 			case "vehicle":
 				return ec.fieldContext_SyntheticDevice_vehicle(ctx, field)
+			case "connection":
+				return ec.fieldContext_SyntheticDevice_connection(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SyntheticDevice", field.Name)
 		},
@@ -15006,6 +15019,62 @@ func (ec *executionContext) fieldContext_SyntheticDevice_vehicle(_ context.Conte
 	return fc, nil
 }
 
+func (ec *executionContext) _SyntheticDevice_connection(ctx context.Context, field graphql.CollectedField, obj *model.SyntheticDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SyntheticDevice_connection(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.SyntheticDevice().Connection(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Connection)
+	fc.Result = res
+	return ec.marshalNConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SyntheticDevice_connection(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SyntheticDevice",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "name":
+				return ec.fieldContext_Connection_name(ctx, field)
+			case "address":
+				return ec.fieldContext_Connection_address(ctx, field)
+			case "owner":
+				return ec.fieldContext_Connection_owner(ctx, field)
+			case "tokenId":
+				return ec.fieldContext_Connection_tokenId(ctx, field)
+			case "mintedAt":
+				return ec.fieldContext_Connection_mintedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Connection", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _SyntheticDeviceConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.SyntheticDeviceConnection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_SyntheticDeviceConnection_totalCount(ctx, field)
 	if err != nil {
@@ -15155,6 +15224,8 @@ func (ec *executionContext) fieldContext_SyntheticDeviceConnection_nodes(_ conte
 				return ec.fieldContext_SyntheticDevice_mintedAt(ctx, field)
 			case "vehicle":
 				return ec.fieldContext_SyntheticDevice_vehicle(ctx, field)
+			case "connection":
+				return ec.fieldContext_SyntheticDevice_connection(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SyntheticDevice", field.Name)
 		},
@@ -15315,6 +15386,8 @@ func (ec *executionContext) fieldContext_SyntheticDeviceEdge_node(_ context.Cont
 				return ec.fieldContext_SyntheticDevice_mintedAt(ctx, field)
 			case "vehicle":
 				return ec.fieldContext_SyntheticDevice_vehicle(ctx, field)
+			case "connection":
+				return ec.fieldContext_SyntheticDevice_connection(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SyntheticDevice", field.Name)
 		},
@@ -15976,6 +16049,8 @@ func (ec *executionContext) fieldContext_Vehicle_syntheticDevice(_ context.Conte
 				return ec.fieldContext_SyntheticDevice_mintedAt(ctx, field)
 			case "vehicle":
 				return ec.fieldContext_SyntheticDevice_vehicle(ctx, field)
+			case "connection":
+				return ec.fieldContext_SyntheticDevice_connection(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SyntheticDevice", field.Name)
 		},
@@ -22518,6 +22593,42 @@ func (ec *executionContext) _SyntheticDevice(ctx context.Context, sel ast.Select
 					}
 				}()
 				res = ec._SyntheticDevice_vehicle(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "connection":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._SyntheticDevice_connection(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}

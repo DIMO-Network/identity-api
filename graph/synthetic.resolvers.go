@@ -49,6 +49,11 @@ func (r *syntheticDeviceResolver) Vehicle(ctx context.Context, obj *model.Synthe
 	return loader.GetVehicleByID(ctx, obj.VehicleID)
 }
 
+// Connection is the resolver for the connection field.
+func (r *syntheticDeviceResolver) Connection(ctx context.Context, obj *model.SyntheticDevice) (*model.Connection, error) {
+	return loader.GetConnection(ctx, obj.IntegrationID, obj.ConnectionID)
+}
+
 // SyntheticDevice returns SyntheticDeviceResolver implementation.
 func (r *Resolver) SyntheticDevice() SyntheticDeviceResolver { return &syntheticDeviceResolver{r} }
 

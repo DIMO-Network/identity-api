@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -23,11 +24,12 @@ import (
 
 // SyntheticDevice is an object representing the database table.
 type SyntheticDevice struct {
-	ID            int       `boil:"id" json:"id" toml:"id" yaml:"id"`
-	IntegrationID int       `boil:"integration_id" json:"integration_id" toml:"integration_id" yaml:"integration_id"`
-	VehicleID     int       `boil:"vehicle_id" json:"vehicle_id" toml:"vehicle_id" yaml:"vehicle_id"`
-	DeviceAddress []byte    `boil:"device_address" json:"device_address" toml:"device_address" yaml:"device_address"`
-	MintedAt      time.Time `boil:"minted_at" json:"minted_at" toml:"minted_at" yaml:"minted_at"`
+	ID            int        `boil:"id" json:"id" toml:"id" yaml:"id"`
+	IntegrationID int        `boil:"integration_id" json:"integration_id" toml:"integration_id" yaml:"integration_id"`
+	VehicleID     int        `boil:"vehicle_id" json:"vehicle_id" toml:"vehicle_id" yaml:"vehicle_id"`
+	DeviceAddress []byte     `boil:"device_address" json:"device_address" toml:"device_address" yaml:"device_address"`
+	MintedAt      time.Time  `boil:"minted_at" json:"minted_at" toml:"minted_at" yaml:"minted_at"`
+	ConnectionID  null.Bytes `boil:"connection_id" json:"connection_id,omitempty" toml:"connection_id" yaml:"connection_id,omitempty"`
 
 	R *syntheticDeviceR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L syntheticDeviceL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -39,12 +41,14 @@ var SyntheticDeviceColumns = struct {
 	VehicleID     string
 	DeviceAddress string
 	MintedAt      string
+	ConnectionID  string
 }{
 	ID:            "id",
 	IntegrationID: "integration_id",
 	VehicleID:     "vehicle_id",
 	DeviceAddress: "device_address",
 	MintedAt:      "minted_at",
+	ConnectionID:  "connection_id",
 }
 
 var SyntheticDeviceTableColumns = struct {
@@ -53,12 +57,14 @@ var SyntheticDeviceTableColumns = struct {
 	VehicleID     string
 	DeviceAddress string
 	MintedAt      string
+	ConnectionID  string
 }{
 	ID:            "synthetic_devices.id",
 	IntegrationID: "synthetic_devices.integration_id",
 	VehicleID:     "synthetic_devices.vehicle_id",
 	DeviceAddress: "synthetic_devices.device_address",
 	MintedAt:      "synthetic_devices.minted_at",
+	ConnectionID:  "synthetic_devices.connection_id",
 }
 
 // Generated where
@@ -69,25 +75,30 @@ var SyntheticDeviceWhere = struct {
 	VehicleID     whereHelperint
 	DeviceAddress whereHelper__byte
 	MintedAt      whereHelpertime_Time
+	ConnectionID  whereHelpernull_Bytes
 }{
 	ID:            whereHelperint{field: "\"identity_api\".\"synthetic_devices\".\"id\""},
 	IntegrationID: whereHelperint{field: "\"identity_api\".\"synthetic_devices\".\"integration_id\""},
 	VehicleID:     whereHelperint{field: "\"identity_api\".\"synthetic_devices\".\"vehicle_id\""},
 	DeviceAddress: whereHelper__byte{field: "\"identity_api\".\"synthetic_devices\".\"device_address\""},
 	MintedAt:      whereHelpertime_Time{field: "\"identity_api\".\"synthetic_devices\".\"minted_at\""},
+	ConnectionID:  whereHelpernull_Bytes{field: "\"identity_api\".\"synthetic_devices\".\"connection_id\""},
 }
 
 // SyntheticDeviceRels is where relationship names are stored.
 var SyntheticDeviceRels = struct {
+	Connection            string
 	Vehicle               string
 	SyntheticTokenRewards string
 }{
+	Connection:            "Connection",
 	Vehicle:               "Vehicle",
 	SyntheticTokenRewards: "SyntheticTokenRewards",
 }
 
 // syntheticDeviceR is where relationships are stored.
 type syntheticDeviceR struct {
+	Connection            *Connection `boil:"Connection" json:"Connection" toml:"Connection" yaml:"Connection"`
 	Vehicle               *Vehicle    `boil:"Vehicle" json:"Vehicle" toml:"Vehicle" yaml:"Vehicle"`
 	SyntheticTokenRewards RewardSlice `boil:"SyntheticTokenRewards" json:"SyntheticTokenRewards" toml:"SyntheticTokenRewards" yaml:"SyntheticTokenRewards"`
 }
@@ -95,6 +106,22 @@ type syntheticDeviceR struct {
 // NewStruct creates a new relationship struct
 func (*syntheticDeviceR) NewStruct() *syntheticDeviceR {
 	return &syntheticDeviceR{}
+}
+
+func (o *SyntheticDevice) GetConnection() *Connection {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetConnection()
+}
+
+func (r *syntheticDeviceR) GetConnection() *Connection {
+	if r == nil {
+		return nil
+	}
+
+	return r.Connection
 }
 
 func (o *SyntheticDevice) GetVehicle() *Vehicle {
@@ -133,9 +160,9 @@ func (r *syntheticDeviceR) GetSyntheticTokenRewards() RewardSlice {
 type syntheticDeviceL struct{}
 
 var (
-	syntheticDeviceAllColumns            = []string{"id", "integration_id", "vehicle_id", "device_address", "minted_at"}
+	syntheticDeviceAllColumns            = []string{"id", "integration_id", "vehicle_id", "device_address", "minted_at", "connection_id"}
 	syntheticDeviceColumnsWithoutDefault = []string{"id", "integration_id", "vehicle_id", "device_address", "minted_at"}
-	syntheticDeviceColumnsWithDefault    = []string{}
+	syntheticDeviceColumnsWithDefault    = []string{"connection_id"}
 	syntheticDevicePrimaryKeyColumns     = []string{"id"}
 	syntheticDeviceGeneratedColumns      = []string{}
 )
@@ -445,6 +472,17 @@ func (q syntheticDeviceQuery) Exists(ctx context.Context, exec boil.ContextExecu
 	return count > 0, nil
 }
 
+// Connection pointed to by the foreign key.
+func (o *SyntheticDevice) Connection(mods ...qm.QueryMod) connectionQuery {
+	queryMods := []qm.QueryMod{
+		qm.Where("\"id\" = ?", o.ConnectionID),
+	}
+
+	queryMods = append(queryMods, mods...)
+
+	return Connections(queryMods...)
+}
+
 // Vehicle pointed to by the foreign key.
 func (o *SyntheticDevice) Vehicle(mods ...qm.QueryMod) vehicleQuery {
 	queryMods := []qm.QueryMod{
@@ -468,6 +506,130 @@ func (o *SyntheticDevice) SyntheticTokenRewards(mods ...qm.QueryMod) rewardQuery
 	)
 
 	return Rewards(queryMods...)
+}
+
+// LoadConnection allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for an N-1 relationship.
+func (syntheticDeviceL) LoadConnection(ctx context.Context, e boil.ContextExecutor, singular bool, maybeSyntheticDevice interface{}, mods queries.Applicator) error {
+	var slice []*SyntheticDevice
+	var object *SyntheticDevice
+
+	if singular {
+		var ok bool
+		object, ok = maybeSyntheticDevice.(*SyntheticDevice)
+		if !ok {
+			object = new(SyntheticDevice)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeSyntheticDevice)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeSyntheticDevice))
+			}
+		}
+	} else {
+		s, ok := maybeSyntheticDevice.(*[]*SyntheticDevice)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeSyntheticDevice)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeSyntheticDevice))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &syntheticDeviceR{}
+		}
+		if !queries.IsNil(object.ConnectionID) {
+			args[object.ConnectionID] = struct{}{}
+		}
+
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &syntheticDeviceR{}
+			}
+
+			if !queries.IsNil(obj.ConnectionID) {
+				args[obj.ConnectionID] = struct{}{}
+			}
+
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`identity_api.connections`),
+		qm.WhereIn(`identity_api.connections.id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load Connection")
+	}
+
+	var resultSlice []*Connection
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice Connection")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results of eager load for connections")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for connections")
+	}
+
+	if len(connectionAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+
+	if len(resultSlice) == 0 {
+		return nil
+	}
+
+	if singular {
+		foreign := resultSlice[0]
+		object.R.Connection = foreign
+		if foreign.R == nil {
+			foreign.R = &connectionR{}
+		}
+		foreign.R.SyntheticDevices = append(foreign.R.SyntheticDevices, object)
+		return nil
+	}
+
+	for _, local := range slice {
+		for _, foreign := range resultSlice {
+			if queries.Equal(local.ConnectionID, foreign.ID) {
+				local.R.Connection = foreign
+				if foreign.R == nil {
+					foreign.R = &connectionR{}
+				}
+				foreign.R.SyntheticDevices = append(foreign.R.SyntheticDevices, local)
+				break
+			}
+		}
+	}
+
+	return nil
 }
 
 // LoadVehicle allows an eager lookup of values, cached into the
@@ -700,6 +862,86 @@ func (syntheticDeviceL) LoadSyntheticTokenRewards(ctx context.Context, e boil.Co
 		}
 	}
 
+	return nil
+}
+
+// SetConnection of the syntheticDevice to the related item.
+// Sets o.R.Connection to related.
+// Adds o to related.R.SyntheticDevices.
+func (o *SyntheticDevice) SetConnection(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Connection) error {
+	var err error
+	if insert {
+		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
+			return errors.Wrap(err, "failed to insert into foreign table")
+		}
+	}
+
+	updateQuery := fmt.Sprintf(
+		"UPDATE \"identity_api\".\"synthetic_devices\" SET %s WHERE %s",
+		strmangle.SetParamNames("\"", "\"", 1, []string{"connection_id"}),
+		strmangle.WhereClause("\"", "\"", 2, syntheticDevicePrimaryKeyColumns),
+	)
+	values := []interface{}{related.ID, o.ID}
+
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, updateQuery)
+		fmt.Fprintln(writer, values)
+	}
+	if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	queries.Assign(&o.ConnectionID, related.ID)
+	if o.R == nil {
+		o.R = &syntheticDeviceR{
+			Connection: related,
+		}
+	} else {
+		o.R.Connection = related
+	}
+
+	if related.R == nil {
+		related.R = &connectionR{
+			SyntheticDevices: SyntheticDeviceSlice{o},
+		}
+	} else {
+		related.R.SyntheticDevices = append(related.R.SyntheticDevices, o)
+	}
+
+	return nil
+}
+
+// RemoveConnection relationship.
+// Sets o.R.Connection to nil.
+// Removes o from all passed in related items' relationships struct.
+func (o *SyntheticDevice) RemoveConnection(ctx context.Context, exec boil.ContextExecutor, related *Connection) error {
+	var err error
+
+	queries.SetScanner(&o.ConnectionID, nil)
+	if _, err = o.Update(ctx, exec, boil.Whitelist("connection_id")); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	if o.R != nil {
+		o.R.Connection = nil
+	}
+	if related == nil || related.R == nil {
+		return nil
+	}
+
+	for i, ri := range related.R.SyntheticDevices {
+		if queries.Equal(o.ConnectionID, ri.ConnectionID) {
+			continue
+		}
+
+		ln := len(related.R.SyntheticDevices)
+		if ln > 1 && i < ln-1 {
+			related.R.SyntheticDevices[i] = related.R.SyntheticDevices[ln-1]
+		}
+		related.R.SyntheticDevices = related.R.SyntheticDevices[:ln-1]
+		break
+	}
 	return nil
 }
 

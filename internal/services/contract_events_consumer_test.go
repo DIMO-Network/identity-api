@@ -593,6 +593,7 @@ func TestHandle_SyntheticDeviceNodeMintedEvent_Success(t *testing.T) {
 		VehicleID:     int(eventData.VehicleNode.Int64()),
 		DeviceAddress: eventData.SyntheticDeviceAddress.Bytes(),
 		MintedAt:      mintedTime,
+		ConnectionID:  null.NewBytes([]byte{}, false),
 	}, sd)
 }
 

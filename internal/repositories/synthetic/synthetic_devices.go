@@ -59,7 +59,7 @@ func (r *Repository) ToAPI(sd *models.SyntheticDevice) (*gmodel.SyntheticDevice,
 		TokenID:         new(big.Int).SetUint64(uint64(sd.ID)),
 	}.String()
 
-	return &gmodel.SyntheticDevice{
+	out := &gmodel.SyntheticDevice{
 		ID:            globalID,
 		Name:          name,
 		TokenID:       sd.ID,
@@ -68,7 +68,13 @@ func (r *Repository) ToAPI(sd *models.SyntheticDevice) (*gmodel.SyntheticDevice,
 		Address:       common.BytesToAddress(sd.DeviceAddress),
 		MintedAt:      sd.MintedAt,
 		VehicleID:     sd.VehicleID,
-	}, nil
+	}
+
+	if sd.ConnectionID.Valid {
+		out.ConnectionID = sd.ConnectionID.Bytes
+	}
+
+	return out, err
 }
 
 // GetSyntheticDevice Device retrieves a synthetic device by either its address or tokenID from the database.

@@ -125,9 +125,15 @@ models:
     fields:
       vehicle:
         resolver: true
+      connection:
+        resolver: true
     extraFields:
       VehicleID:
         type: "int"
+      ConnectionID:
+        type: "[]byte" # Can't use [32]byte here, or gqlgen will barf. If this is an old mint, attached
+                       # to an "integration node", then we will try to infer a corresponding connection
+                       # from that.
   Vehicle:
     fields:
       manufacturer:
