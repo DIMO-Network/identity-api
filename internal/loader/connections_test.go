@@ -10,10 +10,18 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
 const migrationsDir = "../../migrations"
+
+func nameToConnID(name string) []byte {
+	nameBytes := []byte(name)
+	paddedBytes := make([]byte, 32)
+	copy(paddedBytes, nameBytes)
+	return paddedBytes
+}
 
 func TestBulk(t *testing.T) {
 	ctx := context.Background()
@@ -26,41 +34,50 @@ func TestBulk(t *testing.T) {
 
 	cl := ConnectionLoader{db: pdb}
 
+	staexConnID := nameToConnID("Staex")
+	teslaConnID := nameToConnID("Tesla")
+	missingConnID := nameToConnID("Xdd")
+
 	conn1 := models.Connection{
 		Address:  common.FromHex("0xc008ef40b0b42aad7e34879eb024385024f753ea"),
 		Owner:    common.FromHex("0xb83de952d389f9a6806819434450324197712fda"),
 		MintedAt: time.Now(),
-		ID:       common.FromHex("0x5374616578000000000000000000000000000000000000000000000000000000"),
+		ID:       staexConnID,
 	}
 
 	conn2 := models.Connection{
-		Address:  common.FromHex("0x98308F9338841309E9F286e4053eA08d1963628B"),
-		Owner:    common.FromHex("0xb83de952d389f9a6806819434450324197712fda"),
-		MintedAt: time.Now(),
-		ID:       common.FromHex("5465736c61000000000000000000000000000000000000000000000000000000"),
+		Address:         common.FromHex("0x98308F9338841309E9F286e4053eA08d1963628B"),
+		Owner:           common.FromHex("0xb83de952d389f9a6806819434450324197712fda"),
+		MintedAt:        time.Now(),
+		ID:              teslaConnID,
+		IntegrationNode: null.IntFrom(2),
 	}
 
 	require.NoError(t, conn1.Insert(t.Context(), pdb.DBS().Writer, boil.Infer()))
 	require.NoError(t, conn2.Insert(t.Context(), pdb.DBS().Writer, boil.Infer()))
 
-	results := cl.BatchGetConnectionsByIDs(t.Context(), nil)
-	// [][32]byte{
-	// 	[32]byte(common.FromHex("0x5374616578000000000000000000000000000000000000000000000000000000")),
-	// 	[32]byte(common.FromHex("0x5374616578000000000000000000000000000000000000000000000000000000")),
-	// 	[32]byte(common.FromHex("0x5465736c61000000000000000000000000000000000000000000000000000000")),
-	// 	[32]byte(common.FromHex("0x5465736c61000000000000000000000000000000000000000000000000000001")),
-	// })
+	results := cl.BatchGetConnectionsByIDs(t.Context(),
+		[]ConnectionQueryKey{
+			{ConnectionID: [32]byte(staexConnID)},
+			{ConnectionID: [32]byte(staexConnID)},
+			{IntegrationNode: 2},
+			{ConnectionID: [32]byte(missingConnID)},
+		},
+	)
 
 	require.Len(t, results, 4)
 
-	assert.Equal(t, "Staex", results[0].Data.Name)
-	assert.NoError(t, results[0].Error)
+	if assert.NoError(t, results[0].Error) {
+		assert.Equal(t, "Staex", results[0].Data.Name)
+	}
 
-	assert.Equal(t, "Staex", results[1].Data.Name)
-	assert.NoError(t, results[1].Error)
+	if assert.NoError(t, results[1].Error) {
+		assert.Equal(t, "Staex", results[1].Data.Name)
+	}
 
-	assert.Equal(t, "Tesla", results[2].Data.Name)
-	assert.NoError(t, results[2].Error)
+	if assert.NoError(t, results[2].Error) {
+		assert.Equal(t, "Tesla", results[2].Data.Name)
+	}
 
 	assert.Error(t, results[3].Error)
 }

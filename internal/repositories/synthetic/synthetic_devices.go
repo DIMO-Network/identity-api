@@ -39,7 +39,8 @@ func ToAPI(sd *models.SyntheticDevice) (*gmodel.SyntheticDevice, error) {
 
 	nameList := mnemonic.FromInt32WithObfuscation(int32(sd.ID))
 	name := strings.Join(nameList, " ")
-	return &gmodel.SyntheticDevice{
+
+	out := &gmodel.SyntheticDevice{
 		ID:            globalID,
 		Name:          name,
 		TokenID:       sd.ID,
@@ -47,8 +48,13 @@ func ToAPI(sd *models.SyntheticDevice) (*gmodel.SyntheticDevice, error) {
 		Address:       common.BytesToAddress(sd.DeviceAddress),
 		MintedAt:      sd.MintedAt,
 		VehicleID:     sd.VehicleID,
-		ConnectionID:  sd.ConnectionID.Bytes,
-	}, nil
+	}
+
+	if sd.ConnectionID.Valid {
+		out.ConnectionID = sd.ConnectionID.Bytes
+	}
+
+	return out, err
 }
 
 // GetSyntheticDevice Device retrieves a synthetic device by either its address or tokenID from the database.

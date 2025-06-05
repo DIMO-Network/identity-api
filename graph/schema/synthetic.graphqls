@@ -68,7 +68,9 @@ type SyntheticDevice implements Node {
   The vehicle with which the synthetic device is paired.
   """
   vehicle: Vehicle!
-
+  """
+  The parent connection for the synthetic device.
+  """
   connection: Connection!
 }
 
