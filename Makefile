@@ -44,6 +44,10 @@ install: $(APPS)
 	@mkdir -p bin
 	@cp $(PATHINSTBIN)/$(APPS) ./bin/
 
+build: ## Build the binary
+	@CGO_ENABLED=0 \
+	go build -o $(PATHINSTBIN)/$(BIN_NAME) ./cmd/$(BIN_NAME)
+
 deps:
 	@go mod tidy
 	@go mod vendor
