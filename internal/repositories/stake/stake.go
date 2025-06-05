@@ -2,9 +2,11 @@ package stake
 
 import (
 	"context"
+	"math/big"
 	"slices"
 	"time"
 
+	"github.com/DIMO-Network/cloudevent"
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
@@ -18,6 +20,16 @@ import (
 
 type Repository struct {
 	*base.Repository
+	chainID         uint64
+	contractAddress common.Address
+}
+
+func New(repo *base.Repository) *Repository {
+	return &Repository{
+		Repository:      repo,
+		chainID:         uint64(repo.Settings.DIMORegistryChainID),
+		contractAddress: common.HexToAddress(repo.Settings.StakingAddr),
+	}
 }
 
 var weiPerEther = decimal.New(params.Ether, 0)
@@ -26,9 +38,16 @@ func weiToToken(wei types.Decimal) *decimal.Big {
 	return new(decimal.Big).Quo(wei.Big, weiPerEther)
 }
 
-func ToAPI(v *models.Stake) *gmodel.Stake {
+func (r *Repository) ToAPI(v *models.Stake) *gmodel.Stake {
+	tokenDID := cloudevent.ERC721DID{
+		ChainID:         r.chainID,
+		ContractAddress: r.contractAddress,
+		TokenID:         new(big.Int).SetUint64(uint64(v.ID)),
+	}.String()
+
 	return &gmodel.Stake{
 		TokenID:     v.ID,
+		TokenDID:    tokenDID,
 		Owner:       common.BytesToAddress(v.Owner),
 		Level:       v.Level, // 0 in code corresponds to Level 2 in the DIP, and so on. Unfortunate. https://docs.dimo.org/governance/improvement-proposals/dip2
 		Points:      v.Points,
@@ -134,7 +153,7 @@ func (r *Repository) GetStakes(ctx context.Context, first *int, after *string, l
 	nodes := make([]*gmodel.Stake, len(all))
 
 	for i, dv := range all {
-		dlv := ToAPI(dv)
+		dlv := r.ToAPI(dv)
 
 		edges[i] = &gmodel.StakeEdge{
 			Node:   dlv,

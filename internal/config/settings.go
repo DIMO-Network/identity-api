@@ -13,6 +13,7 @@ type Settings struct {
 	DIMORegistryChainID   int64       `yaml:"DIMO_REGISTRY_CHAIN_ID"`
 	DIMORegistryAddr      string      `yaml:"DIMO_REGISTRY_ADDR"`
 	VehicleNFTAddr        string      `yaml:"DIMO_VEHICLE_NFT_ADDR"`
+	ManufacturerNFTAddr   string      `yaml:"DIMO_MANUFACTURER_NFT_ADDR"`
 	AftermarketDeviceAddr string      `yaml:"AFTERMARKET_DEVICE_CONTRACT_ADDRESS"`
 	SACDAddress           string      `yaml:"SACD_ADDRESS"`
 	DCNRegistryAddr       string      `yaml:"DCN_REGISTRY_ADDR"`

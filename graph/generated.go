@@ -78,6 +78,7 @@ type ComplexityRoot struct {
 		Owner            func(childComplexity int) int
 		PairedAt         func(childComplexity int) int
 		Serial           func(childComplexity int) int
+		TokenDID         func(childComplexity int) int
 		TokenID          func(childComplexity int) int
 		Vehicle          func(childComplexity int) int
 	}
@@ -104,6 +105,7 @@ type ComplexityRoot struct {
 		MintedAt func(childComplexity int) int
 		Name     func(childComplexity int) int
 		Owner    func(childComplexity int) int
+		TokenDID func(childComplexity int) int
 		TokenID  func(childComplexity int) int
 	}
 
@@ -126,6 +128,7 @@ type ComplexityRoot struct {
 		Name      func(childComplexity int) int
 		Node      func(childComplexity int) int
 		Owner     func(childComplexity int) int
+		TokenDID  func(childComplexity int) int
 		TokenID   func(childComplexity int) int
 		Vehicle   func(childComplexity int) int
 	}
@@ -156,6 +159,7 @@ type ComplexityRoot struct {
 		Owner        func(childComplexity int) int
 		RedirectURIs func(childComplexity int, first *int, after *string, last *int, before *string) int
 		Signers      func(childComplexity int, first *int, after *string, last *int, before *string) int
+		TokenDID     func(childComplexity int) int
 		TokenID      func(childComplexity int) int
 	}
 
@@ -232,6 +236,7 @@ type ComplexityRoot struct {
 		Name               func(childComplexity int) int
 		Owner              func(childComplexity int) int
 		TableID            func(childComplexity int) int
+		TokenDID           func(childComplexity int) int
 		TokenID            func(childComplexity int) int
 	}
 
@@ -290,7 +295,7 @@ type ComplexityRoot struct {
 		Stakes             func(childComplexity int, first *int, after *string, last *int, before *string, filterBy *model.StakeFilterBy) int
 		SyntheticDevice    func(childComplexity int, by model.SyntheticDeviceBy) int
 		SyntheticDevices   func(childComplexity int, first *int, last *int, after *string, before *string, filterBy *model.SyntheticDevicesFilter) int
-		Vehicle            func(childComplexity int, tokenID int) int
+		Vehicle            func(childComplexity int, tokenID *int, tokenDid *string) int
 		Vehicles           func(childComplexity int, first *int, after *string, last *int, before *string, filterBy *model.VehiclesFilter) int
 	}
 
@@ -355,6 +360,7 @@ type ComplexityRoot struct {
 		Owner       func(childComplexity int) int
 		Points      func(childComplexity int) int
 		StakedAt    func(childComplexity int) int
+		TokenDID    func(childComplexity int) int
 		TokenID     func(childComplexity int) int
 		Vehicle     func(childComplexity int) int
 		WithdrawnAt func(childComplexity int) int
@@ -378,6 +384,7 @@ type ComplexityRoot struct {
 		IntegrationID func(childComplexity int) int
 		MintedAt      func(childComplexity int) int
 		Name          func(childComplexity int) int
+		TokenDID      func(childComplexity int) int
 		TokenID       func(childComplexity int) int
 		Vehicle       func(childComplexity int) int
 	}
@@ -416,6 +423,7 @@ type ComplexityRoot struct {
 		Sacds             func(childComplexity int, first *int, after *string, last *int, before *string) int
 		Stake             func(childComplexity int) int
 		SyntheticDevice   func(childComplexity int) int
+		TokenDID          func(childComplexity int) int
 		TokenID           func(childComplexity int) int
 	}
 
@@ -482,7 +490,7 @@ type QueryResolver interface {
 	Stakes(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.StakeFilterBy) (*model.StakeConnection, error)
 	SyntheticDevice(ctx context.Context, by model.SyntheticDeviceBy) (*model.SyntheticDevice, error)
 	SyntheticDevices(ctx context.Context, first *int, last *int, after *string, before *string, filterBy *model.SyntheticDevicesFilter) (*model.SyntheticDeviceConnection, error)
-	Vehicle(ctx context.Context, tokenID int) (*model.Vehicle, error)
+	Vehicle(ctx context.Context, tokenID *int, tokenDid *string) (*model.Vehicle, error)
 	Vehicles(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.VehiclesFilter) (*model.VehicleConnection, error)
 }
 type StakeResolver interface {
@@ -636,6 +644,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.AftermarketDevice.Serial(childComplexity), true
 
+	case "AftermarketDevice.tokenDID":
+		if e.complexity.AftermarketDevice.TokenDID == nil {
+			break
+		}
+
+		return e.complexity.AftermarketDevice.TokenDID(childComplexity), true
+
 	case "AftermarketDevice.tokenId":
 		if e.complexity.AftermarketDevice.TokenID == nil {
 			break
@@ -739,6 +754,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Connection.Owner(childComplexity), true
 
+	case "Connection.tokenDID":
+		if e.complexity.Connection.TokenDID == nil {
+			break
+		}
+
+		return e.complexity.Connection.TokenDID(childComplexity), true
+
 	case "Connection.tokenId":
 		if e.complexity.Connection.TokenID == nil {
 			break
@@ -829,6 +851,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.DCN.Owner(childComplexity), true
+
+	case "DCN.tokenDID":
+		if e.complexity.DCN.TokenDID == nil {
+			break
+		}
+
+		return e.complexity.DCN.TokenDID(childComplexity), true
 
 	case "DCN.tokenId":
 		if e.complexity.DCN.TokenID == nil {
@@ -965,6 +994,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.DeveloperLicense.Signers(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
+
+	case "DeveloperLicense.tokenDID":
+		if e.complexity.DeveloperLicense.TokenDID == nil {
+			break
+		}
+
+		return e.complexity.DeveloperLicense.TokenDID(childComplexity), true
 
 	case "DeveloperLicense.tokenId":
 		if e.complexity.DeveloperLicense.TokenID == nil {
@@ -1297,6 +1333,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Manufacturer.TableID(childComplexity), true
+
+	case "Manufacturer.tokenDID":
+		if e.complexity.Manufacturer.TokenDID == nil {
+			break
+		}
+
+		return e.complexity.Manufacturer.TokenDID(childComplexity), true
 
 	case "Manufacturer.tokenId":
 		if e.complexity.Manufacturer.TokenID == nil {
@@ -1642,7 +1685,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.Vehicle(childComplexity, args["tokenId"].(int)), true
+		return e.complexity.Query.Vehicle(childComplexity, args["tokenId"].(*int), args["tokenDID"].(*string)), true
 
 	case "Query.vehicles":
 		if e.complexity.Query.Vehicles == nil {
@@ -1887,6 +1930,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Stake.StakedAt(childComplexity), true
 
+	case "Stake.tokenDID":
+		if e.complexity.Stake.TokenDID == nil {
+			break
+		}
+
+		return e.complexity.Stake.TokenDID(childComplexity), true
+
 	case "Stake.tokenId":
 		if e.complexity.Stake.TokenID == nil {
 			break
@@ -1984,6 +2034,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.SyntheticDevice.Name(childComplexity), true
+
+	case "SyntheticDevice.tokenDID":
+		if e.complexity.SyntheticDevice.TokenDID == nil {
+			break
+		}
+
+		return e.complexity.SyntheticDevice.TokenDID(childComplexity), true
 
 	case "SyntheticDevice.tokenId":
 		if e.complexity.SyntheticDevice.TokenID == nil {
@@ -2181,6 +2238,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Vehicle.SyntheticDevice(childComplexity), true
+
+	case "Vehicle.tokenDID":
+		if e.complexity.Vehicle.TokenDID == nil {
+			break
+		}
+
+		return e.complexity.Vehicle.TokenDID(childComplexity), true
 
 	case "Vehicle.tokenId":
 		if e.complexity.Vehicle.TokenID == nil {
@@ -3902,23 +3966,46 @@ func (ec *executionContext) field_Query_vehicle_args(ctx context.Context, rawArg
 		return nil, err
 	}
 	args["tokenId"] = arg0
+	arg1, err := ec.field_Query_vehicle_argsTokenDid(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["tokenDID"] = arg1
 	return args, nil
 }
 func (ec *executionContext) field_Query_vehicle_argsTokenID(
 	ctx context.Context,
 	rawArgs map[string]any,
-) (int, error) {
+) (*int, error) {
 	if _, ok := rawArgs["tokenId"]; !ok {
-		var zeroVal int
+		var zeroVal *int
 		return zeroVal, nil
 	}
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("tokenId"))
 	if tmp, ok := rawArgs["tokenId"]; ok {
-		return ec.unmarshalNInt2int(ctx, tmp)
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
 	}
 
-	var zeroVal int
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_vehicle_argsTokenDid(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*string, error) {
+	if _, ok := rawArgs["tokenDID"]; !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("tokenDID"))
+	if tmp, ok := rawArgs["tokenDID"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
 	return zeroVal, nil
 }
 
@@ -4661,6 +4748,50 @@ func (ec *executionContext) fieldContext_AftermarketDevice_tokenId(_ context.Con
 	return fc, nil
 }
 
+func (ec *executionContext) _AftermarketDevice_tokenDID(ctx context.Context, field graphql.CollectedField, obj *model.AftermarketDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AftermarketDevice_tokenDID(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TokenDID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AftermarketDevice_tokenDID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AftermarketDevice",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _AftermarketDevice_manufacturer(ctx context.Context, field graphql.CollectedField, obj *model.AftermarketDevice) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_AftermarketDevice_manufacturer(ctx, field)
 	if err != nil {
@@ -4704,6 +4835,8 @@ func (ec *executionContext) fieldContext_AftermarketDevice_manufacturer(_ contex
 				return ec.fieldContext_Manufacturer_id(ctx, field)
 			case "tokenId":
 				return ec.fieldContext_Manufacturer_tokenId(ctx, field)
+			case "tokenDID":
+				return ec.fieldContext_Manufacturer_tokenDID(ctx, field)
 			case "name":
 				return ec.fieldContext_Manufacturer_name(ctx, field)
 			case "owner":
@@ -5100,6 +5233,8 @@ func (ec *executionContext) fieldContext_AftermarketDevice_vehicle(_ context.Con
 				return ec.fieldContext_Vehicle_id(ctx, field)
 			case "tokenId":
 				return ec.fieldContext_Vehicle_tokenId(ctx, field)
+			case "tokenDID":
+				return ec.fieldContext_Vehicle_tokenDID(ctx, field)
 			case "manufacturer":
 				return ec.fieldContext_Vehicle_manufacturer(ctx, field)
 			case "owner":
@@ -5494,6 +5629,8 @@ func (ec *executionContext) fieldContext_AftermarketDeviceConnection_nodes(_ con
 				return ec.fieldContext_AftermarketDevice_id(ctx, field)
 			case "tokenId":
 				return ec.fieldContext_AftermarketDevice_tokenId(ctx, field)
+			case "tokenDID":
+				return ec.fieldContext_AftermarketDevice_tokenDID(ctx, field)
 			case "manufacturer":
 				return ec.fieldContext_AftermarketDevice_manufacturer(ctx, field)
 			case "address":
@@ -5781,6 +5918,8 @@ func (ec *executionContext) fieldContext_AftermarketDeviceEdge_node(_ context.Co
 				return ec.fieldContext_AftermarketDevice_id(ctx, field)
 			case "tokenId":
 				return ec.fieldContext_AftermarketDevice_tokenId(ctx, field)
+			case "tokenDID":
+				return ec.fieldContext_AftermarketDevice_tokenDID(ctx, field)
 			case "manufacturer":
 				return ec.fieldContext_AftermarketDevice_manufacturer(ctx, field)
 			case "address":
@@ -5994,6 +6133,50 @@ func (ec *executionContext) fieldContext_Connection_tokenId(_ context.Context, f
 	return fc, nil
 }
 
+func (ec *executionContext) _Connection_tokenDID(ctx context.Context, field graphql.CollectedField, obj *model.Connection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Connection_tokenDID(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TokenDID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Connection_tokenDID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Connection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Connection_mintedAt(ctx context.Context, field graphql.CollectedField, obj *model.Connection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Connection_mintedAt(ctx, field)
 	if err != nil {
@@ -6179,6 +6362,8 @@ func (ec *executionContext) fieldContext_ConnectionConnection_nodes(_ context.Co
 				return ec.fieldContext_Connection_owner(ctx, field)
 			case "tokenId":
 				return ec.fieldContext_Connection_tokenId(ctx, field)
+			case "tokenDID":
+				return ec.fieldContext_Connection_tokenDID(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_Connection_mintedAt(ctx, field)
 			}
@@ -6289,6 +6474,8 @@ func (ec *executionContext) fieldContext_ConnectionEdge_node(_ context.Context, 
 				return ec.fieldContext_Connection_owner(ctx, field)
 			case "tokenId":
 				return ec.fieldContext_Connection_tokenId(ctx, field)
+			case "tokenDID":
+				return ec.fieldContext_Connection_tokenDID(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_Connection_mintedAt(ctx, field)
 			}
@@ -6469,6 +6656,50 @@ func (ec *executionContext) fieldContext_DCN_tokenId(_ context.Context, field gr
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type BigInt does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DCN_tokenDID(ctx context.Context, field graphql.CollectedField, obj *model.Dcn) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DCN_tokenDID(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TokenDID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DCN_tokenDID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DCN",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -6684,6 +6915,8 @@ func (ec *executionContext) fieldContext_DCN_vehicle(_ context.Context, field gr
 				return ec.fieldContext_Vehicle_id(ctx, field)
 			case "tokenId":
 				return ec.fieldContext_Vehicle_tokenId(ctx, field)
+			case "tokenDID":
+				return ec.fieldContext_Vehicle_tokenDID(ctx, field)
 			case "manufacturer":
 				return ec.fieldContext_Vehicle_manufacturer(ctx, field)
 			case "owner":
@@ -6860,6 +7093,8 @@ func (ec *executionContext) fieldContext_DCNConnection_nodes(_ context.Context, 
 				return ec.fieldContext_DCN_node(ctx, field)
 			case "tokenId":
 				return ec.fieldContext_DCN_tokenId(ctx, field)
+			case "tokenDID":
+				return ec.fieldContext_DCN_tokenDID(ctx, field)
 			case "owner":
 				return ec.fieldContext_DCN_owner(ctx, field)
 			case "expiresAt":
@@ -7020,6 +7255,8 @@ func (ec *executionContext) fieldContext_DCNEdge_node(_ context.Context, field g
 				return ec.fieldContext_DCN_node(ctx, field)
 			case "tokenId":
 				return ec.fieldContext_DCN_tokenId(ctx, field)
+			case "tokenDID":
+				return ec.fieldContext_DCN_tokenDID(ctx, field)
 			case "owner":
 				return ec.fieldContext_DCN_owner(ctx, field)
 			case "expiresAt":
@@ -7240,6 +7477,50 @@ func (ec *executionContext) fieldContext_DeveloperLicense_tokenId(_ context.Cont
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DeveloperLicense_tokenDID(ctx context.Context, field graphql.CollectedField, obj *model.DeveloperLicense) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeveloperLicense_tokenDID(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TokenDID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DeveloperLicense_tokenDID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeveloperLicense",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -7683,6 +7964,8 @@ func (ec *executionContext) fieldContext_DeveloperLicenseConnection_nodes(_ cont
 			switch field.Name {
 			case "tokenId":
 				return ec.fieldContext_DeveloperLicense_tokenId(ctx, field)
+			case "tokenDID":
+				return ec.fieldContext_DeveloperLicense_tokenDID(ctx, field)
 			case "owner":
 				return ec.fieldContext_DeveloperLicense_owner(ctx, field)
 			case "clientId":
@@ -7797,6 +8080,8 @@ func (ec *executionContext) fieldContext_DeveloperLicenseEdge_node(_ context.Con
 			switch field.Name {
 			case "tokenId":
 				return ec.fieldContext_DeveloperLicense_tokenId(ctx, field)
+			case "tokenDID":
+				return ec.fieldContext_DeveloperLicense_tokenDID(ctx, field)
 			case "owner":
 				return ec.fieldContext_DeveloperLicense_owner(ctx, field)
 			case "clientId":
@@ -7985,6 +8270,8 @@ func (ec *executionContext) fieldContext_DeviceDefinition_manufacturer(_ context
 				return ec.fieldContext_Manufacturer_id(ctx, field)
 			case "tokenId":
 				return ec.fieldContext_Manufacturer_tokenId(ctx, field)
+			case "tokenDID":
+				return ec.fieldContext_Manufacturer_tokenDID(ctx, field)
 			case "name":
 				return ec.fieldContext_Manufacturer_name(ctx, field)
 			case "owner":
@@ -8841,6 +9128,8 @@ func (ec *executionContext) fieldContext_Earning_aftermarketDevice(_ context.Con
 				return ec.fieldContext_AftermarketDevice_id(ctx, field)
 			case "tokenId":
 				return ec.fieldContext_AftermarketDevice_tokenId(ctx, field)
+			case "tokenDID":
+				return ec.fieldContext_AftermarketDevice_tokenDID(ctx, field)
 			case "manufacturer":
 				return ec.fieldContext_AftermarketDevice_manufacturer(ctx, field)
 			case "address":
@@ -8964,6 +9253,8 @@ func (ec *executionContext) fieldContext_Earning_syntheticDevice(_ context.Conte
 				return ec.fieldContext_SyntheticDevice_name(ctx, field)
 			case "tokenId":
 				return ec.fieldContext_SyntheticDevice_tokenId(ctx, field)
+			case "tokenDID":
+				return ec.fieldContext_SyntheticDevice_tokenDID(ctx, field)
 			case "integrationId":
 				return ec.fieldContext_SyntheticDevice_integrationId(ctx, field)
 			case "address":
@@ -9063,6 +9354,8 @@ func (ec *executionContext) fieldContext_Earning_vehicle(_ context.Context, fiel
 				return ec.fieldContext_Vehicle_id(ctx, field)
 			case "tokenId":
 				return ec.fieldContext_Vehicle_tokenId(ctx, field)
+			case "tokenDID":
+				return ec.fieldContext_Vehicle_tokenDID(ctx, field)
 			case "manufacturer":
 				return ec.fieldContext_Vehicle_manufacturer(ctx, field)
 			case "owner":
@@ -9556,6 +9849,50 @@ func (ec *executionContext) fieldContext_Manufacturer_tokenId(_ context.Context,
 	return fc, nil
 }
 
+func (ec *executionContext) _Manufacturer_tokenDID(ctx context.Context, field graphql.CollectedField, obj *model.Manufacturer) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Manufacturer_tokenDID(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TokenDID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Manufacturer_tokenDID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Manufacturer",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Manufacturer_name(ctx context.Context, field graphql.CollectedField, obj *model.Manufacturer) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Manufacturer_name(ctx, field)
 	if err != nil {
@@ -9996,6 +10333,8 @@ func (ec *executionContext) fieldContext_ManufacturerConnection_nodes(_ context.
 				return ec.fieldContext_Manufacturer_id(ctx, field)
 			case "tokenId":
 				return ec.fieldContext_Manufacturer_tokenId(ctx, field)
+			case "tokenDID":
+				return ec.fieldContext_Manufacturer_tokenDID(ctx, field)
 			case "name":
 				return ec.fieldContext_Manufacturer_name(ctx, field)
 			case "owner":
@@ -10112,6 +10451,8 @@ func (ec *executionContext) fieldContext_ManufacturerEdge_node(_ context.Context
 				return ec.fieldContext_Manufacturer_id(ctx, field)
 			case "tokenId":
 				return ec.fieldContext_Manufacturer_tokenId(ctx, field)
+			case "tokenDID":
+				return ec.fieldContext_Manufacturer_tokenDID(ctx, field)
 			case "name":
 				return ec.fieldContext_Manufacturer_name(ctx, field)
 			case "owner":
@@ -10916,6 +11257,8 @@ func (ec *executionContext) fieldContext_Query_aftermarketDevice(ctx context.Con
 				return ec.fieldContext_AftermarketDevice_id(ctx, field)
 			case "tokenId":
 				return ec.fieldContext_AftermarketDevice_tokenId(ctx, field)
+			case "tokenDID":
+				return ec.fieldContext_AftermarketDevice_tokenDID(ctx, field)
 			case "manufacturer":
 				return ec.fieldContext_AftermarketDevice_manufacturer(ctx, field)
 			case "address":
@@ -11141,6 +11484,8 @@ func (ec *executionContext) fieldContext_Query_connection(ctx context.Context, f
 				return ec.fieldContext_Connection_owner(ctx, field)
 			case "tokenId":
 				return ec.fieldContext_Connection_tokenId(ctx, field)
+			case "tokenDID":
+				return ec.fieldContext_Connection_tokenDID(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_Connection_mintedAt(ctx, field)
 			}
@@ -11206,6 +11551,8 @@ func (ec *executionContext) fieldContext_Query_dcn(ctx context.Context, field gr
 				return ec.fieldContext_DCN_node(ctx, field)
 			case "tokenId":
 				return ec.fieldContext_DCN_tokenId(ctx, field)
+			case "tokenDID":
+				return ec.fieldContext_DCN_tokenDID(ctx, field)
 			case "owner":
 				return ec.fieldContext_DCN_owner(ctx, field)
 			case "expiresAt":
@@ -11405,6 +11752,8 @@ func (ec *executionContext) fieldContext_Query_developerLicense(ctx context.Cont
 			switch field.Name {
 			case "tokenId":
 				return ec.fieldContext_DeveloperLicense_tokenId(ctx, field)
+			case "tokenDID":
+				return ec.fieldContext_DeveloperLicense_tokenDID(ctx, field)
 			case "owner":
 				return ec.fieldContext_DeveloperLicense_owner(ctx, field)
 			case "clientId":
@@ -11551,6 +11900,8 @@ func (ec *executionContext) fieldContext_Query_manufacturer(ctx context.Context,
 				return ec.fieldContext_Manufacturer_id(ctx, field)
 			case "tokenId":
 				return ec.fieldContext_Manufacturer_tokenId(ctx, field)
+			case "tokenDID":
+				return ec.fieldContext_Manufacturer_tokenDID(ctx, field)
 			case "name":
 				return ec.fieldContext_Manufacturer_name(ctx, field)
 			case "owner":
@@ -11803,6 +12154,8 @@ func (ec *executionContext) fieldContext_Query_syntheticDevice(ctx context.Conte
 				return ec.fieldContext_SyntheticDevice_name(ctx, field)
 			case "tokenId":
 				return ec.fieldContext_SyntheticDevice_tokenId(ctx, field)
+			case "tokenDID":
+				return ec.fieldContext_SyntheticDevice_tokenDID(ctx, field)
 			case "integrationId":
 				return ec.fieldContext_SyntheticDevice_integrationId(ctx, field)
 			case "address":
@@ -11908,7 +12261,7 @@ func (ec *executionContext) _Query_vehicle(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Vehicle(rctx, fc.Args["tokenId"].(int))
+		return ec.resolvers.Query().Vehicle(rctx, fc.Args["tokenId"].(*int), fc.Args["tokenDID"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11937,6 +12290,8 @@ func (ec *executionContext) fieldContext_Query_vehicle(ctx context.Context, fiel
 				return ec.fieldContext_Vehicle_id(ctx, field)
 			case "tokenId":
 				return ec.fieldContext_Vehicle_tokenId(ctx, field)
+			case "tokenDID":
+				return ec.fieldContext_Vehicle_tokenDID(ctx, field)
 			case "manufacturer":
 				return ec.fieldContext_Vehicle_manufacturer(ctx, field)
 			case "owner":
@@ -13509,6 +13864,50 @@ func (ec *executionContext) fieldContext_Stake_tokenId(_ context.Context, field 
 	return fc, nil
 }
 
+func (ec *executionContext) _Stake_tokenDID(ctx context.Context, field graphql.CollectedField, obj *model.Stake) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Stake_tokenDID(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TokenDID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Stake_tokenDID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Stake",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Stake_owner(ctx context.Context, field graphql.CollectedField, obj *model.Stake) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Stake_owner(ctx, field)
 	if err != nil {
@@ -13854,6 +14253,8 @@ func (ec *executionContext) fieldContext_Stake_vehicle(_ context.Context, field 
 				return ec.fieldContext_Vehicle_id(ctx, field)
 			case "tokenId":
 				return ec.fieldContext_Vehicle_tokenId(ctx, field)
+			case "tokenDID":
+				return ec.fieldContext_Vehicle_tokenDID(ctx, field)
 			case "manufacturer":
 				return ec.fieldContext_Vehicle_manufacturer(ctx, field)
 			case "owner":
@@ -14026,6 +14427,8 @@ func (ec *executionContext) fieldContext_StakeConnection_nodes(_ context.Context
 			switch field.Name {
 			case "tokenId":
 				return ec.fieldContext_Stake_tokenId(ctx, field)
+			case "tokenDID":
+				return ec.fieldContext_Stake_tokenDID(ctx, field)
 			case "owner":
 				return ec.fieldContext_Stake_owner(ctx, field)
 			case "level":
@@ -14144,6 +14547,8 @@ func (ec *executionContext) fieldContext_StakeEdge_node(_ context.Context, field
 			switch field.Name {
 			case "tokenId":
 				return ec.fieldContext_Stake_tokenId(ctx, field)
+			case "tokenDID":
+				return ec.fieldContext_Stake_tokenDID(ctx, field)
 			case "owner":
 				return ec.fieldContext_Stake_owner(ctx, field)
 			case "level":
@@ -14343,6 +14748,50 @@ func (ec *executionContext) fieldContext_SyntheticDevice_tokenId(_ context.Conte
 	return fc, nil
 }
 
+func (ec *executionContext) _SyntheticDevice_tokenDID(ctx context.Context, field graphql.CollectedField, obj *model.SyntheticDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SyntheticDevice_tokenDID(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TokenDID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SyntheticDevice_tokenDID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SyntheticDevice",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _SyntheticDevice_integrationId(ctx context.Context, field graphql.CollectedField, obj *model.SyntheticDevice) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_SyntheticDevice_integrationId(ctx, field)
 	if err != nil {
@@ -14518,6 +14967,8 @@ func (ec *executionContext) fieldContext_SyntheticDevice_vehicle(_ context.Conte
 				return ec.fieldContext_Vehicle_id(ctx, field)
 			case "tokenId":
 				return ec.fieldContext_Vehicle_tokenId(ctx, field)
+			case "tokenDID":
+				return ec.fieldContext_Vehicle_tokenDID(ctx, field)
 			case "manufacturer":
 				return ec.fieldContext_Vehicle_manufacturer(ctx, field)
 			case "owner":
@@ -14694,6 +15145,8 @@ func (ec *executionContext) fieldContext_SyntheticDeviceConnection_nodes(_ conte
 				return ec.fieldContext_SyntheticDevice_name(ctx, field)
 			case "tokenId":
 				return ec.fieldContext_SyntheticDevice_tokenId(ctx, field)
+			case "tokenDID":
+				return ec.fieldContext_SyntheticDevice_tokenDID(ctx, field)
 			case "integrationId":
 				return ec.fieldContext_SyntheticDevice_integrationId(ctx, field)
 			case "address":
@@ -14852,6 +15305,8 @@ func (ec *executionContext) fieldContext_SyntheticDeviceEdge_node(_ context.Cont
 				return ec.fieldContext_SyntheticDevice_name(ctx, field)
 			case "tokenId":
 				return ec.fieldContext_SyntheticDevice_tokenId(ctx, field)
+			case "tokenDID":
+				return ec.fieldContext_SyntheticDevice_tokenDID(ctx, field)
 			case "integrationId":
 				return ec.fieldContext_SyntheticDevice_integrationId(ctx, field)
 			case "address":
@@ -15064,6 +15519,50 @@ func (ec *executionContext) fieldContext_Vehicle_tokenId(_ context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _Vehicle_tokenDID(ctx context.Context, field graphql.CollectedField, obj *model.Vehicle) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Vehicle_tokenDID(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TokenDID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Vehicle_tokenDID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Vehicle",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Vehicle_manufacturer(ctx context.Context, field graphql.CollectedField, obj *model.Vehicle) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Vehicle_manufacturer(ctx, field)
 	if err != nil {
@@ -15107,6 +15606,8 @@ func (ec *executionContext) fieldContext_Vehicle_manufacturer(_ context.Context,
 				return ec.fieldContext_Manufacturer_id(ctx, field)
 			case "tokenId":
 				return ec.fieldContext_Manufacturer_tokenId(ctx, field)
+			case "tokenDID":
+				return ec.fieldContext_Manufacturer_tokenDID(ctx, field)
 			case "name":
 				return ec.fieldContext_Manufacturer_name(ctx, field)
 			case "owner":
@@ -15254,6 +15755,8 @@ func (ec *executionContext) fieldContext_Vehicle_aftermarketDevice(_ context.Con
 				return ec.fieldContext_AftermarketDevice_id(ctx, field)
 			case "tokenId":
 				return ec.fieldContext_AftermarketDevice_tokenId(ctx, field)
+			case "tokenDID":
+				return ec.fieldContext_AftermarketDevice_tokenDID(ctx, field)
 			case "manufacturer":
 				return ec.fieldContext_AftermarketDevice_manufacturer(ctx, field)
 			case "address":
@@ -15463,6 +15966,8 @@ func (ec *executionContext) fieldContext_Vehicle_syntheticDevice(_ context.Conte
 				return ec.fieldContext_SyntheticDevice_name(ctx, field)
 			case "tokenId":
 				return ec.fieldContext_SyntheticDevice_tokenId(ctx, field)
+			case "tokenDID":
+				return ec.fieldContext_SyntheticDevice_tokenDID(ctx, field)
 			case "integrationId":
 				return ec.fieldContext_SyntheticDevice_integrationId(ctx, field)
 			case "address":
@@ -15571,6 +16076,8 @@ func (ec *executionContext) fieldContext_Vehicle_dcn(_ context.Context, field gr
 				return ec.fieldContext_DCN_node(ctx, field)
 			case "tokenId":
 				return ec.fieldContext_DCN_tokenId(ctx, field)
+			case "tokenDID":
+				return ec.fieldContext_DCN_tokenDID(ctx, field)
 			case "owner":
 				return ec.fieldContext_DCN_owner(ctx, field)
 			case "expiresAt":
@@ -15849,6 +16356,8 @@ func (ec *executionContext) fieldContext_Vehicle_stake(_ context.Context, field 
 			switch field.Name {
 			case "tokenId":
 				return ec.fieldContext_Stake_tokenId(ctx, field)
+			case "tokenDID":
+				return ec.fieldContext_Stake_tokenDID(ctx, field)
 			case "owner":
 				return ec.fieldContext_Stake_owner(ctx, field)
 			case "level":
@@ -16009,6 +16518,8 @@ func (ec *executionContext) fieldContext_VehicleConnection_nodes(_ context.Conte
 				return ec.fieldContext_Vehicle_id(ctx, field)
 			case "tokenId":
 				return ec.fieldContext_Vehicle_tokenId(ctx, field)
+			case "tokenDID":
+				return ec.fieldContext_Vehicle_tokenDID(ctx, field)
 			case "manufacturer":
 				return ec.fieldContext_Vehicle_manufacturer(ctx, field)
 			case "owner":
@@ -16252,6 +16763,8 @@ func (ec *executionContext) fieldContext_VehicleEdge_node(_ context.Context, fie
 				return ec.fieldContext_Vehicle_id(ctx, field)
 			case "tokenId":
 				return ec.fieldContext_Vehicle_tokenId(ctx, field)
+			case "tokenDID":
+				return ec.fieldContext_Vehicle_tokenDID(ctx, field)
 			case "manufacturer":
 				return ec.fieldContext_Vehicle_manufacturer(ctx, field)
 			case "owner":
@@ -18291,7 +18804,7 @@ func (ec *executionContext) unmarshalInputAftermarketDeviceBy(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"tokenId", "address", "serial", "imei", "devEUI"}
+	fieldsInOrder := [...]string{"tokenId", "tokenDID", "address", "serial", "imei", "devEUI"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -18305,6 +18818,13 @@ func (ec *executionContext) unmarshalInputAftermarketDeviceBy(ctx context.Contex
 				return it, err
 			}
 			it.TokenID = data
+		case "tokenDID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokenDID"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TokenDID = data
 		case "address":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("address"))
 			data, err := ec.unmarshalOAddress2ᚖgithubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, v)
@@ -18387,7 +18907,7 @@ func (ec *executionContext) unmarshalInputConnectionBy(ctx context.Context, obj 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "address", "tokenId"}
+	fieldsInOrder := [...]string{"name", "address", "tokenId", "tokenDID"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -18415,6 +18935,13 @@ func (ec *executionContext) unmarshalInputConnectionBy(ctx context.Context, obj 
 				return it, err
 			}
 			it.TokenID = data
+		case "tokenDID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokenDID"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TokenDID = data
 		}
 	}
 
@@ -18428,7 +18955,7 @@ func (ec *executionContext) unmarshalInputDCNBy(ctx context.Context, obj any) (m
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"node", "name"}
+	fieldsInOrder := [...]string{"node", "tokenDID", "name"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -18442,6 +18969,13 @@ func (ec *executionContext) unmarshalInputDCNBy(ctx context.Context, obj any) (m
 				return it, err
 			}
 			it.Node = data
+		case "tokenDID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokenDID"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TokenDID = data
 		case "name":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -18489,7 +19023,7 @@ func (ec *executionContext) unmarshalInputDeveloperLicenseBy(ctx context.Context
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"clientId", "alias", "tokenId"}
+	fieldsInOrder := [...]string{"clientId", "alias", "tokenId", "tokenDID"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -18517,6 +19051,13 @@ func (ec *executionContext) unmarshalInputDeveloperLicenseBy(ctx context.Context
 				return it, err
 			}
 			it.TokenID = data
+		case "tokenDID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokenDID"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TokenDID = data
 		}
 	}
 
@@ -18625,7 +19166,7 @@ func (ec *executionContext) unmarshalInputManufacturerBy(ctx context.Context, ob
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "tokenId", "slug"}
+	fieldsInOrder := [...]string{"name", "tokenId", "slug", "tokenDID"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -18653,6 +19194,13 @@ func (ec *executionContext) unmarshalInputManufacturerBy(ctx context.Context, ob
 				return it, err
 			}
 			it.Slug = data
+		case "tokenDID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokenDID"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TokenDID = data
 		}
 	}
 
@@ -18734,7 +19282,7 @@ func (ec *executionContext) unmarshalInputSyntheticDeviceBy(ctx context.Context,
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"tokenId", "address"}
+	fieldsInOrder := [...]string{"tokenId", "tokenDID", "address"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -18748,6 +19296,13 @@ func (ec *executionContext) unmarshalInputSyntheticDeviceBy(ctx context.Context,
 				return it, err
 			}
 			it.TokenID = data
+		case "tokenDID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokenDID"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TokenDID = data
 		case "address":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("address"))
 			data, err := ec.unmarshalOAddress2ᚖgithubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, v)
@@ -18934,6 +19489,11 @@ func (ec *executionContext) _AftermarketDevice(ctx context.Context, sel ast.Sele
 			}
 		case "tokenId":
 			out.Values[i] = ec._AftermarketDevice_tokenId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "tokenDID":
+			out.Values[i] = ec._AftermarketDevice_tokenDID(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -19308,6 +19868,11 @@ func (ec *executionContext) _Connection(ctx context.Context, sel ast.SelectionSe
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "tokenDID":
+			out.Values[i] = ec._Connection_tokenDID(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "mintedAt":
 			out.Values[i] = ec._Connection_mintedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -19457,6 +20022,11 @@ func (ec *executionContext) _DCN(ctx context.Context, sel ast.SelectionSet, obj 
 			}
 		case "tokenId":
 			out.Values[i] = ec._DCN_tokenId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "tokenDID":
+			out.Values[i] = ec._DCN_tokenDID(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -19683,6 +20253,11 @@ func (ec *executionContext) _DeveloperLicense(ctx context.Context, sel ast.Selec
 			out.Values[i] = graphql.MarshalString("DeveloperLicense")
 		case "tokenId":
 			out.Values[i] = ec._DeveloperLicense_tokenId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "tokenDID":
+			out.Values[i] = ec._DeveloperLicense_tokenDID(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -20381,6 +20956,11 @@ func (ec *executionContext) _Manufacturer(ctx context.Context, sel ast.Selection
 			}
 		case "tokenId":
 			out.Values[i] = ec._Manufacturer_tokenId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "tokenDID":
+			out.Values[i] = ec._Manufacturer_tokenDID(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -21691,6 +22271,11 @@ func (ec *executionContext) _Stake(ctx context.Context, sel ast.SelectionSet, ob
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "tokenDID":
+			out.Values[i] = ec._Stake_tokenDID(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "owner":
 			out.Values[i] = ec._Stake_owner(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -21900,6 +22485,11 @@ func (ec *executionContext) _SyntheticDevice(ctx context.Context, sel ast.Select
 			}
 		case "tokenId":
 			out.Values[i] = ec._SyntheticDevice_tokenId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "tokenDID":
+			out.Values[i] = ec._SyntheticDevice_tokenDID(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -22168,6 +22758,11 @@ func (ec *executionContext) _Vehicle(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "tokenId":
 			out.Values[i] = ec._Vehicle_tokenId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "tokenDID":
+			out.Values[i] = ec._Vehicle_tokenDID(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}

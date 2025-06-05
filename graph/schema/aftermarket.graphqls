@@ -29,6 +29,10 @@ type AftermarketDevice implements Node {
   """
   tokenId: Int!
   """
+  The DID for this aftermarket device's token ID in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+  """
+  tokenDID: String! @goField(name: "TokenDID")
+  """
   The manufacturer of this aftermarket device.
   """
   manufacturer: Manufacturer!
@@ -100,6 +104,11 @@ input AftermarketDeviceBy @oneOf {
   token id of the aftermarket device NFT
   """
   tokenId: Int
+
+  """
+  The DID of the aftermarket device in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+  """
+  tokenDID: String @goField(name: "TokenDID")
 
   """
   address of the aftermarket device

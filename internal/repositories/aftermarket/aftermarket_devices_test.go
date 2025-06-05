@@ -113,9 +113,11 @@ func Test_GetOwnedAftermarketDevices_Pagination_PreviousPage(t *testing.T) {
 	//       |
 	//       before this
 	repo := base.NewRepository(pdb, config.Settings{
-		BaseImageURL: "https://mockUrl.com/v1",
+		BaseImageURL:          "https://mockUrl.com/v1",
+		DIMORegistryChainID:   80001,
+		AftermarketDeviceAddr: "0x325b45949C833986bC98e98a49F3CA5C5c4643B5",
 	}, &logger)
-	adController := Repository{Repository: repo}
+	adController := New(repo)
 	last := 2
 	before := "MQ=="
 	startCrsr := "Mw=="
@@ -138,6 +140,7 @@ func Test_GetOwnedAftermarketDevices_Pagination_PreviousPage(t *testing.T) {
 				ID:             "AD_kQM=",
 				ManufacturerID: 137,
 				TokenID:        3,
+				TokenDID:       "did:erc721:80001:0x325b45949C833986bC98e98a49F3CA5C5c4643B5:3",
 				Owner:          common.BytesToAddress(ad[2].Owner),
 				Beneficiary:    common.BytesToAddress(ad[2].Beneficiary),
 				Address:        common.BytesToAddress(ad[2].Address),
@@ -149,6 +152,7 @@ func Test_GetOwnedAftermarketDevices_Pagination_PreviousPage(t *testing.T) {
 			Node: &model.AftermarketDevice{
 				ID:             "AD_kQI=",
 				TokenID:        2,
+				TokenDID:       "did:erc721:80001:0x325b45949C833986bC98e98a49F3CA5C5c4643B5:2",
 				ManufacturerID: 137,
 				Owner:          common.BytesToAddress(ad[1].Owner),
 				Beneficiary:    common.BytesToAddress(ad[1].Beneficiary),
@@ -212,7 +216,7 @@ func Test_GetAftermarketDevices_FilterByBeneficiary(t *testing.T) {
 
 	first := 10
 	logger := zerolog.Nop()
-	adController := Repository{Repository: base.NewRepository(pdb, config.Settings{}, &logger)}
+	adController := New(base.NewRepository(pdb, config.Settings{}, &logger))
 	beneFilterRes, err := adController.GetAftermarketDevices(ctx, &first, nil, nil, nil, &model.AftermarketDevicesFilter{Beneficiary: &beneficiary})
 	assert.NoError(t, err)
 
@@ -394,7 +398,7 @@ func TestAftermarketDeviceBy(t *testing.T) {
 	require.NoError(t, err)
 
 	logger := zerolog.Nop()
-	adController := Repository{Repository: base.NewRepository(pdb, config.Settings{}, &logger)}
+	adController := New(base.NewRepository(pdb, config.Settings{}, &logger))
 	res, err := adController.GetAftermarketDevice(ctx, model.AftermarketDeviceBy{Imei: ref("123456789012345")})
 	require.NoError(t, err)
 	require.Equal(t, imeiAd.ID, res.TokenID)

@@ -10,17 +10,30 @@ import (
 	"slices"
 	"time"
 
+	"github.com/DIMO-Network/cloudevent"
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
 type Repository struct {
 	*base.Repository
+	chainID         uint64
+	contractAddress common.Address
+}
+
+// New creates a new connection repository.
+func New(db *base.Repository) *Repository {
+	return &Repository{
+		Repository:      db,
+		chainID:         uint64(db.Settings.DIMORegistryChainID),
+		contractAddress: common.HexToAddress(db.Settings.ConnectionAddr),
+	}
 }
 
 type Cursor struct {
@@ -30,16 +43,23 @@ type Cursor struct {
 
 var pageHelper = helpers.PaginationHelper[Cursor]{}
 
-func ToAPI(v *models.Connection) *gmodel.Connection {
+func (r *Repository) ToAPI(v *models.Connection) *gmodel.Connection {
 	name := string(bytes.TrimRight(v.ID, "\x00"))
 
 	tokenID := new(big.Int).SetBytes(v.ID)
+
+	tokenDID := cloudevent.ERC721DID{
+		ChainID:         r.chainID,
+		ContractAddress: r.contractAddress,
+		TokenID:         tokenID,
+	}.String()
 
 	return &gmodel.Connection{
 		Name:     name,
 		Address:  common.BytesToAddress(v.Address),
 		Owner:    common.BytesToAddress(v.Owner),
 		TokenID:  tokenID,
+		TokenDID: tokenDID,
 		MintedAt: v.MintedAt,
 	}
 }
@@ -120,7 +140,7 @@ func (r *Repository) GetConnections(ctx context.Context, first *int, after *stri
 	edges := make([]*gmodel.ConnectionEdge, len(all))
 
 	for i, dv := range all {
-		dlv := ToAPI(dv)
+		dlv := r.ToAPI(dv)
 
 		nodes[i] = dlv
 
@@ -161,8 +181,8 @@ func (r *Repository) GetConnections(ctx context.Context, first *int, after *stri
 }
 
 func (r *Repository) GetConnection(ctx context.Context, by gmodel.ConnectionBy) (*gmodel.Connection, error) {
-	if base.CountTrue(by.Name != nil, by.Address != nil, by.TokenID != nil) != 1 {
-		return nil, fmt.Errorf("must specify exactly one of `name`, `address`, or `tokenId`")
+	if base.CountTrue(by.Name != nil, by.Address != nil, by.TokenID != nil, by.TokenDID != nil) != 1 {
+		return nil, gqlerror.Errorf("must specify exactly one of `name`, `address`, `tokenId`, or `tokenDID`")
 	}
 
 	var mod qm.QueryMod
@@ -180,7 +200,25 @@ func (r *Repository) GetConnection(ctx context.Context, by gmodel.ConnectionBy) 
 	case by.Address != nil:
 		mod = models.ConnectionWhere.Address.EQ(by.Address.Bytes())
 	case by.TokenID != nil:
-		id, err := convertTokenIDToID(by.TokenID)
+		id, err := helpers.ConvertTokenIDToID(by.TokenID)
+		if err != nil {
+			return nil, err
+		}
+
+		mod = models.ConnectionWhere.ID.EQ(id)
+	case by.TokenDID != nil:
+		did, err := cloudevent.DecodeERC721DID(*by.TokenDID)
+		if err != nil {
+			return nil, fmt.Errorf("error decoding token did: %w", err)
+		}
+		if did.ChainID != r.chainID {
+			return nil, fmt.Errorf("unknown chain id %d in token did", did.ChainID)
+		}
+		if did.ContractAddress != r.contractAddress {
+			return nil, fmt.Errorf("invalid contract address '%s' in token did", did.ContractAddress.Hex())
+		}
+
+		id, err := helpers.ConvertTokenIDToID(did.TokenID)
 		if err != nil {
 			return nil, err
 		}
@@ -196,26 +234,5 @@ func (r *Repository) GetConnection(ctx context.Context, by gmodel.ConnectionBy) 
 		return nil, err
 	}
 
-	return ToAPI(dl), nil
-}
-
-func convertTokenIDToID(tokenID *big.Int) ([]byte, error) {
-	if tokenID.Sign() < 0 {
-		return nil, errors.New("token id cannot be negative")
-	}
-
-	tbs := tokenID.Bytes()
-	if len(tbs) > 32 {
-		return nil, errors.New("token id too large")
-	}
-
-	if len(tbs) == 32 {
-		// This should almost always be the case.
-		return tbs, nil
-	}
-
-	tb32 := make([]byte, 32)
-	copy(tb32[32-len(tbs):], tbs)
-
-	return tb32, nil
+	return r.ToAPI(dl), nil
 }

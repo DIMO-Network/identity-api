@@ -53,6 +53,10 @@ type SyntheticDevice implements Node {
   """
   tokenId: Int!
   """
+  The DID for this synthetic device's token ID in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+  """
+  tokenDID: String! @goField(name: "TokenDID")
+  """
   Type of integration for the synthetic device.
   """
   integrationId: Int!
@@ -129,6 +133,12 @@ input SyntheticDeviceBy @oneOf {
   The token id for the synthetic device.
   """
   tokenId: Int
+
+  """
+  The DID of the synthetic device in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
+  """
+  tokenDID: String @goField(name: "TokenDID")
+
   """
   The Ethereum address for the synthetic device.
   """

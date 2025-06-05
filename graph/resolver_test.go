@@ -107,8 +107,10 @@ func TestResolver(t *testing.T) {
 
 	err = syntheticDevice.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	assert.NoError(err)
-
-	settings := config.Settings{}
+	vehicleAddress := common.HexToAddress("0x123")
+	settings := config.Settings{
+		VehicleNFTAddr: vehicleAddress.String(),
+	}
 	logger := zerolog.Nop()
 	repo := base.NewRepository(pdb, settings, &logger)
 	resolver := NewResolver(repo)
@@ -159,6 +161,38 @@ func TestResolver(t *testing.T) {
 		assert.JSONEq(
 			`{"vehicles":{"edges":[{"node":{"tokenId":11,"owner":"0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4","syntheticDevice":{"tokenId":1}}}]}}`,
 			string(b))
+	})
+
+	t.Run("vehicle query with tokenId", func(t *testing.T) {
+		var resp interface{}
+		c.MustPost(`{vehicle(tokenId: 11) {tokenId owner}}`, &resp)
+		b, _ := json.Marshal(resp)
+		fmt.Println(string(b))
+		assert.JSONEq(
+			`{"vehicle":{"tokenId":11,"owner":"0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"}}`,
+			string(b))
+	})
+
+	t.Run("vehicle query with tokenDID", func(t *testing.T) {
+		var resp interface{}
+		c.MustPost(`{vehicle(tokenDID: "did:erc721:1:`+vehicleAddress.String()+`:11") {tokenId owner}}`, &resp)
+		b, _ := json.Marshal(resp)
+		fmt.Println(string(b))
+		assert.JSONEq(
+			`{"vehicle":{"tokenId":11,"owner":"0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"}}`,
+			string(b))
+	})
+
+	t.Run("vehicle query with both tokenId and tokenDID should fail", func(t *testing.T) {
+		var resp interface{}
+		err := c.Post(`{vehicle(tokenId: 11, tokenDID: "did:erc721:1:`+vehicleAddress.String()+`:11") {tokenId owner}}`, &resp)
+		assert.NotNil(err)
+	})
+
+	t.Run("vehicle query with no parameters should fail", func(t *testing.T) {
+		var resp interface{}
+		err := c.Post(`{vehicle {tokenId owner}}`, &resp)
+		assert.NotNil(err)
 	})
 }
 
