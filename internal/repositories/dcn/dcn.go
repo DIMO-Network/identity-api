@@ -90,7 +90,11 @@ func (r *Repository) GetDCN(ctx context.Context, by gmodel.DCNBy) (*gmodel.Dcn, 
 		if did.ContractAddress != r.contractAddress {
 			return nil, fmt.Errorf("invalid contract address '%s' in token did", did.ContractAddress.Hex())
 		}
-		return r.GetDCNByNode(ctx, did.TokenID.Bytes())
+		id, err := helpers.ConvertTokenIDToID(did.TokenID)
+		if err != nil {
+			return nil, fmt.Errorf("error converting token id to id: %w", err)
+		}
+		return r.GetDCNByNode(ctx, id)
 	default:
 		return nil, fmt.Errorf("invalid filter")
 	}

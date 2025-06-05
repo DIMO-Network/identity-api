@@ -200,7 +200,7 @@ func (r *Repository) GetConnection(ctx context.Context, by gmodel.ConnectionBy) 
 	case by.Address != nil:
 		mod = models.ConnectionWhere.Address.EQ(by.Address.Bytes())
 	case by.TokenID != nil:
-		id, err := convertTokenIDToID(by.TokenID)
+		id, err := helpers.ConvertTokenIDToID(by.TokenID)
 		if err != nil {
 			return nil, err
 		}
@@ -218,7 +218,7 @@ func (r *Repository) GetConnection(ctx context.Context, by gmodel.ConnectionBy) 
 			return nil, fmt.Errorf("invalid contract address '%s' in token did", did.ContractAddress.Hex())
 		}
 
-		id, err := convertTokenIDToID(did.TokenID)
+		id, err := helpers.ConvertTokenIDToID(did.TokenID)
 		if err != nil {
 			return nil, err
 		}
@@ -235,25 +235,4 @@ func (r *Repository) GetConnection(ctx context.Context, by gmodel.ConnectionBy) 
 	}
 
 	return r.ToAPI(dl), nil
-}
-
-func convertTokenIDToID(tokenID *big.Int) ([]byte, error) {
-	if tokenID.Sign() < 0 {
-		return nil, errors.New("token id cannot be negative")
-	}
-
-	tbs := tokenID.Bytes()
-	if len(tbs) > 32 {
-		return nil, errors.New("token id too large")
-	}
-
-	if len(tbs) == 32 {
-		// This should almost always be the case.
-		return tbs, nil
-	}
-
-	tb32 := make([]byte, 32)
-	copy(tb32[32-len(tbs):], tbs)
-
-	return tb32, nil
 }
