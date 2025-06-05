@@ -2,30 +2,22 @@ FROM golang:1.24 AS build
 
 RUN useradd -u 10001 dimo
 
-WORKDIR /go/src/github.com/DIMO-Network/identity-api/
-COPY . /go/src/github.com/DIMO-Network/identity-api/
+WORKDIR /build
+COPY . ./
 
-ENV CGO_ENABLED=0
-ENV GOOS=linux
-
-RUN ls
-RUN go mod tidy
 RUN make build
 
-FROM gcr.io/distroless/static-debian12 AS package
+FROM gcr.io/distroless/base AS final
 
 LABEL maintainer="DIMO <hello@dimo.zone>"
 
-WORKDIR /
+USER nonroot:nonroot
 
-COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=build /etc/passwd /etc/passwd
-COPY --from=build /build/bin/identity-api /identity-api
-COPY --from=build /go/src/github.com/DIMO-Network/identity-api/migrations /migrations
-
-USER dimo
+COPY --from=build --chown=nonroot:nonroot /build/bin/identity-api /
+COPY --from=build --chown=nonroot:nonroot /build/migrations /migrations
 
 EXPOSE 8080
 EXPOSE 8888
 
-CMD ["/identity-api"]
+ENTRYPOINT ["/identity-api"]
+
