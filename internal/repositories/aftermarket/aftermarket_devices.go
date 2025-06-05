@@ -193,6 +193,9 @@ func (r *Repository) GetAftermarketDevice(ctx context.Context, by gmodel.Afterma
 		if did.ContractAddress != r.contractAddress {
 			return nil, fmt.Errorf("invalid contract address '%s' in token did", did.ContractAddress.Hex())
 		}
+		if !did.TokenID.IsInt64() {
+			return nil, fmt.Errorf("token id is too large")
+		}
 		qm = models.AftermarketDeviceWhere.ID.EQ(int(did.TokenID.Int64()))
 	case by.Serial != nil:
 		qm = models.AftermarketDeviceWhere.Serial.EQ(null.StringFrom(*by.Serial))

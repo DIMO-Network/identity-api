@@ -95,6 +95,9 @@ func (r *Repository) GetSyntheticDevice(ctx context.Context, by gmodel.Synthetic
 		if did.ContractAddress != r.contractAddress {
 			return nil, fmt.Errorf("invalid contract address '%s' in token did", did.ContractAddress.Hex())
 		}
+		if !did.TokenID.IsInt64() {
+			return nil, fmt.Errorf("token id is too large")
+		}
 		mod = models.SyntheticDeviceWhere.ID.EQ(int(did.TokenID.Int64()))
 	}
 

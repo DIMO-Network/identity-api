@@ -97,6 +97,9 @@ func (r *Repository) GetManufacturer(ctx context.Context, by gmodel.Manufacturer
 		if did.ContractAddress != r.contractAddress {
 			return nil, fmt.Errorf("invalid contract address '%s' in token did", did.ContractAddress.Hex())
 		}
+		if !did.TokenID.IsInt64() {
+			return nil, fmt.Errorf("token id is too large")
+		}
 		qm = models.ManufacturerWhere.ID.EQ(int(did.TokenID.Int64()))
 	default:
 		return nil, fmt.Errorf("invalid filter")

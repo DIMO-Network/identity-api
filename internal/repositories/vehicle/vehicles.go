@@ -212,6 +212,9 @@ func (r *Repository) GetVehicle(ctx context.Context, tokenID *int, tokenDID *str
 		if err != nil {
 			return nil, fmt.Errorf("error decoding tokenDID: %w", err)
 		}
+		if !did.TokenID.IsInt64() {
+			return nil, fmt.Errorf("token id is too large")
+		}
 		id = int(did.TokenID.Int64())
 	default:
 		return nil, fmt.Errorf("invalid filter")
@@ -318,7 +321,7 @@ func (r *Repository) ToAPI(v *models.Vehicle, imageURI string, dataURI string) (
 	tokenDID := cloudevent.ERC721DID{
 		ChainID:         r.chainID,
 		ContractAddress: r.contractAddress,
-		TokenID:         new(big.Int).SetUint64(uint64(v.ID)),
+		TokenID:         new(big.Int).SetInt64(int64(v.ID)),
 	}.String()
 
 	return &gmodel.Vehicle{
