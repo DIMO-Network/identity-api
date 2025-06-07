@@ -83,5 +83,7 @@ func TestBulk(t *testing.T) {
 		assert.Equal(t, "Tesla", results[2].Data.Name)
 	}
 
-	assert.Error(t, results[3].Error)
+	if assert.NoError(t, results[3].Error) {
+		assert.Equal(t, "", results[3].Data.Name)
+	}
 }
