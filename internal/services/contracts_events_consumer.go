@@ -131,6 +131,7 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *cloudevent
 	devLicenseAddr := common.HexToAddress(c.settings.DevLicenseAddr)
 	stakingAddr := common.HexToAddress(c.settings.StakingAddr)
 	connAddr := common.HexToAddress(c.settings.ConnectionAddr)
+	manufacturerAddr := common.HexToAddress(c.settings.ManufacturerNFTAddr)
 
 	var data cmodels.ContractEventData
 	if err := json.Unmarshal(event.Data, &data); err != nil {
@@ -198,6 +199,11 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *cloudevent
 			return c.handleAftermarketDeviceTransferredEvent(ctx, &data)
 		}
 
+	case manufacturerAddr:
+		switch eventName {
+		case Transfer:
+			return c.handleManufacturerTransferEvent(ctx, &data)
+		}
 	case DCNRegistryAddr:
 		switch eventName {
 		case NewNode:
@@ -666,6 +672,37 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceUnpairedEvent(ctx conte
 	ad := models.AftermarketDevice{ID: int(args.AftermarketDeviceNode.Int64())}
 
 	_, err := ad.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.AftermarketDeviceColumns.VehicleID, models.AftermarketDeviceColumns.PairedAt))
+	return err
+}
+
+func (c *ContractsEventsConsumer) handleManufacturerTransferEvent(ctx context.Context, e *cmodels.ContractEventData) error {
+	var args TransferData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	if args.From == zeroAddress {
+		// We handle mints via ManufacturerNodeMinted.
+		return nil
+	}
+
+	mfr := models.Manufacturer{
+		ID:    int(args.TokenID.Int64()),
+		Owner: args.To.Bytes(),
+	}
+
+	if args.To == zeroAddress {
+		// Must be a burn.
+		_, err := mfr.Delete(ctx, c.dbs.DBS().Writer)
+		return err
+	}
+
+	_, err := mfr.Update(
+		ctx,
+		c.dbs.DBS().Writer,
+		boil.Whitelist(models.ManufacturerColumns.Owner),
+	)
+
 	return err
 }
 
