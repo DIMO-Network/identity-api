@@ -21,6 +21,7 @@ import (
 type MockConnectionRepository struct {
 	ctrl     *gomock.Controller
 	recorder *MockConnectionRepositoryMockRecorder
+	isgomock struct{}
 }
 
 // MockConnectionRepositoryMockRecorder is the mock recorder for MockConnectionRepository.
@@ -41,31 +42,31 @@ func (m *MockConnectionRepository) EXPECT() *MockConnectionRepositoryMockRecorde
 }
 
 // GetConnection mocks base method.
-func (m *MockConnectionRepository) GetConnection(arg0 context.Context, arg1 model.ConnectionBy) (*model.Connection, error) {
+func (m *MockConnectionRepository) GetConnection(ctx context.Context, by model.ConnectionBy) (*model.Connection, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetConnection", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetConnection", ctx, by)
 	ret0, _ := ret[0].(*model.Connection)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetConnection indicates an expected call of GetConnection.
-func (mr *MockConnectionRepositoryMockRecorder) GetConnection(arg0, arg1 any) *gomock.Call {
+func (mr *MockConnectionRepositoryMockRecorder) GetConnection(ctx, by any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConnection", reflect.TypeOf((*MockConnectionRepository)(nil).GetConnection), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConnection", reflect.TypeOf((*MockConnectionRepository)(nil).GetConnection), ctx, by)
 }
 
 // GetConnections mocks base method.
-func (m *MockConnectionRepository) GetConnections(arg0 context.Context, arg1 *int, arg2 *string, arg3 *int, arg4 *string) (*model.ConnectionConnection, error) {
+func (m *MockConnectionRepository) GetConnections(ctx context.Context, first *int, after *string, last *int, before *string) (*model.ConnectionConnection, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetConnections", arg0, arg1, arg2, arg3, arg4)
+	ret := m.ctrl.Call(m, "GetConnections", ctx, first, after, last, before)
 	ret0, _ := ret[0].(*model.ConnectionConnection)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetConnections indicates an expected call of GetConnections.
-func (mr *MockConnectionRepositoryMockRecorder) GetConnections(arg0, arg1, arg2, arg3, arg4 any) *gomock.Call {
+func (mr *MockConnectionRepositoryMockRecorder) GetConnections(ctx, first, after, last, before any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConnections", reflect.TypeOf((*MockConnectionRepository)(nil).GetConnections), arg0, arg1, arg2, arg3, arg4)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConnections", reflect.TypeOf((*MockConnectionRepository)(nil).GetConnections), ctx, first, after, last, before)
 }

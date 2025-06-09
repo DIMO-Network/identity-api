@@ -59,7 +59,7 @@ type SyntheticDevice implements Node {
   """
   Type of integration for the synthetic device.
   """
-  integrationId: Int!
+  integrationId: Int! @deprecated(reason: "Use the `connection` field instead. For newer synthetic devices, this field will be zero.")
   """
   The Ethereum address for the device.
   """
