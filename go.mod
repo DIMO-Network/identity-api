@@ -16,6 +16,7 @@ require (
 	github.com/gofiber/fiber/v2 v2.52.8
 	github.com/graph-gophers/dataloader/v7 v7.1.0
 	github.com/jarcoal/httpmock v1.4.0
+	github.com/lib/pq v1.10.9
 	github.com/pressly/goose/v3 v3.24.3
 	github.com/prometheus/client_golang v1.22.0
 	github.com/rs/zerolog v1.34.0
@@ -28,7 +29,6 @@ require (
 	github.com/volatiletech/sqlboiler/v4 v4.19.1
 	github.com/volatiletech/strmangle v0.0.8
 	go.uber.org/mock v0.5.2
-	github.com/lib/pq v1.10.9
 )
 
 require (

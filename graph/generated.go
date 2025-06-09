@@ -15066,6 +15066,8 @@ func (ec *executionContext) fieldContext_SyntheticDevice_connection(_ context.Co
 				return ec.fieldContext_Connection_owner(ctx, field)
 			case "tokenId":
 				return ec.fieldContext_Connection_tokenId(ctx, field)
+			case "tokenDID":
+				return ec.fieldContext_Connection_tokenDID(ctx, field)
 			case "mintedAt":
 				return ec.fieldContext_Connection_mintedAt(ctx, field)
 			}

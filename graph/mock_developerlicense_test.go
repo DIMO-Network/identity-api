@@ -21,6 +21,7 @@ import (
 type MockDeveloperLicenseRepository struct {
 	ctrl     *gomock.Controller
 	recorder *MockDeveloperLicenseRepositoryMockRecorder
+	isgomock struct{}
 }
 
 // MockDeveloperLicenseRepositoryMockRecorder is the mock recorder for MockDeveloperLicenseRepository.
@@ -41,61 +42,61 @@ func (m *MockDeveloperLicenseRepository) EXPECT() *MockDeveloperLicenseRepositor
 }
 
 // GetDeveloperLicenses mocks base method.
-func (m *MockDeveloperLicenseRepository) GetDeveloperLicenses(arg0 context.Context, arg1 *int, arg2 *string, arg3 *int, arg4 *string, arg5 *model.DeveloperLicenseFilterBy) (*model.DeveloperLicenseConnection, error) {
+func (m *MockDeveloperLicenseRepository) GetDeveloperLicenses(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.DeveloperLicenseFilterBy) (*model.DeveloperLicenseConnection, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetDeveloperLicenses", arg0, arg1, arg2, arg3, arg4, arg5)
+	ret := m.ctrl.Call(m, "GetDeveloperLicenses", ctx, first, after, last, before, filterBy)
 	ret0, _ := ret[0].(*model.DeveloperLicenseConnection)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetDeveloperLicenses indicates an expected call of GetDeveloperLicenses.
-func (mr *MockDeveloperLicenseRepositoryMockRecorder) GetDeveloperLicenses(arg0, arg1, arg2, arg3, arg4, arg5 any) *gomock.Call {
+func (mr *MockDeveloperLicenseRepositoryMockRecorder) GetDeveloperLicenses(ctx, first, after, last, before, filterBy any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDeveloperLicenses", reflect.TypeOf((*MockDeveloperLicenseRepository)(nil).GetDeveloperLicenses), arg0, arg1, arg2, arg3, arg4, arg5)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDeveloperLicenses", reflect.TypeOf((*MockDeveloperLicenseRepository)(nil).GetDeveloperLicenses), ctx, first, after, last, before, filterBy)
 }
 
 // GetLicense mocks base method.
-func (m *MockDeveloperLicenseRepository) GetLicense(arg0 context.Context, arg1 model.DeveloperLicenseBy) (*model.DeveloperLicense, error) {
+func (m *MockDeveloperLicenseRepository) GetLicense(ctx context.Context, by model.DeveloperLicenseBy) (*model.DeveloperLicense, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetLicense", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetLicense", ctx, by)
 	ret0, _ := ret[0].(*model.DeveloperLicense)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetLicense indicates an expected call of GetLicense.
-func (mr *MockDeveloperLicenseRepositoryMockRecorder) GetLicense(arg0, arg1 any) *gomock.Call {
+func (mr *MockDeveloperLicenseRepositoryMockRecorder) GetLicense(ctx, by any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLicense", reflect.TypeOf((*MockDeveloperLicenseRepository)(nil).GetLicense), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLicense", reflect.TypeOf((*MockDeveloperLicenseRepository)(nil).GetLicense), ctx, by)
 }
 
 // GetRedirectURIsForLicense mocks base method.
-func (m *MockDeveloperLicenseRepository) GetRedirectURIsForLicense(arg0 context.Context, arg1 *model.DeveloperLicense, arg2 *int, arg3 *string, arg4 *int, arg5 *string) (*model.RedirectURIConnection, error) {
+func (m *MockDeveloperLicenseRepository) GetRedirectURIsForLicense(ctx context.Context, obj *model.DeveloperLicense, first *int, after *string, last *int, before *string) (*model.RedirectURIConnection, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetRedirectURIsForLicense", arg0, arg1, arg2, arg3, arg4, arg5)
+	ret := m.ctrl.Call(m, "GetRedirectURIsForLicense", ctx, obj, first, after, last, before)
 	ret0, _ := ret[0].(*model.RedirectURIConnection)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetRedirectURIsForLicense indicates an expected call of GetRedirectURIsForLicense.
-func (mr *MockDeveloperLicenseRepositoryMockRecorder) GetRedirectURIsForLicense(arg0, arg1, arg2, arg3, arg4, arg5 any) *gomock.Call {
+func (mr *MockDeveloperLicenseRepositoryMockRecorder) GetRedirectURIsForLicense(ctx, obj, first, after, last, before any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRedirectURIsForLicense", reflect.TypeOf((*MockDeveloperLicenseRepository)(nil).GetRedirectURIsForLicense), arg0, arg1, arg2, arg3, arg4, arg5)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRedirectURIsForLicense", reflect.TypeOf((*MockDeveloperLicenseRepository)(nil).GetRedirectURIsForLicense), ctx, obj, first, after, last, before)
 }
 
 // GetSignersForLicense mocks base method.
-func (m *MockDeveloperLicenseRepository) GetSignersForLicense(arg0 context.Context, arg1 *model.DeveloperLicense, arg2 *int, arg3 *string, arg4 *int, arg5 *string) (*model.SignerConnection, error) {
+func (m *MockDeveloperLicenseRepository) GetSignersForLicense(ctx context.Context, obj *model.DeveloperLicense, first *int, after *string, last *int, before *string) (*model.SignerConnection, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSignersForLicense", arg0, arg1, arg2, arg3, arg4, arg5)
+	ret := m.ctrl.Call(m, "GetSignersForLicense", ctx, obj, first, after, last, before)
 	ret0, _ := ret[0].(*model.SignerConnection)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetSignersForLicense indicates an expected call of GetSignersForLicense.
-func (mr *MockDeveloperLicenseRepositoryMockRecorder) GetSignersForLicense(arg0, arg1, arg2, arg3, arg4, arg5 any) *gomock.Call {
+func (mr *MockDeveloperLicenseRepositoryMockRecorder) GetSignersForLicense(ctx, obj, first, after, last, before any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSignersForLicense", reflect.TypeOf((*MockDeveloperLicenseRepository)(nil).GetSignersForLicense), arg0, arg1, arg2, arg3, arg4, arg5)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSignersForLicense", reflect.TypeOf((*MockDeveloperLicenseRepository)(nil).GetSignersForLicense), ctx, obj, first, after, last, before)
 }
