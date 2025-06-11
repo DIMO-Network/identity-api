@@ -118,7 +118,8 @@ type Connection struct {
 	// The DID for this connection's token ID in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
 	TokenDID string `json:"tokenDID"`
 	// The block timestamp for the mint of the connection.
-	MintedAt time.Time `json:"mintedAt"`
+	MintedAt      time.Time `json:"mintedAt"`
+	IntegrationID *int      `json:"-"`
 }
 
 type ConnectionBy struct {

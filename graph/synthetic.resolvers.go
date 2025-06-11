@@ -44,6 +44,25 @@ func (r *queryResolver) SyntheticDevices(ctx context.Context, first *int, last *
 	return r.synthetic.GetSyntheticDevices(ctx, first, last, after, before, filterBy)
 }
 
+// IntegrationID is the resolver for the integrationId field.
+func (r *syntheticDeviceResolver) IntegrationID(ctx context.Context, obj *model.SyntheticDevice) (int, error) {
+	if obj.IntegrationID != 0 {
+		return obj.IntegrationID, nil
+	}
+
+	// This is slightly wasteful, retrieving and formatting all of these fields, but we get to reuse code.
+	conn, err := loader.GetConnection(ctx, 0, obj.ConnectionID)
+	if err != nil {
+		return 0, err
+	}
+
+	if conn.IntegrationID != nil {
+		return *conn.IntegrationID, nil
+	}
+
+	return 0, nil
+}
+
 // Vehicle is the resolver for the vehicle field.
 func (r *syntheticDeviceResolver) Vehicle(ctx context.Context, obj *model.SyntheticDevice) (*model.Vehicle, error) {
 	return loader.GetVehicleByID(ctx, obj.VehicleID)

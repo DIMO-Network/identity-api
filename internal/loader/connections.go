@@ -2,6 +2,7 @@ package loader
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 	"time"
 
@@ -38,6 +39,9 @@ func GetConnection(ctx context.Context, integrationNode int, connectionID []byte
 	}
 
 	if integrationNode == 0 {
+		if len(connectionID) != 32 {
+			return nil, fmt.Errorf("connection id %s had unexpected length %d", connectionID, len(connectionID))
+		}
 		queryKey.ConnectionID = [32]byte(connectionID)
 	}
 

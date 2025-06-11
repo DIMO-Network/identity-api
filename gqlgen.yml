@@ -121,11 +121,17 @@ models:
         type: "*int"
       ManufacturerID:
         type: "int"
+  Connection:
+    extraFields:
+      IntegrationID:
+        type: "*int"
   SyntheticDevice:
     fields:
       vehicle:
         resolver: true
       connection:
+        resolver: true
+      integrationId:
         resolver: true
     extraFields:
       VehicleID:
