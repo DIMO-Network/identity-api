@@ -55,12 +55,13 @@ func (r *Repository) ToAPI(v *models.Connection) *gmodel.Connection {
 	}.String()
 
 	return &gmodel.Connection{
-		Name:     name,
-		Address:  common.BytesToAddress(v.Address),
-		Owner:    common.BytesToAddress(v.Owner),
-		TokenID:  tokenID,
-		TokenDID: tokenDID,
-		MintedAt: v.MintedAt,
+		Name:          name,
+		Address:       common.BytesToAddress(v.Address),
+		Owner:         common.BytesToAddress(v.Owner),
+		TokenID:       tokenID,
+		TokenDID:      tokenDID,
+		MintedAt:      v.MintedAt,
+		IntegrationID: v.IntegrationNode.Ptr(),
 	}
 }
 
