@@ -13,6 +13,7 @@ import (
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/loader"
 	"github.com/DIMO-Network/identity-api/internal/repositories"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 )
 
@@ -73,6 +74,15 @@ func (r *vehicleResolver) Earnings(ctx context.Context, obj *model.Vehicle) (*mo
 // Stake is the resolver for the stake field.
 func (r *vehicleResolver) Stake(ctx context.Context, obj *model.Vehicle) (*model.Stake, error) {
 	return loader.GetStakeByVehicleID(ctx, obj.TokenID)
+}
+
+// StorageNode is the resolver for the storageNode field.
+func (r *vehicleResolver) StorageNode(ctx context.Context, obj *model.Vehicle) (*model.StorageNode, error) {
+	if len(obj.StorageNodeID) != common.HashLength {
+		return nil, nil
+	}
+	// TODO(elffjs): If we don't get length 32 here, should we error?
+	return loader.GetStorageNodeByID(ctx, obj.StorageNodeID)
 }
 
 // History is the resolver for the history field.

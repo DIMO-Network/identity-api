@@ -669,6 +669,7 @@ type Vehicle struct {
 	// Description of the storage node to which the vehicle's data should be sent.
 	StorageNode    *StorageNode `json:"storageNode,omitempty"`
 	ManufacturerID int          `json:"-"`
+	StorageNodeID  []byte       `json:"-"`
 }
 
 func (Vehicle) IsNode()            {}

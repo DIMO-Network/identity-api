@@ -530,6 +530,7 @@ type VehicleResolver interface {
 	Earnings(ctx context.Context, obj *model.Vehicle) (*model.VehicleEarnings, error)
 
 	Stake(ctx context.Context, obj *model.Vehicle) (*model.Stake, error)
+	StorageNode(ctx context.Context, obj *model.Vehicle) (*model.StorageNode, error)
 }
 type VehicleEarningsResolver interface {
 	History(ctx context.Context, obj *model.VehicleEarnings, first *int, after *string, last *int, before *string) (*model.EarningsConnection, error)
@@ -16862,7 +16863,7 @@ func (ec *executionContext) _Vehicle_storageNode(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.StorageNode, nil
+		return ec.resolvers.Vehicle().StorageNode(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16880,8 +16881,8 @@ func (ec *executionContext) fieldContext_Vehicle_storageNode(_ context.Context, 
 	fc = &graphql.FieldContext{
 		Object:     "Vehicle",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "label":
@@ -23736,7 +23737,38 @@ func (ec *executionContext) _Vehicle(ctx context.Context, sel ast.SelectionSet, 
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "storageNode":
-			out.Values[i] = ec._Vehicle_storageNode(ctx, field, obj)
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Vehicle_storageNode(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
