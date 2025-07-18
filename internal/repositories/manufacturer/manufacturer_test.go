@@ -11,10 +11,10 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/models"
+	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
-	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
 const migrationsDir = "../../../migrations"

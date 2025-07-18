@@ -11,19 +11,19 @@ import (
 
 	"github.com/DIMO-Network/cloudevent"
 	"github.com/DIMO-Network/identity-api/internal/config"
+	"github.com/DIMO-Network/identity-api/internal/dbtypes"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/services/connection"
 	cmodels "github.com/DIMO-Network/identity-api/internal/services/models"
 	"github.com/DIMO-Network/identity-api/internal/services/staking"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/pkg/db"
-	"github.com/DIMO-Network/shared/pkg/dbtypes"
 	"github.com/DIMO-Network/shared/pkg/strings"
+	"github.com/aarondl/null/v8"
+	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/goccy/go-json"
 	"github.com/rs/zerolog"
-	"github.com/volatiletech/null/v8"
-	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
 type ContractsEventsConsumer struct {

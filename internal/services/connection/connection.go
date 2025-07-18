@@ -8,8 +8,8 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	cmodels "github.com/DIMO-Network/identity-api/internal/services/models"
 	dmodels "github.com/DIMO-Network/identity-api/models"
+	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/volatiletech/sqlboiler/v4/boil"
 
 	"github.com/DIMO-Network/shared/pkg/db"
 
