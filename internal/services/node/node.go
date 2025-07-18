@@ -10,6 +10,7 @@ import (
 	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/aarondl/null/v8"
 	"github.com/aarondl/sqlboiler/v4/boil"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog"
 )
 
@@ -66,6 +67,11 @@ func (h *Handler) HandleTransfer(ctx context.Context, ev *cmodels.ContractEventD
 	err := json.Unmarshal(ev.Arguments, &t)
 	if err != nil {
 		return err
+	}
+
+	// Let StorageNodeAnchorMinted take care of mints.
+	if t.From == zeroAddr {
+		return nil
 	}
 
 	anchorID, err := helpers.ConvertTokenIDToID(t.Id)
@@ -125,3 +131,5 @@ func (h *Handler) HandleNodeSetForVehicle(ctx context.Context, ev *cmodels.Contr
 	_, err = sn.Update(ctx, h.DBS.DBS().Writer, boil.Whitelist(dmodels.VehicleColumns.StorageNodeID))
 	return err
 }
+
+var zeroAddr common.Address
