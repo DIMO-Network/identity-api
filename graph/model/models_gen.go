@@ -543,13 +543,13 @@ type StakeFilterBy struct {
 }
 
 type StorageNode struct {
-	// The label for the node. This is unique.
+	// The label for the storage node. This is unique.
 	Label string `json:"label"`
-	// The address for the node. This is the location of a deployed contract, unique to the node.
+	// The address for the storage node. This is the location of the node's deployed contract.
 	Address common.Address `json:"address"`
-	// The owner of the node. Nodes are transferable, so this may change over time.
+	// The owner of the storage node. Nodes are transferable, so this may change over time.
 	Owner common.Address `json:"owner"`
-	// The token id of the node as an NFT. Since this is uint256(keccak256(bytes(label)))
+	// The token id of the storage node as an NFT. Since this is uint256(keccak256(bytes(label))),
 	// it tends to be very large.
 	TokenID *big.Int `json:"tokenId"`
 	// The URI for the node. This will host the well-known URIs that tell clients how to send in

@@ -1,18 +1,18 @@
 type StorageNode {
   """
-  The label for the node. This is unique.
+  The label for the storage node. This is unique.
   """
   label: String!
   """
-  The address for the node. This is the location of a deployed contract, unique to the node.
+  The address for the storage node. This is the location of the node's deployed contract.
   """
   address: Address!
   """
-  The owner of the node. Nodes are transferable, so this may change over time.
+  The owner of the storage node. Nodes are transferable, so this may change over time.
   """
   owner: Address!
   """
-  The token id of the node as an NFT. Since this is uint256(keccak256(bytes(label)))
+  The token id of the storage node as an NFT. Since this is uint256(keccak256(bytes(label))),
   it tends to be very large.
   """
   tokenId: BigInt!
