@@ -1,4 +1,4 @@
-package node
+package storagenode
 
 import (
 	"math/big"

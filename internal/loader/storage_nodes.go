@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
-	"github.com/DIMO-Network/identity-api/internal/repositories/node"
+	"github.com/DIMO-Network/identity-api/internal/repositories/storagenode"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/aarondl/sqlboiler/v4/queries/qm"
 	"github.com/ethereum/go-ethereum/common"
@@ -14,10 +14,10 @@ import (
 )
 
 type StorageNodeLoader struct {
-	repo *node.Repository
+	repo *storagenode.Repository
 }
 
-func NewStorageNodeLoader(repo *node.Repository) *StorageNodeLoader {
+func NewStorageNodeLoader(repo *storagenode.Repository) *StorageNodeLoader {
 	return &StorageNodeLoader{
 		repo: repo,
 	}

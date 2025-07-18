@@ -15,8 +15,8 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/services/connection"
 	cmodels "github.com/DIMO-Network/identity-api/internal/services/models"
-	"github.com/DIMO-Network/identity-api/internal/services/node"
 	"github.com/DIMO-Network/identity-api/internal/services/staking"
+	"github.com/DIMO-Network/identity-api/internal/services/storagenode"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/DIMO-Network/shared/pkg/strings"
@@ -28,13 +28,13 @@ import (
 )
 
 type ContractsEventsConsumer struct {
-	dbs            db.Store
-	log            *zerolog.Logger
-	settings       *config.Settings
-	httpClient     *http.Client
-	stakingHandler *staking.Handler
-	connsHandler   *connection.Handler
-	nodeHandler    *node.Handler
+	dbs                db.Store
+	log                *zerolog.Logger
+	settings           *config.Settings
+	httpClient         *http.Client
+	stakingHandler     *staking.Handler
+	connsHandler       *connection.Handler
+	storageNodeHandler *storagenode.Handler
 }
 
 type EventName string
@@ -109,8 +109,8 @@ func NewContractsEventsConsumer(dbs db.Store, log *zerolog.Logger, settings *con
 		stakingHandler: &staking.Handler{
 			DBS: dbs,
 		},
-		connsHandler: &connection.Handler{DBS: dbs, Logger: log},
-		nodeHandler:  &node.Handler{DBS: dbs, Logger: log},
+		connsHandler:       &connection.Handler{DBS: dbs, Logger: log},
+		storageNodeHandler: &storagenode.Handler{DBS: dbs, Logger: log},
 	}
 }
 
@@ -249,7 +249,7 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *cloudevent
 	case connAddr:
 		return c.connsHandler.Handle(ctx, &data)
 	case storageNodeAddr:
-		return c.nodeHandler.Handle(ctx, &data)
+		return c.storageNodeHandler.Handle(ctx, &data)
 	}
 
 	c.log.Debug().Str("event", data.EventName).Msg("Handler not provided for event.")

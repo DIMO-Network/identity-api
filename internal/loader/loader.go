@@ -11,8 +11,8 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/repositories/connection"
 	"github.com/DIMO-Network/identity-api/internal/repositories/dcn"
 	"github.com/DIMO-Network/identity-api/internal/repositories/manufacturer"
-	"github.com/DIMO-Network/identity-api/internal/repositories/node"
 	"github.com/DIMO-Network/identity-api/internal/repositories/stake"
+	"github.com/DIMO-Network/identity-api/internal/repositories/storagenode"
 	"github.com/DIMO-Network/identity-api/internal/repositories/synthetic"
 	"github.com/DIMO-Network/identity-api/internal/repositories/vehicle"
 	"github.com/DIMO-Network/shared/pkg/db"
@@ -49,7 +49,7 @@ func NewDataLoader(dbs db.Store, settings config.Settings) *Loaders {
 	manufacturer := NewManufacturerLoader(manufacturer.New(baseRepo))
 	stake := NewStakeLoader(stake.New(baseRepo))
 	connection := ConnectionLoader{repo: connection.New(baseRepo)}
-	storageNode := NewStorageNodeLoader(node.New(baseRepo))
+	storageNode := NewStorageNodeLoader(storagenode.New(baseRepo))
 
 	// return the DataLoader
 	return &Loaders{

@@ -1,4 +1,4 @@
-package node
+package storagenode
 
 import (
 	"context"
@@ -13,6 +13,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog"
 )
+
+//go:generate go tool eventgen eventcfg.yaml -p storagenode -o events.go
 
 type Handler struct {
 	DBS    db.Store
