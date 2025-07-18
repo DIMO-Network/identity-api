@@ -553,7 +553,7 @@ type StorageNode struct {
 	// it tends to be very large.
 	TokenID *big.Int `json:"tokenId"`
 	// The URI for the node. This will host the well-known URIs that tell clients how to send in
-	// and retrieve data.
+	// and retrieve data for this vehicle.
 	URI string `json:"uri"`
 	// The DID for this node's NFT in the format did:erc721:<chainID>:<contractAddress>:<tokenId>.
 	TokenDID string `json:"tokenDID"`
@@ -666,7 +666,9 @@ type Vehicle struct {
 	Earnings *VehicleEarnings `json:"earnings,omitempty"`
 	DataURI  string           `json:"dataURI"`
 	Stake    *Stake           `json:"stake,omitempty"`
-	// Description of the storage node to which the vehicle's data should be sent.
+	// Description of the storage node to which the vehicle's data should be sent. If this is
+	// not set, then the vehicle may be attached to the original Digital Infrastructure, Inc.
+	// node.
 	StorageNode    *StorageNode `json:"storageNode,omitempty"`
 	ManufacturerID int          `json:"-"`
 	StorageNodeID  []byte       `json:"-"`

@@ -18,7 +18,7 @@ type StorageNode {
   tokenId: BigInt!
   """
   The URI for the node. This will host the well-known URIs that tell clients how to send in
-  and retrieve data.
+  and retrieve data for this vehicle.
   """
   uri: String!
   """
