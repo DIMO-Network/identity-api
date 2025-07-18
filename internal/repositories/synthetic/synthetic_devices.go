@@ -17,9 +17,9 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/mnemonic"
+	"github.com/aarondl/sqlboiler/v4/queries/qm"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/vektah/gqlparser/v2/gqlerror"
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
 // TokenPrefix is the prefix for a global token id for synthetic devices.

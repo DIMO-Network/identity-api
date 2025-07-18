@@ -9,9 +9,9 @@ import (
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/repositories/connection"
 	"github.com/DIMO-Network/identity-api/models"
+	"github.com/aarondl/sqlboiler/v4/queries/qm"
 	"github.com/graph-gophers/dataloader/v7"
 	"github.com/lib/pq"
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
 type ConnectionLoader struct {
