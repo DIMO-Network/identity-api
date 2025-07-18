@@ -542,6 +542,25 @@ type StakeFilterBy struct {
 	Attachable *bool `json:"attachable,omitempty"`
 }
 
+type StorageNode struct {
+	// The label for the node. This is unique.
+	Label string `json:"label"`
+	// The address for the node. This is the location of a deployed contract, unique to the node.
+	Address common.Address `json:"address"`
+	// The owner of the node. Nodes are transferable, so this may change over time.
+	Owner common.Address `json:"owner"`
+	// The token id of the node as an NFT. Since this is uint256(keccak256(bytes(label)))
+	// it tends to be very large.
+	TokenID *big.Int `json:"tokenId"`
+	// The URI for the node. This will host the well-known URIs that tell clients how to send in
+	// and retrieve data.
+	URI string `json:"uri"`
+	// The DID for this node's NFT in the format did:erc721:<chainID>:<contractAddress>:<tokenId>.
+	TokenDID string `json:"tokenDID"`
+	// The timestamp of the block in which this node was minted.
+	MintedAt time.Time `json:"mintedAt"`
+}
+
 // The SyntheticDevice is a software connection established to connect the vehicle to the DIMO network.
 type SyntheticDevice struct {
 	// An opaque global identifier for this syntheticDevice.
