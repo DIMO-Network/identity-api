@@ -28,7 +28,6 @@ require (
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.37.0
 	github.com/vektah/gqlparser/v2 v2.5.30
 	github.com/vmihailenco/msgpack/v5 v5.4.1
-	github.com/volatiletech/strmangle v0.0.8
 	go.uber.org/mock v0.5.2
 )
 
@@ -138,7 +137,6 @@ require (
 	github.com/valyala/fasthttp v1.52.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
-	github.com/volatiletech/inflect v0.0.1 // indirect
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
