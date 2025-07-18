@@ -3,3 +3,4 @@ events:
   - StorageNodeAnchorMinted(address,uint256,address,string,string)
   - Transfer(address,address,uint256)
   - NodeUriUpdated(uint256,string)
+  - NodeSetForVehicle(uint256,uint256)

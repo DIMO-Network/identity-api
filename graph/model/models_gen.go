@@ -661,12 +661,14 @@ type Vehicle struct {
 	// Encoded name of the device
 	Name string `json:"name"`
 	// A URI containing an image for the vehicle.
-	ImageURI       string           `json:"imageURI"`
-	Image          string           `json:"image"`
-	Earnings       *VehicleEarnings `json:"earnings,omitempty"`
-	DataURI        string           `json:"dataURI"`
-	Stake          *Stake           `json:"stake,omitempty"`
-	ManufacturerID int              `json:"-"`
+	ImageURI string           `json:"imageURI"`
+	Image    string           `json:"image"`
+	Earnings *VehicleEarnings `json:"earnings,omitempty"`
+	DataURI  string           `json:"dataURI"`
+	Stake    *Stake           `json:"stake,omitempty"`
+	// Description of the storage node to which the vehicle's data should be sent.
+	StorageNode    *StorageNode `json:"storageNode,omitempty"`
+	ManufacturerID int          `json:"-"`
 }
 
 func (Vehicle) IsNode()            {}

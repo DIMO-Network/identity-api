@@ -8,6 +8,7 @@ import (
 	cmodels "github.com/DIMO-Network/identity-api/internal/services/models"
 	dmodels "github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/shared/pkg/db"
+	"github.com/aarondl/null/v8"
 	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/rs/zerolog"
 )
@@ -24,7 +25,9 @@ func (h *Handler) Handle(ctx context.Context, ev *cmodels.ContractEventData) err
 	case TransferEventID:
 		return h.HandleTransfer(ctx, ev)
 	case NodeUriUpdatedEventID:
-		return h.HandleNodeUriUpdatedEvent(ctx, ev)
+		return h.HandleNodeUriUpdated(ctx, ev)
+	case NodeSetForVehicleEventID:
+		return h.HandleNodeSetForVehicle(ctx, ev)
 	default:
 		return nil
 	}
@@ -79,7 +82,7 @@ func (h *Handler) HandleTransfer(ctx context.Context, ev *cmodels.ContractEventD
 	return err
 }
 
-func (h *Handler) HandleNodeUriUpdatedEvent(ctx context.Context, ev *cmodels.ContractEventData) error {
+func (h *Handler) HandleNodeUriUpdated(ctx context.Context, ev *cmodels.ContractEventData) error {
 	var nuu NodeUriUpdated
 	err := json.Unmarshal(ev.Arguments, &nuu)
 	if err != nil {
@@ -97,5 +100,28 @@ func (h *Handler) HandleNodeUriUpdatedEvent(ctx context.Context, ev *cmodels.Con
 	}
 
 	_, err = sn.Update(ctx, h.DBS.DBS().Writer, boil.Whitelist(dmodels.StorageNodeColumns.URI))
+	return err
+}
+
+func (h *Handler) HandleNodeSetForVehicle(ctx context.Context, ev *cmodels.ContractEventData) error {
+	var nsfv NodeSetForVehicle
+	err := json.Unmarshal(ev.Arguments, &nsfv)
+	if err != nil {
+		return err
+	}
+
+	vehicleID := nsfv.VehicleId.Int64()
+
+	anchorID, err := helpers.ConvertTokenIDToID(nsfv.NodeId)
+	if err != nil {
+		return err
+	}
+
+	sn := dmodels.Vehicle{
+		ID:            int(vehicleID),
+		StorageNodeID: null.BytesFrom(anchorID),
+	}
+
+	_, err = sn.Update(ctx, h.DBS.DBS().Writer, boil.Whitelist(dmodels.VehicleColumns.StorageNodeID))
 	return err
 }

@@ -33,6 +33,7 @@ type Vehicle struct {
 	ManufacturerID     int         `boil:"manufacturer_id" json:"manufacturer_id" toml:"manufacturer_id" yaml:"manufacturer_id"`
 	ImageURI           null.String `boil:"image_uri" json:"image_uri,omitempty" toml:"image_uri" yaml:"image_uri,omitempty"`
 	DeviceDefinitionID null.String `boil:"device_definition_id" json:"device_definition_id,omitempty" toml:"device_definition_id" yaml:"device_definition_id,omitempty"`
+	StorageNodeID      null.Bytes  `boil:"storage_node_id" json:"storage_node_id,omitempty" toml:"storage_node_id" yaml:"storage_node_id,omitempty"`
 
 	R *vehicleR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L vehicleL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -48,6 +49,7 @@ var VehicleColumns = struct {
 	ManufacturerID     string
 	ImageURI           string
 	DeviceDefinitionID string
+	StorageNodeID      string
 }{
 	ID:                 "id",
 	OwnerAddress:       "owner_address",
@@ -58,6 +60,7 @@ var VehicleColumns = struct {
 	ManufacturerID:     "manufacturer_id",
 	ImageURI:           "image_uri",
 	DeviceDefinitionID: "device_definition_id",
+	StorageNodeID:      "storage_node_id",
 }
 
 var VehicleTableColumns = struct {
@@ -70,6 +73,7 @@ var VehicleTableColumns = struct {
 	ManufacturerID     string
 	ImageURI           string
 	DeviceDefinitionID string
+	StorageNodeID      string
 }{
 	ID:                 "vehicles.id",
 	OwnerAddress:       "vehicles.owner_address",
@@ -80,6 +84,7 @@ var VehicleTableColumns = struct {
 	ManufacturerID:     "vehicles.manufacturer_id",
 	ImageURI:           "vehicles.image_uri",
 	DeviceDefinitionID: "vehicles.device_definition_id",
+	StorageNodeID:      "vehicles.storage_node_id",
 }
 
 // Generated where
@@ -94,6 +99,7 @@ var VehicleWhere = struct {
 	ManufacturerID     whereHelperint
 	ImageURI           whereHelpernull_String
 	DeviceDefinitionID whereHelpernull_String
+	StorageNodeID      whereHelpernull_Bytes
 }{
 	ID:                 whereHelperint{field: "\"identity_api\".\"vehicles\".\"id\""},
 	OwnerAddress:       whereHelper__byte{field: "\"identity_api\".\"vehicles\".\"owner_address\""},
@@ -104,11 +110,13 @@ var VehicleWhere = struct {
 	ManufacturerID:     whereHelperint{field: "\"identity_api\".\"vehicles\".\"manufacturer_id\""},
 	ImageURI:           whereHelpernull_String{field: "\"identity_api\".\"vehicles\".\"image_uri\""},
 	DeviceDefinitionID: whereHelpernull_String{field: "\"identity_api\".\"vehicles\".\"device_definition_id\""},
+	StorageNodeID:      whereHelpernull_Bytes{field: "\"identity_api\".\"vehicles\".\"storage_node_id\""},
 }
 
 // VehicleRels is where relationship names are stored.
 var VehicleRels = struct {
 	Manufacturer      string
+	StorageNode       string
 	AftermarketDevice string
 	Stake             string
 	SyntheticDevice   string
@@ -118,6 +126,7 @@ var VehicleRels = struct {
 	VehicleSacds      string
 }{
 	Manufacturer:      "Manufacturer",
+	StorageNode:       "StorageNode",
 	AftermarketDevice: "AftermarketDevice",
 	Stake:             "Stake",
 	SyntheticDevice:   "SyntheticDevice",
@@ -130,6 +139,7 @@ var VehicleRels = struct {
 // vehicleR is where relationships are stored.
 type vehicleR struct {
 	Manufacturer      *Manufacturer      `boil:"Manufacturer" json:"Manufacturer" toml:"Manufacturer" yaml:"Manufacturer"`
+	StorageNode       *StorageNode       `boil:"StorageNode" json:"StorageNode" toml:"StorageNode" yaml:"StorageNode"`
 	AftermarketDevice *AftermarketDevice `boil:"AftermarketDevice" json:"AftermarketDevice" toml:"AftermarketDevice" yaml:"AftermarketDevice"`
 	Stake             *Stake             `boil:"Stake" json:"Stake" toml:"Stake" yaml:"Stake"`
 	SyntheticDevice   *SyntheticDevice   `boil:"SyntheticDevice" json:"SyntheticDevice" toml:"SyntheticDevice" yaml:"SyntheticDevice"`
@@ -158,6 +168,22 @@ func (r *vehicleR) GetManufacturer() *Manufacturer {
 	}
 
 	return r.Manufacturer
+}
+
+func (o *Vehicle) GetStorageNode() *StorageNode {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetStorageNode()
+}
+
+func (r *vehicleR) GetStorageNode() *StorageNode {
+	if r == nil {
+		return nil
+	}
+
+	return r.StorageNode
 }
 
 func (o *Vehicle) GetAftermarketDevice() *AftermarketDevice {
@@ -276,9 +302,9 @@ func (r *vehicleR) GetVehicleSacds() VehicleSacdSlice {
 type vehicleL struct{}
 
 var (
-	vehicleAllColumns            = []string{"id", "owner_address", "make", "model", "year", "minted_at", "manufacturer_id", "image_uri", "device_definition_id"}
+	vehicleAllColumns            = []string{"id", "owner_address", "make", "model", "year", "minted_at", "manufacturer_id", "image_uri", "device_definition_id", "storage_node_id"}
 	vehicleColumnsWithoutDefault = []string{"id", "owner_address", "minted_at", "manufacturer_id"}
-	vehicleColumnsWithDefault    = []string{"make", "model", "year", "image_uri", "device_definition_id"}
+	vehicleColumnsWithDefault    = []string{"make", "model", "year", "image_uri", "device_definition_id", "storage_node_id"}
 	vehiclePrimaryKeyColumns     = []string{"id"}
 	vehicleGeneratedColumns      = []string{}
 )
@@ -599,6 +625,17 @@ func (o *Vehicle) Manufacturer(mods ...qm.QueryMod) manufacturerQuery {
 	return Manufacturers(queryMods...)
 }
 
+// StorageNode pointed to by the foreign key.
+func (o *Vehicle) StorageNode(mods ...qm.QueryMod) storageNodeQuery {
+	queryMods := []qm.QueryMod{
+		qm.Where("\"id\" = ?", o.StorageNodeID),
+	}
+
+	queryMods = append(queryMods, mods...)
+
+	return StorageNodes(queryMods...)
+}
+
 // AftermarketDevice pointed to by the foreign key.
 func (o *Vehicle) AftermarketDevice(mods ...qm.QueryMod) aftermarketDeviceQuery {
 	queryMods := []qm.QueryMod{
@@ -798,6 +835,130 @@ func (vehicleL) LoadManufacturer(ctx context.Context, e boil.ContextExecutor, si
 				local.R.Manufacturer = foreign
 				if foreign.R == nil {
 					foreign.R = &manufacturerR{}
+				}
+				foreign.R.Vehicles = append(foreign.R.Vehicles, local)
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadStorageNode allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for an N-1 relationship.
+func (vehicleL) LoadStorageNode(ctx context.Context, e boil.ContextExecutor, singular bool, maybeVehicle interface{}, mods queries.Applicator) error {
+	var slice []*Vehicle
+	var object *Vehicle
+
+	if singular {
+		var ok bool
+		object, ok = maybeVehicle.(*Vehicle)
+		if !ok {
+			object = new(Vehicle)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeVehicle)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeVehicle))
+			}
+		}
+	} else {
+		s, ok := maybeVehicle.(*[]*Vehicle)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeVehicle)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeVehicle))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &vehicleR{}
+		}
+		if !queries.IsNil(object.StorageNodeID) {
+			args[object.StorageNodeID] = struct{}{}
+		}
+
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &vehicleR{}
+			}
+
+			if !queries.IsNil(obj.StorageNodeID) {
+				args[obj.StorageNodeID] = struct{}{}
+			}
+
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`identity_api.storage_nodes`),
+		qm.WhereIn(`identity_api.storage_nodes.id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load StorageNode")
+	}
+
+	var resultSlice []*StorageNode
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice StorageNode")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results of eager load for storage_nodes")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for storage_nodes")
+	}
+
+	if len(storageNodeAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+
+	if len(resultSlice) == 0 {
+		return nil
+	}
+
+	if singular {
+		foreign := resultSlice[0]
+		object.R.StorageNode = foreign
+		if foreign.R == nil {
+			foreign.R = &storageNodeR{}
+		}
+		foreign.R.Vehicles = append(foreign.R.Vehicles, object)
+		return nil
+	}
+
+	for _, local := range slice {
+		for _, foreign := range resultSlice {
+			if queries.Equal(local.StorageNodeID, foreign.ID) {
+				local.R.StorageNode = foreign
+				if foreign.R == nil {
+					foreign.R = &storageNodeR{}
 				}
 				foreign.R.Vehicles = append(foreign.R.Vehicles, local)
 				break
@@ -1655,6 +1816,86 @@ func (o *Vehicle) SetManufacturer(ctx context.Context, exec boil.ContextExecutor
 		related.R.Vehicles = append(related.R.Vehicles, o)
 	}
 
+	return nil
+}
+
+// SetStorageNode of the vehicle to the related item.
+// Sets o.R.StorageNode to related.
+// Adds o to related.R.Vehicles.
+func (o *Vehicle) SetStorageNode(ctx context.Context, exec boil.ContextExecutor, insert bool, related *StorageNode) error {
+	var err error
+	if insert {
+		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
+			return errors.Wrap(err, "failed to insert into foreign table")
+		}
+	}
+
+	updateQuery := fmt.Sprintf(
+		"UPDATE \"identity_api\".\"vehicles\" SET %s WHERE %s",
+		strmangle.SetParamNames("\"", "\"", 1, []string{"storage_node_id"}),
+		strmangle.WhereClause("\"", "\"", 2, vehiclePrimaryKeyColumns),
+	)
+	values := []interface{}{related.ID, o.ID}
+
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, updateQuery)
+		fmt.Fprintln(writer, values)
+	}
+	if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	queries.Assign(&o.StorageNodeID, related.ID)
+	if o.R == nil {
+		o.R = &vehicleR{
+			StorageNode: related,
+		}
+	} else {
+		o.R.StorageNode = related
+	}
+
+	if related.R == nil {
+		related.R = &storageNodeR{
+			Vehicles: VehicleSlice{o},
+		}
+	} else {
+		related.R.Vehicles = append(related.R.Vehicles, o)
+	}
+
+	return nil
+}
+
+// RemoveStorageNode relationship.
+// Sets o.R.StorageNode to nil.
+// Removes o from all passed in related items' relationships struct.
+func (o *Vehicle) RemoveStorageNode(ctx context.Context, exec boil.ContextExecutor, related *StorageNode) error {
+	var err error
+
+	queries.SetScanner(&o.StorageNodeID, nil)
+	if _, err = o.Update(ctx, exec, boil.Whitelist("storage_node_id")); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	if o.R != nil {
+		o.R.StorageNode = nil
+	}
+	if related == nil || related.R == nil {
+		return nil
+	}
+
+	for i, ri := range related.R.Vehicles {
+		if queries.Equal(o.StorageNodeID, ri.StorageNodeID) {
+			continue
+		}
+
+		ln := len(related.R.Vehicles)
+		if ln > 1 && i < ln-1 {
+			related.R.Vehicles[i] = related.R.Vehicles[ln-1]
+		}
+		related.R.Vehicles = related.R.Vehicles[:ln-1]
+		break
+	}
 	return nil
 }
 

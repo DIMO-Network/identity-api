@@ -433,6 +433,7 @@ type ComplexityRoot struct {
 		Privileges        func(childComplexity int, first *int, after *string, last *int, before *string, filterBy *model.PrivilegeFilterBy) int
 		Sacds             func(childComplexity int, first *int, after *string, last *int, before *string) int
 		Stake             func(childComplexity int) int
+		StorageNode       func(childComplexity int) int
 		SyntheticDevice   func(childComplexity int) int
 		TokenDID          func(childComplexity int) int
 		TokenID           func(childComplexity int) int
@@ -2301,6 +2302,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Vehicle.Stake(childComplexity), true
+
+	case "Vehicle.storageNode":
+		if e.complexity.Vehicle.StorageNode == nil {
+			break
+		}
+
+		return e.complexity.Vehicle.StorageNode(childComplexity), true
 
 	case "Vehicle.syntheticDevice":
 		if e.complexity.Vehicle.SyntheticDevice == nil {
@@ -5336,6 +5344,8 @@ func (ec *executionContext) fieldContext_AftermarketDevice_vehicle(_ context.Con
 				return ec.fieldContext_Vehicle_dataURI(ctx, field)
 			case "stake":
 				return ec.fieldContext_Vehicle_stake(ctx, field)
+			case "storageNode":
+				return ec.fieldContext_Vehicle_storageNode(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
 		},
@@ -7018,6 +7028,8 @@ func (ec *executionContext) fieldContext_DCN_vehicle(_ context.Context, field gr
 				return ec.fieldContext_Vehicle_dataURI(ctx, field)
 			case "stake":
 				return ec.fieldContext_Vehicle_stake(ctx, field)
+			case "storageNode":
+				return ec.fieldContext_Vehicle_storageNode(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
 		},
@@ -9459,6 +9471,8 @@ func (ec *executionContext) fieldContext_Earning_vehicle(_ context.Context, fiel
 				return ec.fieldContext_Vehicle_dataURI(ctx, field)
 			case "stake":
 				return ec.fieldContext_Vehicle_stake(ctx, field)
+			case "storageNode":
+				return ec.fieldContext_Vehicle_storageNode(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
 		},
@@ -12397,6 +12411,8 @@ func (ec *executionContext) fieldContext_Query_vehicle(ctx context.Context, fiel
 				return ec.fieldContext_Vehicle_dataURI(ctx, field)
 			case "stake":
 				return ec.fieldContext_Vehicle_stake(ctx, field)
+			case "storageNode":
+				return ec.fieldContext_Vehicle_storageNode(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
 		},
@@ -14360,6 +14376,8 @@ func (ec *executionContext) fieldContext_Stake_vehicle(_ context.Context, field 
 				return ec.fieldContext_Vehicle_dataURI(ctx, field)
 			case "stake":
 				return ec.fieldContext_Vehicle_stake(ctx, field)
+			case "storageNode":
+				return ec.fieldContext_Vehicle_storageNode(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
 		},
@@ -15382,6 +15400,8 @@ func (ec *executionContext) fieldContext_SyntheticDevice_vehicle(_ context.Conte
 				return ec.fieldContext_Vehicle_dataURI(ctx, field)
 			case "stake":
 				return ec.fieldContext_Vehicle_stake(ctx, field)
+			case "storageNode":
+				return ec.fieldContext_Vehicle_storageNode(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
 		},
@@ -16828,6 +16848,63 @@ func (ec *executionContext) fieldContext_Vehicle_stake(_ context.Context, field 
 	return fc, nil
 }
 
+func (ec *executionContext) _Vehicle_storageNode(ctx context.Context, field graphql.CollectedField, obj *model.Vehicle) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Vehicle_storageNode(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.StorageNode, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.StorageNode)
+	fc.Result = res
+	return ec.marshalOStorageNode2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐStorageNode(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Vehicle_storageNode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Vehicle",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "label":
+				return ec.fieldContext_StorageNode_label(ctx, field)
+			case "address":
+				return ec.fieldContext_StorageNode_address(ctx, field)
+			case "owner":
+				return ec.fieldContext_StorageNode_owner(ctx, field)
+			case "tokenId":
+				return ec.fieldContext_StorageNode_tokenId(ctx, field)
+			case "uri":
+				return ec.fieldContext_StorageNode_uri(ctx, field)
+			case "tokenDID":
+				return ec.fieldContext_StorageNode_tokenDID(ctx, field)
+			case "mintedAt":
+				return ec.fieldContext_StorageNode_mintedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type StorageNode", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _VehicleConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.VehicleConnection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_VehicleConnection_totalCount(ctx, field)
 	if err != nil {
@@ -16997,6 +17074,8 @@ func (ec *executionContext) fieldContext_VehicleConnection_nodes(_ context.Conte
 				return ec.fieldContext_Vehicle_dataURI(ctx, field)
 			case "stake":
 				return ec.fieldContext_Vehicle_stake(ctx, field)
+			case "storageNode":
+				return ec.fieldContext_Vehicle_storageNode(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
 		},
@@ -17242,6 +17321,8 @@ func (ec *executionContext) fieldContext_VehicleEdge_node(_ context.Context, fie
 				return ec.fieldContext_Vehicle_dataURI(ctx, field)
 			case "stake":
 				return ec.fieldContext_Vehicle_stake(ctx, field)
+			case "storageNode":
+				return ec.fieldContext_Vehicle_storageNode(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vehicle", field.Name)
 		},
@@ -23654,6 +23735,8 @@ func (ec *executionContext) _Vehicle(ctx context.Context, sel ast.SelectionSet, 
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "storageNode":
+			out.Values[i] = ec._Vehicle_storageNode(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -26636,6 +26719,13 @@ func (ec *executionContext) unmarshalOStakeFilterBy2ᚖgithubᚗcomᚋDIMOᚑNet
 	}
 	res, err := ec.unmarshalInputStakeFilterBy(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOStorageNode2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐStorageNode(ctx context.Context, sel ast.SelectionSet, v *model.StorageNode) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._StorageNode(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v any) (*string, error) {
