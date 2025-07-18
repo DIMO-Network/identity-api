@@ -110,6 +110,7 @@ func NewContractsEventsConsumer(dbs db.Store, log *zerolog.Logger, settings *con
 			DBS: dbs,
 		},
 		connsHandler: &connection.Handler{DBS: dbs, Logger: log},
+		nodeHandler:  &node.Handler{DBS: dbs, Logger: log},
 	}
 }
 

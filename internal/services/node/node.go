@@ -53,6 +53,8 @@ func (h *Handler) HandleStorageNodeAnchorMinted(ctx context.Context, ev *cmodels
 		MintedAt: ev.Block.Time,
 	}
 
+	h.Logger.Info().Str("label", snam.NodeAnchorLabel).Msg("Storage node minted.")
+
 	return sn.Insert(ctx, h.DBS.DBS().Writer, boil.Infer())
 }
 
