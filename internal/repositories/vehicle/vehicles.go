@@ -324,7 +324,7 @@ func (r *Repository) ToAPI(v *models.Vehicle, imageURI string, dataURI string) (
 		TokenID:         new(big.Int).SetInt64(int64(v.ID)),
 	}.String()
 
-	return &gmodel.Vehicle{
+	out := &gmodel.Vehicle{
 		ID:       globalID,
 		TokenID:  v.ID,
 		TokenDID: tokenDID,
@@ -341,7 +341,13 @@ func (r *Repository) ToAPI(v *models.Vehicle, imageURI string, dataURI string) (
 		ImageURI:       imageURI,
 		Image:          imageURI,
 		DataURI:        dataURI,
-	}, nil
+	}
+
+	if v.StorageNodeID.Valid {
+		out.StorageNodeID = v.StorageNodeID.Bytes
+	}
+
+	return out, nil
 }
 
 // DefaultImageURI craates a URL for the vehicle image.

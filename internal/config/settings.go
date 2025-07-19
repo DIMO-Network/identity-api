@@ -27,4 +27,5 @@ type Settings struct {
 	DevLicenseAddr        string      `yaml:"DEV_LICENSE_ADDR"`
 	StakingAddr           string      `yaml:"STAKING_ADDR"`
 	ConnectionAddr        string      `yaml:"CONNECTION_ADDR"`
+	StorageNodeAddr       string      `yaml:"STORAGE_NODE_ADDR"`
 }

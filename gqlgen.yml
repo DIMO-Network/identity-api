@@ -158,9 +158,13 @@ models:
         resolver: true
       stake:
         resolver: true
+      storageNode:
+        resolver: true
     extraFields:
       ManufacturerID:
         type: "int"
+      StorageNodeID:
+        type: "[]byte"
   VehicleEarnings:
     fields:
       history:

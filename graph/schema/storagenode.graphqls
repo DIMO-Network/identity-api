@@ -1,0 +1,32 @@
+type StorageNode {
+  """
+  The label for the storage node. This is unique.
+  """
+  label: String!
+  """
+  The address for the storage node. This is the location of the node's deployed contract.
+  """
+  address: Address!
+  """
+  The owner of the storage node. Nodes are transferable, so this may change over time.
+  """
+  owner: Address!
+  """
+  The token id of the storage node as an NFT. Since this is uint256(keccak256(bytes(label))),
+  it tends to be very large.
+  """
+  tokenId: BigInt!
+  """
+  The URI for the node. This will host the well-known URIs that tell clients how to send in
+  and retrieve data for this vehicle.
+  """
+  uri: String!
+  """
+  The DID for this node's NFT in the format did:erc721:<chainID>:<contractAddress>:<tokenId>.
+  """
+  tokenDID: String! @goField(name: "TokenDID")
+  """
+  The timestamp of the block in which this node was minted.
+  """
+  mintedAt: Time!
+}

@@ -542,6 +542,25 @@ type StakeFilterBy struct {
 	Attachable *bool `json:"attachable,omitempty"`
 }
 
+type StorageNode struct {
+	// The label for the storage node. This is unique.
+	Label string `json:"label"`
+	// The address for the storage node. This is the location of the node's deployed contract.
+	Address common.Address `json:"address"`
+	// The owner of the storage node. Nodes are transferable, so this may change over time.
+	Owner common.Address `json:"owner"`
+	// The token id of the storage node as an NFT. Since this is uint256(keccak256(bytes(label))),
+	// it tends to be very large.
+	TokenID *big.Int `json:"tokenId"`
+	// The URI for the node. This will host the well-known URIs that tell clients how to send in
+	// and retrieve data for this vehicle.
+	URI string `json:"uri"`
+	// The DID for this node's NFT in the format did:erc721:<chainID>:<contractAddress>:<tokenId>.
+	TokenDID string `json:"tokenDID"`
+	// The timestamp of the block in which this node was minted.
+	MintedAt time.Time `json:"mintedAt"`
+}
+
 // The SyntheticDevice is a software connection established to connect the vehicle to the DIMO network.
 type SyntheticDevice struct {
 	// An opaque global identifier for this syntheticDevice.
@@ -642,12 +661,17 @@ type Vehicle struct {
 	// Encoded name of the device
 	Name string `json:"name"`
 	// A URI containing an image for the vehicle.
-	ImageURI       string           `json:"imageURI"`
-	Image          string           `json:"image"`
-	Earnings       *VehicleEarnings `json:"earnings,omitempty"`
-	DataURI        string           `json:"dataURI"`
-	Stake          *Stake           `json:"stake,omitempty"`
-	ManufacturerID int              `json:"-"`
+	ImageURI string           `json:"imageURI"`
+	Image    string           `json:"image"`
+	Earnings *VehicleEarnings `json:"earnings,omitempty"`
+	DataURI  string           `json:"dataURI"`
+	Stake    *Stake           `json:"stake,omitempty"`
+	// Description of the storage node to which the vehicle's data should be sent. If this is
+	// not set, then the vehicle may be attached to the original Digital Infrastructure, Inc.
+	// node.
+	StorageNode    *StorageNode `json:"storageNode,omitempty"`
+	ManufacturerID int          `json:"-"`
+	StorageNodeID  []byte       `json:"-"`
 }
 
 func (Vehicle) IsNode()            {}

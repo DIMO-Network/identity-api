@@ -156,6 +156,12 @@ type Vehicle implements Node {
   dataURI: String!
 
   stake: Stake
+  """
+  Description of the storage node to which the vehicle's data should be sent. If this is
+  not set, then the vehicle may be attached to the original Digital Infrastructure, Inc.
+  node.
+  """
+  storageNode: StorageNode
 }
 
 type Definition {
