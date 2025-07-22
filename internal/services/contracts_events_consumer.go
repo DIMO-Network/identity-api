@@ -68,6 +68,7 @@ const (
 	VehicleAttributeSet                   EventName = "VehicleAttributeSet"
 	VehicleNodeMintedWithDeviceDefinition EventName = "VehicleNodeMintedWithDeviceDefinition"
 	DeviceDefinitionIdSet                 EventName = "DeviceDefinitionIdSet"
+	NodeIdSetForVehicleId                 EventName = "NodeIdSetForVehicleId"
 
 	// Synthetic devices.
 	SyntheticDeviceNodeMinted EventName = "SyntheticDeviceNodeMinted"
@@ -164,6 +165,8 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *cloudevent
 			return c.handleVehicleAttributeSetEvent(ctx, &data)
 		case DeviceDefinitionIdSet:
 			return c.handleDeviceDefinitionIdSet(ctx, &data)
+		case NodeIdSetForVehicleId:
+			return c.handleNodeIdSetForVehicleID(ctx, &data)
 
 		case AftermarketDeviceNodeMinted:
 			return c.handleAftermarketDeviceMintedEvent(ctx, &data)
@@ -462,6 +465,36 @@ func (c *ContractsEventsConsumer) handleDeviceDefinitionIdSet(ctx context.Contex
 	}
 
 	logger.Info().Int64("vehicleId", args.VehicleId.Int64()).Msgf("Vehicle definition updated to %s.", args.DDID)
+
+	return nil
+}
+
+func (c *ContractsEventsConsumer) handleNodeIdSetForVehicleID(ctx context.Context, e *cmodels.ContractEventData) error {
+	logger := c.log.With().Str("EventName", Transfer.String()).Logger()
+
+	var args NodeIdSetForVehicleID
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	anchorID, err := helpers.ConvertTokenIDToID(args.StorageNodeId)
+	if err != nil {
+		return err
+	}
+
+	vehicle := models.Vehicle{
+		ID:            int(args.VehicleId.Int64()),
+		StorageNodeID: null.BytesFrom(anchorID),
+	}
+
+	_, err = vehicle.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.VehicleColumns.StorageNodeID))
+	if err != nil {
+		return err
+	}
+
+	// Don't want to incur the cost of a SELECT, and I don't know how to do RETURNING with SQLBoiler.
+	// This at least is enough to go on.
+	logger.Info().Int64("vehicleId", args.VehicleId.Int64()).Msgf("Vehicle storage node set to %d.", args.StorageNodeId)
 
 	return nil
 }

@@ -161,6 +161,11 @@ type PermissionsSetData struct {
 	Source      string
 }
 
+type NodeIdSetForVehicleID struct {
+	VehicleId     *big.Int
+	StorageNodeId *big.Int
+}
+
 type DeviceDefinitionIdSetData struct {
 	VehicleId *big.Int
 	DDID      string
