@@ -39,7 +39,7 @@ func GetStorageNodeByID(ctx context.Context, nodeID []byte) (*model.StorageNode,
 func (s *StorageNodeLoader) BatchGetStorageNodesByIDs(ctx context.Context, storageNodeIDs [][32]byte) []*dataloader.Result[*model.StorageNode] {
 	results := make([]*dataloader.Result[*model.StorageNode], len(storageNodeIDs))
 
-	nodeIDSlices := make([][]byte, 0, len(storageNodeIDs))
+	nodeIDSlices := make([][]byte, len(storageNodeIDs))
 	for i := range storageNodeIDs {
 		nodeIDSlices[i] = storageNodeIDs[i][:]
 	}
