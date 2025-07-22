@@ -240,16 +240,6 @@
         "internalType": "address"
       },
       {
-        "name": "dimoRegistry_",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "vehicleIdProxy_",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
         "name": "nodeAnchorTemplate_",
         "type": "address",
         "internalType": "address"
@@ -598,24 +588,6 @@
   },
   {
     "type": "function",
-    "name": "setNodeForVehicle",
-    "inputs": [
-      {
-        "name": "vehicleId",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "nodeId",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
     "name": "setNodeUri",
     "inputs": [
       {
@@ -751,25 +723,6 @@
     "stateMutability": "view"
   },
   {
-    "type": "function",
-    "name": "vehicleIdToNodeId",
-    "inputs": [
-      {
-        "name": "vehicleId",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
     "type": "event",
     "name": "Approval",
     "inputs": [
@@ -828,25 +781,6 @@
         "type": "uint64",
         "indexed": false,
         "internalType": "uint64"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "NodeSetForVehicle",
-    "inputs": [
-      {
-        "name": "vehicleId",
-        "type": "uint256",
-        "indexed": true,
-        "internalType": "uint256"
-      },
-      {
-        "name": "nodeId",
-        "type": "uint256",
-        "indexed": true,
-        "internalType": "uint256"
       }
     ],
     "anonymous": false
@@ -1028,17 +962,6 @@
     "type": "error",
     "name": "InvalidInitialization",
     "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "InvalidVehicleId",
-    "inputs": [
-      {
-        "name": "vehicleId",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ]
   },
   {
     "type": "error",
