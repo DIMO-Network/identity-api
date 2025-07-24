@@ -11,7 +11,7 @@ var (
 	StorageNodeAnchorMintedEventID = common.HexToHash("0x430efd668e3f72e9f9f42e0305fdf8b36a502ab1d64cc1f9cd0d0f81f980a4f5")
 	TransferEventID                = common.HexToHash("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef")
 	NodeUriUpdatedEventID          = common.HexToHash("0x299aa0feeeceed16a093b27c728021c473ebe77d341fc5b465711983a7bb8521")
-	NodeSetForVehicleEventID       = common.HexToHash("0xdc2338c7cddc416d49f0ad0f239870fe19e61440a9db520b1f3486a58d4335ba")
+	VehicleStorageNodeIdSetEventID = common.HexToHash("0x9197060b37d411c171b9a3c09175a1f6e3f98e71adaf8f44c750a7cdd2c87fee")
 )
 
 type StorageNodeAnchorMinted struct {
@@ -33,7 +33,7 @@ type NodeUriUpdated struct {
 	NewNodeUri string   `json:"newNodeUri"`
 }
 
-type NodeSetForVehicle struct {
-	VehicleId *big.Int `json:"vehicleId"`
-	NodeId    *big.Int `json:"nodeId"`
+type VehicleStorageNodeIdSet struct {
+	VehicleId     *big.Int `json:"vehicleId"`
+	StorageNodeId *big.Int `json:"storageNodeId"`
 }
