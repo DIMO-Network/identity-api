@@ -68,7 +68,7 @@ const (
 	VehicleAttributeSet                   EventName = "VehicleAttributeSet"
 	VehicleNodeMintedWithDeviceDefinition EventName = "VehicleNodeMintedWithDeviceDefinition"
 	DeviceDefinitionIdSet                 EventName = "DeviceDefinitionIdSet"
-	NodeIdSetForVehicleId                 EventName = "NodeIdSetForVehicleId"
+	VehicleStorageNodeIdSet               EventName = "VehicleStorageNodeIdSet"
 
 	// Synthetic devices.
 	SyntheticDeviceNodeMinted EventName = "SyntheticDeviceNodeMinted"
@@ -165,7 +165,7 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *cloudevent
 			return c.handleVehicleAttributeSetEvent(ctx, &data)
 		case DeviceDefinitionIdSet:
 			return c.handleDeviceDefinitionIdSet(ctx, &data)
-		case NodeIdSetForVehicleId:
+		case VehicleStorageNodeIdSet:
 			return c.handleNodeIdSetForVehicleID(ctx, &data)
 
 		case AftermarketDeviceNodeMinted:
@@ -472,7 +472,7 @@ func (c *ContractsEventsConsumer) handleDeviceDefinitionIdSet(ctx context.Contex
 func (c *ContractsEventsConsumer) handleNodeIdSetForVehicleID(ctx context.Context, e *cmodels.ContractEventData) error {
 	logger := c.log.With().Str("EventName", Transfer.String()).Logger()
 
-	var args NodeIdSetForVehicleID
+	var args VehicleStorageNodeIdSetData
 	if err := json.Unmarshal(e.Arguments, &args); err != nil {
 		return err
 	}

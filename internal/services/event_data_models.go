@@ -161,7 +161,7 @@ type PermissionsSetData struct {
 	Source      string
 }
 
-type NodeIdSetForVehicleID struct {
+type VehicleStorageNodeIdSetData struct {
 	VehicleId     *big.Int
 	StorageNodeId *big.Int
 }
