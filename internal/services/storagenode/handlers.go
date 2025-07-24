@@ -29,8 +29,8 @@ func (h *Handler) Handle(ctx context.Context, ev *cmodels.ContractEventData) err
 		return h.HandleTransfer(ctx, ev)
 	case NodeUriUpdatedEventID:
 		return h.HandleNodeUriUpdated(ctx, ev)
-	case NodeSetForVehicleEventID:
-		return h.HandleNodeSetForVehicle(ctx, ev)
+	case VehicleStorageNodeIdSetEventID:
+		return h.HandleVehicleStorageNodeIdSet(ctx, ev)
 	default:
 		return nil
 	}
@@ -111,8 +111,8 @@ func (h *Handler) HandleNodeUriUpdated(ctx context.Context, ev *cmodels.Contract
 	return err
 }
 
-func (h *Handler) HandleNodeSetForVehicle(ctx context.Context, ev *cmodels.ContractEventData) error {
-	var nsfv NodeSetForVehicle
+func (h *Handler) HandleVehicleStorageNodeIdSet(ctx context.Context, ev *cmodels.ContractEventData) error {
+	var nsfv VehicleStorageNodeIdSet
 	err := json.Unmarshal(ev.Arguments, &nsfv)
 	if err != nil {
 		return err
@@ -120,7 +120,7 @@ func (h *Handler) HandleNodeSetForVehicle(ctx context.Context, ev *cmodels.Contr
 
 	vehicleID := nsfv.VehicleId.Int64()
 
-	anchorID, err := helpers.ConvertTokenIDToID(nsfv.NodeId)
+	anchorID, err := helpers.ConvertTokenIDToID(nsfv.StorageNodeId)
 	if err != nil {
 		return err
 	}
