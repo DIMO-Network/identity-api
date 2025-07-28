@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/DIMO-Network/identity-api/internal/repositories/devicedefinition"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/repositories/vehicle"
@@ -12,11 +13,12 @@ import (
 )
 
 type VehicleLoader struct {
-	repo *vehicle.Repository
+	repo            *vehicle.Repository
+	definitionsRepo *devicedefinition.Repository
 }
 
-func NewVehicleLoader(repo *vehicle.Repository) *VehicleLoader {
-	return &VehicleLoader{repo: repo}
+func NewVehicleLoader(repo *vehicle.Repository, definitionsRepo *devicedefinition.Repository) *VehicleLoader {
+	return &VehicleLoader{repo: repo, definitionsRepo: definitionsRepo}
 }
 
 func GetVehicleByID(ctx context.Context, vehicleID int) (*model.Vehicle, error) {
@@ -66,7 +68,12 @@ func (v *VehicleLoader) BatchGetVehicleByID(ctx context.Context, vehicleIDs []in
 			if err != nil {
 				retErr = errors.Join(retErr, fmt.Errorf("error getting vehicle data uri: %w", err))
 			}
-			obj, err := v.repo.ToAPI(veh, imageURI, dataURI)
+			definition, err := v.definitionsRepo.GetDeviceDefinition(ctx, model.DeviceDefinitionBy{ID: veh.DeviceDefinitionID.String})
+			if err != nil {
+				retErr = errors.Join(retErr, fmt.Errorf("error getting device definition: %w", err))
+			}
+
+			obj, err := v.repo.ToAPI(veh, imageURI, dataURI, definition)
 			if err != nil {
 				retErr = errors.Join(retErr, fmt.Errorf("error converting vehicle to API: %w", err))
 			}

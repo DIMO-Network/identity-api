@@ -1145,7 +1145,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 	o.Require().NoError(err)
 	vehicle1DataURI, err := GetVehicleDataURI(o.settings.BaseVehicleDataURI, testVehicle1.ID)
 	o.Require().NoError(err)
-	vehicle1AsAPI, err := o.repo.ToAPI(&testVehicle1, vehicle1ImageURL, vehicle1DataURI)
+	vehicle1AsAPI, err := o.repo.ToAPI(&testVehicle1, vehicle1ImageURL, vehicle1DataURI, nil)
 	o.NoError(err)
 
 	testVehicle2 := models.Vehicle{
@@ -1162,7 +1162,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 	o.Require().NoError(err)
 	vehicle2DataURI, err := GetVehicleDataURI(o.settings.BaseVehicleDataURI, testVehicle2.ID)
 	o.Require().NoError(err)
-	vehicle2AsAPI, err := o.repo.ToAPI(&testVehicle2, vehicle2ImageURL, vehicle2DataURI)
+	vehicle2AsAPI, err := o.repo.ToAPI(&testVehicle2, vehicle2ImageURL, vehicle2DataURI, nil)
 	o.NoError(err)
 
 	testVehicle3 := models.Vehicle{
@@ -1179,7 +1179,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 	o.Require().NoError(err)
 	vehicle3DataURI, err := GetVehicleDataURI(o.settings.BaseVehicleDataURI, testVehicle3.ID)
 	o.Require().NoError(err)
-	vehicle3AsAPI, err := o.repo.ToAPI(&testVehicle3, vehicle3ImageURL, vehicle3DataURI)
+	vehicle3AsAPI, err := o.repo.ToAPI(&testVehicle3, vehicle3ImageURL, vehicle3DataURI, nil)
 	o.NoError(err)
 
 	testVehicle4 := models.Vehicle{
@@ -1196,7 +1196,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 	o.Require().NoError(err)
 	vehicle4DataURI, err := GetVehicleDataURI(o.settings.BaseVehicleDataURI, testVehicle4.ID)
 	o.Require().NoError(err)
-	vehicle4AsAPI, err := o.repo.ToAPI(&testVehicle4, vehicle4ImageURL, vehicle4DataURI)
+	vehicle4AsAPI, err := o.repo.ToAPI(&testVehicle4, vehicle4ImageURL, vehicle4DataURI, nil)
 	o.Require().NoError(err)
 
 	vehicles := []models.Vehicle{testVehicle1, testVehicle2, testVehicle3, testVehicle4}
