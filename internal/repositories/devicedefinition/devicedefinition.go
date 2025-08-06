@@ -321,6 +321,65 @@ func (r *Repository) GetDeviceDefinitions(ctx context.Context, tableID, first *i
 	return res, nil
 }
 
+func (r *Repository) GetDeviceDefinitionsByIDs(ctx context.Context, ids []string) ([]*gmodel.DeviceDefinition, error) {
+	// filter duplicates
+	ids = filterDuplicates(ids)
+	// get the unique manufacturer slugs
+	mfrs := make(map[string]*models.Manufacturer)
+	ddsByMfr := make(map[string][]string)
+	var err error
+
+	for _, id := range ids {
+		var mfr *models.Manufacturer
+		mfrSlug, _, found := strings.Cut(id, "_")
+		if found {
+			ddsByMfr[mfrSlug] = append(ddsByMfr[mfrSlug], id)
+			ok := false
+			if mfr, ok = mfrs[mfrSlug]; !ok {
+				mfr, err = models.Manufacturers(models.ManufacturerWhere.Slug.EQ(mfrSlug)).One(ctx, r.PDB.DBS().Reader)
+				if err != nil {
+					return nil, err
+				}
+				mfrs[mfrSlug] = mfr
+			}
+		}
+	}
+	var errList gqlerror.List
+	var deviceDefinitions []*gmodel.DeviceDefinition
+	// get each manufacturer by slug to get the table id
+	for slug := range ddsByMfr {
+		// sqllite limit check
+		if len(ddsByMfr[slug]) >= 1000 {
+			return nil, fmt.Errorf("too many device definitions to query in one request")
+		}
+		// do query
+		table := fmt.Sprintf("_%d_%d", r.Settings.DIMORegistryChainID, mfrs[slug].TableID.Int)
+		sqlBuild := goqu.Dialect("sqlite3").From(table)
+		sqlBuild = sqlBuild.Where(goqu.Ex{"id": ddsByMfr[slug]})
+		// do rest of query stuff like above
+		allSQL, _, err := sqlBuild.ToSQL()
+		if err != nil {
+			return nil, fmt.Errorf("error constructing selection SQL: %w", err)
+		}
+
+		var all []DeviceDefinitionTablelandModel
+		if err = r.TablelandApiService.Query(ctx, allSQL, &all); err != nil {
+			return nil, err
+		}
+		// copy all to device definitions
+		for _, dv := range all {
+			gv, err := r.ToAPI(&dv, mfrs[slug])
+			if err != nil {
+				errList = append(errList, gqlerror.Wrap(err))
+				continue
+			}
+			deviceDefinitions = append(deviceDefinitions, gv)
+		}
+	}
+
+	return deviceDefinitions, nil
+}
+
 func idToCursor(id string) string {
 	return base64.StdEncoding.EncodeToString([]byte(id))
 }
@@ -332,4 +391,25 @@ func cursorToID(cursor string) (string, error) {
 	}
 
 	return string(b), nil
+}
+
+// filterDuplicates removes duplicate strings from a slice while preserving order
+func filterDuplicates(ids []string) []string {
+	if len(ids) <= 1 {
+		return ids
+	}
+
+	seen := make(map[string]struct{})
+
+	uniqueIDs := make([]string, 0, len(ids))
+
+	for _, id := range ids {
+		// If we haven't seen this ID before, add it to our result
+		if _, exists := seen[id]; !exists {
+			seen[id] = struct{}{} // Use empty struct{} as value to minimize memory usage
+			uniqueIDs = append(uniqueIDs, id)
+		}
+	}
+
+	return uniqueIDs
 }

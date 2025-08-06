@@ -17,6 +17,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
+	"github.com/DIMO-Network/identity-api/internal/repositories/devicedefinition"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/mnemonic"
 	"github.com/aarondl/null/v8"
@@ -32,18 +33,20 @@ type Repository struct {
 	*base.Repository
 	chainID         uint64
 	contractAddress common.Address
+	definitionsRepo *devicedefinition.Repository
 }
 
 // New creates a new vehicle repository.
-func New(db *base.Repository) *Repository {
+func New(db *base.Repository, definitionsRepo *devicedefinition.Repository) *Repository {
 	return &Repository{
 		Repository:      db,
 		chainID:         uint64(db.Settings.DIMORegistryChainID),
 		contractAddress: common.HexToAddress(db.Settings.VehicleNFTAddr),
+		definitionsRepo: definitionsRepo,
 	}
 }
 
-func (r *Repository) createVehiclesResponse(totalCount int64, vehicles models.VehicleSlice, hasNext bool, hasPrevious bool) (*gmodel.VehicleConnection, error) {
+func (r *Repository) createVehiclesResponse(totalCount int64, vehicles models.VehicleSlice, hasNext bool, hasPrevious bool, definitions map[string]*gmodel.DeviceDefinition) (*gmodel.VehicleConnection, error) {
 	var errList gqlerror.List
 	var endCur, startCur *string
 	if len(vehicles) != 0 {
@@ -56,7 +59,7 @@ func (r *Repository) createVehiclesResponse(totalCount int64, vehicles models.Ve
 
 	edges := make([]*gmodel.VehicleEdge, len(vehicles))
 	nodes := make([]*gmodel.Vehicle, len(vehicles))
-
+	
 	for i, dv := range vehicles {
 		var imageURI string
 
@@ -78,7 +81,7 @@ func (r *Repository) createVehiclesResponse(totalCount int64, vehicles models.Ve
 			errList = append(errList, gqlerror.Wrap(wErr))
 			continue
 		}
-		gv, err := r.ToAPI(dv, imageURI, dataURI, nil)
+		gv, err := r.ToAPI(dv, imageURI, dataURI, definitions[dv.DeviceDefinitionID.String])
 		if err != nil {
 			wErr := fmt.Errorf("error converting vehicle to API: %w", err)
 			errList = append(errList, gqlerror.Wrap(wErr))
@@ -179,6 +182,23 @@ func (r *Repository) GetVehicles(ctx context.Context, first *int, after *string,
 		return nil, err
 	}
 
+	// populate a map of device definitions by id for fast lookup later
+	definitions := make(map[string]*gmodel.DeviceDefinition)
+	for _, veh := range all {
+		definitions[veh.DeviceDefinitionID.String] = &gmodel.DeviceDefinition{}
+	}
+	ids := make([]string, 0, len(definitions))
+	for id := range definitions {
+		ids = append(ids, id)
+	}
+	dds, err := r.definitionsRepo.GetDeviceDefinitionsByIDs(ctx, ids)
+	if err != nil {
+		return nil, err
+	}
+	for _, dd := range dds {
+		definitions[dd.DeviceDefinitionID] = dd
+	}
+
 	// We assume that cursors come from real elements.
 	hasNext := before != nil
 	hasPrevious := after != nil
@@ -195,7 +215,7 @@ func (r *Repository) GetVehicles(ctx context.Context, first *int, after *string,
 		slices.Reverse(all)
 	}
 
-	return r.createVehiclesResponse(totalCount, all, hasNext, hasPrevious)
+	return r.createVehiclesResponse(totalCount, all, hasNext, hasPrevious, definitions)
 }
 
 func (r *Repository) GetVehicle(ctx context.Context, tokenID *int, tokenDID *string) (*gmodel.Vehicle, error) {
