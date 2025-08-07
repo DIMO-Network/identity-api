@@ -37,8 +37,8 @@ var (
 	highlander = null.StringFrom("Highlander")
 	rav4       = null.StringFrom("RAV4")
 	corolla    = null.StringFrom("Corolla")
-	civic      = null.StringFrom("civic")
-	accord     = null.StringFrom("accord")
+	civic      = null.StringFrom("Civic")
+	accord     = null.StringFrom("Accord")
 	year2018   = null.IntFrom(2018)
 	year2020   = null.IntFrom(2020)
 	year2022   = null.IntFrom(2022)
@@ -1185,6 +1185,8 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 		"deviceType": "vehicle",
 		"imageURI": "https://image",
 		"ksuid": "26G3iFH7Xc9Wvsw7pg6sD7uzoSS",
+		"model": "GT R",
+		"year": 2020,
 		"metadata": {
 		  "device_attributes": [
 			{
@@ -1197,6 +1199,44 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 	]`
 	httpmock.RegisterResponder(http.MethodGet, baseURL+queryURLNissan, httpmock.NewStringResponder(200, respQueryBodyNissan))
 
+	// Mock the query for toyota manufacturer
+	queryURLToyota := "api/v1/query?statement=SELECT+%2A+FROM+%22_80001_1%22+WHERE+%28%22id%22+IN+%28%27toyota_rav4_2022%27%2C+%27toyota_camry_2020%27%29%29"
+	respQueryBodyToyota := `[
+	  {
+		"id": "toyota_rav4_2022",
+		"deviceType": "vehicle",
+		"imageURI": "https://image",
+		"ksuid": "26G3iFH7Xc9Wvsw7pg6sD7uzoSS",
+		"model": "RAV4",
+		"year": 2022,
+		"metadata": {
+		  "device_attributes": [
+			{
+			  "name": "powertrain_type",
+			  "value": "ICE"
+			}
+		  ]
+		}
+	  },	  
+      {
+		"id": "toyota_camry_2020",
+		"deviceType": "vehicle",
+		"imageURI": "https://image",
+		"ksuid": "26G3iFH7Xc9Wvsw7pg6sD7uzoSS",
+		"model": "Camry",
+		"year": 2020,
+		"metadata": {
+		  "device_attributes": [
+			{
+			  "name": "powertrain_type",
+			  "value": "ICE"
+			}
+		  ]
+		}
+	  }
+	]`
+	httpmock.RegisterResponder(http.MethodGet, baseURL+queryURLToyota, httpmock.NewStringResponder(200, respQueryBodyToyota))
+
 	// Mock the query for cadillac manufacturer (table _30001_4)
 	queryURLCadillac := "api/v1/query?statement=SELECT+%2A+FROM+%22_80001_4%22+WHERE+%28%22id%22+IN+%28%27cadillac_ats-v-coupe_2019%27%29%29"
 	respQueryBodyCadillac := `[
@@ -1205,7 +1245,9 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 		"deviceType": "vehicle",
 		"imageURI": "https://image",
 		"ksuid": "12G3iFH7Xc9Wvsw7pg6sD7uzoKK",
-		"metadata": ""
+		"metadata": "",
+		"model": "ATS V Coupe",
+		"year": 2019
 	  }
 	]`
 	httpmock.RegisterResponder(http.MethodGet, baseURL+queryURLCadillac, httpmock.NewStringResponder(200, respQueryBodyCadillac))
@@ -1218,12 +1260,38 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 		"deviceType": "vehicle",
 		"imageURI": "https://image",
 		"ksuid": "34G3iFH7Xc9Wvsw7pg6sD7uzoLL",
-		"metadata": ""
+		"metadata": "",
+		"model": "CX 5",
+		"year": 2023
 	  }
 	]`
 	httpmock.RegisterResponder(http.MethodGet, baseURL+queryURLMazda, httpmock.NewStringResponder(200, respQueryBodyMazda))
 
-	testVehicle1 := models.Vehicle{
+	// Mock the query for honda manufacturer
+	queryURLHonda := "api/v1/query?statement=SELECT+%2A+FROM+%22_80001_2%22+WHERE+%28%22id%22+IN+%28%27honda_accord_2020%27%2C+%27honda_civic_2022%27%29%29"
+	respQueryBodyHonda := `[
+	  {
+		"id": "honda_civic_2022",
+		"deviceType": "vehicle",
+		"imageURI": "https://image",
+		"ksuid": "34G3iFH7Xc9Wvsw7pg6sD7uzoLL",
+		"metadata": "",
+		"model": "Civic",
+		"year": 2022
+	  },
+	  {
+		"id": "honda_accord_2020",
+		"deviceType": "vehicle",
+		"imageURI": "https://image",
+		"ksuid": "34G3iFH7Xc9Wvsw7pg6sD7uzoLL",
+		"metadata": "",
+		"model": "Accord",
+		"year": 2020
+	  }
+	]`
+	httpmock.RegisterResponder(http.MethodGet, baseURL+queryURLHonda, httpmock.NewStringResponder(200, respQueryBodyHonda))
+
+	toyotaCamryTID1 := models.Vehicle{
 		ID:                 1,
 		ManufacturerID:     131,
 		OwnerAddress:       wallet1.Bytes(),
@@ -1231,16 +1299,16 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 		Model:              camry,
 		Year:               year2020,
 		MintedAt:           currTime,
-		DeviceDefinitionID: null.StringFrom("nissan_gt-r_2020"),
+		DeviceDefinitionID: null.StringFrom("toyota_camry_2020"),
 	}
-	vehicle1ImageURL, err := DefaultImageURI(o.settings.BaseImageURL, testVehicle1.ID)
+	vehicle1ImageURL, err := DefaultImageURI(o.settings.BaseImageURL, toyotaCamryTID1.ID)
 	o.Require().NoError(err)
-	vehicle1DataURI, err := GetVehicleDataURI(o.settings.BaseVehicleDataURI, testVehicle1.ID)
+	vehicle1DataURI, err := GetVehicleDataURI(o.settings.BaseVehicleDataURI, toyotaCamryTID1.ID)
 	o.Require().NoError(err)
-	vehicle1AsAPI, err := o.repo.ToAPI(&testVehicle1, vehicle1ImageURL, vehicle1DataURI, nil)
+	vehicle1AsAPI, err := o.repo.ToAPI(&toyotaCamryTID1, vehicle1ImageURL, vehicle1DataURI, nil)
 	o.NoError(err)
 
-	testVehicle2 := models.Vehicle{
+	hondaCivicTID2 := models.Vehicle{
 		ID:                 2,
 		OwnerAddress:       wallet1.Bytes(),
 		Make:               honda,
@@ -1248,16 +1316,16 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 		ManufacturerID:     48,
 		Year:               year2022,
 		MintedAt:           currTime,
-		DeviceDefinitionID: null.StringFrom("cadillac_ats-v-coupe_2019"),
+		DeviceDefinitionID: null.StringFrom("honda_civic_2022"),
 	}
-	vehicle2ImageURL, err := DefaultImageURI(o.settings.BaseImageURL, testVehicle2.ID)
+	vehicle2ImageURL, err := DefaultImageURI(o.settings.BaseImageURL, hondaCivicTID2.ID)
 	o.Require().NoError(err)
-	vehicle2DataURI, err := GetVehicleDataURI(o.settings.BaseVehicleDataURI, testVehicle2.ID)
+	vehicle2DataURI, err := GetVehicleDataURI(o.settings.BaseVehicleDataURI, hondaCivicTID2.ID)
 	o.Require().NoError(err)
-	vehicle2AsAPI, err := o.repo.ToAPI(&testVehicle2, vehicle2ImageURL, vehicle2DataURI, nil)
+	vehicle2AsAPI, err := o.repo.ToAPI(&hondaCivicTID2, vehicle2ImageURL, vehicle2DataURI, nil)
 	o.NoError(err)
 
-	testVehicle3 := models.Vehicle{
+	toyotaRav4TID3 := models.Vehicle{
 		ID:                 3,
 		OwnerAddress:       wallet2.Bytes(),
 		Make:               toyota,
@@ -1265,16 +1333,16 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 		Model:              rav4,
 		Year:               year2022,
 		MintedAt:           currTime,
-		DeviceDefinitionID: testVehicle1.DeviceDefinitionID,
+		DeviceDefinitionID: null.StringFrom("toyota_rav4_2022"),
 	}
-	vehicle3ImageURL, err := DefaultImageURI(o.settings.BaseImageURL, testVehicle3.ID)
+	vehicle3ImageURL, err := DefaultImageURI(o.settings.BaseImageURL, toyotaRav4TID3.ID)
 	o.Require().NoError(err)
-	vehicle3DataURI, err := GetVehicleDataURI(o.settings.BaseVehicleDataURI, testVehicle3.ID)
+	vehicle3DataURI, err := GetVehicleDataURI(o.settings.BaseVehicleDataURI, toyotaRav4TID3.ID)
 	o.Require().NoError(err)
-	vehicle3AsAPI, err := o.repo.ToAPI(&testVehicle3, vehicle3ImageURL, vehicle3DataURI, nil)
+	vehicle3AsAPI, err := o.repo.ToAPI(&toyotaRav4TID3, vehicle3ImageURL, vehicle3DataURI, nil)
 	o.NoError(err)
 
-	testVehicle4 := models.Vehicle{
+	hondaAccordTID4 := models.Vehicle{
 		ID:                 4,
 		OwnerAddress:       wallet2.Bytes(),
 		Make:               honda,
@@ -1282,16 +1350,16 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 		ManufacturerID:     48,
 		Year:               year2020,
 		MintedAt:           currTime,
-		DeviceDefinitionID: null.StringFrom("mazda_cx-5_2023"),
+		DeviceDefinitionID: null.StringFrom("honda_accord_2020"),
 	}
-	vehicle4ImageURL, err := DefaultImageURI(o.settings.BaseImageURL, testVehicle4.ID)
+	vehicle4ImageURL, err := DefaultImageURI(o.settings.BaseImageURL, hondaAccordTID4.ID)
 	o.Require().NoError(err)
-	vehicle4DataURI, err := GetVehicleDataURI(o.settings.BaseVehicleDataURI, testVehicle4.ID)
+	vehicle4DataURI, err := GetVehicleDataURI(o.settings.BaseVehicleDataURI, hondaAccordTID4.ID)
 	o.Require().NoError(err)
-	vehicle4AsAPI, err := o.repo.ToAPI(&testVehicle4, vehicle4ImageURL, vehicle4DataURI, nil)
+	vehicle4AsAPI, err := o.repo.ToAPI(&hondaAccordTID4, vehicle4ImageURL, vehicle4DataURI, nil)
 	o.Require().NoError(err)
 
-	vehicles := []models.Vehicle{testVehicle1, testVehicle2, testVehicle3, testVehicle4}
+	vehicles := []models.Vehicle{toyotaCamryTID1, hondaCivicTID2, toyotaRav4TID3, hondaAccordTID4}
 	first := len(vehicles)
 	for _, v := range vehicles {
 		if err := v.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer()); err != nil {
@@ -1301,7 +1369,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 
 	privileges := []models.Privilege{
 		{
-			TokenID:     testVehicle3.ID,
+			TokenID:     toyotaRav4TID3.ID,
 			PrivilegeID: 1,
 			UserAddress: wallet1.Bytes(),
 			SetAt:       currTime,
@@ -1475,7 +1543,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 		{
 			name: "Filter by Device Definition ID",
 			filter: &gmodel.VehiclesFilter{
-				DeviceDefinitionID: &testVehicle1.DeviceDefinitionID.String,
+				DeviceDefinitionID: &toyotaCamryTID1.DeviceDefinitionID.String,
 			},
 			results: []*gmodel.VehicleEdge{
 				{Node: vehicle1AsAPI},
@@ -1490,7 +1558,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 			res, err := o.repo.GetVehicles(o.ctx, &first, nil, nil, nil, tt.filter)
 			o.Require().NoError(err)
 			o.Require().NotNil(res)
-			requireEqualVehicles(o.T(), tt.results, res.Edges)
+			requireEqualVehicles(o.T(), tt.results, res.Edges) // vehicles aren't matching up, got Mazda, expected Honda
 			o.Require().Equalf(len(tt.results), res.TotalCount, "Test %s: expected total count to be %d, got %d", tt.name, len(tt.results), res.TotalCount)
 		})
 	}
