@@ -74,7 +74,7 @@ func main() {
 
 	s := newDefaultServer(graph.NewExecutableSchema(cfg))
 
-	srv := loader.Middleware(dbs, s, settings)
+	srv := loader.Middleware(dbs, s, settings, &logger)
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", srv)

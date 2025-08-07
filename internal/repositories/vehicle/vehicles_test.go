@@ -9,16 +9,21 @@ import (
 	"testing"
 	"time"
 
+	"net/http"
+
 	gmodel "github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/config"
 	test "github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
+	"github.com/DIMO-Network/identity-api/internal/repositories/devicedefinition"
+	"github.com/DIMO-Network/identity-api/internal/services"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/mnemonic"
 	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/aarondl/null/v8"
 	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/jarcoal/httpmock"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -59,9 +64,15 @@ func (o *AccessibleVehiclesRepoTestSuite) SetupSuite() {
 		VehicleNFTAddr:      "0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8",
 		BaseImageURL:        "https://mockUrl.com/v1",
 		BaseVehicleDataURI:  "https://dimoData/vehicles/",
+		TablelandAPIGateway: "http://local/",
 	}
 	logger := zerolog.Nop()
-	o.repo = New(base.NewRepository(o.pdb, o.settings, &logger))
+	baseRepo := base.NewRepository(o.pdb, o.settings, &logger)
+
+	// Create a real device definition repository with HTTP mocks
+	tablelandAPI := services.NewTablelandApiService(&logger, &o.settings)
+	deviceDefRepo := devicedefinition.New(baseRepo, tablelandAPI)
+	o.repo = New(baseRepo, deviceDefRepo)
 }
 
 // TearDownTest after each test truncate tables
@@ -1112,6 +1123,7 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
 		MintedAt: time.Now(),
 		Slug:     "toyota",
+		TableID:  null.IntFrom(1),
 	}
 
 	hondaMfr := models.Manufacturer{
@@ -1120,16 +1132,96 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDff"),
 		MintedAt: time.Now(),
 		Slug:     "honda",
+		TableID:  null.IntFrom(2),
+	}
+
+	nissanMfr := models.Manufacturer{
+		ID:       49,
+		Name:     "Nissan",
+		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf5"),
+		MintedAt: time.Now(),
+		Slug:     "nissan",
+		TableID:  null.IntFrom(3),
+	}
+
+	cadillacMfr := models.Manufacturer{
+		ID:       50,
+		Name:     "Cadillac",
+		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf6"),
+		MintedAt: time.Now(),
+		Slug:     "cadillac",
+		TableID:  null.IntFrom(4),
+	}
+
+	mazdaMfr := models.Manufacturer{
+		ID:       51,
+		Name:     "Mazda",
+		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf7"),
+		MintedAt: time.Now(),
+		Slug:     "mazda",
+		TableID:  null.IntFrom(5),
 	}
 
 	currTime := time.Now().UTC().Truncate(time.Second)
 
-	mfrs := []models.Manufacturer{toyotaMfr, hondaMfr}
+	mfrs := []models.Manufacturer{toyotaMfr, hondaMfr, nissanMfr, cadillacMfr, mazdaMfr}
 	for _, v := range mfrs {
 		if err := v.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer()); err != nil {
 			o.Require().NoError(err)
 		}
 	}
+
+	// Set up HTTP mocks for device definition calls
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	const baseURL = "http://local/"
+
+	// Mock the query for nissan manufacturer (table _30001_3)
+	queryURLNissan := "api/v1/query?statement=SELECT+%2A+FROM+%22_80001_3%22+WHERE+%28%22id%22+IN+%28%27nissan_gt-r_2020%27%29%29"
+	respQueryBodyNissan := `[
+	  {
+		"id": "nissan_gt-r_2020",
+		"deviceType": "vehicle",
+		"imageURI": "https://image",
+		"ksuid": "26G3iFH7Xc9Wvsw7pg6sD7uzoSS",
+		"metadata": {
+		  "device_attributes": [
+			{
+			  "name": "powertrain_type",
+			  "value": "ICE"
+			}
+		  ]
+		}
+	  }
+	]`
+	httpmock.RegisterResponder(http.MethodGet, baseURL+queryURLNissan, httpmock.NewStringResponder(200, respQueryBodyNissan))
+
+	// Mock the query for cadillac manufacturer (table _30001_4)
+	queryURLCadillac := "api/v1/query?statement=SELECT+%2A+FROM+%22_80001_4%22+WHERE+%28%22id%22+IN+%28%27cadillac_ats-v-coupe_2019%27%29%29"
+	respQueryBodyCadillac := `[
+	  {
+		"id": "cadillac_ats-v-coupe_2019",
+		"deviceType": "vehicle",
+		"imageURI": "https://image",
+		"ksuid": "12G3iFH7Xc9Wvsw7pg6sD7uzoKK",
+		"metadata": ""
+	  }
+	]`
+	httpmock.RegisterResponder(http.MethodGet, baseURL+queryURLCadillac, httpmock.NewStringResponder(200, respQueryBodyCadillac))
+
+	// Mock the query for mazda manufacturer (table _30001_5)
+	queryURLMazda := "api/v1/query?statement=SELECT+%2A+FROM+%22_80001_5%22+WHERE+%28%22id%22+IN+%28%27mazda_cx-5_2023%27%29%29"
+	respQueryBodyMazda := `[
+	  {
+		"id": "mazda_cx-5_2023",
+		"deviceType": "vehicle",
+		"imageURI": "https://image",
+		"ksuid": "34G3iFH7Xc9Wvsw7pg6sD7uzoLL",
+		"metadata": ""
+	  }
+	]`
+	httpmock.RegisterResponder(http.MethodGet, baseURL+queryURLMazda, httpmock.NewStringResponder(200, respQueryBodyMazda))
 
 	testVehicle1 := models.Vehicle{
 		ID:                 1,

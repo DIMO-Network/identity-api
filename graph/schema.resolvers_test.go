@@ -9,6 +9,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/repositories/aftermarket"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/internal/repositories/dcn"
+	"github.com/DIMO-Network/identity-api/internal/repositories/devicedefinition"
 	"github.com/DIMO-Network/identity-api/internal/repositories/manufacturer"
 	"github.com/DIMO-Network/identity-api/internal/repositories/synthetic"
 	"github.com/DIMO-Network/identity-api/internal/repositories/vehicle"
@@ -24,7 +25,9 @@ func TestQueryResolver_Node(t *testing.T) {
 
 	baseRepo := &base.Repository{}
 
-	vehicleRepo := vehicle.New(baseRepo)
+	// Create a mock device definition repository for the vehicle repository
+	mockDeviceDefRepo := &devicedefinition.Repository{}
+	vehicleRepo := vehicle.New(baseRepo, mockDeviceDefRepo)
 	testVehicle, err := vehicleRepo.ToAPI(&models.Vehicle{ID: 1}, "", "", nil)
 	require.NoError(t, err)
 

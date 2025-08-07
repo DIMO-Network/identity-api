@@ -59,7 +59,7 @@ func (r *Repository) createVehiclesResponse(totalCount int64, vehicles models.Ve
 
 	edges := make([]*gmodel.VehicleEdge, len(vehicles))
 	nodes := make([]*gmodel.Vehicle, len(vehicles))
-	
+
 	for i, dv := range vehicles {
 		var imageURI string
 
@@ -185,7 +185,10 @@ func (r *Repository) GetVehicles(ctx context.Context, first *int, after *string,
 	// populate a map of device definitions by id for fast lookup later
 	definitions := make(map[string]*gmodel.DeviceDefinition)
 	for _, veh := range all {
-		definitions[veh.DeviceDefinitionID.String] = &gmodel.DeviceDefinition{}
+		// Only add to map if DeviceDefinitionID is not null/empty
+		if veh.DeviceDefinitionID.Valid && veh.DeviceDefinitionID.String != "" {
+			definitions[veh.DeviceDefinitionID.String] = nil // Will be populated if found
+		}
 	}
 	ids := make([]string, 0, len(definitions))
 	for id := range definitions {
@@ -363,7 +366,9 @@ func (r *Repository) ToAPI(v *models.Vehicle, imageURI string, dataURI string, d
 		DataURI:        dataURI,
 	}
 	if definition != nil {
-		out.Definition.Make = &definition.Manufacturer.Name
+		if definition.Manufacturer != nil {
+			out.Definition.Make = &definition.Manufacturer.Name
+		}
 		out.Definition.Model = &definition.Model
 		out.Definition.Year = &definition.Year
 	}

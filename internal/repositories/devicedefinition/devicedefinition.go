@@ -327,16 +327,14 @@ func (r *Repository) GetDeviceDefinitionsByIDs(ctx context.Context, ids []string
 	// get the unique manufacturer slugs
 	mfrs := make(map[string]*models.Manufacturer)
 	ddsByMfr := make(map[string][]string)
-	var err error
 
 	for _, id := range ids {
-		var mfr *models.Manufacturer
 		mfrSlug, _, found := strings.Cut(id, "_")
-		if found {
+		if found { // this should always be true unless if we get eg. a legacy ksuid for the id
 			ddsByMfr[mfrSlug] = append(ddsByMfr[mfrSlug], id)
-			ok := false
-			if mfr, ok = mfrs[mfrSlug]; !ok {
-				mfr, err = models.Manufacturers(models.ManufacturerWhere.Slug.EQ(mfrSlug)).One(ctx, r.PDB.DBS().Reader)
+			_, ok := mfrs[mfrSlug]
+			if !ok {
+				mfr, err := models.Manufacturers(models.ManufacturerWhere.Slug.EQ(mfrSlug)).One(ctx, r.PDB.DBS().Reader)
 				if err != nil {
 					return nil, err
 				}
@@ -352,8 +350,16 @@ func (r *Repository) GetDeviceDefinitionsByIDs(ctx context.Context, ids []string
 		if len(ddsByMfr[slug]) >= 1000 {
 			return nil, fmt.Errorf("too many device definitions to query in one request")
 		}
+
+		// Check if manufacturer exists
+		mfr, exists := mfrs[slug]
+		if !exists || mfr == nil {
+			errList = append(errList, gqlerror.Wrap(fmt.Errorf("manufacturer not found for slug: %s", slug)))
+			continue
+		}
+
 		// do query
-		table := fmt.Sprintf("_%d_%d", r.Settings.DIMORegistryChainID, mfrs[slug].TableID.Int)
+		table := fmt.Sprintf("_%d_%d", r.Settings.DIMORegistryChainID, mfr.TableID.Int)
 		sqlBuild := goqu.Dialect("sqlite3").From(table)
 		sqlBuild = sqlBuild.Where(goqu.Ex{"id": ddsByMfr[slug]})
 		// do rest of query stuff like above
@@ -368,13 +374,17 @@ func (r *Repository) GetDeviceDefinitionsByIDs(ctx context.Context, ids []string
 		}
 		// copy all to device definitions
 		for _, dv := range all {
-			gv, err := r.ToAPI(&dv, mfrs[slug])
+			gv, err := r.ToAPI(&dv, mfr)
 			if err != nil {
 				errList = append(errList, gqlerror.Wrap(err))
 				continue
 			}
 			deviceDefinitions = append(deviceDefinitions, gv)
 		}
+	}
+
+	if len(errList) > 0 {
+		return deviceDefinitions, errList
 	}
 
 	return deviceDefinitions, nil
