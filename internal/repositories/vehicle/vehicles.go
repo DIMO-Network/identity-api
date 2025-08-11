@@ -190,11 +190,11 @@ func (r *Repository) GetVehicles(ctx context.Context, first *int, after *string,
 			definitions[veh.DeviceDefinitionID.String] = nil // Will be populated if found
 		}
 	}
-	ids := make([]string, 0, len(definitions))
+	defIds := make([]string, 0, len(definitions))
 	for id := range definitions {
-		ids = append(ids, id)
+		defIds = append(defIds, id)
 	}
-	dds, err := r.definitionsRepo.GetDeviceDefinitionsByIDs(ctx, ids)
+	dds, err := r.definitionsRepo.GetDeviceDefinitionsByIDs(ctx, defIds)
 	if err != nil {
 		return nil, err
 	}

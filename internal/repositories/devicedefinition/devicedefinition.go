@@ -322,8 +322,9 @@ func (r *Repository) GetDeviceDefinitions(ctx context.Context, tableID, first *i
 }
 
 func (r *Repository) GetDeviceDefinitionsByIDs(ctx context.Context, ids []string) ([]*gmodel.DeviceDefinition, error) {
-	// filter duplicates
 	ids = filterDuplicates(ids)
+	slices.Sort(ids) // order alphabetically
+
 	// get the unique manufacturer slugs
 	mfrs := make(map[string]*models.Manufacturer)
 	ddsByMfr := make(map[string][]string)
@@ -344,24 +345,24 @@ func (r *Repository) GetDeviceDefinitionsByIDs(ctx context.Context, ids []string
 	}
 	var errList gqlerror.List
 	var deviceDefinitions []*gmodel.DeviceDefinition
-	// get each manufacturer by slug to get the table id
-	for slug := range ddsByMfr {
+	// get each manufacturer by mSlug to get the table id
+	for mSlug := range ddsByMfr {
 		// sqllite limit check
-		if len(ddsByMfr[slug]) >= 1000 {
+		if len(ddsByMfr[mSlug]) >= 1000 {
 			return nil, fmt.Errorf("too many device definitions to query in one request")
 		}
 
 		// Check if manufacturer exists
-		mfr, exists := mfrs[slug]
+		mfr, exists := mfrs[mSlug]
 		if !exists || mfr == nil {
-			errList = append(errList, gqlerror.Wrap(fmt.Errorf("manufacturer not found for slug: %s", slug)))
+			errList = append(errList, gqlerror.Wrap(fmt.Errorf("manufacturer not found for slug: %s", mSlug)))
 			continue
 		}
 
 		// do query
 		table := fmt.Sprintf("_%d_%d", r.Settings.DIMORegistryChainID, mfr.TableID.Int)
 		sqlBuild := goqu.Dialect("sqlite3").From(table)
-		sqlBuild = sqlBuild.Where(goqu.Ex{"id": ddsByMfr[slug]})
+		sqlBuild = sqlBuild.Where(goqu.Ex{"id": ddsByMfr[mSlug]})
 		// do rest of query stuff like above
 		allSQL, _, err := sqlBuild.ToSQL()
 		if err != nil {
