@@ -55,6 +55,11 @@ type AftermarketDeviceClaimedData struct {
 	Owner                 common.Address
 }
 
+type AftermarketDeviceUnclaimedData struct {
+	AftermarketDeviceNode *big.Int
+	Owner                 common.Address
+}
+
 // TransferData describes the fields of an ERC-721 Transfer(address,address,uint256) event.
 type TransferData struct {
 	From    common.Address
