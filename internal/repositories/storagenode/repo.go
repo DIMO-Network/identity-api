@@ -16,7 +16,7 @@ type Repository struct {
 	contractAddress common.Address
 }
 
-// New creates a new connection repository.
+// New creates a new storage node repository.
 func New(baseRepo *base.Repository) *Repository {
 	return &Repository{
 		Repository:      baseRepo,
