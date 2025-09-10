@@ -50,6 +50,9 @@ const (
 	// SACD.
 	PermissionsSetEvent EventName = "PermissionsSet"
 
+	// Template.
+	TemplateCreatedEvent EventName = "TemplateCreated"
+
 	// Manufacturers.
 	ManufacturerNodeMinted       EventName = "ManufacturerNodeMinted"
 	DeviceDefinitionTableCreated EventName = "DeviceDefinitionTableCreated"
@@ -137,6 +140,7 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *cloudevent
 	connAddr := common.HexToAddress(c.settings.ConnectionAddr)
 	manufacturerAddr := common.HexToAddress(c.settings.ManufacturerNFTAddr)
 	storageNodeAddr := common.HexToAddress(c.settings.StorageNodeAddr)
+	templateAddr := common.HexToAddress(c.settings.TemplateAddr)
 
 	var data cmodels.ContractEventData
 	if err := json.Unmarshal(event.Data, &data); err != nil {
@@ -199,6 +203,11 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *cloudevent
 		switch eventName {
 		case PermissionsSetEvent:
 			return c.handlePermissionsSetEvent(ctx, &data)
+		}
+	case templateAddr:
+		switch eventName {
+		case TemplateCreatedEvent:
+			return c.handleTemplateCreatedEvent(ctx, &data)
 		}
 	case aftermarketDeviceAddr:
 		switch eventName {
@@ -627,6 +636,10 @@ func (c *ContractsEventsConsumer) handlePermissionsSetEvent(ctx context.Context,
 		Str("grantee", args.Grantee.Hex()).
 		Msg("Vehicle SACD processed.")
 
+	return nil
+}
+
+func (c *ContractsEventsConsumer) handleTemplateCreatedEvent(ctx context.Context, e *cmodels.ContractEventData) error {
 	return nil
 }
 

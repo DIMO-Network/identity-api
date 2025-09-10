@@ -161,6 +161,14 @@ type PermissionsSetData struct {
 	Source      string
 }
 
+type TemplateCreatedData struct {
+	TemplateId  *big.Int
+	Creator     common.Address
+	Asset       common.Address
+	Permissions *big.Int
+	Cid         string
+}
+
 type VehicleStorageNodeIdSetData struct {
 	VehicleId     *big.Int
 	StorageNodeId *big.Int

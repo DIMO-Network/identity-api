@@ -627,6 +627,15 @@ type SyntheticDevicesFilter struct {
 	IntegrationID *int `json:"integrationId,omitempty"`
 }
 
+type Template struct {
+	ID          *big.Int       `json:"id"`
+	Creator     common.Address `json:"creator"`
+	Asset       common.Address `json:"asset"`
+	Permissions string         `json:"permissions"`
+	Cid         string         `json:"cid"`
+	CreatedAt   time.Time      `json:"createdAt"`
+}
+
 type UserRewards struct {
 	TotalTokens *decimal.Big        `json:"totalTokens"`
 	History     *EarningsConnection `json:"history"`
