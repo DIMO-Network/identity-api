@@ -29,6 +29,7 @@ const (
 	aftermarketDeviceAddr = "0xcf9af64522162da85164a714c23a7705e6e466b3"
 	syntheticDeviceAddr   = "0x85226A67FF1b3Ec6cb033162f7df5038a6C3bAB2"
 	rewardContractAddr    = "0x375885164266d48C48abbbb439Be98864Ae62bBE"
+	templateAddr          = "0xf369532e2144034E34Be08DBaA3A589C87dBbE3A"
 )
 
 var (
@@ -1684,4 +1685,55 @@ func TestHandleAftermarketDeviceAddressResetEvent(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, eventData.AftermarketDeviceAddress, common.BytesToAddress(updatedAmd.Address))
+}
+
+func TestHandleTemplateCreatedEvent(t *testing.T) {
+	ctx := context.Background()
+	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
+	contractEventData.EventName = "TemplateCreated"
+	contractEventData.Contract = common.HexToAddress(templateAddr)
+
+	_, wallet, err := helpers.GenerateWallet()
+	assert.NoError(t, err)
+
+	// uint256(keccak256(bytes("QmYA2fn8cMbVWo4v95RwcwJVyQsNtnEwHerfWR8UNtEwoE")))
+	templateIdStr := "39432737238797479986393736422353506685818102154178527542856781838379111614015"
+	templateId := new(big.Int)
+	templateId.SetString(templateIdStr, 10)
+
+	var templateCreatedData = TemplateCreatedData{
+		TemplateId:  templateId,
+		Creator:     *wallet,
+		Asset:       common.HexToAddress("0xc6e7DF5E7b4f2A278906862b61205850344D4e7d"),
+		Permissions: big.NewInt(3888), // 11 11 00 11 00 00
+		Cid:         "QmYA2fn8cMbVWo4v95RwcwJVyQsNtnEwHerfWR8UNtEwoE",
+	}
+
+	settings := config.Settings{
+		DIMORegistryAddr:    "0x4de1bcf2b7e851e31216fc07989caa902a604784", // Different from template address
+		DIMORegistryChainID: contractEventData.ChainID,
+		TemplateAddr:        templateAddr,
+	}
+
+	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
+	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
+	e := prepareEvent(t, contractEventData, templateCreatedData)
+
+	err = contractEventConsumer.Process(ctx, &e)
+	assert.NoError(t, err)
+
+	expectedTemplateID, err := helpers.ConvertTokenIDToID(templateCreatedData.TemplateId)
+	assert.NoError(t, err)
+
+	template, err := models.Templates(
+		models.TemplateWhere.ID.EQ(expectedTemplateID),
+	).One(ctx, pdb.DBS().Reader)
+	assert.NoError(t, err)
+
+	assert.Equal(t, expectedTemplateID, template.ID)
+	assert.Equal(t, templateCreatedData.Creator.Bytes(), template.Creator)
+	assert.Equal(t, templateCreatedData.Asset.Bytes(), template.Asset)
+	assert.Equal(t, templateCreatedData.Permissions.Text(2), template.Permissions)
+	assert.Equal(t, templateCreatedData.Cid, template.Cid)
+	assert.Equal(t, contractEventData.Block.Time.UTC(), template.CreatedAt)
 }
