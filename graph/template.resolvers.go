@@ -6,21 +6,16 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
 )
 
 // Template is the resolver for the template field.
 func (r *queryResolver) Template(ctx context.Context, by model.TemplateBy) (*model.Template, error) {
-	// TODO implement
-	// Add GetTemplate to template repository
-	panic(fmt.Errorf("not implemented: Template - template"))
+	return r.template.GetTemplate(ctx, by)
 }
 
 // Templates is the resolver for the templates field.
 func (r *queryResolver) Templates(ctx context.Context, first *int, after *string, last *int, before *string) (*model.TemplateConnection, error) {
-	// TODO implement
-	// Add GetTemplates to template repository
-	panic(fmt.Errorf("not implemented: Templates - templates"))
+	return r.template.GetTemplates(ctx, first, after, last, before)
 }
