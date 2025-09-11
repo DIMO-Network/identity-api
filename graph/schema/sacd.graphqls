@@ -23,15 +23,6 @@ type Sacd {
   expiresAt: Time!
 }
 
-type Template {
-    id: BigInt!
-    creator: Address!
-    asset: Address!
-    permissions: String!
-    cid: String!
-    createdAt: Time!
-}
-
 type SacdEdge {
   node: Sacd!
   cursor: String!

@@ -1,0 +1,44 @@
+# Template Types
+
+type Template {
+    """
+    The token id of the template as an NFT
+    """
+    tokenId: BigInt!
+    """
+    Creator of the template
+    """
+    creator: Address!
+    asset: Address!
+    """
+    Hex string of permissions
+    """
+    permissions: String!
+    cid: String!
+    """
+    The block timestamp at which this template was created
+    """
+    createdAt: Time!
+}
+
+extend type Query {
+    template(tokenId: Int!): Template
+    templates(
+        first: Int,
+        after: String,
+        last: Int,
+        before: String
+    ): TemplateConnection!
+}
+
+type TemplateConnection {
+  totalCount: Int!
+  edges: [TemplateEdge!]!
+  nodes: [Template!]!
+  pageInfo: PageInfo!
+}
+
+type TemplateEdge {
+  node: Template!
+  cursor: String!
+}

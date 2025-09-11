@@ -628,12 +628,28 @@ type SyntheticDevicesFilter struct {
 }
 
 type Template struct {
-	ID          *big.Int       `json:"id"`
-	Creator     common.Address `json:"creator"`
-	Asset       common.Address `json:"asset"`
-	Permissions string         `json:"permissions"`
-	Cid         string         `json:"cid"`
-	CreatedAt   time.Time      `json:"createdAt"`
+	// The token id of the template as an NFT
+	TokenID *big.Int `json:"tokenId"`
+	// Creator of the template
+	Creator common.Address `json:"creator"`
+	Asset   common.Address `json:"asset"`
+	// Hex string of permissions
+	Permissions string `json:"permissions"`
+	Cid         string `json:"cid"`
+	// The block timestamp at which this template was created
+	CreatedAt time.Time `json:"createdAt"`
+}
+
+type TemplateConnection struct {
+	TotalCount int             `json:"totalCount"`
+	Edges      []*TemplateEdge `json:"edges"`
+	Nodes      []*Template     `json:"nodes"`
+	PageInfo   *PageInfo       `json:"pageInfo"`
+}
+
+type TemplateEdge struct {
+	Node   *Template `json:"node"`
+	Cursor string    `json:"cursor"`
 }
 
 type UserRewards struct {
