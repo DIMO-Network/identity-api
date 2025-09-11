@@ -12,7 +12,7 @@ import (
 )
 
 // Template is the resolver for the template field.
-func (r *queryResolver) Template(ctx context.Context, tokenID int) (*model.Template, error) {
+func (r *queryResolver) Template(ctx context.Context, by model.TemplateBy) (*model.Template, error) {
 	// TODO implement
 	// Add GetTemplate to template repository
 	panic(fmt.Errorf("not implemented: Template - template"))

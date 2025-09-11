@@ -2,12 +2,18 @@ package template
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"math/big"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
+	"github.com/DIMO-Network/identity-api/internal/helpers"
+	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/models"
+	"github.com/aarondl/sqlboiler/v4/queries/qm"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 )
 
 type Repository struct {
@@ -44,7 +50,35 @@ func (r *Repository) GetTemplates(ctx context.Context, first *int, after *string
 	return nil, nil
 }
 
-func (r *Repository) GetTemplate(ctx context.Context, by model.ConnectionBy) (*model.Template, error) {
-	// TODO implement GetTemplate
-	return nil, nil
+// TODO Make tests
+func (r *Repository) GetTemplate(ctx context.Context, by model.TemplateBy) (*model.Template, error) {
+	if base.CountTrue(by.TokenID != nil, by.Creator != nil, by.Cid != nil) != 1 {
+		return nil, gqlerror.Errorf("must specify exactly one of `TokenID`, `Creator`, or `Cid`")
+	}
+
+	var mod qm.QueryMod
+
+	switch {
+	case by.TokenID != nil:
+		id, err := helpers.ConvertTokenIDToID(by.TokenID)
+		if err != nil {
+			return nil, err
+		}
+
+		mod = models.TemplateWhere.ID.EQ(id)
+	case by.Creator != nil:
+		mod = models.TemplateWhere.Creator.EQ(by.Creator.Bytes())
+	case by.Cid != nil:
+		mod = models.TemplateWhere.Cid.EQ(*by.Cid)
+	}
+
+	dl, err := models.Templates(mod).One(ctx, r.PDB.DBS().Reader)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, repositories.ErrNotFound
+		}
+		return nil, err
+	}
+
+	return r.ToAPI(dl), nil
 }

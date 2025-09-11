@@ -640,6 +640,12 @@ type Template struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
 
+type TemplateBy struct {
+	TokenID *big.Int        `json:"tokenId,omitempty"`
+	Cid     *string         `json:"cid,omitempty"`
+	Creator *common.Address `json:"creator,omitempty"`
+}
+
 type TemplateConnection struct {
 	TotalCount int             `json:"totalCount"`
 	Edges      []*TemplateEdge `json:"edges"`

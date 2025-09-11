@@ -22,7 +22,14 @@ type Template {
 }
 
 extend type Query {
-    template(tokenId: Int!): Template
+    """
+    Retrieve a particular template.
+    """
+    template(by: TemplateBy!): Template!
+
+    """
+    List templates. Sorts by minting time, descending.
+    """
     templates(
         first: Int,
         after: String,
@@ -41,4 +48,10 @@ type TemplateConnection {
 type TemplateEdge {
   node: Template!
   cursor: String!
+}
+
+input TemplateBy {
+  tokenId: BigInt
+  cid: String
+  creator: Address
 }

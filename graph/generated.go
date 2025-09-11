@@ -295,7 +295,7 @@ type ComplexityRoot struct {
 		Stakes             func(childComplexity int, first *int, after *string, last *int, before *string, filterBy *model.StakeFilterBy) int
 		SyntheticDevice    func(childComplexity int, by model.SyntheticDeviceBy) int
 		SyntheticDevices   func(childComplexity int, first *int, last *int, after *string, before *string, filterBy *model.SyntheticDevicesFilter) int
-		Template           func(childComplexity int, tokenID int) int
+		Template           func(childComplexity int, by model.TemplateBy) int
 		Templates          func(childComplexity int, first *int, after *string, last *int, before *string) int
 		Vehicle            func(childComplexity int, tokenID *int, tokenDid *string) int
 		Vehicles           func(childComplexity int, first *int, after *string, last *int, before *string, filterBy *model.VehiclesFilter) int
@@ -525,7 +525,7 @@ type QueryResolver interface {
 	Stakes(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.StakeFilterBy) (*model.StakeConnection, error)
 	SyntheticDevice(ctx context.Context, by model.SyntheticDeviceBy) (*model.SyntheticDevice, error)
 	SyntheticDevices(ctx context.Context, first *int, last *int, after *string, before *string, filterBy *model.SyntheticDevicesFilter) (*model.SyntheticDeviceConnection, error)
-	Template(ctx context.Context, tokenID int) (*model.Template, error)
+	Template(ctx context.Context, by model.TemplateBy) (*model.Template, error)
 	Templates(ctx context.Context, first *int, after *string, last *int, before *string) (*model.TemplateConnection, error)
 	Vehicle(ctx context.Context, tokenID *int, tokenDid *string) (*model.Vehicle, error)
 	Vehicles(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.VehiclesFilter) (*model.VehicleConnection, error)
@@ -1726,7 +1726,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.Template(childComplexity, args["tokenId"].(int)), true
+		return e.complexity.Query.Template(childComplexity, args["by"].(model.TemplateBy)), true
 
 	case "Query.templates":
 		if e.complexity.Query.Templates == nil {
@@ -2548,6 +2548,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputStakeFilterBy,
 		ec.unmarshalInputSyntheticDeviceBy,
 		ec.unmarshalInputSyntheticDevicesFilter,
+		ec.unmarshalInputTemplateBy,
 		ec.unmarshalInputVehiclesFilter,
 	)
 	first := true
@@ -3098,11 +3099,11 @@ func (ec *executionContext) field_Query_syntheticDevices_args(ctx context.Contex
 func (ec *executionContext) field_Query_template_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "tokenId", ec.unmarshalNInt2int)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "by", ec.unmarshalNTemplateBy2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐTemplateBy)
 	if err != nil {
 		return nil, err
 	}
-	args["tokenId"] = arg0
+	args["by"] = arg0
 	return args, nil
 }
 
@@ -10951,18 +10952,21 @@ func (ec *executionContext) _Query_template(ctx context.Context, field graphql.C
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Template(rctx, fc.Args["tokenId"].(int))
+		return ec.resolvers.Query().Template(rctx, fc.Args["by"].(model.TemplateBy))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.Template)
 	fc.Result = res
-	return ec.marshalOTemplate2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐTemplate(ctx, field.Selections, res)
+	return ec.marshalNTemplate2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐTemplate(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_template(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -19182,6 +19186,47 @@ func (ec *executionContext) unmarshalInputSyntheticDevicesFilter(ctx context.Con
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputTemplateBy(ctx context.Context, obj any) (model.TemplateBy, error) {
+	var it model.TemplateBy
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"tokenId", "cid", "creator"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "tokenId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokenId"))
+			data, err := ec.unmarshalOBigInt2ᚖmathᚋbigᚐInt(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TokenID = data
+		case "cid":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cid"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Cid = data
+		case "creator":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("creator"))
+			data, err := ec.unmarshalOAddress2ᚖgithubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Creator = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputVehiclesFilter(ctx context.Context, obj any) (model.VehiclesFilter, error) {
 	var it model.VehiclesFilter
 	asMap := map[string]any{}
@@ -21574,13 +21619,16 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "template":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Query_template(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
@@ -25665,6 +25713,10 @@ func (ec *executionContext) marshalNSyntheticDeviceEdge2ᚖgithubᚗcomᚋDIMO�
 	return ec._SyntheticDeviceEdge(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNTemplate2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐTemplate(ctx context.Context, sel ast.SelectionSet, v model.Template) graphql.Marshaler {
+	return ec._Template(ctx, sel, &v)
+}
+
 func (ec *executionContext) marshalNTemplate2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐTemplateᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Template) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -25717,6 +25769,11 @@ func (ec *executionContext) marshalNTemplate2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋ
 		return graphql.Null
 	}
 	return ec._Template(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNTemplateBy2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐTemplateBy(ctx context.Context, v any) (model.TemplateBy, error) {
+	res, err := ec.unmarshalInputTemplateBy(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNTemplateConnection2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐTemplateConnection(ctx context.Context, sel ast.SelectionSet, v model.TemplateConnection) graphql.Marshaler {
@@ -26419,13 +26476,6 @@ func (ec *executionContext) unmarshalOSyntheticDevicesFilter2ᚖgithubᚗcomᚋD
 	}
 	res, err := ec.unmarshalInputSyntheticDevicesFilter(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOTemplate2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐTemplate(ctx context.Context, sel ast.SelectionSet, v *model.Template) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Template(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOTime2ᚖtimeᚐTime(ctx context.Context, v any) (*time.Time, error) {
