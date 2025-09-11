@@ -640,7 +640,35 @@ func (c *ContractsEventsConsumer) handlePermissionsSetEvent(ctx context.Context,
 }
 
 func (c *ContractsEventsConsumer) handleTemplateCreatedEvent(ctx context.Context, e *cmodels.ContractEventData) error {
-	return nil
+	logger := c.log.With().Str("EventName", TemplateCreatedEvent.String()).Logger()
+
+	var args TemplateCreatedData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return fmt.Errorf("error unmarshaling TemplateCreated inputs: %w", err)
+	}
+
+	// This is the result of uint256(keccak256(bytes(cid))).
+	templateID, err := helpers.ConvertTokenIDToID(args.TemplateId)
+	if err != nil {
+		return err
+	}
+
+	template := models.Template{
+		ID:          templateID,
+		Creator:     args.Creator.Bytes(),
+		Asset:       args.Asset.Bytes(),
+		Permissions: args.Permissions.Text(2),
+		Cid:         args.Cid,
+		CreatedAt:   e.Block.Time,
+	}
+
+	logger.Info().
+		Int64("templateId", args.TemplateId.Int64()).
+		Str("creator", args.Creator.Hex()).
+		Str("asset", args.Asset.Hex()).
+		Msg("Template created successfully.")
+
+	return template.Insert(ctx, c.dbs.DBS().Writer, boil.Infer())
 }
 
 func (c *ContractsEventsConsumer) handlePrivilegeSetEvent(ctx context.Context, e *cmodels.ContractEventData) error {
