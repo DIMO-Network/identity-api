@@ -602,9 +602,50 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceAttributeSetEvent(ctx c
 func (c *ContractsEventsConsumer) handlePermissionsSetEvent(ctx context.Context, e *cmodels.ContractEventData) error {
 	logger := c.log.With().Str("EventName", PermissionsSetEvent.String()).Logger()
 
+	// Try to detect which event format by checking the JSON structure
+	var rawArgs map[string]interface{}
+	if err := json.Unmarshal(e.Arguments, &rawArgs); err != nil {
+		return fmt.Errorf("error unmarshaling PermissionsSet raw inputs: %w", err)
+	}
+
+	var templateID []byte
 	var args PermissionsSetData
-	if err := json.Unmarshal(e.Arguments, &args); err != nil {
-		return fmt.Errorf("error unmarshaling PermissionsSet inputs: %w", err)
+
+	// Check if TemplateId field exists to determine event format
+	if _, hasTemplateId := rawArgs["TemplateId"]; hasTemplateId {
+		// New format with templateId
+		var argsWithTemplate PermissionsSetWithTemplateData
+		if err := json.Unmarshal(e.Arguments, &argsWithTemplate); err != nil {
+			return fmt.Errorf("error unmarshaling PermissionsSetWithTemplate inputs: %w", err)
+		}
+
+		// Convert to old format for compatibility
+		args = PermissionsSetData{
+			Asset:       argsWithTemplate.Asset,
+			TokenId:     argsWithTemplate.TokenId,
+			Permissions: argsWithTemplate.Permissions,
+			Grantee:     argsWithTemplate.Grantee,
+			Expiration:  argsWithTemplate.Expiration,
+			Source:      argsWithTemplate.Source,
+		}
+
+		// Convert template ID to bytes for database storage
+		var err error
+		templateID, err = helpers.ConvertTokenIDToID(argsWithTemplate.TemplateId)
+		if err != nil {
+			return fmt.Errorf("error converting template ID: %w", err)
+		}
+
+		logger.Info().
+			Int64("templateId", argsWithTemplate.TemplateId.Int64()).
+			Msg("Processing PermissionsSet with template ID")
+	} else {
+		// Old format without templateId
+		if err := json.Unmarshal(e.Arguments, &args); err != nil {
+			return fmt.Errorf("error unmarshaling PermissionsSet inputs: %w", err)
+		}
+
+		logger.Info().Msg("Processing legacy PermissionsSet without template ID")
 	}
 
 	if args.Asset != common.HexToAddress(c.settings.VehicleNFTAddr) {
@@ -621,12 +662,23 @@ func (c *ContractsEventsConsumer) handlePermissionsSetEvent(ctx context.Context,
 		ExpiresAt:   time.Unix(args.Expiration.Int64(), 0),
 	}
 
+	// Add template ID if present
+	if templateID != nil {
+		sacd.TemplateID = null.BytesFrom(templateID)
+	}
+
 	if err := sacd.Upsert(ctx, c.dbs.DBS().Writer, true,
 		[]string{
 			models.VehicleSacdColumns.VehicleID,
 			models.VehicleSacdColumns.Grantee,
 		},
-		boil.Whitelist(models.VehicleSacdColumns.Permissions, models.VehicleSacdColumns.Source, models.VehicleSacdColumns.CreatedAt, models.PrivilegeColumns.ExpiresAt),
+		boil.Whitelist(
+			models.VehicleSacdColumns.Permissions,
+			models.VehicleSacdColumns.Source,
+			models.VehicleSacdColumns.CreatedAt,
+			models.VehicleSacdColumns.ExpiresAt,
+			models.VehicleSacdColumns.TemplateID, // Add template ID to updateable columns
+		),
 		boil.Infer()); err != nil {
 		return fmt.Errorf("error upserting vehicle SACD: %w", err)
 	}
