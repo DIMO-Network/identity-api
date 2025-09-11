@@ -19193,7 +19193,7 @@ func (ec *executionContext) unmarshalInputTemplateBy(ctx context.Context, obj an
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"tokenId", "cid", "creator"}
+	fieldsInOrder := [...]string{"tokenId", "cid"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -19214,13 +19214,6 @@ func (ec *executionContext) unmarshalInputTemplateBy(ctx context.Context, obj an
 				return it, err
 			}
 			it.Cid = data
-		case "creator":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("creator"))
-			data, err := ec.unmarshalOAddress2ᚖgithubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Creator = data
 		}
 	}
 

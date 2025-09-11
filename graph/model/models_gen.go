@@ -641,9 +641,8 @@ type Template struct {
 }
 
 type TemplateBy struct {
-	TokenID *big.Int        `json:"tokenId,omitempty"`
-	Cid     *string         `json:"cid,omitempty"`
-	Creator *common.Address `json:"creator,omitempty"`
+	TokenID *big.Int `json:"tokenId,omitempty"`
+	Cid     *string  `json:"cid,omitempty"`
 }
 
 type TemplateConnection struct {

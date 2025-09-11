@@ -50,10 +50,9 @@ func (r *Repository) GetTemplates(ctx context.Context, first *int, after *string
 	return nil, nil
 }
 
-// TODO Make tests
 func (r *Repository) GetTemplate(ctx context.Context, by model.TemplateBy) (*model.Template, error) {
-	if base.CountTrue(by.TokenID != nil, by.Creator != nil, by.Cid != nil) != 1 {
-		return nil, gqlerror.Errorf("must specify exactly one of `TokenID`, `Creator`, or `Cid`")
+	if base.CountTrue(by.TokenID != nil, by.Cid != nil) != 1 {
+		return nil, gqlerror.Errorf("must specify exactly one of `TokenID` or `Cid`")
 	}
 
 	var mod qm.QueryMod
@@ -66,8 +65,6 @@ func (r *Repository) GetTemplate(ctx context.Context, by model.TemplateBy) (*mod
 		}
 
 		mod = models.TemplateWhere.ID.EQ(id)
-	case by.Creator != nil:
-		mod = models.TemplateWhere.Creator.EQ(by.Creator.Bytes())
 	case by.Cid != nil:
 		mod = models.TemplateWhere.Cid.EQ(*by.Cid)
 	}

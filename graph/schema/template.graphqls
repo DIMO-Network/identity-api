@@ -52,6 +52,5 @@ type TemplateEdge {
 
 input TemplateBy {
   tokenId: BigInt
-  cid: String
-  creator: Address
+  cid: String  
 }

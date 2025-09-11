@@ -109,7 +109,7 @@ type ConnectionRepository interface {
 //go:generate mockgen -destination=./mock_template_test.go -package=graph github.com/DIMO-Network/identity-api/graph TemplateRepository
 type TemplateRepository interface {
 	GetTemplates(ctx context.Context, first *int, after *string, last *int, before *string) (*model.TemplateConnection, error)
-	GetTemplate(ctx context.Context, by model.ConnectionBy) (*model.Template, error)
+	GetTemplate(ctx context.Context, by model.TemplateBy) (*model.Template, error)
 }
 
 // Resolver holds the repositories for the graph resolvers.
