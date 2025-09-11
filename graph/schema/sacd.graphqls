@@ -21,6 +21,10 @@ type Sacd {
   The block timestamp at which the permission expires.
   """
   expiresAt: Time!
+  """
+  The template used for this permission grant, if any
+  """
+  template: Template
 }
 
 type SacdEdge {

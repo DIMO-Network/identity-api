@@ -30,13 +30,30 @@ func sacdToAPIResponse(pr *models.VehicleSacd) (*gmodel.Sacd, error) {
 		return nil, fmt.Errorf("couldn't parse permission string %q as binary", pr.Permissions)
 	}
 
-	return &gmodel.Sacd{
+	sacd := &gmodel.Sacd{
 		Grantee:     common.BytesToAddress(pr.Grantee),
 		Permissions: "0x" + b.Text(16),
 		Source:      pr.Source,
 		CreatedAt:   pr.CreatedAt,
 		ExpiresAt:   pr.ExpiresAt,
-	}, nil
+	}
+
+	// Include template information if available
+	if pr.R != nil && pr.R.Template != nil {
+		template := pr.R.Template
+		templateID := new(big.Int).SetBytes(template.ID)
+		
+		sacd.Template = &gmodel.Template{
+			TokenID:     templateID,
+			Creator:     common.BytesToAddress(template.Creator),
+			Asset:       common.BytesToAddress(template.Asset),
+			Permissions: template.Permissions,
+			Cid:         template.Cid,
+			CreatedAt:   template.CreatedAt,
+		}
+	}
+
+	return sacd, nil
 }
 
 func (p *Repository) createSacdResponse(sacds models.VehicleSacdSlice, totalCount int64, hasNext, hasPrevious bool, pHelper helpers.PaginationHelper[SacdCursor]) (*gmodel.SacdConnection, error) {
@@ -174,6 +191,14 @@ func (p *Repository) GetSacdsForVehicle(ctx context.Context, tokenID int, first 
 	page, err := models.VehicleSacds(queryMods...).All(ctx, p.PDB.DBS().Reader)
 	if err != nil {
 		return nil, err
+	}
+
+	// Load template relationships for SACDs that have them
+	if len(page) > 0 {
+		err = page[0].L.LoadTemplate(ctx, p.PDB.DBS().Reader, false, &page, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load template relationships: %w", err)
+		}
 	}
 
 	if len(page) == 0 {
