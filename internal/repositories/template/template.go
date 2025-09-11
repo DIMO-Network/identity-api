@@ -4,7 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"math/big"
+	"slices"
+	"time"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
@@ -21,6 +24,13 @@ type Repository struct {
 	chainID         uint64
 	contractAddress common.Address
 }
+
+type Cursor struct {
+	CreatedAt time.Time
+	TokenID   []byte
+}
+
+var pageHelper = helpers.PaginationHelper[Cursor]{}
 
 // New creates a new template repository.
 func New(db *base.Repository) *Repository {
@@ -44,10 +54,120 @@ func (r *Repository) ToAPI(template *models.Template) *model.Template {
 	}
 }
 
-// TODO maybe add a filterby
 func (r *Repository) GetTemplates(ctx context.Context, first *int, after *string, last *int, before *string) (*model.TemplateConnection, error) {
-	// TODO implement GetTemplates
-	return nil, nil
+	limit, err := helpers.ValidateFirstLast(first, last, base.MaxPageSize)
+	if err != nil {
+		return nil, err
+	}
+
+	// None now, but making room.
+	var queryMods []qm.QueryMod
+
+	totalCount, err := models.Templates().Count(ctx, r.PDB.DBS().Reader)
+	if err != nil {
+		return nil, err
+	}
+
+	if after != nil {
+		afterCur, err := pageHelper.DecodeCursor(*after)
+		if err != nil {
+			return nil, err
+		}
+
+		queryMods = append(queryMods, qm.Expr(
+			models.TemplateWhere.CreatedAt.EQ(afterCur.CreatedAt),
+			models.TemplateWhere.ID.GT(afterCur.TokenID),
+			qm.Or2(models.TemplateWhere.CreatedAt.LT(afterCur.CreatedAt)),
+		))
+	}
+
+	if before != nil {
+		beforeCur, err := pageHelper.DecodeCursor(*before)
+		if err != nil {
+			return nil, err
+		}
+
+		queryMods = append(queryMods, qm.Expr(
+			models.TemplateWhere.CreatedAt.EQ(beforeCur.CreatedAt),
+			models.TemplateWhere.ID.LT(beforeCur.TokenID),
+			qm.Or2(models.TemplateWhere.CreatedAt.GT(beforeCur.CreatedAt)),
+		))
+	}
+
+	orderBy := fmt.Sprintf("%s DESC, %s ASC", models.TemplateColumns.CreatedAt, models.TemplateColumns.ID)
+	if last != nil {
+		orderBy = fmt.Sprintf("%s ASC, %s DESC", models.TemplateColumns.CreatedAt, models.TemplateColumns.ID)
+	}
+
+	queryMods = append(queryMods,
+		// Use limit + 1 here to check if there's another page.
+		qm.Limit(limit+1),
+		qm.OrderBy(orderBy),
+	)
+
+	all, err := models.Templates(queryMods...).All(ctx, r.PDB.DBS().Reader)
+	if err != nil {
+		return nil, err
+	}
+
+	// We assume that cursors come from real elements.
+	hasNext := before != nil
+	hasPrevious := after != nil
+
+	if first != nil && len(all) == limit+1 {
+		hasNext = true
+		all = all[:limit]
+	} else if last != nil && len(all) == limit+1 {
+		hasPrevious = true
+		all = all[:limit]
+	}
+
+	if last != nil {
+		slices.Reverse(all)
+	}
+
+	nodes := make([]*model.Template, len(all))
+	edges := make([]*model.TemplateEdge, len(all))
+
+	for i, dv := range all {
+		dlv := r.ToAPI(dv)
+
+		nodes[i] = dlv
+
+		crsr, err := pageHelper.EncodeCursor(Cursor{
+			CreatedAt: dv.CreatedAt,
+			TokenID:   dv.ID,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		edges[i] = &model.TemplateEdge{
+			Node:   dlv,
+			Cursor: crsr,
+		}
+	}
+
+	var endCur, startCur *string
+
+	if len(edges) != 0 {
+		startCur = &edges[0].Cursor
+		endCur = &edges[len(edges)-1].Cursor
+	}
+
+	res := &model.TemplateConnection{
+		Edges: edges,
+		Nodes: nodes,
+		PageInfo: &model.PageInfo{
+			EndCursor:       endCur,
+			HasNextPage:     hasNext,
+			HasPreviousPage: hasPrevious,
+			StartCursor:     startCur,
+		},
+		TotalCount: int(totalCount),
+	}
+
+	return res, nil
 }
 
 func (r *Repository) GetTemplate(ctx context.Context, by model.TemplateBy) (*model.Template, error) {
