@@ -53,7 +53,7 @@ Add a migrations:
 ## Generate SQLBoiler
 
 `docker-compose up -d db` Starts a Postgres database.
-`make tools-boil` Installs the correct version of sqlboiler.
+`make tools-sqlboiler` Installs the correct version of sqlboiler.
 `make migrate` Runs unapplied database migrations.
 `make boil` Regenerates the SQLBoiler models.
 

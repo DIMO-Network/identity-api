@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/aarondl/null/v8"
 	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/aarondl/sqlboiler/v4/queries"
 	"github.com/aarondl/sqlboiler/v4/queries/qm"
@@ -23,12 +24,13 @@ import (
 
 // VehicleSacd is an object representing the database table.
 type VehicleSacd struct {
-	VehicleID   int       `boil:"vehicle_id" json:"vehicle_id" toml:"vehicle_id" yaml:"vehicle_id"`
-	Grantee     []byte    `boil:"grantee" json:"grantee" toml:"grantee" yaml:"grantee"`
-	Permissions string    `boil:"permissions" json:"permissions" toml:"permissions" yaml:"permissions"`
-	Source      string    `boil:"source" json:"source" toml:"source" yaml:"source"`
-	CreatedAt   time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	ExpiresAt   time.Time `boil:"expires_at" json:"expires_at" toml:"expires_at" yaml:"expires_at"`
+	VehicleID   int        `boil:"vehicle_id" json:"vehicle_id" toml:"vehicle_id" yaml:"vehicle_id"`
+	Grantee     []byte     `boil:"grantee" json:"grantee" toml:"grantee" yaml:"grantee"`
+	Permissions string     `boil:"permissions" json:"permissions" toml:"permissions" yaml:"permissions"`
+	Source      string     `boil:"source" json:"source" toml:"source" yaml:"source"`
+	CreatedAt   time.Time  `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	ExpiresAt   time.Time  `boil:"expires_at" json:"expires_at" toml:"expires_at" yaml:"expires_at"`
+	TemplateID  null.Bytes `boil:"template_id" json:"template_id,omitempty" toml:"template_id" yaml:"template_id,omitempty"`
 
 	R *vehicleSacdR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L vehicleSacdL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -41,6 +43,7 @@ var VehicleSacdColumns = struct {
 	Source      string
 	CreatedAt   string
 	ExpiresAt   string
+	TemplateID  string
 }{
 	VehicleID:   "vehicle_id",
 	Grantee:     "grantee",
@@ -48,6 +51,7 @@ var VehicleSacdColumns = struct {
 	Source:      "source",
 	CreatedAt:   "created_at",
 	ExpiresAt:   "expires_at",
+	TemplateID:  "template_id",
 }
 
 var VehicleSacdTableColumns = struct {
@@ -57,6 +61,7 @@ var VehicleSacdTableColumns = struct {
 	Source      string
 	CreatedAt   string
 	ExpiresAt   string
+	TemplateID  string
 }{
 	VehicleID:   "vehicle_sacds.vehicle_id",
 	Grantee:     "vehicle_sacds.grantee",
@@ -64,6 +69,7 @@ var VehicleSacdTableColumns = struct {
 	Source:      "vehicle_sacds.source",
 	CreatedAt:   "vehicle_sacds.created_at",
 	ExpiresAt:   "vehicle_sacds.expires_at",
+	TemplateID:  "vehicle_sacds.template_id",
 }
 
 // Generated where
@@ -75,6 +81,7 @@ var VehicleSacdWhere = struct {
 	Source      whereHelperstring
 	CreatedAt   whereHelpertime_Time
 	ExpiresAt   whereHelpertime_Time
+	TemplateID  whereHelpernull_Bytes
 }{
 	VehicleID:   whereHelperint{field: "\"identity_api\".\"vehicle_sacds\".\"vehicle_id\""},
 	Grantee:     whereHelper__byte{field: "\"identity_api\".\"vehicle_sacds\".\"grantee\""},
@@ -82,23 +89,43 @@ var VehicleSacdWhere = struct {
 	Source:      whereHelperstring{field: "\"identity_api\".\"vehicle_sacds\".\"source\""},
 	CreatedAt:   whereHelpertime_Time{field: "\"identity_api\".\"vehicle_sacds\".\"created_at\""},
 	ExpiresAt:   whereHelpertime_Time{field: "\"identity_api\".\"vehicle_sacds\".\"expires_at\""},
+	TemplateID:  whereHelpernull_Bytes{field: "\"identity_api\".\"vehicle_sacds\".\"template_id\""},
 }
 
 // VehicleSacdRels is where relationship names are stored.
 var VehicleSacdRels = struct {
-	Vehicle string
+	Template string
+	Vehicle  string
 }{
-	Vehicle: "Vehicle",
+	Template: "Template",
+	Vehicle:  "Vehicle",
 }
 
 // vehicleSacdR is where relationships are stored.
 type vehicleSacdR struct {
-	Vehicle *Vehicle `boil:"Vehicle" json:"Vehicle" toml:"Vehicle" yaml:"Vehicle"`
+	Template *Template `boil:"Template" json:"Template" toml:"Template" yaml:"Template"`
+	Vehicle  *Vehicle  `boil:"Vehicle" json:"Vehicle" toml:"Vehicle" yaml:"Vehicle"`
 }
 
 // NewStruct creates a new relationship struct
 func (*vehicleSacdR) NewStruct() *vehicleSacdR {
 	return &vehicleSacdR{}
+}
+
+func (o *VehicleSacd) GetTemplate() *Template {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetTemplate()
+}
+
+func (r *vehicleSacdR) GetTemplate() *Template {
+	if r == nil {
+		return nil
+	}
+
+	return r.Template
 }
 
 func (o *VehicleSacd) GetVehicle() *Vehicle {
@@ -121,9 +148,9 @@ func (r *vehicleSacdR) GetVehicle() *Vehicle {
 type vehicleSacdL struct{}
 
 var (
-	vehicleSacdAllColumns            = []string{"vehicle_id", "grantee", "permissions", "source", "created_at", "expires_at"}
+	vehicleSacdAllColumns            = []string{"vehicle_id", "grantee", "permissions", "source", "created_at", "expires_at", "template_id"}
 	vehicleSacdColumnsWithoutDefault = []string{"vehicle_id", "grantee", "permissions", "source", "created_at", "expires_at"}
-	vehicleSacdColumnsWithDefault    = []string{}
+	vehicleSacdColumnsWithDefault    = []string{"template_id"}
 	vehicleSacdPrimaryKeyColumns     = []string{"vehicle_id", "grantee"}
 	vehicleSacdGeneratedColumns      = []string{}
 )
@@ -433,6 +460,17 @@ func (q vehicleSacdQuery) Exists(ctx context.Context, exec boil.ContextExecutor)
 	return count > 0, nil
 }
 
+// Template pointed to by the foreign key.
+func (o *VehicleSacd) Template(mods ...qm.QueryMod) templateQuery {
+	queryMods := []qm.QueryMod{
+		qm.Where("\"id\" = ?", o.TemplateID),
+	}
+
+	queryMods = append(queryMods, mods...)
+
+	return Templates(queryMods...)
+}
+
 // Vehicle pointed to by the foreign key.
 func (o *VehicleSacd) Vehicle(mods ...qm.QueryMod) vehicleQuery {
 	queryMods := []qm.QueryMod{
@@ -442,6 +480,130 @@ func (o *VehicleSacd) Vehicle(mods ...qm.QueryMod) vehicleQuery {
 	queryMods = append(queryMods, mods...)
 
 	return Vehicles(queryMods...)
+}
+
+// LoadTemplate allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for an N-1 relationship.
+func (vehicleSacdL) LoadTemplate(ctx context.Context, e boil.ContextExecutor, singular bool, maybeVehicleSacd interface{}, mods queries.Applicator) error {
+	var slice []*VehicleSacd
+	var object *VehicleSacd
+
+	if singular {
+		var ok bool
+		object, ok = maybeVehicleSacd.(*VehicleSacd)
+		if !ok {
+			object = new(VehicleSacd)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeVehicleSacd)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeVehicleSacd))
+			}
+		}
+	} else {
+		s, ok := maybeVehicleSacd.(*[]*VehicleSacd)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeVehicleSacd)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeVehicleSacd))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &vehicleSacdR{}
+		}
+		if !queries.IsNil(object.TemplateID) {
+			args[object.TemplateID] = struct{}{}
+		}
+
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &vehicleSacdR{}
+			}
+
+			if !queries.IsNil(obj.TemplateID) {
+				args[obj.TemplateID] = struct{}{}
+			}
+
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`identity_api.templates`),
+		qm.WhereIn(`identity_api.templates.id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load Template")
+	}
+
+	var resultSlice []*Template
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice Template")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results of eager load for templates")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for templates")
+	}
+
+	if len(templateAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+
+	if len(resultSlice) == 0 {
+		return nil
+	}
+
+	if singular {
+		foreign := resultSlice[0]
+		object.R.Template = foreign
+		if foreign.R == nil {
+			foreign.R = &templateR{}
+		}
+		foreign.R.VehicleSacds = append(foreign.R.VehicleSacds, object)
+		return nil
+	}
+
+	for _, local := range slice {
+		for _, foreign := range resultSlice {
+			if queries.Equal(local.TemplateID, foreign.ID) {
+				local.R.Template = foreign
+				if foreign.R == nil {
+					foreign.R = &templateR{}
+				}
+				foreign.R.VehicleSacds = append(foreign.R.VehicleSacds, local)
+				break
+			}
+		}
+	}
+
+	return nil
 }
 
 // LoadVehicle allows an eager lookup of values, cached into the
@@ -561,6 +723,86 @@ func (vehicleSacdL) LoadVehicle(ctx context.Context, e boil.ContextExecutor, sin
 		}
 	}
 
+	return nil
+}
+
+// SetTemplate of the vehicleSacd to the related item.
+// Sets o.R.Template to related.
+// Adds o to related.R.VehicleSacds.
+func (o *VehicleSacd) SetTemplate(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Template) error {
+	var err error
+	if insert {
+		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
+			return errors.Wrap(err, "failed to insert into foreign table")
+		}
+	}
+
+	updateQuery := fmt.Sprintf(
+		"UPDATE \"identity_api\".\"vehicle_sacds\" SET %s WHERE %s",
+		strmangle.SetParamNames("\"", "\"", 1, []string{"template_id"}),
+		strmangle.WhereClause("\"", "\"", 2, vehicleSacdPrimaryKeyColumns),
+	)
+	values := []interface{}{related.ID, o.VehicleID, o.Grantee}
+
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, updateQuery)
+		fmt.Fprintln(writer, values)
+	}
+	if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	queries.Assign(&o.TemplateID, related.ID)
+	if o.R == nil {
+		o.R = &vehicleSacdR{
+			Template: related,
+		}
+	} else {
+		o.R.Template = related
+	}
+
+	if related.R == nil {
+		related.R = &templateR{
+			VehicleSacds: VehicleSacdSlice{o},
+		}
+	} else {
+		related.R.VehicleSacds = append(related.R.VehicleSacds, o)
+	}
+
+	return nil
+}
+
+// RemoveTemplate relationship.
+// Sets o.R.Template to nil.
+// Removes o from all passed in related items' relationships struct.
+func (o *VehicleSacd) RemoveTemplate(ctx context.Context, exec boil.ContextExecutor, related *Template) error {
+	var err error
+
+	queries.SetScanner(&o.TemplateID, nil)
+	if _, err = o.Update(ctx, exec, boil.Whitelist("template_id")); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	if o.R != nil {
+		o.R.Template = nil
+	}
+	if related == nil || related.R == nil {
+		return nil
+	}
+
+	for i, ri := range related.R.VehicleSacds {
+		if queries.Equal(o.TemplateID, ri.TemplateID) {
+			continue
+		}
+
+		ln := len(related.R.VehicleSacds)
+		if ln > 1 && i < ln-1 {
+			related.R.VehicleSacds[i] = related.R.VehicleSacds[ln-1]
+		}
+		related.R.VehicleSacds = related.R.VehicleSacds[:ln-1]
+		break
+	}
 	return nil
 }
 
