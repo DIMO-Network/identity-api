@@ -602,50 +602,9 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceAttributeSetEvent(ctx c
 func (c *ContractsEventsConsumer) handlePermissionsSetEvent(ctx context.Context, e *cmodels.ContractEventData) error {
 	logger := c.log.With().Str("EventName", PermissionsSetEvent.String()).Logger()
 
-	// Try to detect which event format by checking the JSON structure
-	var rawArgs map[string]interface{}
-	if err := json.Unmarshal(e.Arguments, &rawArgs); err != nil {
-		return fmt.Errorf("error unmarshaling PermissionsSet raw inputs: %w", err)
-	}
-
-	var templateID []byte
-	var args PermissionsSetData
-
-	// Check if TemplateId field exists to determine event format
-	if _, hasTemplateId := rawArgs["TemplateId"]; hasTemplateId {
-		// New format with templateId
-		var argsWithTemplate PermissionsSetWithTemplateData
-		if err := json.Unmarshal(e.Arguments, &argsWithTemplate); err != nil {
-			return fmt.Errorf("error unmarshaling PermissionsSetWithTemplate inputs: %w", err)
-		}
-
-		// Convert to old format for compatibility
-		args = PermissionsSetData{
-			Asset:       argsWithTemplate.Asset,
-			TokenId:     argsWithTemplate.TokenId,
-			Permissions: argsWithTemplate.Permissions,
-			Grantee:     argsWithTemplate.Grantee,
-			Expiration:  argsWithTemplate.Expiration,
-			Source:      argsWithTemplate.Source,
-		}
-
-		// Convert template ID to bytes for database storage
-		var err error
-		templateID, err = helpers.ConvertTokenIDToID(argsWithTemplate.TemplateId)
-		if err != nil {
-			return fmt.Errorf("error converting template ID: %w", err)
-		}
-
-		logger.Info().
-			Int64("templateId", argsWithTemplate.TemplateId.Int64()).
-			Msg("Processing PermissionsSet with template ID")
-	} else {
-		// Old format without templateId
-		if err := json.Unmarshal(e.Arguments, &args); err != nil {
-			return fmt.Errorf("error unmarshaling PermissionsSet inputs: %w", err)
-		}
-
-		logger.Info().Msg("Processing legacy PermissionsSet without template ID")
+	args, templateID, err := c.parsePermissionsSetArgs(e.Arguments)
+	if err != nil {
+		return err
 	}
 
 	if args.Asset != common.HexToAddress(c.settings.VehicleNFTAddr) {
@@ -1150,4 +1109,56 @@ func (c *ContractsEventsConsumer) handleSignerDisabled(ctx context.Context, e *c
 
 	_, err := s.Delete(ctx, c.dbs.DBS().Writer)
 	return err
+}
+
+// parsePermissionsSetArgs parses the PermissionsSet event arguments and returns the parsed data
+// along with the template ID if present in the new format
+func (c *ContractsEventsConsumer) parsePermissionsSetArgs(eventArgs []byte) (PermissionsSetData, []byte, error) {
+	// Try to detect which event format by checking the JSON structure
+	var rawArgs map[string]any
+	if err := json.Unmarshal(eventArgs, &rawArgs); err != nil {
+		return PermissionsSetData{}, nil, fmt.Errorf("error unmarshaling PermissionsSet raw inputs: %w", err)
+	}
+
+	var templateID []byte
+	var args PermissionsSetData
+
+	// Check if TemplateId field exists to determine event format
+	if _, hasTemplateId := rawArgs["TemplateId"]; hasTemplateId {
+		// New format with templateId
+		var argsWithTemplate PermissionsSetWithTemplateData
+		if err := json.Unmarshal(eventArgs, &argsWithTemplate); err != nil {
+			return PermissionsSetData{}, nil, fmt.Errorf("error unmarshaling PermissionsSetWithTemplate inputs: %w", err)
+		}
+
+		// Convert to old format for compatibility
+		args = PermissionsSetData{
+			Asset:       argsWithTemplate.Asset,
+			TokenId:     argsWithTemplate.TokenId,
+			Permissions: argsWithTemplate.Permissions,
+			Grantee:     argsWithTemplate.Grantee,
+			Expiration:  argsWithTemplate.Expiration,
+			Source:      argsWithTemplate.Source,
+		}
+
+		// Convert template ID to bytes for database storage
+		var err error
+		templateID, err = helpers.ConvertTokenIDToID(argsWithTemplate.TemplateId)
+		if err != nil {
+			return PermissionsSetData{}, nil, fmt.Errorf("error converting template ID: %w", err)
+		}
+
+		c.log.Info().
+			Int64("templateId", argsWithTemplate.TemplateId.Int64()).
+			Msg("Processing PermissionsSet with template ID")
+	} else {
+		// Old format without templateId
+		if err := json.Unmarshal(eventArgs, &args); err != nil {
+			return PermissionsSetData{}, nil, fmt.Errorf("error unmarshaling PermissionsSet inputs: %w", err)
+		}
+
+		c.log.Info().Msg("Processing legacy PermissionsSet without template ID")
+	}
+
+	return args, templateID, nil
 }
