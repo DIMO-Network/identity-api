@@ -240,10 +240,6 @@ func (s *VehiclesSacdRepoTestSuite) TestGetSacdsForVehicle_Success() {
 	s.Equal("test-source", returnedSacd.Source)
 	s.Equal(currTime, returnedSacd.CreatedAt)
 	s.Equal(expiresAt, returnedSacd.ExpiresAt)
-
-	// TODO: Template relationship loading is currently disabled due to SQLBoiler issue
-	// Templates will be nil until the null.Bytes map key issue is resolved
-	s.Nil(returnedSacd.Template)
 }
 
 func (s *VehiclesSacdRepoTestSuite) TestGetSacdsForVehicle_NoSacds() {
@@ -352,6 +348,188 @@ func (s *VehiclesSacdRepoTestSuite) TestGetSacdsForVehicle_OnlyExpiredSacds() {
 	s.Equal(0, res.TotalCount)
 	s.Len(res.Edges, 0)
 	s.Len(res.Nodes, 0)
+}
+
+func (s *VehiclesSacdRepoTestSuite) TestGetSacdsForVehicle_Pagination_FirstAfter() {
+	_, grantee1, err := helpers.GenerateWallet()
+	s.NoError(err)
+	_, grantee2, err := helpers.GenerateWallet()
+	s.NoError(err)
+	_, ownerWallet, err := helpers.GenerateWallet()
+	s.NoError(err)
+
+	currTime := time.Now().UTC().Truncate(time.Second)
+
+	m := models.Manufacturer{
+		ID:       131,
+		Name:     "Toyota",
+		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		MintedAt: time.Now(),
+		Slug:     "toyota",
+	}
+
+	if err := m.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer()); err != nil {
+		assert.NoError(s.T(), err)
+	}
+
+	vehicle := models.Vehicle{
+		ID:             1,
+		ManufacturerID: 131,
+		OwnerAddress:   ownerWallet.Bytes(),
+		Make:           null.StringFrom("Toyota"),
+		Model:          null.StringFrom("Corolla"),
+		Year:           null.IntFrom(2023),
+		MintedAt:       currTime,
+	}
+
+	if err := vehicle.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer()); err != nil {
+		s.NoError(err)
+	}
+
+	// Create multiple SACDs with different creation times to test ordering
+	expiresAt := currTime.Add(time.Hour).UTC().Truncate(time.Second)
+
+	sacds := []models.VehicleSacd{
+		{
+			VehicleID:   1,
+			Grantee:     grantee1.Bytes(),
+			Permissions: "1010",
+			Source:      "test-source-1",
+			CreatedAt:   currTime,
+			ExpiresAt:   expiresAt,
+		},
+		{
+			VehicleID:   1,
+			Grantee:     grantee2.Bytes(),
+			Permissions: "1100",
+			Source:      "test-source-2",
+			CreatedAt:   currTime.Add(-time.Minute),
+			ExpiresAt:   expiresAt,
+		},
+	}
+
+	for _, sacd := range sacds {
+		if err := sacd.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer()); err != nil {
+			s.NoError(err)
+		}
+	}
+
+	limit := 1
+	res, err := s.repo.GetSacdsForVehicle(s.ctx, 1, &limit, nil, nil, nil)
+	s.NoError(err)
+
+	// Should return the most recent SACD first (DESC order by created_at)
+	s.NotNil(res)
+	s.Equal(2, res.TotalCount)
+	s.Len(res.Edges, 1)
+	s.Len(res.Nodes, 1)
+	s.True(res.PageInfo.HasNextPage)
+	s.False(res.PageInfo.HasPreviousPage)
+	s.NotNil(res.PageInfo.EndCursor)
+
+	// Should be the first SACD (most recent)
+	s.Equal(*grantee1, res.Nodes[0].Grantee)
+	s.Equal("0xa", res.Nodes[0].Permissions) // 1010 binary = a hex
+
+	// Test second page using after cursor
+	res2, err := s.repo.GetSacdsForVehicle(s.ctx, 1, &limit, res.PageInfo.EndCursor, nil, nil)
+	s.NoError(err)
+
+	s.NotNil(res2)
+	s.Equal(2, res2.TotalCount)
+	s.Len(res2.Edges, 1)
+	s.Len(res2.Nodes, 1)
+	s.False(res2.PageInfo.HasNextPage)
+	s.True(res2.PageInfo.HasPreviousPage)
+
+	// Should be the second SACD (older)
+	s.Equal(*grantee2, res2.Nodes[0].Grantee)
+	s.Equal("0xc", res2.Nodes[0].Permissions) // 1100 binary = c hex
+}
+
+func (s *VehiclesSacdRepoTestSuite) TestGetSacdsForVehicle_Pagination_LastBefore() {
+	_, grantee1, err := helpers.GenerateWallet()
+	s.NoError(err)
+	_, grantee2, err := helpers.GenerateWallet()
+	s.NoError(err)
+	_, ownerWallet, err := helpers.GenerateWallet()
+	s.NoError(err)
+
+	currTime := time.Now().UTC().Truncate(time.Second)
+
+	m := models.Manufacturer{
+		ID:       131,
+		Name:     "Toyota",
+		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		MintedAt: time.Now(),
+		Slug:     "toyota",
+	}
+
+	if err := m.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer()); err != nil {
+		assert.NoError(s.T(), err)
+	}
+
+	vehicle := models.Vehicle{
+		ID:             1,
+		ManufacturerID: 131,
+		OwnerAddress:   ownerWallet.Bytes(),
+		Make:           null.StringFrom("Toyota"),
+		Model:          null.StringFrom("Corolla"),
+		Year:           null.IntFrom(2023),
+		MintedAt:       currTime,
+	}
+
+	if err := vehicle.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer()); err != nil {
+		s.NoError(err)
+	}
+
+	// Create multiple SACDs
+	expiresAt := currTime.Add(time.Hour).UTC().Truncate(time.Second)
+
+	sacds := []models.VehicleSacd{
+		{
+			VehicleID:   1,
+			Grantee:     grantee1.Bytes(),
+			Permissions: "1010",
+			Source:      "test-source-1",
+			CreatedAt:   currTime,
+			ExpiresAt:   expiresAt,
+		},
+		{
+			VehicleID:   1,
+			Grantee:     grantee2.Bytes(),
+			Permissions: "1100",
+			Source:      "test-source-2",
+			CreatedAt:   currTime.Add(-time.Minute),
+			ExpiresAt:   expiresAt,
+		},
+	}
+
+	for _, sacd := range sacds {
+		if err := sacd.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer()); err != nil {
+			s.NoError(err)
+		}
+	}
+
+	// Get all SACDs first to get a cursor
+	firstAll := 10
+	res, err := s.repo.GetSacdsForVehicle(s.ctx, 1, &firstAll, nil, nil, nil)
+	s.NoError(err)
+	s.Len(res.Nodes, 2)
+
+	limit := 1
+	res2, err := s.repo.GetSacdsForVehicle(s.ctx, 1, nil, nil, &limit, res.PageInfo.EndCursor)
+	s.NoError(err)
+
+	s.NotNil(res2)
+	s.Equal(2, res2.TotalCount)
+	s.Len(res2.Edges, 1)
+	s.Len(res2.Nodes, 1)
+	s.True(res2.PageInfo.HasNextPage)
+	s.False(res2.PageInfo.HasPreviousPage)
+
+	// Should return the first SACD (most recent)
+	s.Equal(*grantee1, res2.Nodes[0].Grantee)
 }
 
 func (s *VehiclesSacdRepoTestSuite) TestGetSacdsForVehicle_WithoutTemplate() {
