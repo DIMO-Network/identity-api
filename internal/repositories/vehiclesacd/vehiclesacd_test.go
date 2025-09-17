@@ -240,6 +240,15 @@ func (s *VehiclesSacdRepoTestSuite) TestGetSacdsForVehicle_Success() {
 	s.Equal("test-source", returnedSacd.Source)
 	s.Equal(currTime, returnedSacd.CreatedAt)
 	s.Equal(expiresAt, returnedSacd.ExpiresAt)
+
+	// Verify template relationship
+	s.NotNil(returnedSacd.Template)
+	s.Equal(new(big.Int).SetBytes(tokenIdBytes), returnedSacd.Template.TokenID)
+	s.Equal(common.HexToAddress("0x1111111111111111111111111111111111111111"), returnedSacd.Template.Creator)
+	s.Equal(common.HexToAddress("0x2222222222222222222222222222222222222222"), returnedSacd.Template.Asset)
+	s.Equal("1111", returnedSacd.Template.Permissions)
+	s.Equal("QmTestCID123", returnedSacd.Template.Cid)
+	s.Equal(template.CreatedAt, returnedSacd.Template.CreatedAt)
 }
 
 func (s *VehiclesSacdRepoTestSuite) TestGetSacdsForVehicle_NoSacds() {

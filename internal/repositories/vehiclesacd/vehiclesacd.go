@@ -13,6 +13,7 @@ import (
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/aarondl/sqlboiler/v4/queries/qm"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/volatiletech/sqlboiler/queries"
 )
 
 type Repository struct {
@@ -42,7 +43,7 @@ func sacdToAPIResponse(pr *models.VehicleSacd) (*gmodel.Sacd, error) {
 	if pr.R != nil && pr.R.Template != nil {
 		template := pr.R.Template
 		templateID := new(big.Int).SetBytes(template.ID)
-		
+
 		sacd.Template = &gmodel.Template{
 			TokenID:     templateID,
 			Creator:     common.BytesToAddress(template.Creator),
@@ -194,10 +195,39 @@ func (p *Repository) GetSacdsForVehicle(ctx context.Context, tokenID int, first 
 	}
 
 	// Load template relationships for SACDs that have them
+	// Custom implementation to work around SQLBoiler null.Bytes map key issue
 	if len(page) > 0 {
-		err = page[0].L.LoadTemplate(ctx, p.PDB.DBS().Reader, false, &page, nil)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load template relationships: %w", err)
+		var templateIDs []any
+		sacdsByTemplateID := make(map[string]*models.VehicleSacd)
+
+		// Collect unique template IDs and build lookup map
+		for _, sacd := range page {
+			if !queries.IsNil(sacd.TemplateID) {
+				templateIDBytes := sacd.TemplateID.Bytes
+				templateIDs = append(templateIDs, templateIDBytes)
+				sacdsByTemplateID[string(templateIDBytes)] = sacd
+			}
+		}
+
+		// Load templates if any SACDs have template IDs
+		if len(templateIDs) > 0 {
+			templates, err := models.Templates(
+				qm.WhereIn(models.TemplateColumns.ID+" IN ?", templateIDs...),
+			).All(ctx, p.PDB.DBS().Reader)
+
+			if err != nil {
+				return nil, fmt.Errorf("failed to load templates: %w", err)
+			}
+
+			// Manually associate templates with SACDs
+			for _, template := range templates {
+				if sacd, exists := sacdsByTemplateID[string(template.ID)]; exists {
+					if sacd.R == nil {
+						sacd.R = sacd.R.NewStruct()
+					}
+					sacd.R.Template = template
+				}
+			}
 		}
 	}
 
