@@ -465,6 +465,8 @@ type Sacd struct {
 	CreatedAt time.Time `json:"createdAt"`
 	// The block timestamp at which the permission expires.
 	ExpiresAt time.Time `json:"expiresAt"`
+	// The template used for this permission grant, if any
+	Template *Template `json:"template,omitempty"`
 }
 
 // The Connection type for Sacds.
