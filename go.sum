@@ -10,8 +10,8 @@ github.com/DATA-DOG/go-sqlmock v1.5.0 h1:Shsta01QNfFxHCfpW6YH2STWB0MudeXXEWMr20O
 github.com/DATA-DOG/go-sqlmock v1.5.0/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
 github.com/DIMO-Network/cloudevent v0.1.0 h1:ze0ngJQBXjSSyBnEAUO+YvClvkqM68kNko/czY3GfLo=
 github.com/DIMO-Network/cloudevent v0.1.0/go.mod h1:RS9Byb0ycb5b7OFe9y+xpF0nkR4pYYS6Om/ccs3N5Z4=
-github.com/DIMO-Network/eventgen v0.2.0 h1:f5Aym56Rifuct2uHFwCGfye9VFSkqpqBuVq/lF9Dmno=
-github.com/DIMO-Network/eventgen v0.2.0/go.mod h1:yRoCDbRRU8n/eR/C339O1UXpBeN+7lF27et0LHwoU5s=
+github.com/DIMO-Network/eventgen v0.2.1 h1:yvd7nLTqKAls2TJjFwxIJlVK4E8juWGcLdZaCKoX7rY=
+github.com/DIMO-Network/eventgen v0.2.1/go.mod h1:yRoCDbRRU8n/eR/C339O1UXpBeN+7lF27et0LHwoU5s=
 github.com/DIMO-Network/mnemonic v0.0.0-20240611180925-eecaa65be2b9 h1:gzD4pkrKRhjP+KeGjnMLG+D1Py6bVNt3s6BSgB4D/c4=
 github.com/DIMO-Network/mnemonic v0.0.0-20240611180925-eecaa65be2b9/go.mod h1:CTxZYuVPhvEJgDL665oqZClsxB8TtVHQ7qNwpJfqTxk=
 github.com/DIMO-Network/shared v1.0.3 h1:kQbIuvuUEDgUe5nov/Zuyj9OWT6WFLvNYrZxG+e5BT0=

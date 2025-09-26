@@ -9,7 +9,7 @@ import (
 
 var (
 	TransferEventID         = common.HexToHash("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef")
-	ConnectionMintedEventID = common.HexToHash("0xb751dcd57d7731ef1af0a7e83d4062bf65bff8bfe40b39d8d5039fcae7f8db92")
+	ConnectionMintedEventID = common.HexToHash("0x16e7256a94e935dc419efa2b47bdb62ec5023b40947b172169eeb37b9b132686")
 )
 
 type Transfer struct {
@@ -23,6 +23,6 @@ type ConnectionMinted struct {
 	ConnectionId         *big.Int       `json:"connectionId"`
 	ConnectionAddr       common.Address `json:"connectionAddr"`
 	ConnectionName       string         `json:"connectionName"`
+	ConnectionType       [32]byte       `json:"connectionType"`
 	ConnectionCostInDimo *big.Int       `json:"connectionCostInDimo"`
-	Points               *big.Int       `json:"points"`
 }
