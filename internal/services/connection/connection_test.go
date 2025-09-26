@@ -33,7 +33,7 @@ func TestHandleMintAndTransfer(t *testing.T) {
 	// Case taken from
 	// https://amoy.polygonscan.com/tx/0x344a769602df87e9c46f6f7f8752f6bb13ce6f9ae53e7598513af6c280c007a7
 	err := h.Handle(t.Context(), &models.ContractEventData{
-		EventSignature: common.HexToHash("0xb751dcd57d7731ef1af0a7e83d4062bf65bff8bfe40b39d8d5039fcae7f8db92"),
+		EventSignature: common.HexToHash("0x16e7256a94e935dc419efa2b47bdb62ec5023b40947b172169eeb37b9b132686"),
 		Block: models.Block{
 			Time: time.Date(2025, 5, 4, 9, 0, 0, 0, time.UTC),
 		},
@@ -43,8 +43,8 @@ func TestHandleMintAndTransfer(t *testing.T) {
 	"connectionId": 37747592896913129884346430642309039154630403646040022073469559591247189901312,
 	"connectionAddr": "0xb83DE952D389f9A6806819434450324197712FDA",
 	"connectionName": "Staex",
-	"connectionCostInDimo": 90692000000000000000000,
-	"points": 2000
+	"connectionType": [53,60,0,6,41,31,227,82,7,42,41,217,143,3,3,229,190,100,74,224,37,28,180,32,125,55,108,225,133,19,113,107],
+	"connectionCostInDimo": 2000
 }`),
 	})
 
