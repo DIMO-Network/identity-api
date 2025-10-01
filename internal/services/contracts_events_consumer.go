@@ -60,6 +60,7 @@ const (
 	AftermarketDeviceAttributeSet EventName = "AftermarketDeviceAttributeSet"
 	AftermarketDeviceClaimed      EventName = "AftermarketDeviceClaimed"
 	AftermarketDevicePaired       EventName = "AftermarketDevicePaired"
+	AftermarketDeviceUnclaimed    EventName = "AftermarketDeviceUnclaimed"
 	AftermarketDeviceUnpaired     EventName = "AftermarketDeviceUnpaired"
 	AftermarketDeviceAddressReset EventName = "AftermarketDeviceAddressReset"
 
@@ -174,6 +175,8 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *cloudevent
 			return c.handleAftermarketDeviceAttributeSetEvent(ctx, &data)
 		case AftermarketDeviceClaimed:
 			return c.handleAftermarketDeviceClaimedEvent(ctx, &data)
+		case AftermarketDeviceUnclaimed:
+			return c.handleAftermarketDeviceUnclaimedEvent(ctx, &data)
 		case AftermarketDevicePaired:
 			return c.handleAftermarketDevicePairedEvent(ctx, &data)
 		case AftermarketDeviceUnpaired:
@@ -674,6 +677,21 @@ func (c *ContractsEventsConsumer) handleAftermarketDeviceClaimedEvent(ctx contex
 	ad := models.AftermarketDevice{
 		ID:        int(args.AftermarketDeviceNode.Int64()),
 		ClaimedAt: null.TimeFrom(e.Block.Time),
+	}
+
+	_, err := ad.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.AftermarketDeviceColumns.ClaimedAt))
+	return err
+}
+
+func (c *ContractsEventsConsumer) handleAftermarketDeviceUnclaimedEvent(ctx context.Context, e *cmodels.ContractEventData) error {
+	var args AftermarketDeviceUnclaimedData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	ad := models.AftermarketDevice{
+		ID:        int(args.AftermarketDeviceNode.Int64()),
+		ClaimedAt: null.Time{},
 	}
 
 	_, err := ad.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.AftermarketDeviceColumns.ClaimedAt))

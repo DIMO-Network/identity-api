@@ -209,6 +209,57 @@ func TestHandleAftermarketDevicePairedEvent(t *testing.T) {
 	assert.Equal(t, aftermarketDevicePairData.VehicleNode.Int64(), int64(ad.R.Vehicle.ID))
 }
 
+func TestHandleAftermarketDeviceUnClaimedEvent(t *testing.T) {
+	ctx := context.Background()
+	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
+	contractEventData.EventName = "AftermarketDeviceUnclaimed"
+
+	var aftermarketDeviceUnclaimData = AftermarketDeviceUnclaimedData{
+		Owner:                 common.HexToAddress("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		AftermarketDeviceNode: big.NewInt(1),
+	}
+
+	settings := config.Settings{
+		DIMORegistryAddr:    contractEventData.Contract.String(),
+		DIMORegistryChainID: contractEventData.ChainID,
+	}
+
+	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
+	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
+	e := prepareEvent(t, contractEventData, aftermarketDeviceUnclaimData)
+
+	mfr := models.Manufacturer{
+		ID:    137,
+		Name:  "AutoPi",
+		Owner: common.FromHex("0xaba3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Slug:  "autopi",
+	}
+
+	err := mfr.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
+
+	d := models.AftermarketDevice{
+		ID:             1,
+		ManufacturerID: 137,
+		Address:        common.FromHex("0xabb3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Owner:          common.FromHex("0x12b3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		Beneficiary:    common.FromHex("0x12b3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+	}
+	err = d.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err)
+
+	err = contractEventConsumer.Process(ctx, &e)
+	assert.NoError(t, err)
+
+	ad, err := models.AftermarketDevices(
+		models.AftermarketDeviceWhere.ID.EQ(int(aftermarketDeviceUnclaimData.AftermarketDeviceNode.Int64())),
+	).One(ctx, pdb.DBS().Reader)
+	assert.NoError(t, err)
+
+	assert.Equal(t, aftermarketDeviceUnclaimData.AftermarketDeviceNode.Int64(), int64(ad.ID))
+	assert.False(t, ad.ClaimedAt.Valid, "ClaimedAt should be null after unclaiming")
+}
+
 func TestHandleAftermarketDeviceUnPairedEvent(t *testing.T) {
 	ctx := context.Background()
 	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
