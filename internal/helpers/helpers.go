@@ -7,6 +7,8 @@ import (
 	"math/big"
 
 	"strconv"
+
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 func CursorToID(cur string) (int, error) {
@@ -57,4 +59,10 @@ func ConvertTokenIDToID(tokenID *big.Int) ([]byte, error) {
 	copy(tb32[32-len(tbs):], tbs)
 
 	return tb32, nil
+}
+
+// Equivalent of uint256(keccak256(bytes(input)))
+func StringToUint256Hash(input string) *big.Int {
+	hash := crypto.Keccak256([]byte(input))
+	return new(big.Int).SetBytes(hash)
 }
