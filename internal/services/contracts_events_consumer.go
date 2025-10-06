@@ -50,6 +50,9 @@ const (
 	// SACD.
 	PermissionsSetEvent EventName = "PermissionsSet"
 
+	// Template.
+	TemplateCreatedEvent EventName = "TemplateCreated"
+
 	// Manufacturers.
 	ManufacturerNodeMinted       EventName = "ManufacturerNodeMinted"
 	DeviceDefinitionTableCreated EventName = "DeviceDefinitionTableCreated"
@@ -138,6 +141,7 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *cloudevent
 	connAddr := common.HexToAddress(c.settings.ConnectionAddr)
 	manufacturerAddr := common.HexToAddress(c.settings.ManufacturerNFTAddr)
 	storageNodeAddr := common.HexToAddress(c.settings.StorageNodeAddr)
+	templateAddr := common.HexToAddress(c.settings.TemplateAddr)
 
 	var data cmodels.ContractEventData
 	if err := json.Unmarshal(event.Data, &data); err != nil {
@@ -202,6 +206,11 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *cloudevent
 		switch eventName {
 		case PermissionsSetEvent:
 			return c.handlePermissionsSetEvent(ctx, &data)
+		}
+	case templateAddr:
+		switch eventName {
+		case TemplateCreatedEvent:
+			return c.handleTemplateCreatedEvent(ctx, &data)
 		}
 	case aftermarketDeviceAddr:
 		switch eventName {
@@ -631,6 +640,38 @@ func (c *ContractsEventsConsumer) handlePermissionsSetEvent(ctx context.Context,
 		Msg("Vehicle SACD processed.")
 
 	return nil
+}
+
+func (c *ContractsEventsConsumer) handleTemplateCreatedEvent(ctx context.Context, e *cmodels.ContractEventData) error {
+	logger := c.log.With().Str("EventName", TemplateCreatedEvent.String()).Logger()
+
+	var args TemplateCreatedData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return fmt.Errorf("error unmarshaling TemplateCreated inputs: %w", err)
+	}
+
+	// This is the result of uint256(keccak256(bytes(cid))).
+	templateID, err := helpers.ConvertTokenIDToID(args.TemplateId)
+	if err != nil {
+		return err
+	}
+
+	template := models.Template{
+		ID:          templateID,
+		Creator:     args.Creator.Bytes(),
+		Asset:       args.Asset.Bytes(),
+		Permissions: args.Permissions.Text(2),
+		Cid:         args.Cid,
+		CreatedAt:   e.Block.Time,
+	}
+
+	logger.Info().
+		Int64("templateId", args.TemplateId.Int64()).
+		Str("creator", args.Creator.Hex()).
+		Str("asset", args.Asset.Hex()).
+		Msg("Template created successfully.")
+
+	return template.Insert(ctx, c.dbs.DBS().Writer, boil.Infer())
 }
 
 func (c *ContractsEventsConsumer) handlePrivilegeSetEvent(ctx context.Context, e *cmodels.ContractEventData) error {

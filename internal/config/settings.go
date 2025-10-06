@@ -28,4 +28,5 @@ type Settings struct {
 	StakingAddr           string      `yaml:"STAKING_ADDR"`
 	ConnectionAddr        string      `yaml:"CONNECTION_ADDR"`
 	StorageNodeAddr       string      `yaml:"STORAGE_NODE_ADDR"`
+	TemplateAddr          string      `yaml:"TEMPLATE_ADDR"`
 }
