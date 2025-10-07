@@ -166,6 +166,16 @@ type PermissionsSetData struct {
 	Source      string
 }
 
+type PermissionsSetWithTemplateData struct {
+	Asset       common.Address
+	TokenId     *big.Int
+	Permissions *big.Int
+	Grantee     common.Address
+	Expiration  *big.Int
+	TemplateId  *big.Int
+	Source      string
+}
+
 type TemplateCreatedData struct {
 	TemplateId  *big.Int
 	Creator     common.Address

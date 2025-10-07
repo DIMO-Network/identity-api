@@ -29,6 +29,9 @@ const (
 	aftermarketDeviceAddr = "0xcf9af64522162da85164a714c23a7705e6e466b3"
 	syntheticDeviceAddr   = "0x85226A67FF1b3Ec6cb033162f7df5038a6C3bAB2"
 	rewardContractAddr    = "0x375885164266d48C48abbbb439Be98864Ae62bBE"
+	vehicleIdAddr         = "0xc6e7DF5E7b4f2A278906862b61205850344D4e7d"
+	dimoRegistryAddr      = "0x4de1bcf2b7e851e31216fc07989caa902a604784"
+	sacdAddr              = "0x4E5F9320b1c7cB3DE5ebDD760aD67375B66cF8a3"
 	templateAddr          = "0xf369532e2144034E34Be08DBaA3A589C87dBbE3A"
 )
 
@@ -40,14 +43,14 @@ var (
 			ID:          "2SiTVhP3WBhfQQnnnpeBdMR7BSY",
 			Source:      "chain/80001",
 			SpecVersion: "1.0",
-			Subject:     "0x4de1bcf2b7e851e31216fc07989caa902a604784",
+			Subject:     dimoRegistryAddr,
 			Time:        mintedAt,
 			Type:        "zone.dimo.contract.event",
 		},
 	}
 	contractEventData = cmodels.ContractEventData{
 		ChainID:         80001,
-		Contract:        common.HexToAddress("0x4de1bcf2b7e851e31216fc07989caa902a604784"),
+		Contract:        common.HexToAddress(dimoRegistryAddr),
 		TransactionHash: common.HexToHash("0x811a85e24d0129a2018c9a6668652db63d73bc6d1c76f21b07da2162c6bfea7d"),
 		EventSignature:  common.HexToHash("0xd624fd4c3311e1803d230d97ce71fd60c4f658c30a31fbe08edcb211fd90f63f"),
 		Block: cmodels.Block{
@@ -1755,13 +1758,13 @@ func TestHandleTemplateCreatedEvent(t *testing.T) {
 	var templateCreatedData = TemplateCreatedData{
 		TemplateId:  templateId,
 		Creator:     *wallet,
-		Asset:       common.HexToAddress("0xc6e7DF5E7b4f2A278906862b61205850344D4e7d"),
+		Asset:       common.HexToAddress(vehicleIdAddr),
 		Permissions: big.NewInt(3888), // 11 11 00 11 00 00
 		Cid:         "QmYA2fn8cMbVWo4v95RwcwJVyQsNtnEwHerfWR8UNtEwoE",
 	}
 
 	settings := config.Settings{
-		DIMORegistryAddr:    "0x4de1bcf2b7e851e31216fc07989caa902a604784", // Different from template address
+		DIMORegistryAddr:    dimoRegistryAddr,
 		DIMORegistryChainID: contractEventData.ChainID,
 		TemplateAddr:        templateAddr,
 	}
@@ -1787,4 +1790,167 @@ func TestHandleTemplateCreatedEvent(t *testing.T) {
 	assert.Equal(t, templateCreatedData.Permissions.Text(2), template.Permissions)
 	assert.Equal(t, templateCreatedData.Cid, template.Cid)
 	assert.Equal(t, contractEventData.Block.Time.UTC(), template.CreatedAt)
+}
+
+func TestHandlePermissionsSetEventLegacy(t *testing.T) {
+	ctx := context.Background()
+	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
+
+	contractEventData.EventName = "PermissionsSet"
+	contractEventData.Contract = common.HexToAddress(sacdAddr)
+
+	var permissionsSetData = PermissionsSetData{
+		Asset:       common.HexToAddress(vehicleIdAddr),
+		TokenId:     big.NewInt(123),
+		Permissions: big.NewInt(3888), // 11 11 00 11 00 00
+		Grantee:     common.HexToAddress("0x1234567890123456789012345678901234567890"),
+		Expiration:  big.NewInt(time.Now().Add(time.Hour * 24 * 30).Unix()),
+		Source:      "test-source",
+	}
+
+	settings := config.Settings{
+		VehicleNFTAddr:      vehicleIdAddr,
+		SACDAddress:         sacdAddr,
+		DIMORegistryAddr:    dimoRegistryAddr,
+		DIMORegistryChainID: contractEventData.ChainID,
+	}
+
+	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
+
+	vehicle := models.Vehicle{
+		ID:             int(permissionsSetData.TokenId.Int64()),
+		OwnerAddress:   permissionsSetData.Grantee.Bytes(),
+		MintedAt:       time.Now(),
+		ManufacturerID: 131,
+	}
+
+	manufacturer := models.Manufacturer{
+		ID:       131,
+		Name:     "Toyota",
+		Owner:    permissionsSetData.Grantee.Bytes(),
+		MintedAt: time.Now(),
+		Slug:     "toyota",
+	}
+	err := manufacturer.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
+
+	err = vehicle.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
+
+	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
+	e := prepareEvent(t, contractEventData, permissionsSetData)
+
+	err = contractEventConsumer.Process(ctx, &e)
+	assert.NoError(t, err)
+
+	// Verify the SACD was created correctly (without template_id)
+	sacd, err := models.VehicleSacds(
+		models.VehicleSacdWhere.VehicleID.EQ(int(permissionsSetData.TokenId.Int64())),
+		models.VehicleSacdWhere.Grantee.EQ(permissionsSetData.Grantee.Bytes()),
+	).One(ctx, pdb.DBS().Reader)
+	assert.NoError(t, err)
+
+	assert.Equal(t, int(permissionsSetData.TokenId.Int64()), sacd.VehicleID)
+	assert.Equal(t, permissionsSetData.Grantee.Bytes(), sacd.Grantee)
+	assert.Equal(t, permissionsSetData.Permissions.Text(2), sacd.Permissions)
+	assert.Equal(t, permissionsSetData.Source, sacd.Source)
+	assert.Equal(t, contractEventData.Block.Time.UTC().Truncate(time.Microsecond), sacd.CreatedAt.UTC().Truncate(time.Microsecond))
+	assert.Equal(t, time.Unix(permissionsSetData.Expiration.Int64(), 0).UTC().Truncate(time.Microsecond), sacd.ExpiresAt.UTC().Truncate(time.Microsecond))
+
+	// Template ID should be null for legacy events
+	assert.False(t, sacd.TemplateID.Valid)
+}
+
+func TestHandlePermissionsSetEventWithTemplate(t *testing.T) {
+	ctx := context.Background()
+	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
+
+	contractEventData.EventName = "PermissionsSet"
+	contractEventData.Contract = common.HexToAddress(sacdAddr)
+
+	templateId := big.NewInt(456)
+	var permissionsSetWithTemplateData = PermissionsSetWithTemplateData{
+		Asset:       common.HexToAddress(vehicleIdAddr),
+		TokenId:     big.NewInt(124),
+		Permissions: big.NewInt(3888), // 11 11 00 11 00 00
+		Grantee:     common.HexToAddress("0x1234567890123456789012345678901234567891"),
+		Expiration:  big.NewInt(time.Now().Add(time.Hour * 24 * 30).Unix()),
+		TemplateId:  templateId,
+		Source:      "test-source-with-template",
+	}
+
+	settings := config.Settings{
+		VehicleNFTAddr:      vehicleIdAddr,
+		SACDAddress:         sacdAddr,
+		DIMORegistryAddr:    dimoRegistryAddr,
+		DIMORegistryChainID: contractEventData.ChainID,
+	}
+
+	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
+
+	manufacturer := models.Manufacturer{
+		ID:       131,
+		Name:     "Toyota",
+		Owner:    permissionsSetWithTemplateData.Grantee.Bytes(),
+		MintedAt: time.Now(),
+		Slug:     "toyota",
+	}
+	err := manufacturer.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
+
+	vehicle := models.Vehicle{
+		ID:             int(permissionsSetWithTemplateData.TokenId.Int64()),
+		OwnerAddress:   permissionsSetWithTemplateData.Grantee.Bytes(),
+		MintedAt:       time.Now(),
+		ManufacturerID: 131,
+	}
+	err = vehicle.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
+
+	templateIDBytes, err := helpers.ConvertTokenIDToID(templateId)
+	require.NoError(t, err)
+
+	template := models.Template{
+		ID:          templateIDBytes,
+		Creator:     permissionsSetWithTemplateData.Grantee.Bytes(),
+		Asset:       permissionsSetWithTemplateData.Asset.Bytes(),
+		Permissions: permissionsSetWithTemplateData.Permissions.Text(2),
+		Cid:         "QmYA2fn8cMbVWo4v95RwcwJVyQsNtnEwHerfWR8UNtEwoE",
+		CreatedAt:   time.Now(),
+	}
+	err = template.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
+
+	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
+	e := prepareEvent(t, contractEventData, permissionsSetWithTemplateData)
+
+	err = contractEventConsumer.Process(ctx, &e)
+	assert.NoError(t, err)
+
+	// Verify the SACD was created correctly (with template_id)
+	sacd, err := models.VehicleSacds(
+		models.VehicleSacdWhere.VehicleID.EQ(int(permissionsSetWithTemplateData.TokenId.Int64())),
+		models.VehicleSacdWhere.Grantee.EQ(permissionsSetWithTemplateData.Grantee.Bytes()),
+	).One(ctx, pdb.DBS().Reader)
+	assert.NoError(t, err)
+
+	assert.Equal(t, int(permissionsSetWithTemplateData.TokenId.Int64()), sacd.VehicleID)
+	assert.Equal(t, permissionsSetWithTemplateData.Grantee.Bytes(), sacd.Grantee)
+	assert.Equal(t, permissionsSetWithTemplateData.Permissions.Text(2), sacd.Permissions)
+	assert.Equal(t, permissionsSetWithTemplateData.Source, sacd.Source)
+	assert.Equal(t, contractEventData.Block.Time.UTC().Truncate(time.Microsecond), sacd.CreatedAt.UTC().Truncate(time.Microsecond))
+	assert.Equal(t, time.Unix(permissionsSetWithTemplateData.Expiration.Int64(), 0).UTC().Truncate(time.Microsecond), sacd.ExpiresAt.UTC().Truncate(time.Microsecond))
+
+	// Template ID should be set for new events
+	assert.True(t, sacd.TemplateID.Valid)
+	assert.Equal(t, templateIDBytes, sacd.TemplateID.Bytes)
+
+	// Verify we can query the related template directly
+	relatedTemplate, err := models.Templates(
+		models.TemplateWhere.ID.EQ(sacd.TemplateID.Bytes),
+	).One(ctx, pdb.DBS().Reader)
+	assert.NoError(t, err)
+	assert.NotNil(t, relatedTemplate)
+	assert.Equal(t, template.ID, relatedTemplate.ID)
+	assert.Equal(t, template.Cid, relatedTemplate.Cid)
 }

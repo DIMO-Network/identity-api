@@ -324,6 +324,7 @@ type ComplexityRoot struct {
 		Grantee     func(childComplexity int) int
 		Permissions func(childComplexity int) int
 		Source      func(childComplexity int) int
+		Template    func(childComplexity int) int
 	}
 
 	SacdConnection struct {
@@ -1854,6 +1855,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Sacd.Source(childComplexity), true
+
+	case "Sacd.template":
+		if e.complexity.Sacd.Template == nil {
+			break
+		}
+
+		return e.complexity.Sacd.Template(childComplexity), true
 
 	case "SacdConnection.edges":
 		if e.complexity.SacdConnection.Edges == nil {
@@ -11963,6 +11971,61 @@ func (ec *executionContext) fieldContext_Sacd_expiresAt(_ context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _Sacd_template(ctx context.Context, field graphql.CollectedField, obj *model.Sacd) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Sacd_template(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Template, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Template)
+	fc.Result = res
+	return ec.marshalOTemplate2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐTemplate(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Sacd_template(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Sacd",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "tokenId":
+				return ec.fieldContext_Template_tokenId(ctx, field)
+			case "creator":
+				return ec.fieldContext_Template_creator(ctx, field)
+			case "asset":
+				return ec.fieldContext_Template_asset(ctx, field)
+			case "permissions":
+				return ec.fieldContext_Template_permissions(ctx, field)
+			case "cid":
+				return ec.fieldContext_Template_cid(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Template_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Template", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _SacdConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.SacdConnection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_SacdConnection_totalCount(ctx, field)
 	if err != nil {
@@ -12106,6 +12169,8 @@ func (ec *executionContext) fieldContext_SacdConnection_nodes(_ context.Context,
 				return ec.fieldContext_Sacd_createdAt(ctx, field)
 			case "expiresAt":
 				return ec.fieldContext_Sacd_expiresAt(ctx, field)
+			case "template":
+				return ec.fieldContext_Sacd_template(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Sacd", field.Name)
 		},
@@ -12216,6 +12281,8 @@ func (ec *executionContext) fieldContext_SacdEdge_node(_ context.Context, field 
 				return ec.fieldContext_Sacd_createdAt(ctx, field)
 			case "expiresAt":
 				return ec.fieldContext_Sacd_expiresAt(ctx, field)
+			case "template":
+				return ec.fieldContext_Sacd_template(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Sacd", field.Name)
 		},
@@ -21906,6 +21973,8 @@ func (ec *executionContext) _Sacd(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "template":
+			out.Values[i] = ec._Sacd_template(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -26469,6 +26538,13 @@ func (ec *executionContext) unmarshalOSyntheticDevicesFilter2ᚖgithubᚗcomᚋD
 	}
 	res, err := ec.unmarshalInputSyntheticDevicesFilter(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOTemplate2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐTemplate(ctx context.Context, sel ast.SelectionSet, v *model.Template) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Template(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOTime2ᚖtimeᚐTime(ctx context.Context, v any) (*time.Time, error) {

@@ -104,4 +104,3 @@ func (h *Handler) HandleEvent(ctx context.Context, event *models.ContractEventDa
 
 	return nil
 }
-
