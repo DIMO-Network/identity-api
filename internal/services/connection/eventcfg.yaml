@@ -1,4 +1,4 @@
 abi: abi.json
 events:
   - Transfer(address,address,uint256)
-  - ConnectionMinted(address,uint256,address,string,uint256,uint256)
+  - ConnectionMinted(address,uint256,address,string,bytes32,uint256)

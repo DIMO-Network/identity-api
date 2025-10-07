@@ -28,14 +28,14 @@
             },
             {
                 "indexed": false,
-                "internalType": "uint256",
-                "name": "connectionCostInDimo",
-                "type": "uint256"
+                "internalType": "bytes32",
+                "name": "connectionType",
+                "type": "bytes32"
             },
             {
                 "indexed": false,
                 "internalType": "uint256",
-                "name": "points",
+                "name": "connectionCostInDimo",
                 "type": "uint256"
             }
         ],
