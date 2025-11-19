@@ -15,6 +15,17 @@ type Node interface {
 	GetID() string
 }
 
+type Account struct {
+	// The account's Ethereum address.
+	Address common.Address `json:"address"`
+	// Lists active account SACDs granted by this account.
+	Sacds *SacdConnection `json:"sacds"`
+}
+
+type AccountBy struct {
+	Address *common.Address `json:"address,omitempty"`
+}
+
 type AftermarketDevice struct {
 	// An opaque global identifier for this aftermarket device.
 	ID string `json:"id"`

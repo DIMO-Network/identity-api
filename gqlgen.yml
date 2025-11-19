@@ -140,6 +140,10 @@ models:
         type: "[]byte" # Can't use [32]byte here, or gqlgen will barf. If this is an old mint, attached
                        # to an "integration node", then we will try to infer a corresponding connection
                        # from that.
+  Account:
+    fields:
+      sacds:
+        resolver: true
   Vehicle:
     fields:
       manufacturer:

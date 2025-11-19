@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
+	"github.com/DIMO-Network/identity-api/internal/repositories/accountsacd"
 	"github.com/DIMO-Network/identity-api/internal/repositories/aftermarket"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/internal/repositories/connection"
@@ -19,6 +20,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/repositories/vehicleprivilege"
 	"github.com/DIMO-Network/identity-api/internal/repositories/vehiclesacd"
 	"github.com/DIMO-Network/identity-api/internal/services"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 //go:generate go run github.com/99designs/gqlgen generate
@@ -112,6 +114,10 @@ type TemplateRepository interface {
 	GetTemplate(ctx context.Context, by model.TemplateBy) (*model.Template, error)
 }
 
+type AccountSacdRepository interface {
+	GetSacdsForAccount(ctx context.Context, address common.Address, first *int, after *string, last *int, before *string) (*model.SacdConnection, error)
+}
+
 // Resolver holds the repositories for the graph resolvers.
 type Resolver struct {
 	aftermarket      AftermarketDeviceRepository
@@ -127,6 +133,7 @@ type Resolver struct {
 	stake            StakeRepository
 	connection       ConnectionRepository
 	template         TemplateRepository
+	accountsacd      AccountSacdRepository
 }
 
 // NewResolver creates a new Resolver with allocated repositories.
@@ -147,5 +154,6 @@ func NewResolver(baseRepo *base.Repository) *Resolver {
 		stake:            stake.New(baseRepo),
 		connection:       connection.New(baseRepo),
 		template:         template.New(baseRepo),
+		accountsacd:      &accountsacd.Repository{Repository: baseRepo},
 	}
 }
