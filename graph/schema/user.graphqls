@@ -1,0 +1,24 @@
+# Vehicle related types
+
+extend type Query {
+  """
+  Retrieves information about an account. Right now, this is mainly to show
+  SACDs for user information.
+  """
+  account(by: AccountBy!): Account!
+}
+
+input AccountBy @oneOf {
+  address: Address
+}
+
+type Account {
+  """
+  The account's Ethereum address.
+  """
+  address: Address!
+  """
+  Lists active account SACDs granted by this account.
+  """
+  sacds(first: Int, after: String, last: Int, before: String): SacdConnection!
+}

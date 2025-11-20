@@ -610,6 +610,45 @@ func (c *ContractsEventsConsumer) handlePermissionsSetEvent(ctx context.Context,
 		return err
 	}
 
+	if args.TokenId.Cmp(big.NewInt(0)) == 0 {
+		// Account SACD.
+
+		as := models.AccountSacd{
+			Account:     args.Asset.Bytes(),
+			Grantee:     args.Grantee.Bytes(),
+			Permissions: args.Permissions.Text(2),
+			Source:      args.Source,
+			CreatedAt:   e.Block.Time,
+			ExpiresAt:   time.Unix(args.Expiration.Int64(), 0),
+		}
+
+		if templateID != nil {
+			as.TemplateID = null.BytesFrom(templateID)
+		}
+
+		err := as.Upsert(ctx, c.dbs.DBS().Writer, true,
+			[]string{models.AccountSacdColumns.Account, models.AccountSacdColumns.Grantee},
+			boil.Whitelist(
+				models.AccountSacdColumns.Permissions,
+				models.AccountSacdColumns.Source,
+				models.AccountSacdColumns.CreatedAt,
+				models.AccountSacdColumns.ExpiresAt,
+				models.AccountSacdColumns.TemplateID,
+			),
+			boil.Infer(),
+		)
+		if err != nil {
+			return fmt.Errorf("error upserting account SACD: %w", err)
+		}
+
+		logger.Info().
+			Str("account", args.Asset.Hex()).
+			Str("grantee", args.Grantee.Hex()).
+			Msg("Account SACD processed.")
+
+		return nil
+	}
+
 	if args.Asset != common.HexToAddress(c.settings.VehicleNFTAddr) {
 		logger.Warn().Msgf("SACD set for non-vehicle asset %s.", args.Asset.Hex())
 		return nil
