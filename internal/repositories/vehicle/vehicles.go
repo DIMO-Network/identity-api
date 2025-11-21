@@ -17,6 +17,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
+	"github.com/DIMO-Network/identity-api/internal/repositories/devicedefinition"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/mnemonic"
 	"github.com/aarondl/null/v8"
@@ -32,18 +33,20 @@ type Repository struct {
 	*base.Repository
 	chainID         uint64
 	contractAddress common.Address
+	definitionsRepo *devicedefinition.Repository
 }
 
 // New creates a new vehicle repository.
-func New(db *base.Repository) *Repository {
+func New(db *base.Repository, definitionsRepo *devicedefinition.Repository) *Repository {
 	return &Repository{
 		Repository:      db,
 		chainID:         uint64(db.Settings.DIMORegistryChainID),
 		contractAddress: common.HexToAddress(db.Settings.VehicleNFTAddr),
+		definitionsRepo: definitionsRepo,
 	}
 }
 
-func (r *Repository) createVehiclesResponse(totalCount int64, vehicles models.VehicleSlice, hasNext bool, hasPrevious bool) (*gmodel.VehicleConnection, error) {
+func (r *Repository) createVehiclesResponse(totalCount int64, vehicles models.VehicleSlice, hasNext bool, hasPrevious bool, definitions map[string]*gmodel.DeviceDefinition) (*gmodel.VehicleConnection, error) {
 	var errList gqlerror.List
 	var endCur, startCur *string
 	if len(vehicles) != 0 {
@@ -78,7 +81,7 @@ func (r *Repository) createVehiclesResponse(totalCount int64, vehicles models.Ve
 			errList = append(errList, gqlerror.Wrap(wErr))
 			continue
 		}
-		gv, err := r.ToAPI(dv, imageURI, dataURI)
+		gv, err := r.ToAPI(dv, imageURI, dataURI, definitions[dv.DeviceDefinitionID.String])
 		if err != nil {
 			wErr := fmt.Errorf("error converting vehicle to API: %w", err)
 			errList = append(errList, gqlerror.Wrap(wErr))
@@ -179,6 +182,26 @@ func (r *Repository) GetVehicles(ctx context.Context, first *int, after *string,
 		return nil, err
 	}
 
+	// populate a map of device definitions by id for fast lookup later
+	definitions := make(map[string]*gmodel.DeviceDefinition)
+	for _, veh := range all {
+		// Only add to map if DeviceDefinitionID is not null/empty
+		if veh.DeviceDefinitionID.Valid && veh.DeviceDefinitionID.String != "" {
+			definitions[veh.DeviceDefinitionID.String] = nil // Will be populated if found
+		}
+	}
+	defIds := make([]string, 0, len(definitions))
+	for id := range definitions {
+		defIds = append(defIds, id)
+	}
+	dds, err := r.definitionsRepo.GetDeviceDefinitionsByIDs(ctx, defIds)
+	if err != nil {
+		return nil, err
+	}
+	for _, dd := range dds {
+		definitions[dd.DeviceDefinitionID] = dd
+	}
+
 	// We assume that cursors come from real elements.
 	hasNext := before != nil
 	hasPrevious := after != nil
@@ -195,7 +218,7 @@ func (r *Repository) GetVehicles(ctx context.Context, first *int, after *string,
 		slices.Reverse(all)
 	}
 
-	return r.createVehiclesResponse(totalCount, all, hasNext, hasPrevious)
+	return r.createVehiclesResponse(totalCount, all, hasNext, hasPrevious, definitions)
 }
 
 func (r *Repository) GetVehicle(ctx context.Context, tokenID *int, tokenDID *string) (*gmodel.Vehicle, error) {
@@ -244,7 +267,7 @@ func (r *Repository) GetVehicle(ctx context.Context, tokenID *int, tokenDID *str
 		return nil, fmt.Errorf("error getting vehicle data uri: %w", err)
 	}
 
-	return r.ToAPI(v, imageURI, dataURI)
+	return r.ToAPI(v, imageURI, dataURI, nil)
 }
 
 // queryModsFromFilters returns a slice of query mods from the given filters.
@@ -309,7 +332,7 @@ func (r *Repository) queryModsFromFilters(filter *gmodel.VehiclesFilter) ([]qm.Q
 }
 
 // ToAPI converts a vehicle to a corresponding graphql model.
-func (r *Repository) ToAPI(v *models.Vehicle, imageURI string, dataURI string) (*gmodel.Vehicle, error) {
+func (r *Repository) ToAPI(v *models.Vehicle, imageURI string, dataURI string, definition *gmodel.DeviceDefinition) (*gmodel.Vehicle, error) {
 	nameList := mnemonic.FromInt32WithObfuscation(int32(v.ID))
 	name := strings.Join(nameList, " ")
 
@@ -341,6 +364,13 @@ func (r *Repository) ToAPI(v *models.Vehicle, imageURI string, dataURI string) (
 		ImageURI:       imageURI,
 		Image:          imageURI,
 		DataURI:        dataURI,
+	}
+	if definition != nil {
+		if definition.Manufacturer != nil {
+			out.Definition.Make = &definition.Manufacturer.Name
+		}
+		out.Definition.Model = &definition.Model
+		out.Definition.Year = &definition.Year
 	}
 
 	if v.StorageNodeID.Valid {

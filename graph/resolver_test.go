@@ -114,7 +114,7 @@ func TestResolver(t *testing.T) {
 	logger := zerolog.Nop()
 	repo := base.NewRepository(pdb, settings, &logger)
 	resolver := NewResolver(repo)
-	c := client.New(loader.Middleware(pdb, NewDefaultServer(NewExecutableSchema(Config{Resolvers: resolver})), settings))
+	c := client.New(loader.Middleware(pdb, NewDefaultServer(NewExecutableSchema(Config{Resolvers: resolver})), settings, nil))
 
 	t.Run("ownedAftermarketDevices, return only one response", func(t *testing.T) {
 		var resp interface{}

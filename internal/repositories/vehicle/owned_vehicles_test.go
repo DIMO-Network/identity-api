@@ -11,6 +11,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
+	"github.com/DIMO-Network/identity-api/internal/repositories/devicedefinition"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/mnemonic"
 	"github.com/DIMO-Network/shared/pkg/db"
@@ -46,7 +47,11 @@ func (s *OwnedVehiclesRepoTestSuite) SetupSuite() {
 		BaseVehicleDataURI:  "https://dimoData/vehicles/",
 	}
 	logger := zerolog.Nop()
-	s.repo = New(base.NewRepository(s.pdb, s.settings, &logger))
+	baseRepo := base.NewRepository(s.pdb, s.settings, &logger)
+
+	// Create a mock device definition repository for the vehicle repository
+	mockDeviceDefRepo := &devicedefinition.Repository{}
+	s.repo = New(baseRepo, mockDeviceDefRepo)
 }
 
 // TearDownTest after each test truncate tables
@@ -365,7 +370,11 @@ func Test_GetOwnedVehicles_Filters(t *testing.T) {
 	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDir)
 
 	logger := zerolog.Nop()
-	repo := New(base.NewRepository(pdb, config.Settings{}, &logger))
+	baseRepo := base.NewRepository(pdb, config.Settings{}, &logger)
+
+	// Create a mock device definition repository for the vehicle repository
+	mockDeviceDefRepo := &devicedefinition.Repository{}
+	repo := New(baseRepo, mockDeviceDefRepo)
 	_, walletA, err := helpers.GenerateWallet()
 	assert.NoError(err)
 	_, walletB, err := helpers.GenerateWallet()
@@ -500,4 +509,54 @@ func Test_GetOwnedVehicles_Filters(t *testing.T) {
 			assert.Equal(*addr, res.Edges[idx].Node.Owner)
 		}
 	}
+}
+
+func (s *OwnedVehiclesRepoTestSuite) Test_Debug_Database_Fields() {
+	_, wallet, err := helpers.GenerateWallet()
+	s.NoError(err)
+
+	m := models.Manufacturer{
+		ID:       131,
+		Name:     "Toyota",
+		Owner:    common.FromHex("0x46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4"),
+		MintedAt: time.Now(),
+		Slug:     "toyota",
+	}
+
+	if err := m.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer()); err != nil {
+		s.NoError(err)
+	}
+
+	currTime := time.Now().UTC().Truncate(time.Second)
+	vehicle := models.Vehicle{
+		ID:             1,
+		ManufacturerID: 131,
+		OwnerAddress:   wallet.Bytes(),
+		Make:           null.StringFrom("Toyota"),
+		Model:          null.StringFrom("Camry"),
+		Year:           null.IntFrom(2022),
+		MintedAt:       currTime,
+	}
+
+	if err := vehicle.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer()); err != nil {
+		s.NoError(err)
+	}
+
+	// Query the vehicle back from the database
+	retrievedVehicle, err := models.FindVehicle(s.ctx, s.pdb.DBS().Reader, 1)
+	s.NoError(err)
+
+	// Debug: Print the actual values
+	s.T().Logf("Retrieved vehicle - Make: %v, Model: %v, Year: %v",
+		retrievedVehicle.Make.String, retrievedVehicle.Model.String, retrievedVehicle.Year.Int)
+
+	// Test the ToAPI method directly
+	imageURI := "https://mockUrl.com/v1/vehicle/1/image"
+	dataURI := "https://dimoData/vehicles/1"
+
+	result, err := s.repo.ToAPI(retrievedVehicle, imageURI, dataURI, nil)
+	s.NoError(err)
+
+	s.T().Logf("ToAPI result - Make: %v, Model: %v, Year: %v",
+		*result.Definition.Make, *result.Definition.Model, *result.Definition.Year)
 }

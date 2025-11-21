@@ -139,6 +139,7 @@ type Resolver struct {
 // NewResolver creates a new Resolver with allocated repositories.
 func NewResolver(baseRepo *base.Repository) *Resolver {
 	tablelandApiService := services.NewTablelandApiService(baseRepo.Log, &baseRepo.Settings)
+	deviceDefRepo := devicedefinition.New(baseRepo, tablelandApiService)
 
 	return &Resolver{
 		aftermarket:      aftermarket.New(baseRepo),
@@ -146,10 +147,10 @@ func NewResolver(baseRepo *base.Repository) *Resolver {
 		manufacturer:     manufacturer.New(baseRepo),
 		reward:           reward.Repository{Repository: baseRepo},
 		synthetic:        synthetic.New(baseRepo),
-		vehicle:          vehicle.New(baseRepo),
+		vehicle:          vehicle.New(baseRepo, deviceDefRepo),
 		vehicleprivilege: vehicleprivilege.Repository{Repository: baseRepo},
 		vehiclesacd:      vehiclesacd.Repository{Repository: baseRepo},
-		deviceDefinition: devicedefinition.New(baseRepo, tablelandApiService),
+		deviceDefinition: deviceDefRepo,
 		developerLicense: developerlicense.New(baseRepo),
 		stake:            stake.New(baseRepo),
 		connection:       connection.New(baseRepo),

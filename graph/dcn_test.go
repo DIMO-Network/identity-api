@@ -88,7 +88,7 @@ func TestDCNQuery(t *testing.T) {
 
 	require.NoError(err)
 	cfg := Config{Resolvers: resolver}
-	c := client.New(loader.Middleware(pdb, NewDefaultServer(NewExecutableSchema(cfg)), settings))
+	c := client.New(loader.Middleware(pdb, NewDefaultServer(NewExecutableSchema(cfg)), settings, nil))
 
 	type response struct {
 		DCN struct {
