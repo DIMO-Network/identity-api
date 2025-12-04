@@ -19,7 +19,7 @@ securityContext:
   allowPrivilegeEscalation: false
   capabilities:
     drop:
-      - all
+    - all
 cronJob:
   enabled: false
   schedule: 0 0 * * 0
@@ -64,12 +64,12 @@ service:
       targetPort: http
       protocol: TCP
 ports:
-  - name: mon-http
-    containerPort: 8888
-    protocol: TCP
-  - name: http
-    containerPort: 8080
-    protocol: TCP
+- name: mon-http
+  containerPort: 8888
+  protocol: TCP
+- name: http
+  containerPort: 8080
+  protocol: TCP
 ingress:
   enabled: true
   className: nginx
@@ -81,18 +81,18 @@ ingress:
     nginx.ingress.kubernetes.io/limit-rps: '25'
     external-dns.alpha.kubernetes.io/hostname: identity-api.dev.dimo.zone
   hosts:
-    - host: identity-api.dev.dimo.zone
-      paths:
-        - path: /
-          pathType: ImplementationSpecific
+  - host: identity-api.dev.dimo.zone
+    paths:
+    - path: /
+      pathType: ImplementationSpecific
   tls: []
 resources:
   limits:
     cpu: 250m
     memory: 384Mi
   requests:
-    cpu: 25m
-    memory: 64Mi
+    cpu: 5m
+    memory: 32Mi
 autoscaling:
   enabled: false
   minReplicas: 1
