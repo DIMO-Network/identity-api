@@ -695,6 +695,8 @@ type Vehicle struct {
 	Privileges *PrivilegesConnection `json:"privileges"`
 	// A Relay-style connection listing any active SACD permission grants on this vehicle.
 	Sacds *SacdConnection `json:"sacds"`
+	// The active SACD for this vehicle and the specified grantee, if there is one.
+	Sacd *Sacd `json:"sacd,omitempty"`
 	// The paired synthetic device, if any.
 	SyntheticDevice *SyntheticDevice `json:"syntheticDevice,omitempty"`
 	// The device definition for this vehicle; which includes make, model, and year among
