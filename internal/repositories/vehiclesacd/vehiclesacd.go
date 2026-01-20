@@ -2,6 +2,8 @@ package vehiclesacd
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"math/big"
 	"slices"
@@ -256,4 +258,20 @@ func (p *Repository) GetSacdsForVehicle(ctx context.Context, tokenID int, first 
 	}
 
 	return p.createSacdResponse(page, totalCount, hasNext, hasPrevious, pHelp)
+}
+
+func (p *Repository) GetSacdForVehicleAndGrantee(ctx context.Context, tokenID int, grantee common.Address) (*gmodel.Sacd, error) {
+	vs, err := models.VehicleSacds(
+		models.VehicleSacdWhere.VehicleID.EQ(tokenID),
+		models.VehicleSacdWhere.Grantee.EQ(grantee.Bytes()),
+		models.VehicleSacdWhere.ExpiresAt.GT(time.Now()),
+	).One(ctx, p.PDB.DBS().Reader)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to search for SACD: %w", err)
+	}
+
+	return sacdToAPIResponse(vs)
 }

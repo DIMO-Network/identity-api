@@ -462,6 +462,7 @@ type ComplexityRoot struct {
 		Name              func(childComplexity int) int
 		Owner             func(childComplexity int) int
 		Privileges        func(childComplexity int, first *int, after *string, last *int, before *string, filterBy *model.PrivilegeFilterBy) int
+		Sacd              func(childComplexity int, grantee common.Address) int
 		Sacds             func(childComplexity int, first *int, after *string, last *int, before *string) int
 		Stake             func(childComplexity int) int
 		StorageNode       func(childComplexity int) int
@@ -560,6 +561,7 @@ type VehicleResolver interface {
 	AftermarketDevice(ctx context.Context, obj *model.Vehicle) (*model.AftermarketDevice, error)
 	Privileges(ctx context.Context, obj *model.Vehicle, first *int, after *string, last *int, before *string, filterBy *model.PrivilegeFilterBy) (*model.PrivilegesConnection, error)
 	Sacds(ctx context.Context, obj *model.Vehicle, first *int, after *string, last *int, before *string) (*model.SacdConnection, error)
+	Sacd(ctx context.Context, obj *model.Vehicle, grantee common.Address) (*model.Sacd, error)
 	SyntheticDevice(ctx context.Context, obj *model.Vehicle) (*model.SyntheticDevice, error)
 
 	Dcn(ctx context.Context, obj *model.Vehicle) (*model.Dcn, error)
@@ -2270,6 +2272,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Vehicle.Privileges(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["filterBy"].(*model.PrivilegeFilterBy)), true
+	case "Vehicle.sacd":
+		if e.complexity.Vehicle.Sacd == nil {
+			break
+		}
+
+		args, err := ec.field_Vehicle_sacd_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Vehicle.Sacd(childComplexity, args["grantee"].(common.Address)), true
 	case "Vehicle.sacds":
 		if e.complexity.Vehicle.Sacds == nil {
 			break
@@ -3144,6 +3157,17 @@ func (ec *executionContext) field_Vehicle_privileges_args(ctx context.Context, r
 	return args, nil
 }
 
+func (ec *executionContext) field_Vehicle_sacd_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "grantee", ec.unmarshalNAddress2githubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress)
+	if err != nil {
+		return nil, err
+	}
+	args["grantee"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Vehicle_sacds_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -3712,6 +3736,8 @@ func (ec *executionContext) fieldContext_AftermarketDevice_vehicle(_ context.Con
 				return ec.fieldContext_Vehicle_privileges(ctx, field)
 			case "sacds":
 				return ec.fieldContext_Vehicle_sacds(ctx, field)
+			case "sacd":
+				return ec.fieldContext_Vehicle_sacd(ctx, field)
 			case "syntheticDevice":
 				return ec.fieldContext_Vehicle_syntheticDevice(ctx, field)
 			case "definition":
@@ -4902,6 +4928,8 @@ func (ec *executionContext) fieldContext_DCN_vehicle(_ context.Context, field gr
 				return ec.fieldContext_Vehicle_privileges(ctx, field)
 			case "sacds":
 				return ec.fieldContext_Vehicle_sacds(ctx, field)
+			case "sacd":
+				return ec.fieldContext_Vehicle_sacd(ctx, field)
 			case "syntheticDevice":
 				return ec.fieldContext_Vehicle_syntheticDevice(ctx, field)
 			case "definition":
@@ -6651,6 +6679,8 @@ func (ec *executionContext) fieldContext_Earning_vehicle(_ context.Context, fiel
 				return ec.fieldContext_Vehicle_privileges(ctx, field)
 			case "sacds":
 				return ec.fieldContext_Vehicle_sacds(ctx, field)
+			case "sacd":
+				return ec.fieldContext_Vehicle_sacd(ctx, field)
 			case "syntheticDevice":
 				return ec.fieldContext_Vehicle_syntheticDevice(ctx, field)
 			case "definition":
@@ -8982,6 +9012,8 @@ func (ec *executionContext) fieldContext_Query_vehicle(ctx context.Context, fiel
 				return ec.fieldContext_Vehicle_privileges(ctx, field)
 			case "sacds":
 				return ec.fieldContext_Vehicle_sacds(ctx, field)
+			case "sacd":
+				return ec.fieldContext_Vehicle_sacd(ctx, field)
 			case "syntheticDevice":
 				return ec.fieldContext_Vehicle_syntheticDevice(ctx, field)
 			case "definition":
@@ -10408,6 +10440,8 @@ func (ec *executionContext) fieldContext_Stake_vehicle(_ context.Context, field 
 				return ec.fieldContext_Vehicle_privileges(ctx, field)
 			case "sacds":
 				return ec.fieldContext_Vehicle_sacds(ctx, field)
+			case "sacd":
+				return ec.fieldContext_Vehicle_sacd(ctx, field)
 			case "syntheticDevice":
 				return ec.fieldContext_Vehicle_syntheticDevice(ctx, field)
 			case "definition":
@@ -11117,6 +11151,8 @@ func (ec *executionContext) fieldContext_SyntheticDevice_vehicle(_ context.Conte
 				return ec.fieldContext_Vehicle_privileges(ctx, field)
 			case "sacds":
 				return ec.fieldContext_Vehicle_sacds(ctx, field)
+			case "sacd":
+				return ec.fieldContext_Vehicle_sacd(ctx, field)
 			case "syntheticDevice":
 				return ec.fieldContext_Vehicle_syntheticDevice(ctx, field)
 			case "definition":
@@ -12252,6 +12288,61 @@ func (ec *executionContext) fieldContext_Vehicle_sacds(ctx context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _Vehicle_sacd(ctx context.Context, field graphql.CollectedField, obj *model.Vehicle) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Vehicle_sacd,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Vehicle().Sacd(ctx, obj, fc.Args["grantee"].(common.Address))
+		},
+		nil,
+		ec.marshalOSacd2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSacd,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Vehicle_sacd(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Vehicle",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "grantee":
+				return ec.fieldContext_Sacd_grantee(ctx, field)
+			case "permissions":
+				return ec.fieldContext_Sacd_permissions(ctx, field)
+			case "source":
+				return ec.fieldContext_Sacd_source(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Sacd_createdAt(ctx, field)
+			case "expiresAt":
+				return ec.fieldContext_Sacd_expiresAt(ctx, field)
+			case "template":
+				return ec.fieldContext_Sacd_template(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Sacd", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Vehicle_sacd_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Vehicle_syntheticDevice(ctx context.Context, field graphql.CollectedField, obj *model.Vehicle) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -12742,6 +12833,8 @@ func (ec *executionContext) fieldContext_VehicleConnection_nodes(_ context.Conte
 				return ec.fieldContext_Vehicle_privileges(ctx, field)
 			case "sacds":
 				return ec.fieldContext_Vehicle_sacds(ctx, field)
+			case "sacd":
+				return ec.fieldContext_Vehicle_sacd(ctx, field)
 			case "syntheticDevice":
 				return ec.fieldContext_Vehicle_syntheticDevice(ctx, field)
 			case "definition":
@@ -12930,6 +13023,8 @@ func (ec *executionContext) fieldContext_VehicleEdge_node(_ context.Context, fie
 				return ec.fieldContext_Vehicle_privileges(ctx, field)
 			case "sacds":
 				return ec.fieldContext_Vehicle_sacds(ctx, field)
+			case "sacd":
+				return ec.fieldContext_Vehicle_sacd(ctx, field)
 			case "syntheticDevice":
 				return ec.fieldContext_Vehicle_syntheticDevice(ctx, field)
 			case "definition":
@@ -19058,6 +19153,39 @@ func (ec *executionContext) _Vehicle(ctx context.Context, sel ast.SelectionSet, 
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "sacd":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Vehicle_sacd(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "syntheticDevice":
 			field := field
 
@@ -22362,6 +22490,13 @@ func (ec *executionContext) unmarshalOPrivilegeFilterBy2ᚖgithubᚗcomᚋDIMO�
 	}
 	res, err := ec.unmarshalInputPrivilegeFilterBy(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOSacd2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSacd(ctx context.Context, sel ast.SelectionSet, v *model.Sacd) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Sacd(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOStake2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐStake(ctx context.Context, sel ast.SelectionSet, v *model.Stake) graphql.Marshaler {

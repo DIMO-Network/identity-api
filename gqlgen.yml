@@ -154,6 +154,8 @@ models:
         resolver: true
       sacds:
         resolver: true
+      sacd:
+        resolver: true
       syntheticDevice:
         resolver: true
       dcn:

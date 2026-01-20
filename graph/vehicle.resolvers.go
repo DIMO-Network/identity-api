@@ -57,6 +57,11 @@ func (r *vehicleResolver) Sacds(ctx context.Context, obj *model.Vehicle, first *
 	return r.vehiclesacd.GetSacdsForVehicle(ctx, obj.TokenID, first, after, last, before)
 }
 
+// Sacd is the resolver for the sacd field.
+func (r *vehicleResolver) Sacd(ctx context.Context, obj *model.Vehicle, grantee common.Address) (*model.Sacd, error) {
+	return r.vehiclesacd.GetSacdForVehicleAndGrantee(ctx, obj.TokenID, grantee)
+}
+
 // SyntheticDevice is the resolver for the syntheticDevice field.
 func (r *vehicleResolver) SyntheticDevice(ctx context.Context, obj *model.Vehicle) (*model.SyntheticDevice, error) {
 	return loader.GetSyntheticDeviceByVehicleID(ctx, obj.TokenID)

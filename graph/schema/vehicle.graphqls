@@ -132,6 +132,10 @@ type Vehicle implements Node {
   """
   sacds(first: Int, after: String, last: Int, before: String): SacdConnection!
   """
+  The active SACD for this vehicle and the specified grantee, if there is one.
+  """
+  sacd(grantee: Address!): Sacd
+  """
   The paired synthetic device, if any.
   """
   syntheticDevice: SyntheticDevice
