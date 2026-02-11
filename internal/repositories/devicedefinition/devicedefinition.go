@@ -321,6 +321,76 @@ func (r *Repository) GetDeviceDefinitions(ctx context.Context, tableID, first *i
 	return res, nil
 }
 
+func (r *Repository) GetDeviceDefinitionsByIDs(ctx context.Context, ids []string) ([]*gmodel.DeviceDefinition, error) {
+	ids = filterDuplicates(ids)
+	slices.Sort(ids) // order alphabetically
+
+	// get the unique manufacturer slugs
+	mfrs := make(map[string]*models.Manufacturer)
+	ddsByMfr := make(map[string][]string)
+
+	for _, id := range ids {
+		mfrSlug, _, found := strings.Cut(id, "_")
+		if found { // this should always be true unless if we get eg. a legacy ksuid for the id
+			ddsByMfr[mfrSlug] = append(ddsByMfr[mfrSlug], id)
+			_, ok := mfrs[mfrSlug]
+			if !ok {
+				mfr, err := models.Manufacturers(models.ManufacturerWhere.Slug.EQ(mfrSlug)).One(ctx, r.PDB.DBS().Reader)
+				if err != nil {
+					return nil, err
+				}
+				mfrs[mfrSlug] = mfr
+			}
+		}
+	}
+	var errList gqlerror.List
+	var deviceDefinitions []*gmodel.DeviceDefinition
+	// get each manufacturer by mSlug to get the table id
+	for mSlug := range ddsByMfr {
+		// sqllite limit check
+		if len(ddsByMfr[mSlug]) >= 1000 {
+			return nil, fmt.Errorf("too many device definitions to query in one request")
+		}
+
+		// Check if manufacturer exists
+		mfr, exists := mfrs[mSlug]
+		if !exists || mfr == nil {
+			errList = append(errList, gqlerror.Wrap(fmt.Errorf("manufacturer not found for slug: %s", mSlug)))
+			continue
+		}
+
+		// do query
+		table := fmt.Sprintf("_%d_%d", r.Settings.DIMORegistryChainID, mfr.TableID.Int)
+		sqlBuild := goqu.Dialect("sqlite3").From(table)
+		sqlBuild = sqlBuild.Where(goqu.Ex{"id": ddsByMfr[mSlug]})
+		// do rest of query stuff like above
+		allSQL, _, err := sqlBuild.ToSQL()
+		if err != nil {
+			return nil, fmt.Errorf("error constructing selection SQL: %w", err)
+		}
+
+		var all []DeviceDefinitionTablelandModel
+		if err = r.TablelandApiService.Query(ctx, allSQL, &all); err != nil {
+			return nil, err
+		}
+		// copy all to device definitions
+		for _, dv := range all {
+			gv, err := r.ToAPI(&dv, mfr)
+			if err != nil {
+				errList = append(errList, gqlerror.Wrap(err))
+				continue
+			}
+			deviceDefinitions = append(deviceDefinitions, gv)
+		}
+	}
+
+	if len(errList) > 0 {
+		return deviceDefinitions, errList
+	}
+
+	return deviceDefinitions, nil
+}
+
 func idToCursor(id string) string {
 	return base64.StdEncoding.EncodeToString([]byte(id))
 }
@@ -332,4 +402,25 @@ func cursorToID(cursor string) (string, error) {
 	}
 
 	return string(b), nil
+}
+
+// filterDuplicates removes duplicate strings from a slice while preserving order
+func filterDuplicates(ids []string) []string {
+	if len(ids) <= 1 {
+		return ids
+	}
+
+	seen := make(map[string]struct{})
+
+	uniqueIDs := make([]string, 0, len(ids))
+
+	for _, id := range ids {
+		// If we haven't seen this ID before, add it to our result
+		if _, exists := seen[id]; !exists {
+			seen[id] = struct{}{} // Use empty struct{} as value to minimize memory usage
+			uniqueIDs = append(uniqueIDs, id)
+		}
+	}
+
+	return uniqueIDs
 }

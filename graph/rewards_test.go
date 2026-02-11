@@ -213,10 +213,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate() {
 	  }`
 
 	c := client.New(
-		loader.Middleware(
-			r.pdb,
-			NewDefaultServer(NewExecutableSchema(Config{Resolvers: r.resolver})), r.settings,
-		),
+		loader.Middleware(r.pdb, NewDefaultServer(NewExecutableSchema(Config{Resolvers: r.resolver})), r.settings, nil),
 	)
 
 	var resp interface{}
@@ -389,10 +386,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_FwdPaginate_Firs
 	  }`
 
 	c := client.New(
-		loader.Middleware(
-			r.pdb,
-			NewDefaultServer(NewExecutableSchema(Config{Resolvers: r.resolver})), r.settings,
-		),
+		loader.Middleware(r.pdb, NewDefaultServer(NewExecutableSchema(Config{Resolvers: r.resolver})), r.settings, nil),
 	)
 
 	var resp interface{}
@@ -594,10 +588,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 	  }`
 
 	c := client.New(
-		loader.Middleware(
-			r.pdb,
-			NewDefaultServer(NewExecutableSchema(Config{Resolvers: r.resolver})), r.settings,
-		),
+		loader.Middleware(r.pdb, NewDefaultServer(NewExecutableSchema(Config{Resolvers: r.resolver})), r.settings, nil),
 	)
 
 	var resp interface{}
@@ -799,10 +790,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetEarningsByVehicle_BackPaginate_Las
 	  }`
 
 	c := client.New(
-		loader.Middleware(
-			r.pdb,
-			NewDefaultServer(NewExecutableSchema(Config{Resolvers: r.resolver})), r.settings,
-		),
+		loader.Middleware(r.pdb, NewDefaultServer(NewExecutableSchema(Config{Resolvers: r.resolver})), r.settings, nil),
 	)
 
 	var resp interface{}
@@ -962,10 +950,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetAftermarketDeviceEarnings_FwdPagin
 	  }`
 
 	c := client.New(
-		loader.Middleware(
-			r.pdb,
-			NewDefaultServer(NewExecutableSchema(Config{Resolvers: r.resolver})), r.settings,
-		),
+		loader.Middleware(r.pdb, NewDefaultServer(NewExecutableSchema(Config{Resolvers: r.resolver})), r.settings, nil),
 	)
 
 	var resp interface{}
@@ -1113,10 +1098,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetUserRewards_FwdPaginate() {
 	  }`, beneficiary.Hex())
 
 	c := client.New(
-		loader.Middleware(
-			r.pdb,
-			NewDefaultServer(NewExecutableSchema(Config{Resolvers: r.resolver})), r.settings,
-		),
+		loader.Middleware(r.pdb, NewDefaultServer(NewExecutableSchema(Config{Resolvers: r.resolver})), r.settings, nil),
 	)
 
 	var resp interface{}
@@ -1286,10 +1268,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetUserRewards_BackPaginate_LastBefor
 	  }`, beneficiary.Hex())
 
 	c := client.New(
-		loader.Middleware(
-			r.pdb,
-			NewDefaultServer(NewExecutableSchema(Config{Resolvers: r.resolver})), r.settings,
-		),
+		loader.Middleware(r.pdb, NewDefaultServer(NewExecutableSchema(Config{Resolvers: r.resolver})), r.settings, nil),
 	)
 
 	var resp interface{}
@@ -1416,10 +1395,7 @@ func (r *RewardsQueryTestSuite) Test_Query_GetUserRewards_NullEarnings() {
 	  }`, beneficiary.Hex())
 
 	c := client.New(
-		loader.Middleware(
-			r.pdb,
-			NewDefaultServer(NewExecutableSchema(Config{Resolvers: r.resolver})), r.settings,
-		),
+		loader.Middleware(r.pdb, NewDefaultServer(NewExecutableSchema(Config{Resolvers: r.resolver})), r.settings, nil),
 	)
 
 	var resp any
