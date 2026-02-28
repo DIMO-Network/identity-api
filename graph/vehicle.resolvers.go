@@ -22,8 +22,17 @@ import (
 func (r *queryResolver) Vehicle(ctx context.Context, tokenID *int, tokenDid *string) (*model.Vehicle, error) {
 	v, err := r.vehicle.GetVehicle(ctx, tokenID, tokenDid)
 	if errors.Is(err, repositories.ErrNotFound) {
+		// It would be a different error if neither one of these were populated.
+		// At the time of writing, one of these branches must be taken.
+		var msg string
+		if tokenID != nil {
+			msg = fmt.Sprintf("No vehicle with token id %d.", *tokenID)
+		} else if tokenDid != nil {
+			msg = fmt.Sprintf("No vehicle with DID %q.", *tokenDid)
+		}
+
 		return nil, graphql.ErrorOnPath(ctx, &gqlerror.Error{
-			Message: fmt.Sprintf("No vehicle with token id %d.", tokenID),
+			Message: msg,
 			Extensions: map[string]interface{}{
 				"code": "NOT_FOUND",
 			},
