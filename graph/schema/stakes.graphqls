@@ -10,7 +10,7 @@ extend type Query {
     last: Int
     before: String
     filterBy: StakeFilterBy
-  ): StakeConnection!
+  ): StakeConnection
 }
 
 input StakeFilterBy {

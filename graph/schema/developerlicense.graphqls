@@ -15,7 +15,7 @@ extend type Query {
   """
   Retrieve a particular developer license.
   """
-  developerLicense(by: DeveloperLicenseBy!): DeveloperLicense!
+  developerLicense(by: DeveloperLicenseBy!): DeveloperLicense
 }
 
 type DeveloperLicense {

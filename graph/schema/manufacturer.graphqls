@@ -9,7 +9,7 @@ extend type Query {
     criteria to search for a manufacturer
     """
     by: ManufacturerBy!
-  ): Manufacturer!
+  ): Manufacturer
 
   """
   List minted manufacturers.

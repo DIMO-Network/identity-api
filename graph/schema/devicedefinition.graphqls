@@ -9,7 +9,7 @@ extend type Query {
     criteria to search for a device definition
     """
     by: DeviceDefinitionBy!
-  ): DeviceDefinition!
+  ): DeviceDefinition
 }
 
 """

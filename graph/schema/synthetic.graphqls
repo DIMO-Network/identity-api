@@ -4,7 +4,7 @@ extend type Query {
   """
   View a particular synthetic device.
   """
-  syntheticDevice(by: SyntheticDeviceBy!): SyntheticDevice!
+  syntheticDevice(by: SyntheticDeviceBy!): SyntheticDevice
 
   """
   List synthetic devices.

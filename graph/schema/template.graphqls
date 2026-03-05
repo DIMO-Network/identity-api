@@ -25,7 +25,7 @@ extend type Query {
     """
     Retrieve a particular template.
     """
-    template(by: TemplateBy!): Template!
+    template(by: TemplateBy!): Template
 
     """
     List templates. Sorts by minting time, descending.

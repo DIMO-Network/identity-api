@@ -4,7 +4,7 @@ extend type Query {
   """
   View a particular aftermarket device.
   """
-  aftermarketDevice(by: AftermarketDeviceBy!): AftermarketDevice!
+  aftermarketDevice(by: AftermarketDeviceBy!): AftermarketDevice
 
   """
   List aftermarket devices.

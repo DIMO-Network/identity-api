@@ -8000,9 +8000,9 @@ func (ec *executionContext) _Query_aftermarketDevice(ctx context.Context, field 
 			return ec.resolvers.Query().AftermarketDevice(ctx, fc.Args["by"].(model.AftermarketDeviceBy))
 		},
 		nil,
-		ec.marshalNAftermarketDevice2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDevice,
+		ec.marshalOAftermarketDevice2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDevice,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -8181,9 +8181,9 @@ func (ec *executionContext) _Query_connection(ctx context.Context, field graphql
 			return ec.resolvers.Query().Connection(ctx, fc.Args["by"].(model.ConnectionBy))
 		},
 		nil,
-		ec.marshalNConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐConnection,
+		ec.marshalOConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐConnection,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -8236,9 +8236,9 @@ func (ec *executionContext) _Query_dcn(ctx context.Context, field graphql.Collec
 			return ec.resolvers.Query().Dcn(ctx, fc.Args["by"].(model.DCNBy))
 		},
 		nil,
-		ec.marshalNDCN2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDcn,
+		ec.marshalODCN2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDcn,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -8399,9 +8399,9 @@ func (ec *executionContext) _Query_developerLicense(ctx context.Context, field g
 			return ec.resolvers.Query().DeveloperLicense(ctx, fc.Args["by"].(model.DeveloperLicenseBy))
 		},
 		nil,
-		ec.marshalNDeveloperLicense2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeveloperLicense,
+		ec.marshalODeveloperLicense2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeveloperLicense,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -8458,9 +8458,9 @@ func (ec *executionContext) _Query_deviceDefinition(ctx context.Context, field g
 			return ec.resolvers.Query().DeviceDefinition(ctx, fc.Args["by"].(model.DeviceDefinitionBy))
 		},
 		nil,
-		ec.marshalNDeviceDefinition2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeviceDefinition,
+		ec.marshalODeviceDefinition2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeviceDefinition,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -8517,9 +8517,9 @@ func (ec *executionContext) _Query_manufacturer(ctx context.Context, field graph
 			return ec.resolvers.Query().Manufacturer(ctx, fc.Args["by"].(model.ManufacturerBy))
 		},
 		nil,
-		ec.marshalNManufacturer2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐManufacturer,
+		ec.marshalOManufacturer2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐManufacturer,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -8664,9 +8664,9 @@ func (ec *executionContext) _Query_stakes(ctx context.Context, field graphql.Col
 			return ec.resolvers.Query().Stakes(ctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["filterBy"].(*model.StakeFilterBy))
 		},
 		nil,
-		ec.marshalNStakeConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐStakeConnection,
+		ec.marshalOStakeConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐStakeConnection,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -8715,9 +8715,9 @@ func (ec *executionContext) _Query_syntheticDevice(ctx context.Context, field gr
 			return ec.resolvers.Query().SyntheticDevice(ctx, fc.Args["by"].(model.SyntheticDeviceBy))
 		},
 		nil,
-		ec.marshalNSyntheticDevice2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSyntheticDevice,
+		ec.marshalOSyntheticDevice2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSyntheticDevice,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -8827,9 +8827,9 @@ func (ec *executionContext) _Query_template(ctx context.Context, field graphql.C
 			return ec.resolvers.Query().Template(ctx, fc.Args["by"].(model.TemplateBy))
 		},
 		nil,
-		ec.marshalNTemplate2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐTemplate,
+		ec.marshalOTemplate2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐTemplate,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -8933,9 +8933,9 @@ func (ec *executionContext) _Query_account(ctx context.Context, field graphql.Co
 			return ec.resolvers.Query().Account(ctx, fc.Args["by"].(model.AccountBy))
 		},
 		nil,
-		ec.marshalNAccount2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAccount,
+		ec.marshalOAccount2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAccount,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -8980,9 +8980,9 @@ func (ec *executionContext) _Query_vehicle(ctx context.Context, field graphql.Co
 			return ec.resolvers.Query().Vehicle(ctx, fc.Args["tokenId"].(*int), fc.Args["tokenDID"].(*string))
 		},
 		nil,
-		ec.marshalNVehicle2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐVehicle,
+		ec.marshalOVehicle2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐVehicle,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -17285,16 +17285,13 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "aftermarketDevice":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Query_aftermarketDevice(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 
@@ -17351,16 +17348,13 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "connection":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Query_connection(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 
@@ -17373,16 +17367,13 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "dcn":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Query_dcn(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 
@@ -17439,16 +17430,13 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "developerLicense":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Query_developerLicense(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 
@@ -17461,16 +17449,13 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "deviceDefinition":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Query_deviceDefinition(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 
@@ -17483,16 +17468,13 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "manufacturer":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Query_manufacturer(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 
@@ -17546,16 +17528,13 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "stakes":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Query_stakes(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 
@@ -17568,16 +17547,13 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "syntheticDevice":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Query_syntheticDevice(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 
@@ -17612,16 +17588,13 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "template":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Query_template(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 
@@ -17656,16 +17629,13 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "account":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Query_account(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 
@@ -17678,16 +17648,13 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "vehicle":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Query_vehicle(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 
@@ -19904,20 +19871,6 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNAccount2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAccount(ctx context.Context, sel ast.SelectionSet, v model.Account) graphql.Marshaler {
-	return ec._Account(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNAccount2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAccount(ctx context.Context, sel ast.SelectionSet, v *model.Account) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Account(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalNAccountBy2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAccountBy(ctx context.Context, v any) (model.AccountBy, error) {
 	res, err := ec.unmarshalInputAccountBy(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -19937,10 +19890,6 @@ func (ec *executionContext) marshalNAddress2githubᚗcomᚋethereumᚋgoᚑether
 		}
 	}
 	return res
-}
-
-func (ec *executionContext) marshalNAftermarketDevice2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDevice(ctx context.Context, sel ast.SelectionSet, v model.AftermarketDevice) graphql.Marshaler {
-	return ec._AftermarketDevice(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNAftermarketDevice2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDeviceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.AftermarketDevice) graphql.Marshaler {
@@ -20283,10 +20232,6 @@ func (ec *executionContext) marshalNConnectionEdge2ᚖgithubᚗcomᚋDIMOᚑNetw
 	return ec._ConnectionEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNDCN2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDcn(ctx context.Context, sel ast.SelectionSet, v model.Dcn) graphql.Marshaler {
-	return ec._DCN(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNDCN2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDcnᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Dcn) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -20414,10 +20359,6 @@ func (ec *executionContext) marshalNDCNEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋi
 	return ec._DCNEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNDeveloperLicense2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeveloperLicense(ctx context.Context, sel ast.SelectionSet, v model.DeveloperLicense) graphql.Marshaler {
-	return ec._DeveloperLicense(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNDeveloperLicense2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeveloperLicenseᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.DeveloperLicense) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -20543,10 +20484,6 @@ func (ec *executionContext) marshalNDeveloperLicenseEdge2ᚖgithubᚗcomᚋDIMO�
 		return graphql.Null
 	}
 	return ec._DeveloperLicenseEdge(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNDeviceDefinition2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeviceDefinition(ctx context.Context, sel ast.SelectionSet, v model.DeviceDefinition) graphql.Marshaler {
-	return ec._DeviceDefinition(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNDeviceDefinition2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeviceDefinitionᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.DeviceDefinition) graphql.Marshaler {
@@ -21567,20 +21504,6 @@ func (ec *executionContext) marshalNStake2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋide
 	return ec._Stake(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNStakeConnection2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐStakeConnection(ctx context.Context, sel ast.SelectionSet, v model.StakeConnection) graphql.Marshaler {
-	return ec._StakeConnection(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNStakeConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐStakeConnection(ctx context.Context, sel ast.SelectionSet, v *model.StakeConnection) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._StakeConnection(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalNStakeEdge2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐStakeEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.StakeEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -21649,10 +21572,6 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 		}
 	}
 	return res
-}
-
-func (ec *executionContext) marshalNSyntheticDevice2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSyntheticDevice(ctx context.Context, sel ast.SelectionSet, v model.SyntheticDevice) graphql.Marshaler {
-	return ec._SyntheticDevice(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNSyntheticDevice2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSyntheticDeviceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SyntheticDevice) graphql.Marshaler {
@@ -21780,10 +21699,6 @@ func (ec *executionContext) marshalNSyntheticDeviceEdge2ᚖgithubᚗcomᚋDIMO�
 		return graphql.Null
 	}
 	return ec._SyntheticDeviceEdge(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNTemplate2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐTemplate(ctx context.Context, sel ast.SelectionSet, v model.Template) graphql.Marshaler {
-	return ec._Template(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNTemplate2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐTemplateᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Template) graphql.Marshaler {
@@ -22308,6 +22223,13 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
+func (ec *executionContext) marshalOAccount2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAccount(ctx context.Context, sel ast.SelectionSet, v *model.Account) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Account(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalOAddress2ᚖgithubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx context.Context, v any) (*common.Address, error) {
 	if v == nil {
 		return nil, nil
@@ -22414,6 +22336,13 @@ func (ec *executionContext) marshalOBytes2ᚕbyte(ctx context.Context, sel ast.S
 	return res
 }
 
+func (ec *executionContext) marshalOConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐConnection(ctx context.Context, sel ast.SelectionSet, v *model.Connection) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Connection(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalODCN2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDcn(ctx context.Context, sel ast.SelectionSet, v *model.Dcn) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -22436,12 +22365,26 @@ func (ec *executionContext) marshalODefinition2ᚖgithubᚗcomᚋDIMOᚑNetwork�
 	return ec._Definition(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalODeveloperLicense2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeveloperLicense(ctx context.Context, sel ast.SelectionSet, v *model.DeveloperLicense) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._DeveloperLicense(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalODeveloperLicenseFilterBy2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeveloperLicenseFilterBy(ctx context.Context, v any) (*model.DeveloperLicenseFilterBy, error) {
 	if v == nil {
 		return nil, nil
 	}
 	res, err := ec.unmarshalInputDeveloperLicenseFilterBy(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalODeviceDefinition2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeviceDefinition(ctx context.Context, sel ast.SelectionSet, v *model.DeviceDefinition) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._DeviceDefinition(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalODeviceDefinitionFilter2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeviceDefinitionFilter(ctx context.Context, v any) (*model.DeviceDefinitionFilter, error) {
@@ -22504,6 +22447,13 @@ func (ec *executionContext) marshalOStake2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋide
 		return graphql.Null
 	}
 	return ec._Stake(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOStakeConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐStakeConnection(ctx context.Context, sel ast.SelectionSet, v *model.StakeConnection) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._StakeConnection(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOStakeFilterBy2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐStakeFilterBy(ctx context.Context, v any) (*model.StakeFilterBy, error) {

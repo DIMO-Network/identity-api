@@ -14,7 +14,7 @@ extend type Query {
   """
   Retrieve a particular connection.
   """
-  connection(by: ConnectionBy!): Connection!
+  connection(by: ConnectionBy!): Connection
 }
 
 type Connection {

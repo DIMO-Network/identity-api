@@ -13,7 +13,7 @@ extend type Query {
     The DID of the vehicle.
     """
     tokenDID: String
-  ): Vehicle!
+  ): Vehicle
 
   """
   List minted vehicles.

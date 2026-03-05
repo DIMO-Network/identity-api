@@ -4,7 +4,7 @@ extend type Query {
   """
   View a particular DIMO Canonical Name.
   """
-  dcn(by: DCNBy!): DCN!
+  dcn(by: DCNBy!): DCN
 
   """
   List DIMO Canonical Names.

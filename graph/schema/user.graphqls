@@ -5,7 +5,7 @@ extend type Query {
   Retrieves information about an account. Right now, this is mainly to show
   SACDs for user information.
   """
-  account(by: AccountBy!): Account!
+  account(by: AccountBy!): Account
 }
 
 input AccountBy @oneOf {
