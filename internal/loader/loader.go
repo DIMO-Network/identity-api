@@ -42,7 +42,7 @@ type Loaders struct {
 func NewDataLoader(dbs db.Store, settings config.Settings) *Loaders {
 	// instantiate the user dataloader
 	baseRepo := &base.Repository{PDB: dbs, Settings: settings}
-	vehicle := NewVehicleLoader(vehicle.New(baseRepo))
+	vehicle := NewVehicleLoader(vehicle.New(baseRepo, nil))
 	aftermarketDevice := NewAftermarketDeviceLoader(aftermarket.New(baseRepo))
 	syntheticDevice := NewSyntheticDeviceLoader(synthetic.New(baseRepo))
 	dcn := NewDCNLoader(dcn.New(baseRepo))

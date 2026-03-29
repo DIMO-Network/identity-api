@@ -140,13 +140,22 @@ type Resolver struct {
 func NewResolver(baseRepo *base.Repository) *Resolver {
 	tablelandApiService := services.NewTablelandApiService(baseRepo.Log, &baseRepo.Settings)
 
+	var fetchAPI *services.FetchAPIService
+	if baseRepo.Settings.FetchAPIGRPCAddr != "" {
+		var err error
+		fetchAPI, err = services.NewFetchAPIService(baseRepo.Settings.FetchAPIGRPCAddr, baseRepo.Log)
+		if err != nil {
+			baseRepo.Log.Warn().Err(err).Msg("could not connect to fetch-api; vehicle definitions will fall back to DB values")
+		}
+	}
+
 	return &Resolver{
 		aftermarket:      aftermarket.New(baseRepo),
 		dcn:              dcn.New(baseRepo),
 		manufacturer:     manufacturer.New(baseRepo),
 		reward:           reward.Repository{Repository: baseRepo},
 		synthetic:        synthetic.New(baseRepo),
-		vehicle:          vehicle.New(baseRepo),
+		vehicle:          vehicle.New(baseRepo, fetchAPI),
 		vehicleprivilege: vehicleprivilege.Repository{Repository: baseRepo},
 		vehiclesacd:      vehiclesacd.Repository{Repository: baseRepo},
 		deviceDefinition: devicedefinition.New(baseRepo, tablelandApiService),

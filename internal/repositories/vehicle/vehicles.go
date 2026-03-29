@@ -17,6 +17,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
+	"github.com/DIMO-Network/identity-api/internal/services"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/DIMO-Network/mnemonic"
 	"github.com/aarondl/null/v8"
@@ -32,18 +33,20 @@ type Repository struct {
 	*base.Repository
 	chainID         uint64
 	contractAddress common.Address
+	fetchAPI        *services.FetchAPIService
 }
 
 // New creates a new vehicle repository.
-func New(db *base.Repository) *Repository {
+func New(db *base.Repository, fetchAPI *services.FetchAPIService) *Repository {
 	return &Repository{
 		Repository:      db,
 		chainID:         uint64(db.Settings.DIMORegistryChainID),
 		contractAddress: common.HexToAddress(db.Settings.VehicleNFTAddr),
+		fetchAPI:        fetchAPI,
 	}
 }
 
-func (r *Repository) createVehiclesResponse(totalCount int64, vehicles models.VehicleSlice, hasNext bool, hasPrevious bool) (*gmodel.VehicleConnection, error) {
+func (r *Repository) createVehiclesResponse(ctx context.Context, totalCount int64, vehicles models.VehicleSlice, hasNext bool, hasPrevious bool) (*gmodel.VehicleConnection, error) {
 	var errList gqlerror.List
 	var endCur, startCur *string
 	if len(vehicles) != 0 {
@@ -84,6 +87,7 @@ func (r *Repository) createVehiclesResponse(totalCount int64, vehicles models.Ve
 			errList = append(errList, gqlerror.Wrap(wErr))
 			continue
 		}
+		gv.Definition = r.enrichDefinitionFromFetch(ctx, gv.TokenDID, gv.Definition)
 
 		edges[i] = &gmodel.VehicleEdge{
 			Node:   gv,
@@ -195,7 +199,7 @@ func (r *Repository) GetVehicles(ctx context.Context, first *int, after *string,
 		slices.Reverse(all)
 	}
 
-	return r.createVehiclesResponse(totalCount, all, hasNext, hasPrevious)
+	return r.createVehiclesResponse(ctx, totalCount, all, hasNext, hasPrevious)
 }
 
 func (r *Repository) GetVehicle(ctx context.Context, tokenID *int, tokenDID *string) (*gmodel.Vehicle, error) {
@@ -244,7 +248,12 @@ func (r *Repository) GetVehicle(ctx context.Context, tokenID *int, tokenDID *str
 		return nil, fmt.Errorf("error getting vehicle data uri: %w", err)
 	}
 
-	return r.ToAPI(v, imageURI, dataURI)
+	gv, err := r.ToAPI(v, imageURI, dataURI)
+	if err != nil {
+		return nil, err
+	}
+	gv.Definition = r.enrichDefinitionFromFetch(ctx, gv.TokenDID, gv.Definition)
+	return gv, nil
 }
 
 // queryModsFromFilters returns a slice of query mods from the given filters.
@@ -306,6 +315,36 @@ func (r *Repository) queryModsFromFilters(filter *gmodel.VehiclesFilter) ([]qm.Q
 	}
 
 	return queryMods, nil
+}
+
+// enrichDefinitionFromFetch checks the fetch-api for a dimo.document.devicedefinition
+// cloud event for the given vehicle DID and overlays any non-zero fields onto def.
+// On error or when no document exists, def is returned unchanged.
+func (r *Repository) enrichDefinitionFromFetch(ctx context.Context, vehicleDID string, def *gmodel.Definition) *gmodel.Definition {
+	if r.fetchAPI == nil {
+		return def
+	}
+	doc, err := r.fetchAPI.GetVehicleDefinitionDoc(ctx, vehicleDID)
+	if err != nil {
+		r.Log.Warn().Err(err).Str("vehicleDID", vehicleDID).Msg("fetch-api definition lookup failed, using DB values")
+		return def
+	}
+	if doc == nil {
+		return def
+	}
+	if doc.ID != "" {
+		def.ID = &doc.ID
+	}
+	if doc.Make != "" {
+		def.Make = &doc.Make
+	}
+	if doc.Model != "" {
+		def.Model = &doc.Model
+	}
+	if doc.Year != 0 {
+		def.Year = &doc.Year
+	}
+	return def
 }
 
 // ToAPI converts a vehicle to a corresponding graphql model.

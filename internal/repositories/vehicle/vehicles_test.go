@@ -61,7 +61,7 @@ func (o *AccessibleVehiclesRepoTestSuite) SetupSuite() {
 		BaseVehicleDataURI:  "https://dimoData/vehicles/",
 	}
 	logger := zerolog.Nop()
-	o.repo = New(base.NewRepository(o.pdb, o.settings, &logger))
+	o.repo = New(base.NewRepository(o.pdb, o.settings, &logger), nil)
 }
 
 // TearDownTest after each test truncate tables
