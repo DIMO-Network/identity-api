@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
+	"github.com/DIMO-Network/identity-api/internal/loader"
 	"github.com/DIMO-Network/identity-api/internal/repositories/accountsacd"
 	"github.com/DIMO-Network/identity-api/internal/repositories/aftermarket"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
@@ -21,6 +22,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/repositories/vehiclesacd"
 	"github.com/DIMO-Network/identity-api/internal/services"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/rs/zerolog"
 )
 
 //go:generate go run github.com/99designs/gqlgen generate
@@ -134,20 +136,13 @@ type Resolver struct {
 	connection       ConnectionRepository
 	template         TemplateRepository
 	accountsacd      AccountSacdRepository
+	vehicleDefFetch  loader.VehicleDefinitionFetcher
+	log              *zerolog.Logger
 }
 
 // NewResolver creates a new Resolver with allocated repositories.
 func NewResolver(baseRepo *base.Repository) *Resolver {
 	tablelandApiService := services.NewTablelandApiService(baseRepo.Log, &baseRepo.Settings)
-
-	var fetchAPI *services.FetchAPIService
-	if baseRepo.Settings.FetchAPIGRPCAddr != "" {
-		var err error
-		fetchAPI, err = services.NewFetchAPIService(baseRepo.Settings.FetchAPIGRPCAddr, baseRepo.Log)
-		if err != nil {
-			baseRepo.Log.Warn().Err(err).Msg("could not connect to fetch-api; vehicle definitions will fall back to DB values")
-		}
-	}
 
 	return &Resolver{
 		aftermarket:      aftermarket.New(baseRepo),
@@ -155,7 +150,7 @@ func NewResolver(baseRepo *base.Repository) *Resolver {
 		manufacturer:     manufacturer.New(baseRepo),
 		reward:           reward.Repository{Repository: baseRepo},
 		synthetic:        synthetic.New(baseRepo),
-		vehicle:          vehicle.New(baseRepo, fetchAPI),
+		vehicle:          vehicle.New(baseRepo),
 		vehicleprivilege: vehicleprivilege.Repository{Repository: baseRepo},
 		vehiclesacd:      vehiclesacd.Repository{Repository: baseRepo},
 		deviceDefinition: devicedefinition.New(baseRepo, tablelandApiService),
@@ -164,5 +159,7 @@ func NewResolver(baseRepo *base.Repository) *Resolver {
 		connection:       connection.New(baseRepo),
 		template:         template.New(baseRepo),
 		accountsacd:      &accountsacd.Repository{Repository: baseRepo},
+		vehicleDefFetch:  loader.NewVehicleDefinitionFetcher(baseRepo.Settings, baseRepo.Log),
+		log:              baseRepo.Log,
 	}
 }

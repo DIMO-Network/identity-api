@@ -15,8 +15,10 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/repositories/storagenode"
 	"github.com/DIMO-Network/identity-api/internal/repositories/synthetic"
 	"github.com/DIMO-Network/identity-api/internal/repositories/vehicle"
+	"github.com/DIMO-Network/identity-api/internal/services"
 	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/graph-gophers/dataloader/v7"
+	"github.com/rs/zerolog"
 )
 
 type loadersString string
@@ -39,10 +41,15 @@ type Loaders struct {
 }
 
 // NewDataLoader returns the instantiated Loaders struct for use in a request
-func NewDataLoader(dbs db.Store, settings config.Settings) *Loaders {
+func NewDataLoader(dbs db.Store, settings config.Settings, log *zerolog.Logger) *Loaders {
+	return NewDataLoaderWithFetcher(dbs, settings, log, NewVehicleDefinitionFetcher(settings, log))
+}
+
+func NewDataLoaderWithFetcher(dbs db.Store, settings config.Settings, log *zerolog.Logger, fetcher VehicleDefinitionFetcher) *Loaders {
 	// instantiate the user dataloader
-	baseRepo := &base.Repository{PDB: dbs, Settings: settings}
-	vehicle := NewVehicleLoader(vehicle.New(baseRepo, nil))
+	baseRepo := &base.Repository{PDB: dbs, Settings: settings, Log: log}
+	vehicleRepo := vehicle.New(baseRepo)
+	vehicle := NewVehicleLoader(vehicleRepo, fetcher, log)
 	aftermarketDevice := NewAftermarketDeviceLoader(aftermarket.New(baseRepo))
 	syntheticDevice := NewSyntheticDeviceLoader(synthetic.New(baseRepo))
 	dcn := NewDCNLoader(dcn.New(baseRepo))
@@ -96,11 +103,31 @@ func NewDataLoader(dbs db.Store, settings config.Settings) *Loaders {
 	}
 }
 
+func NewVehicleDefinitionFetcher(settings config.Settings, log *zerolog.Logger) VehicleDefinitionFetcher {
+	if settings.FetchAPIGRPCAddr == "" {
+		return nil
+	}
+
+	fetchAPI, err := services.NewFetchAPIService(settings.FetchAPIGRPCAddr, log)
+	if err != nil {
+		if log != nil {
+			log.Warn().Err(err).Msg("could not connect to fetch-api; vehicle definitions will fall back to DB values")
+		}
+		return nil
+	}
+
+	return fetchAPI
+}
+
 // Middleware injects a DataLoader into the request context so it can be
 // used later in the schema resolvers
-func Middleware(db db.Store, next http.Handler, settings config.Settings) http.Handler {
+func Middleware(db db.Store, next http.Handler, settings config.Settings, log *zerolog.Logger) http.Handler {
+	return MiddlewareWithFetcher(db, next, settings, log, NewVehicleDefinitionFetcher(settings, log))
+}
+
+func MiddlewareWithFetcher(db db.Store, next http.Handler, settings config.Settings, log *zerolog.Logger, fetcher VehicleDefinitionFetcher) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		loader := NewDataLoader(db, settings)
+		loader := NewDataLoaderWithFetcher(db, settings, log, fetcher)
 		nextCtx := context.WithValue(r.Context(), dataLoadersKey, loader)
 		r = r.WithContext(nextCtx)
 		next.ServeHTTP(w, r)

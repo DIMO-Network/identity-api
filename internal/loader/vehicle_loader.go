@@ -9,14 +9,17 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/repositories/vehicle"
 	"github.com/DIMO-Network/identity-api/models"
 	"github.com/graph-gophers/dataloader/v7"
+	"github.com/rs/zerolog"
 )
 
 type VehicleLoader struct {
-	repo *vehicle.Repository
+	repo    *vehicle.Repository
+	fetcher VehicleDefinitionFetcher
+	log     *zerolog.Logger
 }
 
-func NewVehicleLoader(repo *vehicle.Repository) *VehicleLoader {
-	return &VehicleLoader{repo: repo}
+func NewVehicleLoader(repo *vehicle.Repository, fetcher VehicleDefinitionFetcher, log *zerolog.Logger) *VehicleLoader {
+	return &VehicleLoader{repo: repo, fetcher: fetcher, log: log}
 }
 
 func GetVehicleByID(ctx context.Context, vehicleID int) (*model.Vehicle, error) {
@@ -78,6 +81,16 @@ func (v *VehicleLoader) BatchGetVehicleByID(ctx context.Context, vehicleIDs []in
 			results[i] = &dataloader.Result[*model.Vehicle]{Error: fmt.Errorf("no vehicle with id %d", k)}
 		}
 	}
+
+	vehiclesToEnrich := make([]*model.Vehicle, 0, len(results))
+	for _, result := range results {
+		if result == nil || result.Data == nil {
+			continue
+		}
+		vehiclesToEnrich = append(vehiclesToEnrich, result.Data)
+	}
+
+	enrichVehicleDefinitions(ctx, v.log, v.fetcher, vehiclesToEnrich)
 
 	return results
 }

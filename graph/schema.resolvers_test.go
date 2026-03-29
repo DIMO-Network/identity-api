@@ -24,7 +24,7 @@ func TestQueryResolver_Node(t *testing.T) {
 
 	baseRepo := &base.Repository{}
 
-	vehicleRepo := vehicle.New(baseRepo, nil)
+	vehicleRepo := vehicle.New(baseRepo)
 	testVehicle, err := vehicleRepo.ToAPI(&models.Vehicle{ID: 1}, "", "")
 	require.NoError(t, err)
 
