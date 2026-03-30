@@ -84,7 +84,6 @@ func (r *Repository) createVehiclesResponse(totalCount int64, vehicles models.Ve
 			errList = append(errList, gqlerror.Wrap(wErr))
 			continue
 		}
-
 		edges[i] = &gmodel.VehicleEdge{
 			Node:   gv,
 			Cursor: helpers.IDToCursor(dv.ID),
@@ -244,7 +243,11 @@ func (r *Repository) GetVehicle(ctx context.Context, tokenID *int, tokenDID *str
 		return nil, fmt.Errorf("error getting vehicle data uri: %w", err)
 	}
 
-	return r.ToAPI(v, imageURI, dataURI)
+	gv, err := r.ToAPI(v, imageURI, dataURI)
+	if err != nil {
+		return nil, err
+	}
+	return gv, nil
 }
 
 // queryModsFromFilters returns a slice of query mods from the given filters.

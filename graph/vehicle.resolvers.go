@@ -38,12 +38,22 @@ func (r *queryResolver) Vehicle(ctx context.Context, tokenID *int, tokenDid *str
 			},
 		})
 	}
+
+	if err == nil && v != nil {
+		loader.EnrichVehicleDefinitions(ctx, r.log, r.vehicleDefFetch, []*model.Vehicle{v})
+	}
+
 	return v, err
 }
 
 // Vehicles is the resolver for the vehicles field.
 func (r *queryResolver) Vehicles(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.VehiclesFilter) (*model.VehicleConnection, error) {
-	return r.vehicle.GetVehicles(ctx, first, after, last, before, filterBy)
+	conn, err := r.vehicle.GetVehicles(ctx, first, after, last, before, filterBy)
+	if err == nil && conn != nil {
+		loader.EnrichVehicleDefinitions(ctx, r.log, r.vehicleDefFetch, conn.Nodes)
+	}
+
+	return conn, err
 }
 
 // Manufacturer is the resolver for the manufacturer field.

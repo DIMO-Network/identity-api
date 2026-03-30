@@ -46,7 +46,7 @@ func (s *VehicleTestSuite) SetupSuite() {
 	resolver := NewResolver(repo)
 
 	s.consumer = services.NewContractsEventsConsumer(db, &logger, &settings)
-	s.handler = loader.Middleware(db, NewDefaultServer(NewExecutableSchema(Config{Resolvers: resolver})), settings)
+	s.handler = loader.Middleware(db, NewDefaultServer(NewExecutableSchema(Config{Resolvers: resolver})), settings, &logger)
 }
 
 func (s *VehicleTestSuite) TearDownSuite() {

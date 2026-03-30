@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
+	"github.com/DIMO-Network/identity-api/internal/loader"
 	"github.com/DIMO-Network/identity-api/internal/repositories/accountsacd"
 	"github.com/DIMO-Network/identity-api/internal/repositories/aftermarket"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
@@ -21,6 +22,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/repositories/vehiclesacd"
 	"github.com/DIMO-Network/identity-api/internal/services"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/rs/zerolog"
 )
 
 //go:generate go run github.com/99designs/gqlgen generate
@@ -134,6 +136,8 @@ type Resolver struct {
 	connection       ConnectionRepository
 	template         TemplateRepository
 	accountsacd      AccountSacdRepository
+	vehicleDefFetch  loader.VehicleDefinitionFetcher
+	log              *zerolog.Logger
 }
 
 // NewResolver creates a new Resolver with allocated repositories.
@@ -155,5 +159,7 @@ func NewResolver(baseRepo *base.Repository) *Resolver {
 		connection:       connection.New(baseRepo),
 		template:         template.New(baseRepo),
 		accountsacd:      &accountsacd.Repository{Repository: baseRepo},
+		vehicleDefFetch:  loader.NewVehicleDefinitionFetcher(baseRepo.Settings, baseRepo.Log),
+		log:              baseRepo.Log,
 	}
 }

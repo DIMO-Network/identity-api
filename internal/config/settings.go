@@ -29,4 +29,5 @@ type Settings struct {
 	ConnectionAddr        string      `yaml:"CONNECTION_ADDR"`
 	StorageNodeAddr       string      `yaml:"STORAGE_NODE_ADDR"`
 	TemplateAddr          string      `yaml:"TEMPLATE_ADDR"`
+	FetchAPIGRPCAddr      string      `yaml:"FETCH_API_GRPC_ADDR"`
 }
