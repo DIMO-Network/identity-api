@@ -15,12 +15,24 @@ import (
 )
 
 // DeviceDefinitionDoc holds the device definition fields stored in the fetch-api.
-// The data field of the cloud event contains tableland column values as JSON key-value pairs.
 type DeviceDefinitionDoc struct {
-	ID    string `json:"id"`
-	Make  string `json:"make"`
-	Model string `json:"model"`
-	Year  int    `json:"year"`
+	ID    string
+	Make  string
+	Model string
+	Year  int
+}
+
+type ddManufacturer struct {
+	Name string `json:"name"`
+}
+
+type ddPayload struct {
+	Data struct {
+		DeviceDefinitionID string         `json:"deviceDefinitionId"`
+		Manufacturer       ddManufacturer `json:"manufacturer"`
+		Model              string         `json:"model"`
+		Year               int            `json:"year"`
+	} `json:"data"`
 }
 
 // FetchAPIService wraps the fetch-api gRPC client.
@@ -61,10 +73,15 @@ func (s *FetchAPIService) GetVehicleDefinitionDoc(ctx context.Context, vehicleDI
 		return nil, nil
 	}
 
-	var doc DeviceDefinitionDoc
-	if err := json.Unmarshal(resp.GetCloudEvent().GetData(), &doc); err != nil {
+	var payload ddPayload
+	if err := json.Unmarshal(resp.GetCloudEvent().GetData(), &payload); err != nil {
 		return nil, fmt.Errorf("unmarshal device definition doc for %s: %w", vehicleDID, err)
 	}
 
-	return &doc, nil
+	return &DeviceDefinitionDoc{
+		ID:    payload.Data.DeviceDefinitionID,
+		Make:  payload.Data.Manufacturer.Name,
+		Model: payload.Data.Model,
+		Year:  payload.Data.Year,
+	}, nil
 }
