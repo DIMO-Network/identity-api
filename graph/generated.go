@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"math/big"
 	"strconv"
-	"sync"
 	"sync/atomic"
 	"time"
 
@@ -28,20 +27,10 @@ import (
 
 // NewExecutableSchema creates an ExecutableSchema from the ResolverRoot interface.
 func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
-	return &executableSchema{
-		schema:     cfg.Schema,
-		resolvers:  cfg.Resolvers,
-		directives: cfg.Directives,
-		complexity: cfg.Complexity,
-	}
+	return &executableSchema{SchemaData: cfg.Schema, Resolvers: cfg.Resolvers, Directives: cfg.Directives, ComplexityRoot: cfg.Complexity}
 }
 
-type Config struct {
-	Schema     *ast.Schema
-	Resolvers  ResolverRoot
-	Directives DirectiveRoot
-	Complexity ComplexityRoot
-}
+type Config = graphql.Config[ResolverRoot, DirectiveRoot, ComplexityRoot]
 
 type ResolverRoot interface {
 	Account() AccountResolver
@@ -60,6 +49,7 @@ type ResolverRoot interface {
 }
 
 type DirectiveRoot struct {
+	McpHide func(ctx context.Context, obj any, next graphql.Resolver) (res any, err error)
 }
 
 type ComplexityRoot struct {
@@ -575,33 +565,28 @@ type VehicleEarningsResolver interface {
 	History(ctx context.Context, obj *model.VehicleEarnings, first *int, after *string, last *int, before *string) (*model.EarningsConnection, error)
 }
 
-type executableSchema struct {
-	schema     *ast.Schema
-	resolvers  ResolverRoot
-	directives DirectiveRoot
-	complexity ComplexityRoot
-}
+type executableSchema graphql.ExecutableSchemaState[ResolverRoot, DirectiveRoot, ComplexityRoot]
 
 func (e *executableSchema) Schema() *ast.Schema {
-	if e.schema != nil {
-		return e.schema
+	if e.SchemaData != nil {
+		return e.SchemaData
 	}
 	return parsedSchema
 }
 
 func (e *executableSchema) Complexity(ctx context.Context, typeName, field string, childComplexity int, rawArgs map[string]any) (int, bool) {
-	ec := executionContext{nil, e, 0, 0, nil}
+	ec := newExecutionContext(nil, e, nil)
 	_ = ec
 	switch typeName + "." + field {
 
 	case "Account.address":
-		if e.complexity.Account.Address == nil {
+		if e.ComplexityRoot.Account.Address == nil {
 			break
 		}
 
-		return e.complexity.Account.Address(childComplexity), true
+		return e.ComplexityRoot.Account.Address(childComplexity), true
 	case "Account.sacds":
-		if e.complexity.Account.Sacds == nil {
+		if e.ComplexityRoot.Account.Sacds == nil {
 			break
 		}
 
@@ -610,144 +595,144 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Account.Sacds(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
+		return e.ComplexityRoot.Account.Sacds(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
 
 	case "AftermarketDevice.address":
-		if e.complexity.AftermarketDevice.Address == nil {
+		if e.ComplexityRoot.AftermarketDevice.Address == nil {
 			break
 		}
 
-		return e.complexity.AftermarketDevice.Address(childComplexity), true
+		return e.ComplexityRoot.AftermarketDevice.Address(childComplexity), true
 	case "AftermarketDevice.beneficiary":
-		if e.complexity.AftermarketDevice.Beneficiary == nil {
+		if e.ComplexityRoot.AftermarketDevice.Beneficiary == nil {
 			break
 		}
 
-		return e.complexity.AftermarketDevice.Beneficiary(childComplexity), true
+		return e.ComplexityRoot.AftermarketDevice.Beneficiary(childComplexity), true
 	case "AftermarketDevice.claimedAt":
-		if e.complexity.AftermarketDevice.ClaimedAt == nil {
+		if e.ComplexityRoot.AftermarketDevice.ClaimedAt == nil {
 			break
 		}
 
-		return e.complexity.AftermarketDevice.ClaimedAt(childComplexity), true
+		return e.ComplexityRoot.AftermarketDevice.ClaimedAt(childComplexity), true
 	case "AftermarketDevice.devEUI":
-		if e.complexity.AftermarketDevice.DevEui == nil {
+		if e.ComplexityRoot.AftermarketDevice.DevEui == nil {
 			break
 		}
 
-		return e.complexity.AftermarketDevice.DevEui(childComplexity), true
+		return e.ComplexityRoot.AftermarketDevice.DevEui(childComplexity), true
 	case "AftermarketDevice.earnings":
-		if e.complexity.AftermarketDevice.Earnings == nil {
+		if e.ComplexityRoot.AftermarketDevice.Earnings == nil {
 			break
 		}
 
-		return e.complexity.AftermarketDevice.Earnings(childComplexity), true
+		return e.ComplexityRoot.AftermarketDevice.Earnings(childComplexity), true
 	case "AftermarketDevice.hardwareRevision":
-		if e.complexity.AftermarketDevice.HardwareRevision == nil {
+		if e.ComplexityRoot.AftermarketDevice.HardwareRevision == nil {
 			break
 		}
 
-		return e.complexity.AftermarketDevice.HardwareRevision(childComplexity), true
+		return e.ComplexityRoot.AftermarketDevice.HardwareRevision(childComplexity), true
 	case "AftermarketDevice.id":
-		if e.complexity.AftermarketDevice.ID == nil {
+		if e.ComplexityRoot.AftermarketDevice.ID == nil {
 			break
 		}
 
-		return e.complexity.AftermarketDevice.ID(childComplexity), true
+		return e.ComplexityRoot.AftermarketDevice.ID(childComplexity), true
 	case "AftermarketDevice.image":
-		if e.complexity.AftermarketDevice.Image == nil {
+		if e.ComplexityRoot.AftermarketDevice.Image == nil {
 			break
 		}
 
-		return e.complexity.AftermarketDevice.Image(childComplexity), true
+		return e.ComplexityRoot.AftermarketDevice.Image(childComplexity), true
 	case "AftermarketDevice.imei":
-		if e.complexity.AftermarketDevice.Imei == nil {
+		if e.ComplexityRoot.AftermarketDevice.Imei == nil {
 			break
 		}
 
-		return e.complexity.AftermarketDevice.Imei(childComplexity), true
+		return e.ComplexityRoot.AftermarketDevice.Imei(childComplexity), true
 	case "AftermarketDevice.manufacturer":
-		if e.complexity.AftermarketDevice.Manufacturer == nil {
+		if e.ComplexityRoot.AftermarketDevice.Manufacturer == nil {
 			break
 		}
 
-		return e.complexity.AftermarketDevice.Manufacturer(childComplexity), true
+		return e.ComplexityRoot.AftermarketDevice.Manufacturer(childComplexity), true
 	case "AftermarketDevice.mintedAt":
-		if e.complexity.AftermarketDevice.MintedAt == nil {
+		if e.ComplexityRoot.AftermarketDevice.MintedAt == nil {
 			break
 		}
 
-		return e.complexity.AftermarketDevice.MintedAt(childComplexity), true
+		return e.ComplexityRoot.AftermarketDevice.MintedAt(childComplexity), true
 	case "AftermarketDevice.name":
-		if e.complexity.AftermarketDevice.Name == nil {
+		if e.ComplexityRoot.AftermarketDevice.Name == nil {
 			break
 		}
 
-		return e.complexity.AftermarketDevice.Name(childComplexity), true
+		return e.ComplexityRoot.AftermarketDevice.Name(childComplexity), true
 	case "AftermarketDevice.owner":
-		if e.complexity.AftermarketDevice.Owner == nil {
+		if e.ComplexityRoot.AftermarketDevice.Owner == nil {
 			break
 		}
 
-		return e.complexity.AftermarketDevice.Owner(childComplexity), true
+		return e.ComplexityRoot.AftermarketDevice.Owner(childComplexity), true
 	case "AftermarketDevice.pairedAt":
-		if e.complexity.AftermarketDevice.PairedAt == nil {
+		if e.ComplexityRoot.AftermarketDevice.PairedAt == nil {
 			break
 		}
 
-		return e.complexity.AftermarketDevice.PairedAt(childComplexity), true
+		return e.ComplexityRoot.AftermarketDevice.PairedAt(childComplexity), true
 	case "AftermarketDevice.serial":
-		if e.complexity.AftermarketDevice.Serial == nil {
+		if e.ComplexityRoot.AftermarketDevice.Serial == nil {
 			break
 		}
 
-		return e.complexity.AftermarketDevice.Serial(childComplexity), true
+		return e.ComplexityRoot.AftermarketDevice.Serial(childComplexity), true
 	case "AftermarketDevice.tokenDID":
-		if e.complexity.AftermarketDevice.TokenDID == nil {
+		if e.ComplexityRoot.AftermarketDevice.TokenDID == nil {
 			break
 		}
 
-		return e.complexity.AftermarketDevice.TokenDID(childComplexity), true
+		return e.ComplexityRoot.AftermarketDevice.TokenDID(childComplexity), true
 	case "AftermarketDevice.tokenId":
-		if e.complexity.AftermarketDevice.TokenID == nil {
+		if e.ComplexityRoot.AftermarketDevice.TokenID == nil {
 			break
 		}
 
-		return e.complexity.AftermarketDevice.TokenID(childComplexity), true
+		return e.ComplexityRoot.AftermarketDevice.TokenID(childComplexity), true
 	case "AftermarketDevice.vehicle":
-		if e.complexity.AftermarketDevice.Vehicle == nil {
+		if e.ComplexityRoot.AftermarketDevice.Vehicle == nil {
 			break
 		}
 
-		return e.complexity.AftermarketDevice.Vehicle(childComplexity), true
+		return e.ComplexityRoot.AftermarketDevice.Vehicle(childComplexity), true
 
 	case "AftermarketDeviceConnection.edges":
-		if e.complexity.AftermarketDeviceConnection.Edges == nil {
+		if e.ComplexityRoot.AftermarketDeviceConnection.Edges == nil {
 			break
 		}
 
-		return e.complexity.AftermarketDeviceConnection.Edges(childComplexity), true
+		return e.ComplexityRoot.AftermarketDeviceConnection.Edges(childComplexity), true
 	case "AftermarketDeviceConnection.nodes":
-		if e.complexity.AftermarketDeviceConnection.Nodes == nil {
+		if e.ComplexityRoot.AftermarketDeviceConnection.Nodes == nil {
 			break
 		}
 
-		return e.complexity.AftermarketDeviceConnection.Nodes(childComplexity), true
+		return e.ComplexityRoot.AftermarketDeviceConnection.Nodes(childComplexity), true
 	case "AftermarketDeviceConnection.pageInfo":
-		if e.complexity.AftermarketDeviceConnection.PageInfo == nil {
+		if e.ComplexityRoot.AftermarketDeviceConnection.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.AftermarketDeviceConnection.PageInfo(childComplexity), true
+		return e.ComplexityRoot.AftermarketDeviceConnection.PageInfo(childComplexity), true
 	case "AftermarketDeviceConnection.totalCount":
-		if e.complexity.AftermarketDeviceConnection.TotalCount == nil {
+		if e.ComplexityRoot.AftermarketDeviceConnection.TotalCount == nil {
 			break
 		}
 
-		return e.complexity.AftermarketDeviceConnection.TotalCount(childComplexity), true
+		return e.ComplexityRoot.AftermarketDeviceConnection.TotalCount(childComplexity), true
 
 	case "AftermarketDeviceEarnings.history":
-		if e.complexity.AftermarketDeviceEarnings.History == nil {
+		if e.ComplexityRoot.AftermarketDeviceEarnings.History == nil {
 			break
 		}
 
@@ -756,246 +741,246 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.AftermarketDeviceEarnings.History(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
+		return e.ComplexityRoot.AftermarketDeviceEarnings.History(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
 	case "AftermarketDeviceEarnings.totalTokens":
-		if e.complexity.AftermarketDeviceEarnings.TotalTokens == nil {
+		if e.ComplexityRoot.AftermarketDeviceEarnings.TotalTokens == nil {
 			break
 		}
 
-		return e.complexity.AftermarketDeviceEarnings.TotalTokens(childComplexity), true
+		return e.ComplexityRoot.AftermarketDeviceEarnings.TotalTokens(childComplexity), true
 
 	case "AftermarketDeviceEdge.cursor":
-		if e.complexity.AftermarketDeviceEdge.Cursor == nil {
+		if e.ComplexityRoot.AftermarketDeviceEdge.Cursor == nil {
 			break
 		}
 
-		return e.complexity.AftermarketDeviceEdge.Cursor(childComplexity), true
+		return e.ComplexityRoot.AftermarketDeviceEdge.Cursor(childComplexity), true
 	case "AftermarketDeviceEdge.node":
-		if e.complexity.AftermarketDeviceEdge.Node == nil {
+		if e.ComplexityRoot.AftermarketDeviceEdge.Node == nil {
 			break
 		}
 
-		return e.complexity.AftermarketDeviceEdge.Node(childComplexity), true
+		return e.ComplexityRoot.AftermarketDeviceEdge.Node(childComplexity), true
 
 	case "Connection.address":
-		if e.complexity.Connection.Address == nil {
+		if e.ComplexityRoot.Connection.Address == nil {
 			break
 		}
 
-		return e.complexity.Connection.Address(childComplexity), true
+		return e.ComplexityRoot.Connection.Address(childComplexity), true
 	case "Connection.mintedAt":
-		if e.complexity.Connection.MintedAt == nil {
+		if e.ComplexityRoot.Connection.MintedAt == nil {
 			break
 		}
 
-		return e.complexity.Connection.MintedAt(childComplexity), true
+		return e.ComplexityRoot.Connection.MintedAt(childComplexity), true
 	case "Connection.name":
-		if e.complexity.Connection.Name == nil {
+		if e.ComplexityRoot.Connection.Name == nil {
 			break
 		}
 
-		return e.complexity.Connection.Name(childComplexity), true
+		return e.ComplexityRoot.Connection.Name(childComplexity), true
 	case "Connection.owner":
-		if e.complexity.Connection.Owner == nil {
+		if e.ComplexityRoot.Connection.Owner == nil {
 			break
 		}
 
-		return e.complexity.Connection.Owner(childComplexity), true
+		return e.ComplexityRoot.Connection.Owner(childComplexity), true
 	case "Connection.tokenDID":
-		if e.complexity.Connection.TokenDID == nil {
+		if e.ComplexityRoot.Connection.TokenDID == nil {
 			break
 		}
 
-		return e.complexity.Connection.TokenDID(childComplexity), true
+		return e.ComplexityRoot.Connection.TokenDID(childComplexity), true
 	case "Connection.tokenId":
-		if e.complexity.Connection.TokenID == nil {
+		if e.ComplexityRoot.Connection.TokenID == nil {
 			break
 		}
 
-		return e.complexity.Connection.TokenID(childComplexity), true
+		return e.ComplexityRoot.Connection.TokenID(childComplexity), true
 
 	case "ConnectionConnection.edges":
-		if e.complexity.ConnectionConnection.Edges == nil {
+		if e.ComplexityRoot.ConnectionConnection.Edges == nil {
 			break
 		}
 
-		return e.complexity.ConnectionConnection.Edges(childComplexity), true
+		return e.ComplexityRoot.ConnectionConnection.Edges(childComplexity), true
 	case "ConnectionConnection.nodes":
-		if e.complexity.ConnectionConnection.Nodes == nil {
+		if e.ComplexityRoot.ConnectionConnection.Nodes == nil {
 			break
 		}
 
-		return e.complexity.ConnectionConnection.Nodes(childComplexity), true
+		return e.ComplexityRoot.ConnectionConnection.Nodes(childComplexity), true
 	case "ConnectionConnection.pageInfo":
-		if e.complexity.ConnectionConnection.PageInfo == nil {
+		if e.ComplexityRoot.ConnectionConnection.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.ConnectionConnection.PageInfo(childComplexity), true
+		return e.ComplexityRoot.ConnectionConnection.PageInfo(childComplexity), true
 	case "ConnectionConnection.totalCount":
-		if e.complexity.ConnectionConnection.TotalCount == nil {
+		if e.ComplexityRoot.ConnectionConnection.TotalCount == nil {
 			break
 		}
 
-		return e.complexity.ConnectionConnection.TotalCount(childComplexity), true
+		return e.ComplexityRoot.ConnectionConnection.TotalCount(childComplexity), true
 
 	case "ConnectionEdge.cursor":
-		if e.complexity.ConnectionEdge.Cursor == nil {
+		if e.ComplexityRoot.ConnectionEdge.Cursor == nil {
 			break
 		}
 
-		return e.complexity.ConnectionEdge.Cursor(childComplexity), true
+		return e.ComplexityRoot.ConnectionEdge.Cursor(childComplexity), true
 	case "ConnectionEdge.node":
-		if e.complexity.ConnectionEdge.Node == nil {
+		if e.ComplexityRoot.ConnectionEdge.Node == nil {
 			break
 		}
 
-		return e.complexity.ConnectionEdge.Node(childComplexity), true
+		return e.ComplexityRoot.ConnectionEdge.Node(childComplexity), true
 
 	case "DCN.expiresAt":
-		if e.complexity.DCN.ExpiresAt == nil {
+		if e.ComplexityRoot.DCN.ExpiresAt == nil {
 			break
 		}
 
-		return e.complexity.DCN.ExpiresAt(childComplexity), true
+		return e.ComplexityRoot.DCN.ExpiresAt(childComplexity), true
 	case "DCN.id":
-		if e.complexity.DCN.ID == nil {
+		if e.ComplexityRoot.DCN.ID == nil {
 			break
 		}
 
-		return e.complexity.DCN.ID(childComplexity), true
+		return e.ComplexityRoot.DCN.ID(childComplexity), true
 	case "DCN.mintedAt":
-		if e.complexity.DCN.MintedAt == nil {
+		if e.ComplexityRoot.DCN.MintedAt == nil {
 			break
 		}
 
-		return e.complexity.DCN.MintedAt(childComplexity), true
+		return e.ComplexityRoot.DCN.MintedAt(childComplexity), true
 	case "DCN.name":
-		if e.complexity.DCN.Name == nil {
+		if e.ComplexityRoot.DCN.Name == nil {
 			break
 		}
 
-		return e.complexity.DCN.Name(childComplexity), true
+		return e.ComplexityRoot.DCN.Name(childComplexity), true
 	case "DCN.node":
-		if e.complexity.DCN.Node == nil {
+		if e.ComplexityRoot.DCN.Node == nil {
 			break
 		}
 
-		return e.complexity.DCN.Node(childComplexity), true
+		return e.ComplexityRoot.DCN.Node(childComplexity), true
 	case "DCN.owner":
-		if e.complexity.DCN.Owner == nil {
+		if e.ComplexityRoot.DCN.Owner == nil {
 			break
 		}
 
-		return e.complexity.DCN.Owner(childComplexity), true
+		return e.ComplexityRoot.DCN.Owner(childComplexity), true
 	case "DCN.tokenDID":
-		if e.complexity.DCN.TokenDID == nil {
+		if e.ComplexityRoot.DCN.TokenDID == nil {
 			break
 		}
 
-		return e.complexity.DCN.TokenDID(childComplexity), true
+		return e.ComplexityRoot.DCN.TokenDID(childComplexity), true
 	case "DCN.tokenId":
-		if e.complexity.DCN.TokenID == nil {
+		if e.ComplexityRoot.DCN.TokenID == nil {
 			break
 		}
 
-		return e.complexity.DCN.TokenID(childComplexity), true
+		return e.ComplexityRoot.DCN.TokenID(childComplexity), true
 	case "DCN.vehicle":
-		if e.complexity.DCN.Vehicle == nil {
+		if e.ComplexityRoot.DCN.Vehicle == nil {
 			break
 		}
 
-		return e.complexity.DCN.Vehicle(childComplexity), true
+		return e.ComplexityRoot.DCN.Vehicle(childComplexity), true
 
 	case "DCNConnection.edges":
-		if e.complexity.DCNConnection.Edges == nil {
+		if e.ComplexityRoot.DCNConnection.Edges == nil {
 			break
 		}
 
-		return e.complexity.DCNConnection.Edges(childComplexity), true
+		return e.ComplexityRoot.DCNConnection.Edges(childComplexity), true
 	case "DCNConnection.nodes":
-		if e.complexity.DCNConnection.Nodes == nil {
+		if e.ComplexityRoot.DCNConnection.Nodes == nil {
 			break
 		}
 
-		return e.complexity.DCNConnection.Nodes(childComplexity), true
+		return e.ComplexityRoot.DCNConnection.Nodes(childComplexity), true
 	case "DCNConnection.pageInfo":
-		if e.complexity.DCNConnection.PageInfo == nil {
+		if e.ComplexityRoot.DCNConnection.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.DCNConnection.PageInfo(childComplexity), true
+		return e.ComplexityRoot.DCNConnection.PageInfo(childComplexity), true
 	case "DCNConnection.totalCount":
-		if e.complexity.DCNConnection.TotalCount == nil {
+		if e.ComplexityRoot.DCNConnection.TotalCount == nil {
 			break
 		}
 
-		return e.complexity.DCNConnection.TotalCount(childComplexity), true
+		return e.ComplexityRoot.DCNConnection.TotalCount(childComplexity), true
 
 	case "DCNEdge.cursor":
-		if e.complexity.DCNEdge.Cursor == nil {
+		if e.ComplexityRoot.DCNEdge.Cursor == nil {
 			break
 		}
 
-		return e.complexity.DCNEdge.Cursor(childComplexity), true
+		return e.ComplexityRoot.DCNEdge.Cursor(childComplexity), true
 	case "DCNEdge.node":
-		if e.complexity.DCNEdge.Node == nil {
+		if e.ComplexityRoot.DCNEdge.Node == nil {
 			break
 		}
 
-		return e.complexity.DCNEdge.Node(childComplexity), true
+		return e.ComplexityRoot.DCNEdge.Node(childComplexity), true
 
 	case "Definition.id":
-		if e.complexity.Definition.ID == nil {
+		if e.ComplexityRoot.Definition.ID == nil {
 			break
 		}
 
-		return e.complexity.Definition.ID(childComplexity), true
+		return e.ComplexityRoot.Definition.ID(childComplexity), true
 	case "Definition.make":
-		if e.complexity.Definition.Make == nil {
+		if e.ComplexityRoot.Definition.Make == nil {
 			break
 		}
 
-		return e.complexity.Definition.Make(childComplexity), true
+		return e.ComplexityRoot.Definition.Make(childComplexity), true
 	case "Definition.model":
-		if e.complexity.Definition.Model == nil {
+		if e.ComplexityRoot.Definition.Model == nil {
 			break
 		}
 
-		return e.complexity.Definition.Model(childComplexity), true
+		return e.ComplexityRoot.Definition.Model(childComplexity), true
 	case "Definition.year":
-		if e.complexity.Definition.Year == nil {
+		if e.ComplexityRoot.Definition.Year == nil {
 			break
 		}
 
-		return e.complexity.Definition.Year(childComplexity), true
+		return e.ComplexityRoot.Definition.Year(childComplexity), true
 
 	case "DeveloperLicense.alias":
-		if e.complexity.DeveloperLicense.Alias == nil {
+		if e.ComplexityRoot.DeveloperLicense.Alias == nil {
 			break
 		}
 
-		return e.complexity.DeveloperLicense.Alias(childComplexity), true
+		return e.ComplexityRoot.DeveloperLicense.Alias(childComplexity), true
 	case "DeveloperLicense.clientId":
-		if e.complexity.DeveloperLicense.ClientID == nil {
+		if e.ComplexityRoot.DeveloperLicense.ClientID == nil {
 			break
 		}
 
-		return e.complexity.DeveloperLicense.ClientID(childComplexity), true
+		return e.ComplexityRoot.DeveloperLicense.ClientID(childComplexity), true
 	case "DeveloperLicense.mintedAt":
-		if e.complexity.DeveloperLicense.MintedAt == nil {
+		if e.ComplexityRoot.DeveloperLicense.MintedAt == nil {
 			break
 		}
 
-		return e.complexity.DeveloperLicense.MintedAt(childComplexity), true
+		return e.ComplexityRoot.DeveloperLicense.MintedAt(childComplexity), true
 	case "DeveloperLicense.owner":
-		if e.complexity.DeveloperLicense.Owner == nil {
+		if e.ComplexityRoot.DeveloperLicense.Owner == nil {
 			break
 		}
 
-		return e.complexity.DeveloperLicense.Owner(childComplexity), true
+		return e.ComplexityRoot.DeveloperLicense.Owner(childComplexity), true
 	case "DeveloperLicense.redirectURIs":
-		if e.complexity.DeveloperLicense.RedirectURIs == nil {
+		if e.ComplexityRoot.DeveloperLicense.RedirectURIs == nil {
 			break
 		}
 
@@ -1004,9 +989,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.DeveloperLicense.RedirectURIs(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
+		return e.ComplexityRoot.DeveloperLicense.RedirectURIs(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
 	case "DeveloperLicense.signers":
-		if e.complexity.DeveloperLicense.Signers == nil {
+		if e.ComplexityRoot.DeveloperLicense.Signers == nil {
 			break
 		}
 
@@ -1015,259 +1000,259 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.DeveloperLicense.Signers(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
+		return e.ComplexityRoot.DeveloperLicense.Signers(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
 	case "DeveloperLicense.tokenDID":
-		if e.complexity.DeveloperLicense.TokenDID == nil {
+		if e.ComplexityRoot.DeveloperLicense.TokenDID == nil {
 			break
 		}
 
-		return e.complexity.DeveloperLicense.TokenDID(childComplexity), true
+		return e.ComplexityRoot.DeveloperLicense.TokenDID(childComplexity), true
 	case "DeveloperLicense.tokenId":
-		if e.complexity.DeveloperLicense.TokenID == nil {
+		if e.ComplexityRoot.DeveloperLicense.TokenID == nil {
 			break
 		}
 
-		return e.complexity.DeveloperLicense.TokenID(childComplexity), true
+		return e.ComplexityRoot.DeveloperLicense.TokenID(childComplexity), true
 
 	case "DeveloperLicenseConnection.edges":
-		if e.complexity.DeveloperLicenseConnection.Edges == nil {
+		if e.ComplexityRoot.DeveloperLicenseConnection.Edges == nil {
 			break
 		}
 
-		return e.complexity.DeveloperLicenseConnection.Edges(childComplexity), true
+		return e.ComplexityRoot.DeveloperLicenseConnection.Edges(childComplexity), true
 	case "DeveloperLicenseConnection.nodes":
-		if e.complexity.DeveloperLicenseConnection.Nodes == nil {
+		if e.ComplexityRoot.DeveloperLicenseConnection.Nodes == nil {
 			break
 		}
 
-		return e.complexity.DeveloperLicenseConnection.Nodes(childComplexity), true
+		return e.ComplexityRoot.DeveloperLicenseConnection.Nodes(childComplexity), true
 	case "DeveloperLicenseConnection.pageInfo":
-		if e.complexity.DeveloperLicenseConnection.PageInfo == nil {
+		if e.ComplexityRoot.DeveloperLicenseConnection.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.DeveloperLicenseConnection.PageInfo(childComplexity), true
+		return e.ComplexityRoot.DeveloperLicenseConnection.PageInfo(childComplexity), true
 	case "DeveloperLicenseConnection.totalCount":
-		if e.complexity.DeveloperLicenseConnection.TotalCount == nil {
+		if e.ComplexityRoot.DeveloperLicenseConnection.TotalCount == nil {
 			break
 		}
 
-		return e.complexity.DeveloperLicenseConnection.TotalCount(childComplexity), true
+		return e.ComplexityRoot.DeveloperLicenseConnection.TotalCount(childComplexity), true
 
 	case "DeveloperLicenseEdge.cursor":
-		if e.complexity.DeveloperLicenseEdge.Cursor == nil {
+		if e.ComplexityRoot.DeveloperLicenseEdge.Cursor == nil {
 			break
 		}
 
-		return e.complexity.DeveloperLicenseEdge.Cursor(childComplexity), true
+		return e.ComplexityRoot.DeveloperLicenseEdge.Cursor(childComplexity), true
 	case "DeveloperLicenseEdge.node":
-		if e.complexity.DeveloperLicenseEdge.Node == nil {
+		if e.ComplexityRoot.DeveloperLicenseEdge.Node == nil {
 			break
 		}
 
-		return e.complexity.DeveloperLicenseEdge.Node(childComplexity), true
+		return e.ComplexityRoot.DeveloperLicenseEdge.Node(childComplexity), true
 
 	case "DeviceDefinition.attributes":
-		if e.complexity.DeviceDefinition.Attributes == nil {
+		if e.ComplexityRoot.DeviceDefinition.Attributes == nil {
 			break
 		}
 
-		return e.complexity.DeviceDefinition.Attributes(childComplexity), true
+		return e.ComplexityRoot.DeviceDefinition.Attributes(childComplexity), true
 	case "DeviceDefinition.deviceDefinitionId":
-		if e.complexity.DeviceDefinition.DeviceDefinitionID == nil {
+		if e.ComplexityRoot.DeviceDefinition.DeviceDefinitionID == nil {
 			break
 		}
 
-		return e.complexity.DeviceDefinition.DeviceDefinitionID(childComplexity), true
+		return e.ComplexityRoot.DeviceDefinition.DeviceDefinitionID(childComplexity), true
 	case "DeviceDefinition.deviceType":
-		if e.complexity.DeviceDefinition.DeviceType == nil {
+		if e.ComplexityRoot.DeviceDefinition.DeviceType == nil {
 			break
 		}
 
-		return e.complexity.DeviceDefinition.DeviceType(childComplexity), true
+		return e.ComplexityRoot.DeviceDefinition.DeviceType(childComplexity), true
 	case "DeviceDefinition.imageURI":
-		if e.complexity.DeviceDefinition.ImageURI == nil {
+		if e.ComplexityRoot.DeviceDefinition.ImageURI == nil {
 			break
 		}
 
-		return e.complexity.DeviceDefinition.ImageURI(childComplexity), true
+		return e.ComplexityRoot.DeviceDefinition.ImageURI(childComplexity), true
 	case "DeviceDefinition.legacyId":
-		if e.complexity.DeviceDefinition.LegacyID == nil {
+		if e.ComplexityRoot.DeviceDefinition.LegacyID == nil {
 			break
 		}
 
-		return e.complexity.DeviceDefinition.LegacyID(childComplexity), true
+		return e.ComplexityRoot.DeviceDefinition.LegacyID(childComplexity), true
 	case "DeviceDefinition.manufacturer":
-		if e.complexity.DeviceDefinition.Manufacturer == nil {
+		if e.ComplexityRoot.DeviceDefinition.Manufacturer == nil {
 			break
 		}
 
-		return e.complexity.DeviceDefinition.Manufacturer(childComplexity), true
+		return e.ComplexityRoot.DeviceDefinition.Manufacturer(childComplexity), true
 	case "DeviceDefinition.model":
-		if e.complexity.DeviceDefinition.Model == nil {
+		if e.ComplexityRoot.DeviceDefinition.Model == nil {
 			break
 		}
 
-		return e.complexity.DeviceDefinition.Model(childComplexity), true
+		return e.ComplexityRoot.DeviceDefinition.Model(childComplexity), true
 	case "DeviceDefinition.year":
-		if e.complexity.DeviceDefinition.Year == nil {
+		if e.ComplexityRoot.DeviceDefinition.Year == nil {
 			break
 		}
 
-		return e.complexity.DeviceDefinition.Year(childComplexity), true
+		return e.ComplexityRoot.DeviceDefinition.Year(childComplexity), true
 
 	case "DeviceDefinitionAttribute.name":
-		if e.complexity.DeviceDefinitionAttribute.Name == nil {
+		if e.ComplexityRoot.DeviceDefinitionAttribute.Name == nil {
 			break
 		}
 
-		return e.complexity.DeviceDefinitionAttribute.Name(childComplexity), true
+		return e.ComplexityRoot.DeviceDefinitionAttribute.Name(childComplexity), true
 	case "DeviceDefinitionAttribute.value":
-		if e.complexity.DeviceDefinitionAttribute.Value == nil {
+		if e.ComplexityRoot.DeviceDefinitionAttribute.Value == nil {
 			break
 		}
 
-		return e.complexity.DeviceDefinitionAttribute.Value(childComplexity), true
+		return e.ComplexityRoot.DeviceDefinitionAttribute.Value(childComplexity), true
 
 	case "DeviceDefinitionConnection.edges":
-		if e.complexity.DeviceDefinitionConnection.Edges == nil {
+		if e.ComplexityRoot.DeviceDefinitionConnection.Edges == nil {
 			break
 		}
 
-		return e.complexity.DeviceDefinitionConnection.Edges(childComplexity), true
+		return e.ComplexityRoot.DeviceDefinitionConnection.Edges(childComplexity), true
 	case "DeviceDefinitionConnection.nodes":
-		if e.complexity.DeviceDefinitionConnection.Nodes == nil {
+		if e.ComplexityRoot.DeviceDefinitionConnection.Nodes == nil {
 			break
 		}
 
-		return e.complexity.DeviceDefinitionConnection.Nodes(childComplexity), true
+		return e.ComplexityRoot.DeviceDefinitionConnection.Nodes(childComplexity), true
 	case "DeviceDefinitionConnection.pageInfo":
-		if e.complexity.DeviceDefinitionConnection.PageInfo == nil {
+		if e.ComplexityRoot.DeviceDefinitionConnection.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.DeviceDefinitionConnection.PageInfo(childComplexity), true
+		return e.ComplexityRoot.DeviceDefinitionConnection.PageInfo(childComplexity), true
 	case "DeviceDefinitionConnection.totalCount":
-		if e.complexity.DeviceDefinitionConnection.TotalCount == nil {
+		if e.ComplexityRoot.DeviceDefinitionConnection.TotalCount == nil {
 			break
 		}
 
-		return e.complexity.DeviceDefinitionConnection.TotalCount(childComplexity), true
+		return e.ComplexityRoot.DeviceDefinitionConnection.TotalCount(childComplexity), true
 
 	case "DeviceDefinitionEdge.cursor":
-		if e.complexity.DeviceDefinitionEdge.Cursor == nil {
+		if e.ComplexityRoot.DeviceDefinitionEdge.Cursor == nil {
 			break
 		}
 
-		return e.complexity.DeviceDefinitionEdge.Cursor(childComplexity), true
+		return e.ComplexityRoot.DeviceDefinitionEdge.Cursor(childComplexity), true
 	case "DeviceDefinitionEdge.node":
-		if e.complexity.DeviceDefinitionEdge.Node == nil {
+		if e.ComplexityRoot.DeviceDefinitionEdge.Node == nil {
 			break
 		}
 
-		return e.complexity.DeviceDefinitionEdge.Node(childComplexity), true
+		return e.ComplexityRoot.DeviceDefinitionEdge.Node(childComplexity), true
 
 	case "Earning.aftermarketDevice":
-		if e.complexity.Earning.AftermarketDevice == nil {
+		if e.ComplexityRoot.Earning.AftermarketDevice == nil {
 			break
 		}
 
-		return e.complexity.Earning.AftermarketDevice(childComplexity), true
+		return e.ComplexityRoot.Earning.AftermarketDevice(childComplexity), true
 	case "Earning.aftermarketDeviceTokens":
-		if e.complexity.Earning.AftermarketDeviceTokens == nil {
+		if e.ComplexityRoot.Earning.AftermarketDeviceTokens == nil {
 			break
 		}
 
-		return e.complexity.Earning.AftermarketDeviceTokens(childComplexity), true
+		return e.ComplexityRoot.Earning.AftermarketDeviceTokens(childComplexity), true
 	case "Earning.beneficiary":
-		if e.complexity.Earning.Beneficiary == nil {
+		if e.ComplexityRoot.Earning.Beneficiary == nil {
 			break
 		}
 
-		return e.complexity.Earning.Beneficiary(childComplexity), true
+		return e.ComplexityRoot.Earning.Beneficiary(childComplexity), true
 	case "Earning.connectionStreak":
-		if e.complexity.Earning.ConnectionStreak == nil {
+		if e.ComplexityRoot.Earning.ConnectionStreak == nil {
 			break
 		}
 
-		return e.complexity.Earning.ConnectionStreak(childComplexity), true
+		return e.ComplexityRoot.Earning.ConnectionStreak(childComplexity), true
 	case "Earning.sentAt":
-		if e.complexity.Earning.SentAt == nil {
+		if e.ComplexityRoot.Earning.SentAt == nil {
 			break
 		}
 
-		return e.complexity.Earning.SentAt(childComplexity), true
+		return e.ComplexityRoot.Earning.SentAt(childComplexity), true
 	case "Earning.streakTokens":
-		if e.complexity.Earning.StreakTokens == nil {
+		if e.ComplexityRoot.Earning.StreakTokens == nil {
 			break
 		}
 
-		return e.complexity.Earning.StreakTokens(childComplexity), true
+		return e.ComplexityRoot.Earning.StreakTokens(childComplexity), true
 	case "Earning.syntheticDevice":
-		if e.complexity.Earning.SyntheticDevice == nil {
+		if e.ComplexityRoot.Earning.SyntheticDevice == nil {
 			break
 		}
 
-		return e.complexity.Earning.SyntheticDevice(childComplexity), true
+		return e.ComplexityRoot.Earning.SyntheticDevice(childComplexity), true
 	case "Earning.syntheticDeviceTokens":
-		if e.complexity.Earning.SyntheticDeviceTokens == nil {
+		if e.ComplexityRoot.Earning.SyntheticDeviceTokens == nil {
 			break
 		}
 
-		return e.complexity.Earning.SyntheticDeviceTokens(childComplexity), true
+		return e.ComplexityRoot.Earning.SyntheticDeviceTokens(childComplexity), true
 	case "Earning.vehicle":
-		if e.complexity.Earning.Vehicle == nil {
+		if e.ComplexityRoot.Earning.Vehicle == nil {
 			break
 		}
 
-		return e.complexity.Earning.Vehicle(childComplexity), true
+		return e.ComplexityRoot.Earning.Vehicle(childComplexity), true
 	case "Earning.week":
-		if e.complexity.Earning.Week == nil {
+		if e.ComplexityRoot.Earning.Week == nil {
 			break
 		}
 
-		return e.complexity.Earning.Week(childComplexity), true
+		return e.ComplexityRoot.Earning.Week(childComplexity), true
 
 	case "EarningsConnection.edges":
-		if e.complexity.EarningsConnection.Edges == nil {
+		if e.ComplexityRoot.EarningsConnection.Edges == nil {
 			break
 		}
 
-		return e.complexity.EarningsConnection.Edges(childComplexity), true
+		return e.ComplexityRoot.EarningsConnection.Edges(childComplexity), true
 	case "EarningsConnection.nodes":
-		if e.complexity.EarningsConnection.Nodes == nil {
+		if e.ComplexityRoot.EarningsConnection.Nodes == nil {
 			break
 		}
 
-		return e.complexity.EarningsConnection.Nodes(childComplexity), true
+		return e.ComplexityRoot.EarningsConnection.Nodes(childComplexity), true
 	case "EarningsConnection.pageInfo":
-		if e.complexity.EarningsConnection.PageInfo == nil {
+		if e.ComplexityRoot.EarningsConnection.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.EarningsConnection.PageInfo(childComplexity), true
+		return e.ComplexityRoot.EarningsConnection.PageInfo(childComplexity), true
 	case "EarningsConnection.totalCount":
-		if e.complexity.EarningsConnection.TotalCount == nil {
+		if e.ComplexityRoot.EarningsConnection.TotalCount == nil {
 			break
 		}
 
-		return e.complexity.EarningsConnection.TotalCount(childComplexity), true
+		return e.ComplexityRoot.EarningsConnection.TotalCount(childComplexity), true
 
 	case "EarningsEdge.cursor":
-		if e.complexity.EarningsEdge.Cursor == nil {
+		if e.ComplexityRoot.EarningsEdge.Cursor == nil {
 			break
 		}
 
-		return e.complexity.EarningsEdge.Cursor(childComplexity), true
+		return e.ComplexityRoot.EarningsEdge.Cursor(childComplexity), true
 	case "EarningsEdge.node":
-		if e.complexity.EarningsEdge.Node == nil {
+		if e.ComplexityRoot.EarningsEdge.Node == nil {
 			break
 		}
 
-		return e.complexity.EarningsEdge.Node(childComplexity), true
+		return e.ComplexityRoot.EarningsEdge.Node(childComplexity), true
 
 	case "Manufacturer.aftermarketDevices":
-		if e.complexity.Manufacturer.AftermarketDevices == nil {
+		if e.ComplexityRoot.Manufacturer.AftermarketDevices == nil {
 			break
 		}
 
@@ -1276,9 +1261,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Manufacturer.AftermarketDevices(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["filterBy"].(*model.AftermarketDevicesFilter)), true
+		return e.ComplexityRoot.Manufacturer.AftermarketDevices(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["filterBy"].(*model.AftermarketDevicesFilter)), true
 	case "Manufacturer.deviceDefinitions":
-		if e.complexity.Manufacturer.DeviceDefinitions == nil {
+		if e.ComplexityRoot.Manufacturer.DeviceDefinitions == nil {
 			break
 		}
 
@@ -1287,178 +1272,178 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Manufacturer.DeviceDefinitions(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["filterBy"].(*model.DeviceDefinitionFilter)), true
+		return e.ComplexityRoot.Manufacturer.DeviceDefinitions(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["filterBy"].(*model.DeviceDefinitionFilter)), true
 	case "Manufacturer.id":
-		if e.complexity.Manufacturer.ID == nil {
+		if e.ComplexityRoot.Manufacturer.ID == nil {
 			break
 		}
 
-		return e.complexity.Manufacturer.ID(childComplexity), true
+		return e.ComplexityRoot.Manufacturer.ID(childComplexity), true
 	case "Manufacturer.mintedAt":
-		if e.complexity.Manufacturer.MintedAt == nil {
+		if e.ComplexityRoot.Manufacturer.MintedAt == nil {
 			break
 		}
 
-		return e.complexity.Manufacturer.MintedAt(childComplexity), true
+		return e.ComplexityRoot.Manufacturer.MintedAt(childComplexity), true
 	case "Manufacturer.name":
-		if e.complexity.Manufacturer.Name == nil {
+		if e.ComplexityRoot.Manufacturer.Name == nil {
 			break
 		}
 
-		return e.complexity.Manufacturer.Name(childComplexity), true
+		return e.ComplexityRoot.Manufacturer.Name(childComplexity), true
 	case "Manufacturer.owner":
-		if e.complexity.Manufacturer.Owner == nil {
+		if e.ComplexityRoot.Manufacturer.Owner == nil {
 			break
 		}
 
-		return e.complexity.Manufacturer.Owner(childComplexity), true
+		return e.ComplexityRoot.Manufacturer.Owner(childComplexity), true
 	case "Manufacturer.tableId":
-		if e.complexity.Manufacturer.TableID == nil {
+		if e.ComplexityRoot.Manufacturer.TableID == nil {
 			break
 		}
 
-		return e.complexity.Manufacturer.TableID(childComplexity), true
+		return e.ComplexityRoot.Manufacturer.TableID(childComplexity), true
 	case "Manufacturer.tokenDID":
-		if e.complexity.Manufacturer.TokenDID == nil {
+		if e.ComplexityRoot.Manufacturer.TokenDID == nil {
 			break
 		}
 
-		return e.complexity.Manufacturer.TokenDID(childComplexity), true
+		return e.ComplexityRoot.Manufacturer.TokenDID(childComplexity), true
 	case "Manufacturer.tokenId":
-		if e.complexity.Manufacturer.TokenID == nil {
+		if e.ComplexityRoot.Manufacturer.TokenID == nil {
 			break
 		}
 
-		return e.complexity.Manufacturer.TokenID(childComplexity), true
+		return e.ComplexityRoot.Manufacturer.TokenID(childComplexity), true
 
 	case "ManufacturerConnection.edges":
-		if e.complexity.ManufacturerConnection.Edges == nil {
+		if e.ComplexityRoot.ManufacturerConnection.Edges == nil {
 			break
 		}
 
-		return e.complexity.ManufacturerConnection.Edges(childComplexity), true
+		return e.ComplexityRoot.ManufacturerConnection.Edges(childComplexity), true
 	case "ManufacturerConnection.nodes":
-		if e.complexity.ManufacturerConnection.Nodes == nil {
+		if e.ComplexityRoot.ManufacturerConnection.Nodes == nil {
 			break
 		}
 
-		return e.complexity.ManufacturerConnection.Nodes(childComplexity), true
+		return e.ComplexityRoot.ManufacturerConnection.Nodes(childComplexity), true
 	case "ManufacturerConnection.pageInfo":
-		if e.complexity.ManufacturerConnection.PageInfo == nil {
+		if e.ComplexityRoot.ManufacturerConnection.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.ManufacturerConnection.PageInfo(childComplexity), true
+		return e.ComplexityRoot.ManufacturerConnection.PageInfo(childComplexity), true
 	case "ManufacturerConnection.totalCount":
-		if e.complexity.ManufacturerConnection.TotalCount == nil {
+		if e.ComplexityRoot.ManufacturerConnection.TotalCount == nil {
 			break
 		}
 
-		return e.complexity.ManufacturerConnection.TotalCount(childComplexity), true
+		return e.ComplexityRoot.ManufacturerConnection.TotalCount(childComplexity), true
 
 	case "ManufacturerEdge.cursor":
-		if e.complexity.ManufacturerEdge.Cursor == nil {
+		if e.ComplexityRoot.ManufacturerEdge.Cursor == nil {
 			break
 		}
 
-		return e.complexity.ManufacturerEdge.Cursor(childComplexity), true
+		return e.ComplexityRoot.ManufacturerEdge.Cursor(childComplexity), true
 	case "ManufacturerEdge.node":
-		if e.complexity.ManufacturerEdge.Node == nil {
+		if e.ComplexityRoot.ManufacturerEdge.Node == nil {
 			break
 		}
 
-		return e.complexity.ManufacturerEdge.Node(childComplexity), true
+		return e.ComplexityRoot.ManufacturerEdge.Node(childComplexity), true
 
 	case "PageInfo.endCursor":
-		if e.complexity.PageInfo.EndCursor == nil {
+		if e.ComplexityRoot.PageInfo.EndCursor == nil {
 			break
 		}
 
-		return e.complexity.PageInfo.EndCursor(childComplexity), true
+		return e.ComplexityRoot.PageInfo.EndCursor(childComplexity), true
 	case "PageInfo.hasNextPage":
-		if e.complexity.PageInfo.HasNextPage == nil {
+		if e.ComplexityRoot.PageInfo.HasNextPage == nil {
 			break
 		}
 
-		return e.complexity.PageInfo.HasNextPage(childComplexity), true
+		return e.ComplexityRoot.PageInfo.HasNextPage(childComplexity), true
 	case "PageInfo.hasPreviousPage":
-		if e.complexity.PageInfo.HasPreviousPage == nil {
+		if e.ComplexityRoot.PageInfo.HasPreviousPage == nil {
 			break
 		}
 
-		return e.complexity.PageInfo.HasPreviousPage(childComplexity), true
+		return e.ComplexityRoot.PageInfo.HasPreviousPage(childComplexity), true
 	case "PageInfo.startCursor":
-		if e.complexity.PageInfo.StartCursor == nil {
+		if e.ComplexityRoot.PageInfo.StartCursor == nil {
 			break
 		}
 
-		return e.complexity.PageInfo.StartCursor(childComplexity), true
+		return e.ComplexityRoot.PageInfo.StartCursor(childComplexity), true
 
 	case "Privilege.expiresAt":
-		if e.complexity.Privilege.ExpiresAt == nil {
+		if e.ComplexityRoot.Privilege.ExpiresAt == nil {
 			break
 		}
 
-		return e.complexity.Privilege.ExpiresAt(childComplexity), true
+		return e.ComplexityRoot.Privilege.ExpiresAt(childComplexity), true
 	case "Privilege.id":
-		if e.complexity.Privilege.ID == nil {
+		if e.ComplexityRoot.Privilege.ID == nil {
 			break
 		}
 
-		return e.complexity.Privilege.ID(childComplexity), true
+		return e.ComplexityRoot.Privilege.ID(childComplexity), true
 	case "Privilege.setAt":
-		if e.complexity.Privilege.SetAt == nil {
+		if e.ComplexityRoot.Privilege.SetAt == nil {
 			break
 		}
 
-		return e.complexity.Privilege.SetAt(childComplexity), true
+		return e.ComplexityRoot.Privilege.SetAt(childComplexity), true
 	case "Privilege.user":
-		if e.complexity.Privilege.User == nil {
+		if e.ComplexityRoot.Privilege.User == nil {
 			break
 		}
 
-		return e.complexity.Privilege.User(childComplexity), true
+		return e.ComplexityRoot.Privilege.User(childComplexity), true
 
 	case "PrivilegeEdge.cursor":
-		if e.complexity.PrivilegeEdge.Cursor == nil {
+		if e.ComplexityRoot.PrivilegeEdge.Cursor == nil {
 			break
 		}
 
-		return e.complexity.PrivilegeEdge.Cursor(childComplexity), true
+		return e.ComplexityRoot.PrivilegeEdge.Cursor(childComplexity), true
 	case "PrivilegeEdge.node":
-		if e.complexity.PrivilegeEdge.Node == nil {
+		if e.ComplexityRoot.PrivilegeEdge.Node == nil {
 			break
 		}
 
-		return e.complexity.PrivilegeEdge.Node(childComplexity), true
+		return e.ComplexityRoot.PrivilegeEdge.Node(childComplexity), true
 
 	case "PrivilegesConnection.edges":
-		if e.complexity.PrivilegesConnection.Edges == nil {
+		if e.ComplexityRoot.PrivilegesConnection.Edges == nil {
 			break
 		}
 
-		return e.complexity.PrivilegesConnection.Edges(childComplexity), true
+		return e.ComplexityRoot.PrivilegesConnection.Edges(childComplexity), true
 	case "PrivilegesConnection.nodes":
-		if e.complexity.PrivilegesConnection.Nodes == nil {
+		if e.ComplexityRoot.PrivilegesConnection.Nodes == nil {
 			break
 		}
 
-		return e.complexity.PrivilegesConnection.Nodes(childComplexity), true
+		return e.ComplexityRoot.PrivilegesConnection.Nodes(childComplexity), true
 	case "PrivilegesConnection.pageInfo":
-		if e.complexity.PrivilegesConnection.PageInfo == nil {
+		if e.ComplexityRoot.PrivilegesConnection.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.PrivilegesConnection.PageInfo(childComplexity), true
+		return e.ComplexityRoot.PrivilegesConnection.PageInfo(childComplexity), true
 	case "PrivilegesConnection.totalCount":
-		if e.complexity.PrivilegesConnection.TotalCount == nil {
+		if e.ComplexityRoot.PrivilegesConnection.TotalCount == nil {
 			break
 		}
 
-		return e.complexity.PrivilegesConnection.TotalCount(childComplexity), true
+		return e.ComplexityRoot.PrivilegesConnection.TotalCount(childComplexity), true
 
 	case "Query.account":
-		if e.complexity.Query.Account == nil {
+		if e.ComplexityRoot.Query.Account == nil {
 			break
 		}
 
@@ -1467,9 +1452,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.Account(childComplexity, args["by"].(model.AccountBy)), true
+		return e.ComplexityRoot.Query.Account(childComplexity, args["by"].(model.AccountBy)), true
 	case "Query.aftermarketDevice":
-		if e.complexity.Query.AftermarketDevice == nil {
+		if e.ComplexityRoot.Query.AftermarketDevice == nil {
 			break
 		}
 
@@ -1478,9 +1463,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.AftermarketDevice(childComplexity, args["by"].(model.AftermarketDeviceBy)), true
+		return e.ComplexityRoot.Query.AftermarketDevice(childComplexity, args["by"].(model.AftermarketDeviceBy)), true
 	case "Query.aftermarketDevices":
-		if e.complexity.Query.AftermarketDevices == nil {
+		if e.ComplexityRoot.Query.AftermarketDevices == nil {
 			break
 		}
 
@@ -1489,9 +1474,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.AftermarketDevices(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["filterBy"].(*model.AftermarketDevicesFilter)), true
+		return e.ComplexityRoot.Query.AftermarketDevices(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["filterBy"].(*model.AftermarketDevicesFilter)), true
 	case "Query.connection":
-		if e.complexity.Query.Connection == nil {
+		if e.ComplexityRoot.Query.Connection == nil {
 			break
 		}
 
@@ -1500,9 +1485,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.Connection(childComplexity, args["by"].(model.ConnectionBy)), true
+		return e.ComplexityRoot.Query.Connection(childComplexity, args["by"].(model.ConnectionBy)), true
 	case "Query.connections":
-		if e.complexity.Query.Connections == nil {
+		if e.ComplexityRoot.Query.Connections == nil {
 			break
 		}
 
@@ -1511,9 +1496,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.Connections(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
+		return e.ComplexityRoot.Query.Connections(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
 	case "Query.dcn":
-		if e.complexity.Query.Dcn == nil {
+		if e.ComplexityRoot.Query.Dcn == nil {
 			break
 		}
 
@@ -1522,9 +1507,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.Dcn(childComplexity, args["by"].(model.DCNBy)), true
+		return e.ComplexityRoot.Query.Dcn(childComplexity, args["by"].(model.DCNBy)), true
 	case "Query.dcns":
-		if e.complexity.Query.Dcns == nil {
+		if e.ComplexityRoot.Query.Dcns == nil {
 			break
 		}
 
@@ -1533,9 +1518,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.Dcns(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["filterBy"].(*model.DCNFilter)), true
+		return e.ComplexityRoot.Query.Dcns(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["filterBy"].(*model.DCNFilter)), true
 	case "Query.developerLicense":
-		if e.complexity.Query.DeveloperLicense == nil {
+		if e.ComplexityRoot.Query.DeveloperLicense == nil {
 			break
 		}
 
@@ -1544,9 +1529,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.DeveloperLicense(childComplexity, args["by"].(model.DeveloperLicenseBy)), true
+		return e.ComplexityRoot.Query.DeveloperLicense(childComplexity, args["by"].(model.DeveloperLicenseBy)), true
 	case "Query.developerLicenses":
-		if e.complexity.Query.DeveloperLicenses == nil {
+		if e.ComplexityRoot.Query.DeveloperLicenses == nil {
 			break
 		}
 
@@ -1555,9 +1540,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.DeveloperLicenses(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["filterBy"].(*model.DeveloperLicenseFilterBy)), true
+		return e.ComplexityRoot.Query.DeveloperLicenses(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["filterBy"].(*model.DeveloperLicenseFilterBy)), true
 	case "Query.deviceDefinition":
-		if e.complexity.Query.DeviceDefinition == nil {
+		if e.ComplexityRoot.Query.DeviceDefinition == nil {
 			break
 		}
 
@@ -1566,9 +1551,10 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.DeviceDefinition(childComplexity, args["by"].(model.DeviceDefinitionBy)), true
+		return e.ComplexityRoot.Query.DeviceDefinition(childComplexity, args["by"].(model.DeviceDefinitionBy)), true
+
 	case "Query.manufacturer":
-		if e.complexity.Query.Manufacturer == nil {
+		if e.ComplexityRoot.Query.Manufacturer == nil {
 			break
 		}
 
@@ -1577,15 +1563,15 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.Manufacturer(childComplexity, args["by"].(model.ManufacturerBy)), true
+		return e.ComplexityRoot.Query.Manufacturer(childComplexity, args["by"].(model.ManufacturerBy)), true
 	case "Query.manufacturers":
-		if e.complexity.Query.Manufacturers == nil {
+		if e.ComplexityRoot.Query.Manufacturers == nil {
 			break
 		}
 
-		return e.complexity.Query.Manufacturers(childComplexity), true
+		return e.ComplexityRoot.Query.Manufacturers(childComplexity), true
 	case "Query.node":
-		if e.complexity.Query.Node == nil {
+		if e.ComplexityRoot.Query.Node == nil {
 			break
 		}
 
@@ -1594,9 +1580,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.Node(childComplexity, args["id"].(string)), true
+		return e.ComplexityRoot.Query.Node(childComplexity, args["id"].(string)), true
 	case "Query.rewards":
-		if e.complexity.Query.Rewards == nil {
+		if e.ComplexityRoot.Query.Rewards == nil {
 			break
 		}
 
@@ -1605,9 +1591,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.Rewards(childComplexity, args["user"].(common.Address)), true
+		return e.ComplexityRoot.Query.Rewards(childComplexity, args["user"].(common.Address)), true
 	case "Query.stakes":
-		if e.complexity.Query.Stakes == nil {
+		if e.ComplexityRoot.Query.Stakes == nil {
 			break
 		}
 
@@ -1616,9 +1602,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.Stakes(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["filterBy"].(*model.StakeFilterBy)), true
+		return e.ComplexityRoot.Query.Stakes(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["filterBy"].(*model.StakeFilterBy)), true
 	case "Query.syntheticDevice":
-		if e.complexity.Query.SyntheticDevice == nil {
+		if e.ComplexityRoot.Query.SyntheticDevice == nil {
 			break
 		}
 
@@ -1627,9 +1613,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.SyntheticDevice(childComplexity, args["by"].(model.SyntheticDeviceBy)), true
+		return e.ComplexityRoot.Query.SyntheticDevice(childComplexity, args["by"].(model.SyntheticDeviceBy)), true
 	case "Query.syntheticDevices":
-		if e.complexity.Query.SyntheticDevices == nil {
+		if e.ComplexityRoot.Query.SyntheticDevices == nil {
 			break
 		}
 
@@ -1638,9 +1624,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.SyntheticDevices(childComplexity, args["first"].(*int), args["last"].(*int), args["after"].(*string), args["before"].(*string), args["filterBy"].(*model.SyntheticDevicesFilter)), true
+		return e.ComplexityRoot.Query.SyntheticDevices(childComplexity, args["first"].(*int), args["last"].(*int), args["after"].(*string), args["before"].(*string), args["filterBy"].(*model.SyntheticDevicesFilter)), true
 	case "Query.template":
-		if e.complexity.Query.Template == nil {
+		if e.ComplexityRoot.Query.Template == nil {
 			break
 		}
 
@@ -1649,9 +1635,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.Template(childComplexity, args["by"].(model.TemplateBy)), true
+		return e.ComplexityRoot.Query.Template(childComplexity, args["by"].(model.TemplateBy)), true
 	case "Query.templates":
-		if e.complexity.Query.Templates == nil {
+		if e.ComplexityRoot.Query.Templates == nil {
 			break
 		}
 
@@ -1660,9 +1646,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.Templates(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
+		return e.ComplexityRoot.Query.Templates(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
 	case "Query.vehicle":
-		if e.complexity.Query.Vehicle == nil {
+		if e.ComplexityRoot.Query.Vehicle == nil {
 			break
 		}
 
@@ -1671,9 +1657,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.Vehicle(childComplexity, args["tokenId"].(*int), args["tokenDID"].(*string)), true
+		return e.ComplexityRoot.Query.Vehicle(childComplexity, args["tokenId"].(*int), args["tokenDID"].(*string)), true
 	case "Query.vehicles":
-		if e.complexity.Query.Vehicles == nil {
+		if e.ComplexityRoot.Query.Vehicles == nil {
 			break
 		}
 
@@ -1682,497 +1668,497 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.Vehicles(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["filterBy"].(*model.VehiclesFilter)), true
+		return e.ComplexityRoot.Query.Vehicles(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["filterBy"].(*model.VehiclesFilter)), true
 
 	case "RedirectURI.enabledAt":
-		if e.complexity.RedirectURI.EnabledAt == nil {
+		if e.ComplexityRoot.RedirectURI.EnabledAt == nil {
 			break
 		}
 
-		return e.complexity.RedirectURI.EnabledAt(childComplexity), true
+		return e.ComplexityRoot.RedirectURI.EnabledAt(childComplexity), true
 	case "RedirectURI.uri":
-		if e.complexity.RedirectURI.URI == nil {
+		if e.ComplexityRoot.RedirectURI.URI == nil {
 			break
 		}
 
-		return e.complexity.RedirectURI.URI(childComplexity), true
+		return e.ComplexityRoot.RedirectURI.URI(childComplexity), true
 
 	case "RedirectURIConnection.edges":
-		if e.complexity.RedirectURIConnection.Edges == nil {
+		if e.ComplexityRoot.RedirectURIConnection.Edges == nil {
 			break
 		}
 
-		return e.complexity.RedirectURIConnection.Edges(childComplexity), true
+		return e.ComplexityRoot.RedirectURIConnection.Edges(childComplexity), true
 	case "RedirectURIConnection.nodes":
-		if e.complexity.RedirectURIConnection.Nodes == nil {
+		if e.ComplexityRoot.RedirectURIConnection.Nodes == nil {
 			break
 		}
 
-		return e.complexity.RedirectURIConnection.Nodes(childComplexity), true
+		return e.ComplexityRoot.RedirectURIConnection.Nodes(childComplexity), true
 	case "RedirectURIConnection.pageInfo":
-		if e.complexity.RedirectURIConnection.PageInfo == nil {
+		if e.ComplexityRoot.RedirectURIConnection.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.RedirectURIConnection.PageInfo(childComplexity), true
+		return e.ComplexityRoot.RedirectURIConnection.PageInfo(childComplexity), true
 	case "RedirectURIConnection.totalCount":
-		if e.complexity.RedirectURIConnection.TotalCount == nil {
+		if e.ComplexityRoot.RedirectURIConnection.TotalCount == nil {
 			break
 		}
 
-		return e.complexity.RedirectURIConnection.TotalCount(childComplexity), true
+		return e.ComplexityRoot.RedirectURIConnection.TotalCount(childComplexity), true
 
 	case "RedirectURIEdge.cursor":
-		if e.complexity.RedirectURIEdge.Cursor == nil {
+		if e.ComplexityRoot.RedirectURIEdge.Cursor == nil {
 			break
 		}
 
-		return e.complexity.RedirectURIEdge.Cursor(childComplexity), true
+		return e.ComplexityRoot.RedirectURIEdge.Cursor(childComplexity), true
 	case "RedirectURIEdge.node":
-		if e.complexity.RedirectURIEdge.Node == nil {
+		if e.ComplexityRoot.RedirectURIEdge.Node == nil {
 			break
 		}
 
-		return e.complexity.RedirectURIEdge.Node(childComplexity), true
+		return e.ComplexityRoot.RedirectURIEdge.Node(childComplexity), true
 
 	case "Sacd.createdAt":
-		if e.complexity.Sacd.CreatedAt == nil {
+		if e.ComplexityRoot.Sacd.CreatedAt == nil {
 			break
 		}
 
-		return e.complexity.Sacd.CreatedAt(childComplexity), true
+		return e.ComplexityRoot.Sacd.CreatedAt(childComplexity), true
 	case "Sacd.expiresAt":
-		if e.complexity.Sacd.ExpiresAt == nil {
+		if e.ComplexityRoot.Sacd.ExpiresAt == nil {
 			break
 		}
 
-		return e.complexity.Sacd.ExpiresAt(childComplexity), true
+		return e.ComplexityRoot.Sacd.ExpiresAt(childComplexity), true
 	case "Sacd.grantee":
-		if e.complexity.Sacd.Grantee == nil {
+		if e.ComplexityRoot.Sacd.Grantee == nil {
 			break
 		}
 
-		return e.complexity.Sacd.Grantee(childComplexity), true
+		return e.ComplexityRoot.Sacd.Grantee(childComplexity), true
 	case "Sacd.permissions":
-		if e.complexity.Sacd.Permissions == nil {
+		if e.ComplexityRoot.Sacd.Permissions == nil {
 			break
 		}
 
-		return e.complexity.Sacd.Permissions(childComplexity), true
+		return e.ComplexityRoot.Sacd.Permissions(childComplexity), true
 	case "Sacd.source":
-		if e.complexity.Sacd.Source == nil {
+		if e.ComplexityRoot.Sacd.Source == nil {
 			break
 		}
 
-		return e.complexity.Sacd.Source(childComplexity), true
+		return e.ComplexityRoot.Sacd.Source(childComplexity), true
 	case "Sacd.template":
-		if e.complexity.Sacd.Template == nil {
+		if e.ComplexityRoot.Sacd.Template == nil {
 			break
 		}
 
-		return e.complexity.Sacd.Template(childComplexity), true
+		return e.ComplexityRoot.Sacd.Template(childComplexity), true
 
 	case "SacdConnection.edges":
-		if e.complexity.SacdConnection.Edges == nil {
+		if e.ComplexityRoot.SacdConnection.Edges == nil {
 			break
 		}
 
-		return e.complexity.SacdConnection.Edges(childComplexity), true
+		return e.ComplexityRoot.SacdConnection.Edges(childComplexity), true
 	case "SacdConnection.nodes":
-		if e.complexity.SacdConnection.Nodes == nil {
+		if e.ComplexityRoot.SacdConnection.Nodes == nil {
 			break
 		}
 
-		return e.complexity.SacdConnection.Nodes(childComplexity), true
+		return e.ComplexityRoot.SacdConnection.Nodes(childComplexity), true
 	case "SacdConnection.pageInfo":
-		if e.complexity.SacdConnection.PageInfo == nil {
+		if e.ComplexityRoot.SacdConnection.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.SacdConnection.PageInfo(childComplexity), true
+		return e.ComplexityRoot.SacdConnection.PageInfo(childComplexity), true
 	case "SacdConnection.totalCount":
-		if e.complexity.SacdConnection.TotalCount == nil {
+		if e.ComplexityRoot.SacdConnection.TotalCount == nil {
 			break
 		}
 
-		return e.complexity.SacdConnection.TotalCount(childComplexity), true
+		return e.ComplexityRoot.SacdConnection.TotalCount(childComplexity), true
 
 	case "SacdEdge.cursor":
-		if e.complexity.SacdEdge.Cursor == nil {
+		if e.ComplexityRoot.SacdEdge.Cursor == nil {
 			break
 		}
 
-		return e.complexity.SacdEdge.Cursor(childComplexity), true
+		return e.ComplexityRoot.SacdEdge.Cursor(childComplexity), true
 	case "SacdEdge.node":
-		if e.complexity.SacdEdge.Node == nil {
+		if e.ComplexityRoot.SacdEdge.Node == nil {
 			break
 		}
 
-		return e.complexity.SacdEdge.Node(childComplexity), true
+		return e.ComplexityRoot.SacdEdge.Node(childComplexity), true
 
 	case "Signer.address":
-		if e.complexity.Signer.Address == nil {
+		if e.ComplexityRoot.Signer.Address == nil {
 			break
 		}
 
-		return e.complexity.Signer.Address(childComplexity), true
+		return e.ComplexityRoot.Signer.Address(childComplexity), true
 	case "Signer.enabledAt":
-		if e.complexity.Signer.EnabledAt == nil {
+		if e.ComplexityRoot.Signer.EnabledAt == nil {
 			break
 		}
 
-		return e.complexity.Signer.EnabledAt(childComplexity), true
+		return e.ComplexityRoot.Signer.EnabledAt(childComplexity), true
 
 	case "SignerConnection.edges":
-		if e.complexity.SignerConnection.Edges == nil {
+		if e.ComplexityRoot.SignerConnection.Edges == nil {
 			break
 		}
 
-		return e.complexity.SignerConnection.Edges(childComplexity), true
+		return e.ComplexityRoot.SignerConnection.Edges(childComplexity), true
 	case "SignerConnection.nodes":
-		if e.complexity.SignerConnection.Nodes == nil {
+		if e.ComplexityRoot.SignerConnection.Nodes == nil {
 			break
 		}
 
-		return e.complexity.SignerConnection.Nodes(childComplexity), true
+		return e.ComplexityRoot.SignerConnection.Nodes(childComplexity), true
 	case "SignerConnection.pageInfo":
-		if e.complexity.SignerConnection.PageInfo == nil {
+		if e.ComplexityRoot.SignerConnection.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.SignerConnection.PageInfo(childComplexity), true
+		return e.ComplexityRoot.SignerConnection.PageInfo(childComplexity), true
 	case "SignerConnection.totalCount":
-		if e.complexity.SignerConnection.TotalCount == nil {
+		if e.ComplexityRoot.SignerConnection.TotalCount == nil {
 			break
 		}
 
-		return e.complexity.SignerConnection.TotalCount(childComplexity), true
+		return e.ComplexityRoot.SignerConnection.TotalCount(childComplexity), true
 
 	case "SignerEdge.cursor":
-		if e.complexity.SignerEdge.Cursor == nil {
+		if e.ComplexityRoot.SignerEdge.Cursor == nil {
 			break
 		}
 
-		return e.complexity.SignerEdge.Cursor(childComplexity), true
+		return e.ComplexityRoot.SignerEdge.Cursor(childComplexity), true
 	case "SignerEdge.node":
-		if e.complexity.SignerEdge.Node == nil {
+		if e.ComplexityRoot.SignerEdge.Node == nil {
 			break
 		}
 
-		return e.complexity.SignerEdge.Node(childComplexity), true
+		return e.ComplexityRoot.SignerEdge.Node(childComplexity), true
 
 	case "Stake.amount":
-		if e.complexity.Stake.Amount == nil {
+		if e.ComplexityRoot.Stake.Amount == nil {
 			break
 		}
 
-		return e.complexity.Stake.Amount(childComplexity), true
+		return e.ComplexityRoot.Stake.Amount(childComplexity), true
 	case "Stake.endsAt":
-		if e.complexity.Stake.EndsAt == nil {
+		if e.ComplexityRoot.Stake.EndsAt == nil {
 			break
 		}
 
-		return e.complexity.Stake.EndsAt(childComplexity), true
+		return e.ComplexityRoot.Stake.EndsAt(childComplexity), true
 	case "Stake.level":
-		if e.complexity.Stake.Level == nil {
+		if e.ComplexityRoot.Stake.Level == nil {
 			break
 		}
 
-		return e.complexity.Stake.Level(childComplexity), true
+		return e.ComplexityRoot.Stake.Level(childComplexity), true
 	case "Stake.owner":
-		if e.complexity.Stake.Owner == nil {
+		if e.ComplexityRoot.Stake.Owner == nil {
 			break
 		}
 
-		return e.complexity.Stake.Owner(childComplexity), true
+		return e.ComplexityRoot.Stake.Owner(childComplexity), true
 	case "Stake.points":
-		if e.complexity.Stake.Points == nil {
+		if e.ComplexityRoot.Stake.Points == nil {
 			break
 		}
 
-		return e.complexity.Stake.Points(childComplexity), true
+		return e.ComplexityRoot.Stake.Points(childComplexity), true
 	case "Stake.stakedAt":
-		if e.complexity.Stake.StakedAt == nil {
+		if e.ComplexityRoot.Stake.StakedAt == nil {
 			break
 		}
 
-		return e.complexity.Stake.StakedAt(childComplexity), true
+		return e.ComplexityRoot.Stake.StakedAt(childComplexity), true
 	case "Stake.tokenDID":
-		if e.complexity.Stake.TokenDID == nil {
+		if e.ComplexityRoot.Stake.TokenDID == nil {
 			break
 		}
 
-		return e.complexity.Stake.TokenDID(childComplexity), true
+		return e.ComplexityRoot.Stake.TokenDID(childComplexity), true
 	case "Stake.tokenId":
-		if e.complexity.Stake.TokenID == nil {
+		if e.ComplexityRoot.Stake.TokenID == nil {
 			break
 		}
 
-		return e.complexity.Stake.TokenID(childComplexity), true
+		return e.ComplexityRoot.Stake.TokenID(childComplexity), true
 	case "Stake.vehicle":
-		if e.complexity.Stake.Vehicle == nil {
+		if e.ComplexityRoot.Stake.Vehicle == nil {
 			break
 		}
 
-		return e.complexity.Stake.Vehicle(childComplexity), true
+		return e.ComplexityRoot.Stake.Vehicle(childComplexity), true
 	case "Stake.withdrawnAt":
-		if e.complexity.Stake.WithdrawnAt == nil {
+		if e.ComplexityRoot.Stake.WithdrawnAt == nil {
 			break
 		}
 
-		return e.complexity.Stake.WithdrawnAt(childComplexity), true
+		return e.ComplexityRoot.Stake.WithdrawnAt(childComplexity), true
 
 	case "StakeConnection.edges":
-		if e.complexity.StakeConnection.Edges == nil {
+		if e.ComplexityRoot.StakeConnection.Edges == nil {
 			break
 		}
 
-		return e.complexity.StakeConnection.Edges(childComplexity), true
+		return e.ComplexityRoot.StakeConnection.Edges(childComplexity), true
 	case "StakeConnection.nodes":
-		if e.complexity.StakeConnection.Nodes == nil {
+		if e.ComplexityRoot.StakeConnection.Nodes == nil {
 			break
 		}
 
-		return e.complexity.StakeConnection.Nodes(childComplexity), true
+		return e.ComplexityRoot.StakeConnection.Nodes(childComplexity), true
 	case "StakeConnection.pageInfo":
-		if e.complexity.StakeConnection.PageInfo == nil {
+		if e.ComplexityRoot.StakeConnection.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.StakeConnection.PageInfo(childComplexity), true
+		return e.ComplexityRoot.StakeConnection.PageInfo(childComplexity), true
 	case "StakeConnection.totalCount":
-		if e.complexity.StakeConnection.TotalCount == nil {
+		if e.ComplexityRoot.StakeConnection.TotalCount == nil {
 			break
 		}
 
-		return e.complexity.StakeConnection.TotalCount(childComplexity), true
+		return e.ComplexityRoot.StakeConnection.TotalCount(childComplexity), true
 
 	case "StakeEdge.cursor":
-		if e.complexity.StakeEdge.Cursor == nil {
+		if e.ComplexityRoot.StakeEdge.Cursor == nil {
 			break
 		}
 
-		return e.complexity.StakeEdge.Cursor(childComplexity), true
+		return e.ComplexityRoot.StakeEdge.Cursor(childComplexity), true
 	case "StakeEdge.node":
-		if e.complexity.StakeEdge.Node == nil {
+		if e.ComplexityRoot.StakeEdge.Node == nil {
 			break
 		}
 
-		return e.complexity.StakeEdge.Node(childComplexity), true
+		return e.ComplexityRoot.StakeEdge.Node(childComplexity), true
 
 	case "StorageNode.address":
-		if e.complexity.StorageNode.Address == nil {
+		if e.ComplexityRoot.StorageNode.Address == nil {
 			break
 		}
 
-		return e.complexity.StorageNode.Address(childComplexity), true
+		return e.ComplexityRoot.StorageNode.Address(childComplexity), true
 	case "StorageNode.label":
-		if e.complexity.StorageNode.Label == nil {
+		if e.ComplexityRoot.StorageNode.Label == nil {
 			break
 		}
 
-		return e.complexity.StorageNode.Label(childComplexity), true
+		return e.ComplexityRoot.StorageNode.Label(childComplexity), true
 	case "StorageNode.mintedAt":
-		if e.complexity.StorageNode.MintedAt == nil {
+		if e.ComplexityRoot.StorageNode.MintedAt == nil {
 			break
 		}
 
-		return e.complexity.StorageNode.MintedAt(childComplexity), true
+		return e.ComplexityRoot.StorageNode.MintedAt(childComplexity), true
 	case "StorageNode.owner":
-		if e.complexity.StorageNode.Owner == nil {
+		if e.ComplexityRoot.StorageNode.Owner == nil {
 			break
 		}
 
-		return e.complexity.StorageNode.Owner(childComplexity), true
+		return e.ComplexityRoot.StorageNode.Owner(childComplexity), true
 	case "StorageNode.tokenDID":
-		if e.complexity.StorageNode.TokenDID == nil {
+		if e.ComplexityRoot.StorageNode.TokenDID == nil {
 			break
 		}
 
-		return e.complexity.StorageNode.TokenDID(childComplexity), true
+		return e.ComplexityRoot.StorageNode.TokenDID(childComplexity), true
 	case "StorageNode.tokenId":
-		if e.complexity.StorageNode.TokenID == nil {
+		if e.ComplexityRoot.StorageNode.TokenID == nil {
 			break
 		}
 
-		return e.complexity.StorageNode.TokenID(childComplexity), true
+		return e.ComplexityRoot.StorageNode.TokenID(childComplexity), true
 	case "StorageNode.uri":
-		if e.complexity.StorageNode.URI == nil {
+		if e.ComplexityRoot.StorageNode.URI == nil {
 			break
 		}
 
-		return e.complexity.StorageNode.URI(childComplexity), true
+		return e.ComplexityRoot.StorageNode.URI(childComplexity), true
 
 	case "SyntheticDevice.address":
-		if e.complexity.SyntheticDevice.Address == nil {
+		if e.ComplexityRoot.SyntheticDevice.Address == nil {
 			break
 		}
 
-		return e.complexity.SyntheticDevice.Address(childComplexity), true
+		return e.ComplexityRoot.SyntheticDevice.Address(childComplexity), true
 	case "SyntheticDevice.connection":
-		if e.complexity.SyntheticDevice.Connection == nil {
+		if e.ComplexityRoot.SyntheticDevice.Connection == nil {
 			break
 		}
 
-		return e.complexity.SyntheticDevice.Connection(childComplexity), true
+		return e.ComplexityRoot.SyntheticDevice.Connection(childComplexity), true
 	case "SyntheticDevice.id":
-		if e.complexity.SyntheticDevice.ID == nil {
+		if e.ComplexityRoot.SyntheticDevice.ID == nil {
 			break
 		}
 
-		return e.complexity.SyntheticDevice.ID(childComplexity), true
+		return e.ComplexityRoot.SyntheticDevice.ID(childComplexity), true
 	case "SyntheticDevice.integrationId":
-		if e.complexity.SyntheticDevice.IntegrationID == nil {
+		if e.ComplexityRoot.SyntheticDevice.IntegrationID == nil {
 			break
 		}
 
-		return e.complexity.SyntheticDevice.IntegrationID(childComplexity), true
+		return e.ComplexityRoot.SyntheticDevice.IntegrationID(childComplexity), true
 	case "SyntheticDevice.mintedAt":
-		if e.complexity.SyntheticDevice.MintedAt == nil {
+		if e.ComplexityRoot.SyntheticDevice.MintedAt == nil {
 			break
 		}
 
-		return e.complexity.SyntheticDevice.MintedAt(childComplexity), true
+		return e.ComplexityRoot.SyntheticDevice.MintedAt(childComplexity), true
 	case "SyntheticDevice.name":
-		if e.complexity.SyntheticDevice.Name == nil {
+		if e.ComplexityRoot.SyntheticDevice.Name == nil {
 			break
 		}
 
-		return e.complexity.SyntheticDevice.Name(childComplexity), true
+		return e.ComplexityRoot.SyntheticDevice.Name(childComplexity), true
 	case "SyntheticDevice.tokenDID":
-		if e.complexity.SyntheticDevice.TokenDID == nil {
+		if e.ComplexityRoot.SyntheticDevice.TokenDID == nil {
 			break
 		}
 
-		return e.complexity.SyntheticDevice.TokenDID(childComplexity), true
+		return e.ComplexityRoot.SyntheticDevice.TokenDID(childComplexity), true
 	case "SyntheticDevice.tokenId":
-		if e.complexity.SyntheticDevice.TokenID == nil {
+		if e.ComplexityRoot.SyntheticDevice.TokenID == nil {
 			break
 		}
 
-		return e.complexity.SyntheticDevice.TokenID(childComplexity), true
+		return e.ComplexityRoot.SyntheticDevice.TokenID(childComplexity), true
 	case "SyntheticDevice.vehicle":
-		if e.complexity.SyntheticDevice.Vehicle == nil {
+		if e.ComplexityRoot.SyntheticDevice.Vehicle == nil {
 			break
 		}
 
-		return e.complexity.SyntheticDevice.Vehicle(childComplexity), true
+		return e.ComplexityRoot.SyntheticDevice.Vehicle(childComplexity), true
 
 	case "SyntheticDeviceConnection.edges":
-		if e.complexity.SyntheticDeviceConnection.Edges == nil {
+		if e.ComplexityRoot.SyntheticDeviceConnection.Edges == nil {
 			break
 		}
 
-		return e.complexity.SyntheticDeviceConnection.Edges(childComplexity), true
+		return e.ComplexityRoot.SyntheticDeviceConnection.Edges(childComplexity), true
 	case "SyntheticDeviceConnection.nodes":
-		if e.complexity.SyntheticDeviceConnection.Nodes == nil {
+		if e.ComplexityRoot.SyntheticDeviceConnection.Nodes == nil {
 			break
 		}
 
-		return e.complexity.SyntheticDeviceConnection.Nodes(childComplexity), true
+		return e.ComplexityRoot.SyntheticDeviceConnection.Nodes(childComplexity), true
 	case "SyntheticDeviceConnection.pageInfo":
-		if e.complexity.SyntheticDeviceConnection.PageInfo == nil {
+		if e.ComplexityRoot.SyntheticDeviceConnection.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.SyntheticDeviceConnection.PageInfo(childComplexity), true
+		return e.ComplexityRoot.SyntheticDeviceConnection.PageInfo(childComplexity), true
 	case "SyntheticDeviceConnection.totalCount":
-		if e.complexity.SyntheticDeviceConnection.TotalCount == nil {
+		if e.ComplexityRoot.SyntheticDeviceConnection.TotalCount == nil {
 			break
 		}
 
-		return e.complexity.SyntheticDeviceConnection.TotalCount(childComplexity), true
+		return e.ComplexityRoot.SyntheticDeviceConnection.TotalCount(childComplexity), true
 
 	case "SyntheticDeviceEdge.cursor":
-		if e.complexity.SyntheticDeviceEdge.Cursor == nil {
+		if e.ComplexityRoot.SyntheticDeviceEdge.Cursor == nil {
 			break
 		}
 
-		return e.complexity.SyntheticDeviceEdge.Cursor(childComplexity), true
+		return e.ComplexityRoot.SyntheticDeviceEdge.Cursor(childComplexity), true
 	case "SyntheticDeviceEdge.node":
-		if e.complexity.SyntheticDeviceEdge.Node == nil {
+		if e.ComplexityRoot.SyntheticDeviceEdge.Node == nil {
 			break
 		}
 
-		return e.complexity.SyntheticDeviceEdge.Node(childComplexity), true
+		return e.ComplexityRoot.SyntheticDeviceEdge.Node(childComplexity), true
 
 	case "Template.asset":
-		if e.complexity.Template.Asset == nil {
+		if e.ComplexityRoot.Template.Asset == nil {
 			break
 		}
 
-		return e.complexity.Template.Asset(childComplexity), true
+		return e.ComplexityRoot.Template.Asset(childComplexity), true
 	case "Template.cid":
-		if e.complexity.Template.Cid == nil {
+		if e.ComplexityRoot.Template.Cid == nil {
 			break
 		}
 
-		return e.complexity.Template.Cid(childComplexity), true
+		return e.ComplexityRoot.Template.Cid(childComplexity), true
 	case "Template.createdAt":
-		if e.complexity.Template.CreatedAt == nil {
+		if e.ComplexityRoot.Template.CreatedAt == nil {
 			break
 		}
 
-		return e.complexity.Template.CreatedAt(childComplexity), true
+		return e.ComplexityRoot.Template.CreatedAt(childComplexity), true
 	case "Template.creator":
-		if e.complexity.Template.Creator == nil {
+		if e.ComplexityRoot.Template.Creator == nil {
 			break
 		}
 
-		return e.complexity.Template.Creator(childComplexity), true
+		return e.ComplexityRoot.Template.Creator(childComplexity), true
 	case "Template.permissions":
-		if e.complexity.Template.Permissions == nil {
+		if e.ComplexityRoot.Template.Permissions == nil {
 			break
 		}
 
-		return e.complexity.Template.Permissions(childComplexity), true
+		return e.ComplexityRoot.Template.Permissions(childComplexity), true
 	case "Template.tokenId":
-		if e.complexity.Template.TokenID == nil {
+		if e.ComplexityRoot.Template.TokenID == nil {
 			break
 		}
 
-		return e.complexity.Template.TokenID(childComplexity), true
+		return e.ComplexityRoot.Template.TokenID(childComplexity), true
 
 	case "TemplateConnection.edges":
-		if e.complexity.TemplateConnection.Edges == nil {
+		if e.ComplexityRoot.TemplateConnection.Edges == nil {
 			break
 		}
 
-		return e.complexity.TemplateConnection.Edges(childComplexity), true
+		return e.ComplexityRoot.TemplateConnection.Edges(childComplexity), true
 	case "TemplateConnection.nodes":
-		if e.complexity.TemplateConnection.Nodes == nil {
+		if e.ComplexityRoot.TemplateConnection.Nodes == nil {
 			break
 		}
 
-		return e.complexity.TemplateConnection.Nodes(childComplexity), true
+		return e.ComplexityRoot.TemplateConnection.Nodes(childComplexity), true
 	case "TemplateConnection.pageInfo":
-		if e.complexity.TemplateConnection.PageInfo == nil {
+		if e.ComplexityRoot.TemplateConnection.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.TemplateConnection.PageInfo(childComplexity), true
+		return e.ComplexityRoot.TemplateConnection.PageInfo(childComplexity), true
 	case "TemplateConnection.totalCount":
-		if e.complexity.TemplateConnection.TotalCount == nil {
+		if e.ComplexityRoot.TemplateConnection.TotalCount == nil {
 			break
 		}
 
-		return e.complexity.TemplateConnection.TotalCount(childComplexity), true
+		return e.ComplexityRoot.TemplateConnection.TotalCount(childComplexity), true
 
 	case "TemplateEdge.cursor":
-		if e.complexity.TemplateEdge.Cursor == nil {
+		if e.ComplexityRoot.TemplateEdge.Cursor == nil {
 			break
 		}
 
-		return e.complexity.TemplateEdge.Cursor(childComplexity), true
+		return e.ComplexityRoot.TemplateEdge.Cursor(childComplexity), true
 	case "TemplateEdge.node":
-		if e.complexity.TemplateEdge.Node == nil {
+		if e.ComplexityRoot.TemplateEdge.Node == nil {
 			break
 		}
 
-		return e.complexity.TemplateEdge.Node(childComplexity), true
+		return e.ComplexityRoot.TemplateEdge.Node(childComplexity), true
 
 	case "UserRewards.history":
-		if e.complexity.UserRewards.History == nil {
+		if e.ComplexityRoot.UserRewards.History == nil {
 			break
 		}
 
@@ -2181,88 +2167,88 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.UserRewards.History(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
+		return e.ComplexityRoot.UserRewards.History(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
 	case "UserRewards.totalTokens":
-		if e.complexity.UserRewards.TotalTokens == nil {
+		if e.ComplexityRoot.UserRewards.TotalTokens == nil {
 			break
 		}
 
-		return e.complexity.UserRewards.TotalTokens(childComplexity), true
+		return e.ComplexityRoot.UserRewards.TotalTokens(childComplexity), true
 
 	case "Vehicle.aftermarketDevice":
-		if e.complexity.Vehicle.AftermarketDevice == nil {
+		if e.ComplexityRoot.Vehicle.AftermarketDevice == nil {
 			break
 		}
 
-		return e.complexity.Vehicle.AftermarketDevice(childComplexity), true
+		return e.ComplexityRoot.Vehicle.AftermarketDevice(childComplexity), true
 	case "Vehicle.dataURI":
-		if e.complexity.Vehicle.DataURI == nil {
+		if e.ComplexityRoot.Vehicle.DataURI == nil {
 			break
 		}
 
-		return e.complexity.Vehicle.DataURI(childComplexity), true
+		return e.ComplexityRoot.Vehicle.DataURI(childComplexity), true
 	case "Vehicle.dcn":
-		if e.complexity.Vehicle.Dcn == nil {
+		if e.ComplexityRoot.Vehicle.Dcn == nil {
 			break
 		}
 
-		return e.complexity.Vehicle.Dcn(childComplexity), true
+		return e.ComplexityRoot.Vehicle.Dcn(childComplexity), true
 	case "Vehicle.definition":
-		if e.complexity.Vehicle.Definition == nil {
+		if e.ComplexityRoot.Vehicle.Definition == nil {
 			break
 		}
 
-		return e.complexity.Vehicle.Definition(childComplexity), true
+		return e.ComplexityRoot.Vehicle.Definition(childComplexity), true
 	case "Vehicle.earnings":
-		if e.complexity.Vehicle.Earnings == nil {
+		if e.ComplexityRoot.Vehicle.Earnings == nil {
 			break
 		}
 
-		return e.complexity.Vehicle.Earnings(childComplexity), true
+		return e.ComplexityRoot.Vehicle.Earnings(childComplexity), true
 	case "Vehicle.id":
-		if e.complexity.Vehicle.ID == nil {
+		if e.ComplexityRoot.Vehicle.ID == nil {
 			break
 		}
 
-		return e.complexity.Vehicle.ID(childComplexity), true
+		return e.ComplexityRoot.Vehicle.ID(childComplexity), true
 	case "Vehicle.image":
-		if e.complexity.Vehicle.Image == nil {
+		if e.ComplexityRoot.Vehicle.Image == nil {
 			break
 		}
 
-		return e.complexity.Vehicle.Image(childComplexity), true
+		return e.ComplexityRoot.Vehicle.Image(childComplexity), true
 	case "Vehicle.imageURI":
-		if e.complexity.Vehicle.ImageURI == nil {
+		if e.ComplexityRoot.Vehicle.ImageURI == nil {
 			break
 		}
 
-		return e.complexity.Vehicle.ImageURI(childComplexity), true
+		return e.ComplexityRoot.Vehicle.ImageURI(childComplexity), true
 	case "Vehicle.manufacturer":
-		if e.complexity.Vehicle.Manufacturer == nil {
+		if e.ComplexityRoot.Vehicle.Manufacturer == nil {
 			break
 		}
 
-		return e.complexity.Vehicle.Manufacturer(childComplexity), true
+		return e.ComplexityRoot.Vehicle.Manufacturer(childComplexity), true
 	case "Vehicle.mintedAt":
-		if e.complexity.Vehicle.MintedAt == nil {
+		if e.ComplexityRoot.Vehicle.MintedAt == nil {
 			break
 		}
 
-		return e.complexity.Vehicle.MintedAt(childComplexity), true
+		return e.ComplexityRoot.Vehicle.MintedAt(childComplexity), true
 	case "Vehicle.name":
-		if e.complexity.Vehicle.Name == nil {
+		if e.ComplexityRoot.Vehicle.Name == nil {
 			break
 		}
 
-		return e.complexity.Vehicle.Name(childComplexity), true
+		return e.ComplexityRoot.Vehicle.Name(childComplexity), true
 	case "Vehicle.owner":
-		if e.complexity.Vehicle.Owner == nil {
+		if e.ComplexityRoot.Vehicle.Owner == nil {
 			break
 		}
 
-		return e.complexity.Vehicle.Owner(childComplexity), true
+		return e.ComplexityRoot.Vehicle.Owner(childComplexity), true
 	case "Vehicle.privileges":
-		if e.complexity.Vehicle.Privileges == nil {
+		if e.ComplexityRoot.Vehicle.Privileges == nil {
 			break
 		}
 
@@ -2271,9 +2257,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Vehicle.Privileges(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["filterBy"].(*model.PrivilegeFilterBy)), true
+		return e.ComplexityRoot.Vehicle.Privileges(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["filterBy"].(*model.PrivilegeFilterBy)), true
 	case "Vehicle.sacd":
-		if e.complexity.Vehicle.Sacd == nil {
+		if e.ComplexityRoot.Vehicle.Sacd == nil {
 			break
 		}
 
@@ -2282,9 +2268,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Vehicle.Sacd(childComplexity, args["grantee"].(common.Address)), true
+		return e.ComplexityRoot.Vehicle.Sacd(childComplexity, args["grantee"].(common.Address)), true
 	case "Vehicle.sacds":
-		if e.complexity.Vehicle.Sacds == nil {
+		if e.ComplexityRoot.Vehicle.Sacds == nil {
 			break
 		}
 
@@ -2293,65 +2279,65 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Vehicle.Sacds(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
+		return e.ComplexityRoot.Vehicle.Sacds(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
 	case "Vehicle.stake":
-		if e.complexity.Vehicle.Stake == nil {
+		if e.ComplexityRoot.Vehicle.Stake == nil {
 			break
 		}
 
-		return e.complexity.Vehicle.Stake(childComplexity), true
+		return e.ComplexityRoot.Vehicle.Stake(childComplexity), true
 	case "Vehicle.storageNode":
-		if e.complexity.Vehicle.StorageNode == nil {
+		if e.ComplexityRoot.Vehicle.StorageNode == nil {
 			break
 		}
 
-		return e.complexity.Vehicle.StorageNode(childComplexity), true
+		return e.ComplexityRoot.Vehicle.StorageNode(childComplexity), true
 	case "Vehicle.syntheticDevice":
-		if e.complexity.Vehicle.SyntheticDevice == nil {
+		if e.ComplexityRoot.Vehicle.SyntheticDevice == nil {
 			break
 		}
 
-		return e.complexity.Vehicle.SyntheticDevice(childComplexity), true
+		return e.ComplexityRoot.Vehicle.SyntheticDevice(childComplexity), true
 	case "Vehicle.tokenDID":
-		if e.complexity.Vehicle.TokenDID == nil {
+		if e.ComplexityRoot.Vehicle.TokenDID == nil {
 			break
 		}
 
-		return e.complexity.Vehicle.TokenDID(childComplexity), true
+		return e.ComplexityRoot.Vehicle.TokenDID(childComplexity), true
 	case "Vehicle.tokenId":
-		if e.complexity.Vehicle.TokenID == nil {
+		if e.ComplexityRoot.Vehicle.TokenID == nil {
 			break
 		}
 
-		return e.complexity.Vehicle.TokenID(childComplexity), true
+		return e.ComplexityRoot.Vehicle.TokenID(childComplexity), true
 
 	case "VehicleConnection.edges":
-		if e.complexity.VehicleConnection.Edges == nil {
+		if e.ComplexityRoot.VehicleConnection.Edges == nil {
 			break
 		}
 
-		return e.complexity.VehicleConnection.Edges(childComplexity), true
+		return e.ComplexityRoot.VehicleConnection.Edges(childComplexity), true
 	case "VehicleConnection.nodes":
-		if e.complexity.VehicleConnection.Nodes == nil {
+		if e.ComplexityRoot.VehicleConnection.Nodes == nil {
 			break
 		}
 
-		return e.complexity.VehicleConnection.Nodes(childComplexity), true
+		return e.ComplexityRoot.VehicleConnection.Nodes(childComplexity), true
 	case "VehicleConnection.pageInfo":
-		if e.complexity.VehicleConnection.PageInfo == nil {
+		if e.ComplexityRoot.VehicleConnection.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.VehicleConnection.PageInfo(childComplexity), true
+		return e.ComplexityRoot.VehicleConnection.PageInfo(childComplexity), true
 	case "VehicleConnection.totalCount":
-		if e.complexity.VehicleConnection.TotalCount == nil {
+		if e.ComplexityRoot.VehicleConnection.TotalCount == nil {
 			break
 		}
 
-		return e.complexity.VehicleConnection.TotalCount(childComplexity), true
+		return e.ComplexityRoot.VehicleConnection.TotalCount(childComplexity), true
 
 	case "VehicleEarnings.history":
-		if e.complexity.VehicleEarnings.History == nil {
+		if e.ComplexityRoot.VehicleEarnings.History == nil {
 			break
 		}
 
@@ -2360,26 +2346,26 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.VehicleEarnings.History(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
+		return e.ComplexityRoot.VehicleEarnings.History(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
 	case "VehicleEarnings.totalTokens":
-		if e.complexity.VehicleEarnings.TotalTokens == nil {
+		if e.ComplexityRoot.VehicleEarnings.TotalTokens == nil {
 			break
 		}
 
-		return e.complexity.VehicleEarnings.TotalTokens(childComplexity), true
+		return e.ComplexityRoot.VehicleEarnings.TotalTokens(childComplexity), true
 
 	case "VehicleEdge.cursor":
-		if e.complexity.VehicleEdge.Cursor == nil {
+		if e.ComplexityRoot.VehicleEdge.Cursor == nil {
 			break
 		}
 
-		return e.complexity.VehicleEdge.Cursor(childComplexity), true
+		return e.ComplexityRoot.VehicleEdge.Cursor(childComplexity), true
 	case "VehicleEdge.node":
-		if e.complexity.VehicleEdge.Node == nil {
+		if e.ComplexityRoot.VehicleEdge.Node == nil {
 			break
 		}
 
-		return e.complexity.VehicleEdge.Node(childComplexity), true
+		return e.ComplexityRoot.VehicleEdge.Node(childComplexity), true
 
 	}
 	return 0, false
@@ -2387,7 +2373,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	opCtx := graphql.GetOperationContext(ctx)
-	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
+	ec := newExecutionContext(opCtx, e, make(chan graphql.DeferredResult))
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputAccountBy,
 		ec.unmarshalInputAftermarketDeviceBy,
@@ -2419,9 +2405,9 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 				ctx = graphql.WithUnmarshalerMap(ctx, inputUnmarshalMap)
 				data = ec._Query(ctx, opCtx.Operation.SelectionSet)
 			} else {
-				if atomic.LoadInt32(&ec.pendingDeferred) > 0 {
-					result := <-ec.deferredResults
-					atomic.AddInt32(&ec.pendingDeferred, -1)
+				if atomic.LoadInt32(&ec.PendingDeferred) > 0 {
+					result := <-ec.DeferredResults
+					atomic.AddInt32(&ec.PendingDeferred, -1)
 					data = result.Result
 					response.Path = result.Path
 					response.Label = result.Label
@@ -2433,8 +2419,8 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 			var buf bytes.Buffer
 			data.MarshalGQL(&buf)
 			response.Data = buf.Bytes()
-			if atomic.LoadInt32(&ec.deferred) > 0 {
-				hasNext := atomic.LoadInt32(&ec.pendingDeferred) > 0
+			if atomic.LoadInt32(&ec.Deferred) > 0 {
+				hasNext := atomic.LoadInt32(&ec.PendingDeferred) > 0
 				response.HasNext = &hasNext
 			}
 
@@ -2447,47 +2433,25 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 }
 
 type executionContext struct {
-	*graphql.OperationContext
-	*executableSchema
-	deferred        int32
-	pendingDeferred int32
-	deferredResults chan graphql.DeferredResult
+	*graphql.ExecutionContextState[ResolverRoot, DirectiveRoot, ComplexityRoot]
 }
 
-func (ec *executionContext) processDeferredGroup(dg graphql.DeferredGroup) {
-	atomic.AddInt32(&ec.pendingDeferred, 1)
-	go func() {
-		ctx := graphql.WithFreshResponseContext(dg.Context)
-		dg.FieldSet.Dispatch(ctx)
-		ds := graphql.DeferredResult{
-			Path:   dg.Path,
-			Label:  dg.Label,
-			Result: dg.FieldSet,
-			Errors: graphql.GetErrors(ctx),
-		}
-		// null fields should bubble up
-		if dg.FieldSet.Invalids > 0 {
-			ds.Result = graphql.Null
-		}
-		ec.deferredResults <- ds
-	}()
-}
-
-func (ec *executionContext) introspectSchema() (*introspection.Schema, error) {
-	if ec.DisableIntrospection {
-		return nil, errors.New("introspection disabled")
+func newExecutionContext(
+	opCtx *graphql.OperationContext,
+	execSchema *executableSchema,
+	deferredResults chan graphql.DeferredResult,
+) executionContext {
+	return executionContext{
+		ExecutionContextState: graphql.NewExecutionContextState[ResolverRoot, DirectiveRoot, ComplexityRoot](
+			opCtx,
+			(*graphql.ExecutableSchemaState[ResolverRoot, DirectiveRoot, ComplexityRoot])(execSchema),
+			parsedSchema,
+			deferredResults,
+		),
 	}
-	return introspection.WrapSchema(ec.Schema()), nil
 }
 
-func (ec *executionContext) introspectType(name string) (*introspection.Type, error) {
-	if ec.DisableIntrospection {
-		return nil, errors.New("introspection disabled")
-	}
-	return introspection.WrapTypeFromDef(ec.Schema(), ec.Schema().Types[name]), nil
-}
-
-//go:embed "schema/aftermarket.graphqls" "schema/connection.graphqls" "schema/dcn.graphqls" "schema/developerlicense.graphqls" "schema/devicedefinition.graphqls" "schema/manufacturer.graphqls" "schema/privilege.graphqls" "schema/reward.graphqls" "schema/sacd.graphqls" "schema/schema.graphqls" "schema/stakes.graphqls" "schema/storagenode.graphqls" "schema/synthetic.graphqls" "schema/template.graphqls" "schema/user.graphqls" "schema/vehicle.graphqls"
+//go:embed "schema/aftermarket.graphqls" "schema/connection.graphqls" "schema/dcn.graphqls" "schema/developerlicense.graphqls" "schema/devicedefinition.graphqls" "schema/directives.graphqls" "schema/manufacturer.graphqls" "schema/privilege.graphqls" "schema/reward.graphqls" "schema/sacd.graphqls" "schema/schema.graphqls" "schema/stakes.graphqls" "schema/storagenode.graphqls" "schema/synthetic.graphqls" "schema/template.graphqls" "schema/user.graphqls" "schema/vehicle.graphqls"
 var sourcesFS embed.FS
 
 func sourceData(filename string) string {
@@ -2504,6 +2468,7 @@ var sources = []*ast.Source{
 	{Name: "schema/dcn.graphqls", Input: sourceData("schema/dcn.graphqls"), BuiltIn: false},
 	{Name: "schema/developerlicense.graphqls", Input: sourceData("schema/developerlicense.graphqls"), BuiltIn: false},
 	{Name: "schema/devicedefinition.graphqls", Input: sourceData("schema/devicedefinition.graphqls"), BuiltIn: false},
+	{Name: "schema/directives.graphqls", Input: sourceData("schema/directives.graphqls"), BuiltIn: false},
 	{Name: "schema/manufacturer.graphqls", Input: sourceData("schema/manufacturer.graphqls"), BuiltIn: false},
 	{Name: "schema/privilege.graphqls", Input: sourceData("schema/privilege.graphqls"), BuiltIn: false},
 	{Name: "schema/reward.graphqls", Input: sourceData("schema/reward.graphqls"), BuiltIn: false},
@@ -3283,7 +3248,7 @@ func (ec *executionContext) _Account_sacds(ctx context.Context, field graphql.Co
 		ec.fieldContext_Account_sacds,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Account().Sacds(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string))
+			return ec.Resolvers.Account().Sacds(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string))
 		},
 		nil,
 		ec.marshalNSacdConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSacdConnection,
@@ -3420,7 +3385,7 @@ func (ec *executionContext) _AftermarketDevice_manufacturer(ctx context.Context,
 		field,
 		ec.fieldContext_AftermarketDevice_manufacturer,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.AftermarketDevice().Manufacturer(ctx, obj)
+			return ec.Resolvers.AftermarketDevice().Manufacturer(ctx, obj)
 		},
 		nil,
 		ec.marshalNManufacturer2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐManufacturer,
@@ -3701,7 +3666,7 @@ func (ec *executionContext) _AftermarketDevice_vehicle(ctx context.Context, fiel
 		field,
 		ec.fieldContext_AftermarketDevice_vehicle,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.AftermarketDevice().Vehicle(ctx, obj)
+			return ec.Resolvers.AftermarketDevice().Vehicle(ctx, obj)
 		},
 		nil,
 		ec.marshalOVehicle2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐVehicle,
@@ -3859,7 +3824,7 @@ func (ec *executionContext) _AftermarketDevice_earnings(ctx context.Context, fie
 		field,
 		ec.fieldContext_AftermarketDevice_earnings,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.AftermarketDevice().Earnings(ctx, obj)
+			return ec.Resolvers.AftermarketDevice().Earnings(ctx, obj)
 		},
 		nil,
 		ec.marshalOAftermarketDeviceEarnings2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDeviceEarnings,
@@ -4123,7 +4088,7 @@ func (ec *executionContext) _AftermarketDeviceEarnings_history(ctx context.Conte
 		ec.fieldContext_AftermarketDeviceEarnings_history,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.AftermarketDeviceEarnings().History(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string))
+			return ec.Resolvers.AftermarketDeviceEarnings().History(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string))
 		},
 		nil,
 		ec.marshalNEarningsConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐEarningsConnection,
@@ -4893,7 +4858,7 @@ func (ec *executionContext) _DCN_vehicle(ctx context.Context, field graphql.Coll
 		field,
 		ec.fieldContext_DCN_vehicle,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.DCN().Vehicle(ctx, obj)
+			return ec.Resolvers.DCN().Vehicle(ctx, obj)
 		},
 		nil,
 		ec.marshalOVehicle2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐVehicle,
@@ -5485,7 +5450,7 @@ func (ec *executionContext) _DeveloperLicense_signers(ctx context.Context, field
 		ec.fieldContext_DeveloperLicense_signers,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.DeveloperLicense().Signers(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string))
+			return ec.Resolvers.DeveloperLicense().Signers(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string))
 		},
 		nil,
 		ec.marshalNSignerConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSignerConnection,
@@ -5536,7 +5501,7 @@ func (ec *executionContext) _DeveloperLicense_redirectURIs(ctx context.Context, 
 		ec.fieldContext_DeveloperLicense_redirectURIs,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.DeveloperLicense().RedirectURIs(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string))
+			return ec.Resolvers.DeveloperLicense().RedirectURIs(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string))
 		},
 		nil,
 		ec.marshalNRedirectURIConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐRedirectURIConnection,
@@ -6470,7 +6435,7 @@ func (ec *executionContext) _Earning_aftermarketDevice(ctx context.Context, fiel
 		field,
 		ec.fieldContext_Earning_aftermarketDevice,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Earning().AftermarketDevice(ctx, obj)
+			return ec.Resolvers.Earning().AftermarketDevice(ctx, obj)
 		},
 		nil,
 		ec.marshalOAftermarketDevice2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDevice,
@@ -6566,7 +6531,7 @@ func (ec *executionContext) _Earning_syntheticDevice(ctx context.Context, field 
 		field,
 		ec.fieldContext_Earning_syntheticDevice,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Earning().SyntheticDevice(ctx, obj)
+			return ec.Resolvers.Earning().SyntheticDevice(ctx, obj)
 		},
 		nil,
 		ec.marshalOSyntheticDevice2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSyntheticDevice,
@@ -6644,7 +6609,7 @@ func (ec *executionContext) _Earning_vehicle(ctx context.Context, field graphql.
 		field,
 		ec.fieldContext_Earning_vehicle,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Earning().Vehicle(ctx, obj)
+			return ec.Resolvers.Earning().Vehicle(ctx, obj)
 		},
 		nil,
 		ec.marshalOVehicle2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐVehicle,
@@ -7182,7 +7147,7 @@ func (ec *executionContext) _Manufacturer_aftermarketDevices(ctx context.Context
 		ec.fieldContext_Manufacturer_aftermarketDevices,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Manufacturer().AftermarketDevices(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["filterBy"].(*model.AftermarketDevicesFilter))
+			return ec.Resolvers.Manufacturer().AftermarketDevices(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["filterBy"].(*model.AftermarketDevicesFilter))
 		},
 		nil,
 		ec.marshalNAftermarketDeviceConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDeviceConnection,
@@ -7233,7 +7198,7 @@ func (ec *executionContext) _Manufacturer_deviceDefinitions(ctx context.Context,
 		ec.fieldContext_Manufacturer_deviceDefinitions,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Manufacturer().DeviceDefinitions(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["filterBy"].(*model.DeviceDefinitionFilter))
+			return ec.Resolvers.Manufacturer().DeviceDefinitions(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["filterBy"].(*model.DeviceDefinitionFilter))
 		},
 		nil,
 		ec.marshalNDeviceDefinitionConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeviceDefinitionConnection,
@@ -7956,7 +7921,7 @@ func (ec *executionContext) _Query_node(ctx context.Context, field graphql.Colle
 		ec.fieldContext_Query_node,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().Node(ctx, fc.Args["id"].(string))
+			return ec.Resolvers.Query().Node(ctx, fc.Args["id"].(string))
 		},
 		nil,
 		ec.marshalONode2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐNode,
@@ -7997,7 +7962,7 @@ func (ec *executionContext) _Query_aftermarketDevice(ctx context.Context, field 
 		ec.fieldContext_Query_aftermarketDevice,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().AftermarketDevice(ctx, fc.Args["by"].(model.AftermarketDeviceBy))
+			return ec.Resolvers.Query().AftermarketDevice(ctx, fc.Args["by"].(model.AftermarketDeviceBy))
 		},
 		nil,
 		ec.marshalOAftermarketDevice2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDevice,
@@ -8076,7 +8041,7 @@ func (ec *executionContext) _Query_aftermarketDevices(ctx context.Context, field
 		ec.fieldContext_Query_aftermarketDevices,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().AftermarketDevices(ctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["filterBy"].(*model.AftermarketDevicesFilter))
+			return ec.Resolvers.Query().AftermarketDevices(ctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["filterBy"].(*model.AftermarketDevicesFilter))
 		},
 		nil,
 		ec.marshalNAftermarketDeviceConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDeviceConnection,
@@ -8127,7 +8092,7 @@ func (ec *executionContext) _Query_connections(ctx context.Context, field graphq
 		ec.fieldContext_Query_connections,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().Connections(ctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string))
+			return ec.Resolvers.Query().Connections(ctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string))
 		},
 		nil,
 		ec.marshalNConnectionConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐConnectionConnection,
@@ -8178,7 +8143,7 @@ func (ec *executionContext) _Query_connection(ctx context.Context, field graphql
 		ec.fieldContext_Query_connection,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().Connection(ctx, fc.Args["by"].(model.ConnectionBy))
+			return ec.Resolvers.Query().Connection(ctx, fc.Args["by"].(model.ConnectionBy))
 		},
 		nil,
 		ec.marshalOConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐConnection,
@@ -8233,7 +8198,7 @@ func (ec *executionContext) _Query_dcn(ctx context.Context, field graphql.Collec
 		ec.fieldContext_Query_dcn,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().Dcn(ctx, fc.Args["by"].(model.DCNBy))
+			return ec.Resolvers.Query().Dcn(ctx, fc.Args["by"].(model.DCNBy))
 		},
 		nil,
 		ec.marshalODCN2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDcn,
@@ -8294,7 +8259,7 @@ func (ec *executionContext) _Query_dcns(ctx context.Context, field graphql.Colle
 		ec.fieldContext_Query_dcns,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().Dcns(ctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["filterBy"].(*model.DCNFilter))
+			return ec.Resolvers.Query().Dcns(ctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["filterBy"].(*model.DCNFilter))
 		},
 		nil,
 		ec.marshalNDCNConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDCNConnection,
@@ -8345,7 +8310,7 @@ func (ec *executionContext) _Query_developerLicenses(ctx context.Context, field 
 		ec.fieldContext_Query_developerLicenses,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().DeveloperLicenses(ctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["filterBy"].(*model.DeveloperLicenseFilterBy))
+			return ec.Resolvers.Query().DeveloperLicenses(ctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["filterBy"].(*model.DeveloperLicenseFilterBy))
 		},
 		nil,
 		ec.marshalNDeveloperLicenseConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeveloperLicenseConnection,
@@ -8396,7 +8361,7 @@ func (ec *executionContext) _Query_developerLicense(ctx context.Context, field g
 		ec.fieldContext_Query_developerLicense,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().DeveloperLicense(ctx, fc.Args["by"].(model.DeveloperLicenseBy))
+			return ec.Resolvers.Query().DeveloperLicense(ctx, fc.Args["by"].(model.DeveloperLicenseBy))
 		},
 		nil,
 		ec.marshalODeveloperLicense2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeveloperLicense,
@@ -8455,7 +8420,7 @@ func (ec *executionContext) _Query_deviceDefinition(ctx context.Context, field g
 		ec.fieldContext_Query_deviceDefinition,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().DeviceDefinition(ctx, fc.Args["by"].(model.DeviceDefinitionBy))
+			return ec.Resolvers.Query().DeviceDefinition(ctx, fc.Args["by"].(model.DeviceDefinitionBy))
 		},
 		nil,
 		ec.marshalODeviceDefinition2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeviceDefinition,
@@ -8514,7 +8479,7 @@ func (ec *executionContext) _Query_manufacturer(ctx context.Context, field graph
 		ec.fieldContext_Query_manufacturer,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().Manufacturer(ctx, fc.Args["by"].(model.ManufacturerBy))
+			return ec.Resolvers.Query().Manufacturer(ctx, fc.Args["by"].(model.ManufacturerBy))
 		},
 		nil,
 		ec.marshalOManufacturer2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐManufacturer,
@@ -8574,7 +8539,7 @@ func (ec *executionContext) _Query_manufacturers(ctx context.Context, field grap
 		field,
 		ec.fieldContext_Query_manufacturers,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Query().Manufacturers(ctx)
+			return ec.Resolvers.Query().Manufacturers(ctx)
 		},
 		nil,
 		ec.marshalNManufacturerConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐManufacturerConnection,
@@ -8614,7 +8579,7 @@ func (ec *executionContext) _Query_rewards(ctx context.Context, field graphql.Co
 		ec.fieldContext_Query_rewards,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().Rewards(ctx, fc.Args["user"].(common.Address))
+			return ec.Resolvers.Query().Rewards(ctx, fc.Args["user"].(common.Address))
 		},
 		nil,
 		ec.marshalOUserRewards2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐUserRewards,
@@ -8661,7 +8626,7 @@ func (ec *executionContext) _Query_stakes(ctx context.Context, field graphql.Col
 		ec.fieldContext_Query_stakes,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().Stakes(ctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["filterBy"].(*model.StakeFilterBy))
+			return ec.Resolvers.Query().Stakes(ctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["filterBy"].(*model.StakeFilterBy))
 		},
 		nil,
 		ec.marshalOStakeConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐStakeConnection,
@@ -8712,7 +8677,7 @@ func (ec *executionContext) _Query_syntheticDevice(ctx context.Context, field gr
 		ec.fieldContext_Query_syntheticDevice,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().SyntheticDevice(ctx, fc.Args["by"].(model.SyntheticDeviceBy))
+			return ec.Resolvers.Query().SyntheticDevice(ctx, fc.Args["by"].(model.SyntheticDeviceBy))
 		},
 		nil,
 		ec.marshalOSyntheticDevice2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSyntheticDevice,
@@ -8773,7 +8738,7 @@ func (ec *executionContext) _Query_syntheticDevices(ctx context.Context, field g
 		ec.fieldContext_Query_syntheticDevices,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().SyntheticDevices(ctx, fc.Args["first"].(*int), fc.Args["last"].(*int), fc.Args["after"].(*string), fc.Args["before"].(*string), fc.Args["filterBy"].(*model.SyntheticDevicesFilter))
+			return ec.Resolvers.Query().SyntheticDevices(ctx, fc.Args["first"].(*int), fc.Args["last"].(*int), fc.Args["after"].(*string), fc.Args["before"].(*string), fc.Args["filterBy"].(*model.SyntheticDevicesFilter))
 		},
 		nil,
 		ec.marshalNSyntheticDeviceConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSyntheticDeviceConnection,
@@ -8824,7 +8789,7 @@ func (ec *executionContext) _Query_template(ctx context.Context, field graphql.C
 		ec.fieldContext_Query_template,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().Template(ctx, fc.Args["by"].(model.TemplateBy))
+			return ec.Resolvers.Query().Template(ctx, fc.Args["by"].(model.TemplateBy))
 		},
 		nil,
 		ec.marshalOTemplate2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐTemplate,
@@ -8879,7 +8844,7 @@ func (ec *executionContext) _Query_templates(ctx context.Context, field graphql.
 		ec.fieldContext_Query_templates,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().Templates(ctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string))
+			return ec.Resolvers.Query().Templates(ctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string))
 		},
 		nil,
 		ec.marshalNTemplateConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐTemplateConnection,
@@ -8930,7 +8895,7 @@ func (ec *executionContext) _Query_account(ctx context.Context, field graphql.Co
 		ec.fieldContext_Query_account,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().Account(ctx, fc.Args["by"].(model.AccountBy))
+			return ec.Resolvers.Query().Account(ctx, fc.Args["by"].(model.AccountBy))
 		},
 		nil,
 		ec.marshalOAccount2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAccount,
@@ -8977,7 +8942,7 @@ func (ec *executionContext) _Query_vehicle(ctx context.Context, field graphql.Co
 		ec.fieldContext_Query_vehicle,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().Vehicle(ctx, fc.Args["tokenId"].(*int), fc.Args["tokenDID"].(*string))
+			return ec.Resolvers.Query().Vehicle(ctx, fc.Args["tokenId"].(*int), fc.Args["tokenDID"].(*string))
 		},
 		nil,
 		ec.marshalOVehicle2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐVehicle,
@@ -9060,7 +9025,7 @@ func (ec *executionContext) _Query_vehicles(ctx context.Context, field graphql.C
 		ec.fieldContext_Query_vehicles,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().Vehicles(ctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["filterBy"].(*model.VehiclesFilter))
+			return ec.Resolvers.Query().Vehicles(ctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["filterBy"].(*model.VehiclesFilter))
 		},
 		nil,
 		ec.marshalNVehicleConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐVehicleConnection,
@@ -9111,7 +9076,7 @@ func (ec *executionContext) _Query___type(ctx context.Context, field graphql.Col
 		ec.fieldContext_Query___type,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.introspectType(fc.Args["name"].(string))
+			return ec.IntrospectType(fc.Args["name"].(string))
 		},
 		nil,
 		ec.marshalO__Type2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType,
@@ -9175,7 +9140,7 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 		field,
 		ec.fieldContext_Query___schema,
 		func(ctx context.Context) (any, error) {
-			return ec.introspectSchema()
+			return ec.IntrospectSchema()
 		},
 		nil,
 		ec.marshalO__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema,
@@ -10405,7 +10370,7 @@ func (ec *executionContext) _Stake_vehicle(ctx context.Context, field graphql.Co
 		field,
 		ec.fieldContext_Stake_vehicle,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Stake().Vehicle(ctx, obj)
+			return ec.Resolvers.Stake().Vehicle(ctx, obj)
 		},
 		nil,
 		ec.marshalOVehicle2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐVehicle,
@@ -11029,7 +10994,7 @@ func (ec *executionContext) _SyntheticDevice_integrationId(ctx context.Context, 
 		field,
 		ec.fieldContext_SyntheticDevice_integrationId,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.SyntheticDevice().IntegrationID(ctx, obj)
+			return ec.Resolvers.SyntheticDevice().IntegrationID(ctx, obj)
 		},
 		nil,
 		ec.marshalNInt2int,
@@ -11116,7 +11081,7 @@ func (ec *executionContext) _SyntheticDevice_vehicle(ctx context.Context, field 
 		field,
 		ec.fieldContext_SyntheticDevice_vehicle,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.SyntheticDevice().Vehicle(ctx, obj)
+			return ec.Resolvers.SyntheticDevice().Vehicle(ctx, obj)
 		},
 		nil,
 		ec.marshalNVehicle2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐVehicle,
@@ -11187,7 +11152,7 @@ func (ec *executionContext) _SyntheticDevice_connection(ctx context.Context, fie
 		field,
 		ec.fieldContext_SyntheticDevice_connection,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.SyntheticDevice().Connection(ctx, obj)
+			return ec.Resolvers.SyntheticDevice().Connection(ctx, obj)
 		},
 		nil,
 		ec.marshalNConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐConnection,
@@ -11882,7 +11847,7 @@ func (ec *executionContext) _UserRewards_history(ctx context.Context, field grap
 		ec.fieldContext_UserRewards_history,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.UserRewards().History(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string))
+			return ec.Resolvers.UserRewards().History(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string))
 		},
 		nil,
 		ec.marshalNEarningsConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐEarningsConnection,
@@ -12019,7 +11984,7 @@ func (ec *executionContext) _Vehicle_manufacturer(ctx context.Context, field gra
 		field,
 		ec.fieldContext_Vehicle_manufacturer,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Vehicle().Manufacturer(ctx, obj)
+			return ec.Resolvers.Vehicle().Manufacturer(ctx, obj)
 		},
 		nil,
 		ec.marshalNManufacturer2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐManufacturer,
@@ -12126,7 +12091,7 @@ func (ec *executionContext) _Vehicle_aftermarketDevice(ctx context.Context, fiel
 		field,
 		ec.fieldContext_Vehicle_aftermarketDevice,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Vehicle().AftermarketDevice(ctx, obj)
+			return ec.Resolvers.Vehicle().AftermarketDevice(ctx, obj)
 		},
 		nil,
 		ec.marshalOAftermarketDevice2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDevice,
@@ -12194,7 +12159,7 @@ func (ec *executionContext) _Vehicle_privileges(ctx context.Context, field graph
 		ec.fieldContext_Vehicle_privileges,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Vehicle().Privileges(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["filterBy"].(*model.PrivilegeFilterBy))
+			return ec.Resolvers.Vehicle().Privileges(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["filterBy"].(*model.PrivilegeFilterBy))
 		},
 		nil,
 		ec.marshalNPrivilegesConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐPrivilegesConnection,
@@ -12245,7 +12210,7 @@ func (ec *executionContext) _Vehicle_sacds(ctx context.Context, field graphql.Co
 		ec.fieldContext_Vehicle_sacds,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Vehicle().Sacds(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string))
+			return ec.Resolvers.Vehicle().Sacds(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string))
 		},
 		nil,
 		ec.marshalNSacdConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSacdConnection,
@@ -12296,7 +12261,7 @@ func (ec *executionContext) _Vehicle_sacd(ctx context.Context, field graphql.Col
 		ec.fieldContext_Vehicle_sacd,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Vehicle().Sacd(ctx, obj, fc.Args["grantee"].(common.Address))
+			return ec.Resolvers.Vehicle().Sacd(ctx, obj, fc.Args["grantee"].(common.Address))
 		},
 		nil,
 		ec.marshalOSacd2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSacd,
@@ -12350,7 +12315,7 @@ func (ec *executionContext) _Vehicle_syntheticDevice(ctx context.Context, field 
 		field,
 		ec.fieldContext_Vehicle_syntheticDevice,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Vehicle().SyntheticDevice(ctx, obj)
+			return ec.Resolvers.Vehicle().SyntheticDevice(ctx, obj)
 		},
 		nil,
 		ec.marshalOSyntheticDevice2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSyntheticDevice,
@@ -12438,7 +12403,7 @@ func (ec *executionContext) _Vehicle_dcn(ctx context.Context, field graphql.Coll
 		field,
 		ec.fieldContext_Vehicle_dcn,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Vehicle().Dcn(ctx, obj)
+			return ec.Resolvers.Vehicle().Dcn(ctx, obj)
 		},
 		nil,
 		ec.marshalODCN2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDcn,
@@ -12574,7 +12539,7 @@ func (ec *executionContext) _Vehicle_earnings(ctx context.Context, field graphql
 		field,
 		ec.fieldContext_Vehicle_earnings,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Vehicle().Earnings(ctx, obj)
+			return ec.Resolvers.Vehicle().Earnings(ctx, obj)
 		},
 		nil,
 		ec.marshalOVehicleEarnings2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐVehicleEarnings,
@@ -12638,7 +12603,7 @@ func (ec *executionContext) _Vehicle_stake(ctx context.Context, field graphql.Co
 		field,
 		ec.fieldContext_Vehicle_stake,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Vehicle().Stake(ctx, obj)
+			return ec.Resolvers.Vehicle().Stake(ctx, obj)
 		},
 		nil,
 		ec.marshalOStake2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐStake,
@@ -12689,7 +12654,7 @@ func (ec *executionContext) _Vehicle_storageNode(ctx context.Context, field grap
 		field,
 		ec.fieldContext_Vehicle_storageNode,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Vehicle().StorageNode(ctx, obj)
+			return ec.Resolvers.Vehicle().StorageNode(ctx, obj)
 		},
 		nil,
 		ec.marshalOStorageNode2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐStorageNode,
@@ -12938,7 +12903,7 @@ func (ec *executionContext) _VehicleEarnings_history(ctx context.Context, field 
 		ec.fieldContext_VehicleEarnings_history,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.VehicleEarnings().History(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string))
+			return ec.Resolvers.VehicleEarnings().History(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string))
 		},
 		nil,
 		ec.marshalNEarningsConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐEarningsConnection,
@@ -14529,6 +14494,10 @@ func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field
 
 func (ec *executionContext) unmarshalInputAccountBy(ctx context.Context, obj any) (model.AccountBy, error) {
 	var it model.AccountBy
+	if obj == nil {
+		return it, nil
+	}
+
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -14550,12 +14519,15 @@ func (ec *executionContext) unmarshalInputAccountBy(ctx context.Context, obj any
 			it.Address = data
 		}
 	}
-
 	return it, nil
 }
 
 func (ec *executionContext) unmarshalInputAftermarketDeviceBy(ctx context.Context, obj any) (model.AftermarketDeviceBy, error) {
 	var it model.AftermarketDeviceBy
+	if obj == nil {
+		return it, nil
+	}
+
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -14612,12 +14584,15 @@ func (ec *executionContext) unmarshalInputAftermarketDeviceBy(ctx context.Contex
 			it.DevEui = data
 		}
 	}
-
 	return it, nil
 }
 
 func (ec *executionContext) unmarshalInputAftermarketDevicesFilter(ctx context.Context, obj any) (model.AftermarketDevicesFilter, error) {
 	var it model.AftermarketDevicesFilter
+	if obj == nil {
+		return it, nil
+	}
+
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -14653,12 +14628,15 @@ func (ec *executionContext) unmarshalInputAftermarketDevicesFilter(ctx context.C
 			it.ManufacturerID = data
 		}
 	}
-
 	return it, nil
 }
 
 func (ec *executionContext) unmarshalInputConnectionBy(ctx context.Context, obj any) (model.ConnectionBy, error) {
 	var it model.ConnectionBy
+	if obj == nil {
+		return it, nil
+	}
+
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -14701,12 +14679,15 @@ func (ec *executionContext) unmarshalInputConnectionBy(ctx context.Context, obj 
 			it.TokenDID = data
 		}
 	}
-
 	return it, nil
 }
 
 func (ec *executionContext) unmarshalInputDCNBy(ctx context.Context, obj any) (model.DCNBy, error) {
 	var it model.DCNBy
+	if obj == nil {
+		return it, nil
+	}
+
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -14742,12 +14723,15 @@ func (ec *executionContext) unmarshalInputDCNBy(ctx context.Context, obj any) (m
 			it.Name = data
 		}
 	}
-
 	return it, nil
 }
 
 func (ec *executionContext) unmarshalInputDCNFilter(ctx context.Context, obj any) (model.DCNFilter, error) {
 	var it model.DCNFilter
+	if obj == nil {
+		return it, nil
+	}
+
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -14769,12 +14753,15 @@ func (ec *executionContext) unmarshalInputDCNFilter(ctx context.Context, obj any
 			it.Owner = data
 		}
 	}
-
 	return it, nil
 }
 
 func (ec *executionContext) unmarshalInputDeveloperLicenseBy(ctx context.Context, obj any) (model.DeveloperLicenseBy, error) {
 	var it model.DeveloperLicenseBy
+	if obj == nil {
+		return it, nil
+	}
+
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -14817,12 +14804,15 @@ func (ec *executionContext) unmarshalInputDeveloperLicenseBy(ctx context.Context
 			it.TokenDID = data
 		}
 	}
-
 	return it, nil
 }
 
 func (ec *executionContext) unmarshalInputDeveloperLicenseFilterBy(ctx context.Context, obj any) (model.DeveloperLicenseFilterBy, error) {
 	var it model.DeveloperLicenseFilterBy
+	if obj == nil {
+		return it, nil
+	}
+
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -14851,12 +14841,15 @@ func (ec *executionContext) unmarshalInputDeveloperLicenseFilterBy(ctx context.C
 			it.Owner = data
 		}
 	}
-
 	return it, nil
 }
 
 func (ec *executionContext) unmarshalInputDeviceDefinitionBy(ctx context.Context, obj any) (model.DeviceDefinitionBy, error) {
 	var it model.DeviceDefinitionBy
+	if obj == nil {
+		return it, nil
+	}
+
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -14878,12 +14871,15 @@ func (ec *executionContext) unmarshalInputDeviceDefinitionBy(ctx context.Context
 			it.ID = data
 		}
 	}
-
 	return it, nil
 }
 
 func (ec *executionContext) unmarshalInputDeviceDefinitionFilter(ctx context.Context, obj any) (model.DeviceDefinitionFilter, error) {
 	var it model.DeviceDefinitionFilter
+	if obj == nil {
+		return it, nil
+	}
+
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -14912,12 +14908,15 @@ func (ec *executionContext) unmarshalInputDeviceDefinitionFilter(ctx context.Con
 			it.Year = data
 		}
 	}
-
 	return it, nil
 }
 
 func (ec *executionContext) unmarshalInputManufacturerBy(ctx context.Context, obj any) (model.ManufacturerBy, error) {
 	var it model.ManufacturerBy
+	if obj == nil {
+		return it, nil
+	}
+
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -14960,12 +14959,15 @@ func (ec *executionContext) unmarshalInputManufacturerBy(ctx context.Context, ob
 			it.TokenDID = data
 		}
 	}
-
 	return it, nil
 }
 
 func (ec *executionContext) unmarshalInputPrivilegeFilterBy(ctx context.Context, obj any) (model.PrivilegeFilterBy, error) {
 	var it model.PrivilegeFilterBy
+	if obj == nil {
+		return it, nil
+	}
+
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -14994,12 +14996,15 @@ func (ec *executionContext) unmarshalInputPrivilegeFilterBy(ctx context.Context,
 			it.PrivilegeID = data
 		}
 	}
-
 	return it, nil
 }
 
 func (ec *executionContext) unmarshalInputStakeFilterBy(ctx context.Context, obj any) (model.StakeFilterBy, error) {
 	var it model.StakeFilterBy
+	if obj == nil {
+		return it, nil
+	}
+
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -15028,12 +15033,15 @@ func (ec *executionContext) unmarshalInputStakeFilterBy(ctx context.Context, obj
 			it.Attachable = data
 		}
 	}
-
 	return it, nil
 }
 
 func (ec *executionContext) unmarshalInputSyntheticDeviceBy(ctx context.Context, obj any) (model.SyntheticDeviceBy, error) {
 	var it model.SyntheticDeviceBy
+	if obj == nil {
+		return it, nil
+	}
+
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -15069,12 +15077,15 @@ func (ec *executionContext) unmarshalInputSyntheticDeviceBy(ctx context.Context,
 			it.Address = data
 		}
 	}
-
 	return it, nil
 }
 
 func (ec *executionContext) unmarshalInputSyntheticDevicesFilter(ctx context.Context, obj any) (model.SyntheticDevicesFilter, error) {
 	var it model.SyntheticDevicesFilter
+	if obj == nil {
+		return it, nil
+	}
+
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -15103,12 +15114,15 @@ func (ec *executionContext) unmarshalInputSyntheticDevicesFilter(ctx context.Con
 			it.IntegrationID = data
 		}
 	}
-
 	return it, nil
 }
 
 func (ec *executionContext) unmarshalInputTemplateBy(ctx context.Context, obj any) (model.TemplateBy, error) {
 	var it model.TemplateBy
+	if obj == nil {
+		return it, nil
+	}
+
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -15137,12 +15151,15 @@ func (ec *executionContext) unmarshalInputTemplateBy(ctx context.Context, obj an
 			it.Cid = data
 		}
 	}
-
 	return it, nil
 }
 
 func (ec *executionContext) unmarshalInputVehiclesFilter(ctx context.Context, obj any) (model.VehiclesFilter, error) {
 	var it model.VehiclesFilter
+	if obj == nil {
+		return it, nil
+	}
+
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -15206,7 +15223,6 @@ func (ec *executionContext) unmarshalInputVehiclesFilter(ctx context.Context, ob
 			it.DeviceDefinitionID = data
 		}
 	}
-
 	return it, nil
 }
 
@@ -15327,10 +15343,10 @@ func (ec *executionContext) _Account(ctx context.Context, sel ast.SelectionSet, 
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -15520,10 +15536,10 @@ func (ec *executionContext) _AftermarketDevice(ctx context.Context, sel ast.Sele
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -15574,10 +15590,10 @@ func (ec *executionContext) _AftermarketDeviceConnection(ctx context.Context, se
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -15649,10 +15665,10 @@ func (ec *executionContext) _AftermarketDeviceEarnings(ctx context.Context, sel 
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -15693,10 +15709,10 @@ func (ec *executionContext) _AftermarketDeviceEdge(ctx context.Context, sel ast.
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -15757,10 +15773,10 @@ func (ec *executionContext) _Connection(ctx context.Context, sel ast.SelectionSe
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -15811,10 +15827,10 @@ func (ec *executionContext) _ConnectionConnection(ctx context.Context, sel ast.S
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -15855,10 +15871,10 @@ func (ec *executionContext) _ConnectionEdge(ctx context.Context, sel ast.Selecti
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -15956,10 +15972,10 @@ func (ec *executionContext) _DCN(ctx context.Context, sel ast.SelectionSet, obj 
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -16010,10 +16026,10 @@ func (ec *executionContext) _DCNConnection(ctx context.Context, sel ast.Selectio
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -16054,10 +16070,10 @@ func (ec *executionContext) _DCNEdge(ctx context.Context, sel ast.SelectionSet, 
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -16096,10 +16112,10 @@ func (ec *executionContext) _Definition(ctx context.Context, sel ast.SelectionSe
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -16229,10 +16245,10 @@ func (ec *executionContext) _DeveloperLicense(ctx context.Context, sel ast.Selec
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -16283,10 +16299,10 @@ func (ec *executionContext) _DeveloperLicenseConnection(ctx context.Context, sel
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -16327,10 +16343,10 @@ func (ec *executionContext) _DeveloperLicenseEdge(ctx context.Context, sel ast.S
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -16389,10 +16405,10 @@ func (ec *executionContext) _DeviceDefinition(ctx context.Context, sel ast.Selec
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -16433,10 +16449,10 @@ func (ec *executionContext) _DeviceDefinitionAttribute(ctx context.Context, sel 
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -16487,10 +16503,10 @@ func (ec *executionContext) _DeviceDefinitionConnection(ctx context.Context, sel
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -16531,10 +16547,10 @@ func (ec *executionContext) _DeviceDefinitionEdge(ctx context.Context, sel ast.S
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -16696,10 +16712,10 @@ func (ec *executionContext) _Earning(ctx context.Context, sel ast.SelectionSet, 
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -16750,10 +16766,10 @@ func (ec *executionContext) _EarningsConnection(ctx context.Context, sel ast.Sel
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -16794,10 +16810,10 @@ func (ec *executionContext) _EarningsEdge(ctx context.Context, sel ast.Selection
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -16932,10 +16948,10 @@ func (ec *executionContext) _Manufacturer(ctx context.Context, sel ast.Selection
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -16986,10 +17002,10 @@ func (ec *executionContext) _ManufacturerConnection(ctx context.Context, sel ast
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -17030,10 +17046,10 @@ func (ec *executionContext) _ManufacturerEdge(ctx context.Context, sel ast.Selec
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -17078,10 +17094,10 @@ func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet,
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -17132,10 +17148,10 @@ func (ec *executionContext) _Privilege(ctx context.Context, sel ast.SelectionSet
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -17176,10 +17192,10 @@ func (ec *executionContext) _PrivilegeEdge(ctx context.Context, sel ast.Selectio
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -17230,10 +17246,10 @@ func (ec *executionContext) _PrivilegesConnection(ctx context.Context, sel ast.S
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -17703,10 +17719,10 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -17747,10 +17763,10 @@ func (ec *executionContext) _RedirectURI(ctx context.Context, sel ast.SelectionS
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -17801,10 +17817,10 @@ func (ec *executionContext) _RedirectURIConnection(ctx context.Context, sel ast.
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -17845,10 +17861,10 @@ func (ec *executionContext) _RedirectURIEdge(ctx context.Context, sel ast.Select
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -17906,10 +17922,10 @@ func (ec *executionContext) _Sacd(ctx context.Context, sel ast.SelectionSet, obj
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -17960,10 +17976,10 @@ func (ec *executionContext) _SacdConnection(ctx context.Context, sel ast.Selecti
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -18004,10 +18020,10 @@ func (ec *executionContext) _SacdEdge(ctx context.Context, sel ast.SelectionSet,
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -18048,10 +18064,10 @@ func (ec *executionContext) _Signer(ctx context.Context, sel ast.SelectionSet, o
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -18102,10 +18118,10 @@ func (ec *executionContext) _SignerConnection(ctx context.Context, sel ast.Selec
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -18146,10 +18162,10 @@ func (ec *executionContext) _SignerEdge(ctx context.Context, sel ast.SelectionSe
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -18255,10 +18271,10 @@ func (ec *executionContext) _Stake(ctx context.Context, sel ast.SelectionSet, ob
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -18309,10 +18325,10 @@ func (ec *executionContext) _StakeConnection(ctx context.Context, sel ast.Select
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -18353,10 +18369,10 @@ func (ec *executionContext) _StakeEdge(ctx context.Context, sel ast.SelectionSet
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -18422,10 +18438,10 @@ func (ec *executionContext) _StorageNode(ctx context.Context, sel ast.SelectionS
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -18594,10 +18610,10 @@ func (ec *executionContext) _SyntheticDevice(ctx context.Context, sel ast.Select
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -18648,10 +18664,10 @@ func (ec *executionContext) _SyntheticDeviceConnection(ctx context.Context, sel 
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -18692,10 +18708,10 @@ func (ec *executionContext) _SyntheticDeviceEdge(ctx context.Context, sel ast.Se
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -18756,10 +18772,10 @@ func (ec *executionContext) _Template(ctx context.Context, sel ast.SelectionSet,
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -18810,10 +18826,10 @@ func (ec *executionContext) _TemplateConnection(ctx context.Context, sel ast.Sel
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -18854,10 +18870,10 @@ func (ec *executionContext) _TemplateEdge(ctx context.Context, sel ast.Selection
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -18929,10 +18945,10 @@ func (ec *executionContext) _UserRewards(ctx context.Context, sel ast.SelectionS
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -19349,10 +19365,10 @@ func (ec *executionContext) _Vehicle(ctx context.Context, sel ast.SelectionSet, 
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -19403,10 +19419,10 @@ func (ec *executionContext) _VehicleConnection(ctx context.Context, sel ast.Sele
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -19478,10 +19494,10 @@ func (ec *executionContext) _VehicleEarnings(ctx context.Context, sel ast.Select
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -19522,10 +19538,10 @@ func (ec *executionContext) _VehicleEdge(ctx context.Context, sel ast.SelectionS
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -19578,10 +19594,10 @@ func (ec *executionContext) ___Directive(ctx context.Context, sel ast.SelectionS
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -19626,10 +19642,10 @@ func (ec *executionContext) ___EnumValue(ctx context.Context, sel ast.SelectionS
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -19684,10 +19700,10 @@ func (ec *executionContext) ___Field(ctx context.Context, sel ast.SelectionSet, 
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -19739,10 +19755,10 @@ func (ec *executionContext) ___InputValue(ctx context.Context, sel ast.Selection
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -19794,10 +19810,10 @@ func (ec *executionContext) ___Schema(ctx context.Context, sel ast.SelectionSet,
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -19853,10 +19869,10 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -19893,39 +19909,11 @@ func (ec *executionContext) marshalNAddress2githubᚗcomᚋethereumᚋgoᚑether
 }
 
 func (ec *executionContext) marshalNAftermarketDevice2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDeviceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.AftermarketDevice) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNAftermarketDevice2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDevice(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNAftermarketDevice2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDevice(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -19966,39 +19954,11 @@ func (ec *executionContext) marshalNAftermarketDeviceConnection2ᚖgithubᚗcom�
 }
 
 func (ec *executionContext) marshalNAftermarketDeviceEdge2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDeviceEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.AftermarketDeviceEdge) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNAftermarketDeviceEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDeviceEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNAftermarketDeviceEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐAftermarketDeviceEdge(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -20106,39 +20066,11 @@ func (ec *executionContext) marshalNConnection2githubᚗcomᚋDIMOᚑNetworkᚋi
 }
 
 func (ec *executionContext) marshalNConnection2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐConnectionᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Connection) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐConnection(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐConnection(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -20179,39 +20111,11 @@ func (ec *executionContext) marshalNConnectionConnection2ᚖgithubᚗcomᚋDIMO�
 }
 
 func (ec *executionContext) marshalNConnectionEdge2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐConnectionEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ConnectionEdge) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNConnectionEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐConnectionEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNConnectionEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐConnectionEdge(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -20233,39 +20137,11 @@ func (ec *executionContext) marshalNConnectionEdge2ᚖgithubᚗcomᚋDIMOᚑNetw
 }
 
 func (ec *executionContext) marshalNDCN2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDcnᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Dcn) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNDCN2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDcn(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDCN2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDcn(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -20306,39 +20182,11 @@ func (ec *executionContext) marshalNDCNConnection2ᚖgithubᚗcomᚋDIMOᚑNetwo
 }
 
 func (ec *executionContext) marshalNDCNEdge2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDCNEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.DCNEdge) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNDCNEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDCNEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDCNEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDCNEdge(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -20360,39 +20208,11 @@ func (ec *executionContext) marshalNDCNEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋi
 }
 
 func (ec *executionContext) marshalNDeveloperLicense2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeveloperLicenseᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.DeveloperLicense) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNDeveloperLicense2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeveloperLicense(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDeveloperLicense2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeveloperLicense(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -20433,39 +20253,11 @@ func (ec *executionContext) marshalNDeveloperLicenseConnection2ᚖgithubᚗcom�
 }
 
 func (ec *executionContext) marshalNDeveloperLicenseEdge2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeveloperLicenseEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.DeveloperLicenseEdge) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNDeveloperLicenseEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeveloperLicenseEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDeveloperLicenseEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeveloperLicenseEdge(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -20487,39 +20279,11 @@ func (ec *executionContext) marshalNDeveloperLicenseEdge2ᚖgithubᚗcomᚋDIMO�
 }
 
 func (ec *executionContext) marshalNDeviceDefinition2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeviceDefinitionᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.DeviceDefinition) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNDeviceDefinition2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeviceDefinition(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDeviceDefinition2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeviceDefinition(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -20541,39 +20305,11 @@ func (ec *executionContext) marshalNDeviceDefinition2ᚖgithubᚗcomᚋDIMOᚑNe
 }
 
 func (ec *executionContext) marshalNDeviceDefinitionAttribute2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeviceDefinitionAttributeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.DeviceDefinitionAttribute) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNDeviceDefinitionAttribute2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeviceDefinitionAttribute(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDeviceDefinitionAttribute2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeviceDefinitionAttribute(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -20614,39 +20350,11 @@ func (ec *executionContext) marshalNDeviceDefinitionConnection2ᚖgithubᚗcom�
 }
 
 func (ec *executionContext) marshalNDeviceDefinitionEdge2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeviceDefinitionEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.DeviceDefinitionEdge) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNDeviceDefinitionEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeviceDefinitionEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDeviceDefinitionEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeviceDefinitionEdge(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -20668,39 +20376,11 @@ func (ec *executionContext) marshalNDeviceDefinitionEdge2ᚖgithubᚗcomᚋDIMO�
 }
 
 func (ec *executionContext) marshalNEarning2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐEarningᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Earning) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNEarning2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐEarning(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNEarning2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐEarning(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -20736,39 +20416,11 @@ func (ec *executionContext) marshalNEarningsConnection2ᚖgithubᚗcomᚋDIMOᚑ
 }
 
 func (ec *executionContext) marshalNEarningsEdge2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐEarningsEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.EarningsEdge) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNEarningsEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐEarningsEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNEarningsEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐEarningsEdge(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -20826,39 +20478,11 @@ func (ec *executionContext) marshalNManufacturer2githubᚗcomᚋDIMOᚑNetwork�
 }
 
 func (ec *executionContext) marshalNManufacturer2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐManufacturerᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Manufacturer) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNManufacturer2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐManufacturer(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNManufacturer2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐManufacturer(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -20899,39 +20523,11 @@ func (ec *executionContext) marshalNManufacturerConnection2ᚖgithubᚗcomᚋDIM
 }
 
 func (ec *executionContext) marshalNManufacturerEdge2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐManufacturerEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ManufacturerEdge) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNManufacturerEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐManufacturerEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNManufacturerEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐManufacturerEdge(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -20963,39 +20559,11 @@ func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋ
 }
 
 func (ec *executionContext) marshalNPrivilege2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐPrivilegeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Privilege) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNPrivilege2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐPrivilege(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNPrivilege2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐPrivilege(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -21017,39 +20585,11 @@ func (ec *executionContext) marshalNPrivilege2ᚖgithubᚗcomᚋDIMOᚑNetwork�
 }
 
 func (ec *executionContext) marshalNPrivilegeEdge2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐPrivilegeEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.PrivilegeEdge) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNPrivilegeEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐPrivilegeEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNPrivilegeEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐPrivilegeEdge(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -21085,39 +20625,11 @@ func (ec *executionContext) marshalNPrivilegesConnection2ᚖgithubᚗcomᚋDIMO�
 }
 
 func (ec *executionContext) marshalNRedirectURI2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐRedirectURIᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.RedirectURI) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNRedirectURI2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐRedirectURI(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNRedirectURI2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐRedirectURI(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -21153,39 +20665,11 @@ func (ec *executionContext) marshalNRedirectURIConnection2ᚖgithubᚗcomᚋDIMO
 }
 
 func (ec *executionContext) marshalNRedirectURIEdge2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐRedirectURIEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.RedirectURIEdge) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNRedirectURIEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐRedirectURIEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNRedirectURIEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐRedirectURIEdge(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -21207,39 +20691,11 @@ func (ec *executionContext) marshalNRedirectURIEdge2ᚖgithubᚗcomᚋDIMOᚑNet
 }
 
 func (ec *executionContext) marshalNSacd2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSacdᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Sacd) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNSacd2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSacd(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNSacd2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSacd(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -21275,39 +20731,11 @@ func (ec *executionContext) marshalNSacdConnection2ᚖgithubᚗcomᚋDIMOᚑNetw
 }
 
 func (ec *executionContext) marshalNSacdEdge2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSacdEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SacdEdge) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNSacdEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSacdEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNSacdEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSacdEdge(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -21329,39 +20757,11 @@ func (ec *executionContext) marshalNSacdEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋ
 }
 
 func (ec *executionContext) marshalNSigner2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSignerᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Signer) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNSigner2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSigner(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNSigner2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSigner(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -21397,39 +20797,11 @@ func (ec *executionContext) marshalNSignerConnection2ᚖgithubᚗcomᚋDIMOᚑNe
 }
 
 func (ec *executionContext) marshalNSignerEdge2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSignerEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SignerEdge) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNSignerEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSignerEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNSignerEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSignerEdge(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -21451,39 +20823,11 @@ func (ec *executionContext) marshalNSignerEdge2ᚖgithubᚗcomᚋDIMOᚑNetwork�
 }
 
 func (ec *executionContext) marshalNStake2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐStakeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Stake) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNStake2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐStake(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNStake2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐStake(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -21505,39 +20849,11 @@ func (ec *executionContext) marshalNStake2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋide
 }
 
 func (ec *executionContext) marshalNStakeEdge2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐStakeEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.StakeEdge) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNStakeEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐStakeEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNStakeEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐStakeEdge(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -21575,39 +20891,11 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 }
 
 func (ec *executionContext) marshalNSyntheticDevice2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSyntheticDeviceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SyntheticDevice) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNSyntheticDevice2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSyntheticDevice(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNSyntheticDevice2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSyntheticDevice(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -21648,39 +20936,11 @@ func (ec *executionContext) marshalNSyntheticDeviceConnection2ᚖgithubᚗcomᚋ
 }
 
 func (ec *executionContext) marshalNSyntheticDeviceEdge2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSyntheticDeviceEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SyntheticDeviceEdge) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNSyntheticDeviceEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSyntheticDeviceEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNSyntheticDeviceEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSyntheticDeviceEdge(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -21702,39 +20962,11 @@ func (ec *executionContext) marshalNSyntheticDeviceEdge2ᚖgithubᚗcomᚋDIMO�
 }
 
 func (ec *executionContext) marshalNTemplate2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐTemplateᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Template) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNTemplate2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐTemplate(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNTemplate2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐTemplate(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -21775,39 +21007,11 @@ func (ec *executionContext) marshalNTemplateConnection2ᚖgithubᚗcomᚋDIMOᚑ
 }
 
 func (ec *executionContext) marshalNTemplateEdge2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐTemplateEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.TemplateEdge) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNTemplateEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐTemplateEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNTemplateEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐTemplateEdge(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -21849,39 +21053,11 @@ func (ec *executionContext) marshalNVehicle2githubᚗcomᚋDIMOᚑNetworkᚋiden
 }
 
 func (ec *executionContext) marshalNVehicle2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐVehicleᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Vehicle) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNVehicle2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐVehicle(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNVehicle2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐVehicle(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -21917,39 +21093,11 @@ func (ec *executionContext) marshalNVehicleConnection2ᚖgithubᚗcomᚋDIMOᚑN
 }
 
 func (ec *executionContext) marshalNVehicleEdge2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐVehicleEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.VehicleEdge) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNVehicleEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐVehicleEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNVehicleEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐVehicleEdge(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -21975,39 +21123,11 @@ func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlge
 }
 
 func (ec *executionContext) marshalN__Directive2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirectiveᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.Directive) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -22050,39 +21170,11 @@ func (ec *executionContext) unmarshalN__DirectiveLocation2ᚕstringᚄ(ctx conte
 }
 
 func (ec *executionContext) marshalN__DirectiveLocation2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalN__DirectiveLocation2string(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalN__DirectiveLocation2string(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -22106,39 +21198,11 @@ func (ec *executionContext) marshalN__InputValue2githubᚗcomᚋ99designsᚋgqlg
 }
 
 func (ec *executionContext) marshalN__InputValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐInputValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.InputValue) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalN__InputValue2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐInputValue(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalN__InputValue2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐInputValue(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -22154,39 +21218,11 @@ func (ec *executionContext) marshalN__Type2githubᚗcomᚋ99designsᚋgqlgenᚋg
 }
 
 func (ec *executionContext) marshalN__Type2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐTypeᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.Type) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalN__Type2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalN__Type2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -22562,39 +21598,11 @@ func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgq
 	if v == nil {
 		return graphql.Null
 	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalN__EnumValue2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValue(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalN__EnumValue2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValue(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -22609,39 +21617,11 @@ func (ec *executionContext) marshalO__Field2ᚕgithubᚗcomᚋ99designsᚋgqlgen
 	if v == nil {
 		return graphql.Null
 	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalN__Field2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐField(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalN__Field2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐField(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -22656,39 +21636,11 @@ func (ec *executionContext) marshalO__InputValue2ᚕgithubᚗcomᚋ99designsᚋg
 	if v == nil {
 		return graphql.Null
 	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalN__InputValue2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐInputValue(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalN__InputValue2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐInputValue(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -22710,39 +21662,11 @@ func (ec *executionContext) marshalO__Type2ᚕgithubᚗcomᚋ99designsᚋgqlgen�
 	if v == nil {
 		return graphql.Null
 	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalN__Type2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalN__Type2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {

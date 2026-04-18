@@ -14,6 +14,10 @@ extend type Query {
     """
     tokenDID: String
   ): Vehicle
+    @mcpTool(name: "get_vehicle", description: "Look up a vehicle. Provide exactly one of tokenId (integer) or tokenDID (string). Returns owner, mint time, definition, and connected devices.", selection: "tokenId name owner mintedAt definition { make model year } aftermarketDevice { serial } syntheticDevice { tokenId }")
+    @mcpExample(description: "Get vehicle by tokenId", query: "{ vehicle(tokenId: 123) { tokenId name owner definition { make model year } aftermarketDevice { serial } syntheticDevice { tokenId } dcn { name } stake { level amount } } }")
+    @mcpExample(description: "Get vehicle SACDs (permission grants)", query: "{ vehicle(tokenId: 123) { sacds { nodes { grantee permissions expiresAt template { cid } } } } }")
+    @mcpExample(description: "Get vehicle privileges", query: "{ vehicle(tokenId: 123) { privileges(filterBy: { user: \"0x...\" }) { nodes { id user setAt expiresAt } } } }")
 
   """
   List minted vehicles.
@@ -44,6 +48,9 @@ extend type Query {
     """
     filterBy: VehiclesFilter
   ): VehicleConnection!
+    @mcpTool(name: "list_vehicles", description: "List vehicles with optional filters for owner, make, model, year. Returns paginated results.", selection: "totalCount nodes { tokenId name definition { make model year } } pageInfo { hasNextPage endCursor }")
+    @mcpExample(description: "List vehicles by owner", query: "{ vehicles(first: 20, filterBy: { owner: \"0x...\" }) { totalCount nodes { tokenId name definition { make model year } } pageInfo { hasNextPage endCursor } } }")
+    @mcpExample(description: "List vehicles user has access to (via privileges or SACDs)", query: "{ vehicles(first: 100, filterBy: { privileged: \"0x...\" }) { nodes { tokenId name owner } } }")
 }
 
 """

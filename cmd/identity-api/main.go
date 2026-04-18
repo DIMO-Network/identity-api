@@ -20,6 +20,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/loader"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/internal/services"
+	"github.com/DIMO-Network/server-garage/pkg/mcpserver"
 	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/DIMO-Network/shared/pkg/kafka"
 	"github.com/DIMO-Network/shared/pkg/settings"
@@ -72,12 +73,27 @@ func main() {
 
 	serveMonitoring(strconv.Itoa(settings.MonPort), &logger)
 
-	s := newDefaultServer(graph.NewExecutableSchema(cfg))
+	es := graph.NewExecutableSchema(cfg)
+	s := newDefaultServer(es)
 
 	srv := loader.Middleware(dbs, s, settings, &repoLogger)
 
+	mcpHandler, err := mcpserver.New(context.Background(), mcpserver.NewGQLGenExecutor(es), "DIMO Identity", "0.1.0", "identity",
+		mcpserver.WithTools(graph.MCPTools),
+		mcpserver.WithCondensedSchema(graph.CondensedSchema),
+	)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Failed to create MCP handler")
+	}
+
+	// Wrap the MCP handler so that zerolog.Ctx inside mcpserver picks up our logger.
+	mcpWithLogger := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mcpHandler.ServeHTTP(w, r.WithContext(logger.WithContext(r.Context())))
+	})
+
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", srv)
+	http.Handle("/mcp", mcpWithLogger)
 
 	logger.Info().Msgf("Server started on port: %d", settings.Port)
 
