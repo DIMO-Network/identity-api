@@ -78,7 +78,7 @@ func main() {
 
 	srv := loader.Middleware(dbs, s, settings, &repoLogger)
 
-	mcpHandler, err := mcpserver.New(context.Background(), mcpserver.NewGQLGenExecutor(es), "DIMO Identity", "0.1.0", "identity",
+	mcpHandler, err := mcpserver.New(mcpserver.NewGQLGenExecutor(es), "DIMO Identity", "0.1.0", "identity",
 		mcpserver.WithTools(graph.MCPTools),
 		mcpserver.WithCondensedSchema(graph.CondensedSchema),
 	)

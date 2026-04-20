@@ -49,7 +49,6 @@ extend type Query {
     filterBy: VehiclesFilter
   ): VehicleConnection!
     @mcpTool(name: "list_vehicles", description: "List vehicles with optional filters for owner, make, model, year. Returns paginated results.", selection: "totalCount nodes { tokenId name definition { make model year } } pageInfo { hasNextPage endCursor }")
-    @mcpExample(description: "List vehicles by owner", query: "{ vehicles(first: 20, filterBy: { owner: \"0x...\" }) { totalCount nodes { tokenId name definition { make model year } } pageInfo { hasNextPage endCursor } } }")
     @mcpExample(description: "List vehicles user has access to (via privileges or SACDs)", query: "{ vehicles(first: 100, filterBy: { privileged: \"0x...\" }) { nodes { tokenId name owner } } }")
 }
 
