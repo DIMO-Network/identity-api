@@ -150,7 +150,7 @@ require (
 )
 
 require (
-	github.com/DIMO-Network/server-garage v0.0.4
+	github.com/DIMO-Network/server-garage v0.1.0
 	github.com/modelcontextprotocol/go-sdk v1.4.1
 )
 
@@ -176,5 +176,3 @@ require (
 tool github.com/DIMO-Network/eventgen
 
 replace github.com/ericlagergren/decimal => github.com/ericlagergren/decimal v0.0.0-20190420051523-6335edbaa640
-
-replace github.com/DIMO-Network/server-garage => /Users/zer0stars/workspace/server-garage
