@@ -5,6 +5,8 @@ extend type Query {
   View a particular aftermarket device.
   """
   aftermarketDevice(by: AftermarketDeviceBy!): AftermarketDevice
+    @mcpTool(name: "get_aftermarket_device", description: "Look up an aftermarket device by serial, token ID, address, IMEI, or devEUI. Returns device info with manufacturer and paired vehicle.", selection: "tokenId owner serial manufacturer { name } vehicle { tokenId definition { make model year } }")
+    @mcpExample(description: "Get aftermarket device by serial", query: "{ aftermarketDevice(by: { serial: \"abc-123\" }) { tokenId owner serial manufacturer { name } vehicle { tokenId definition { make model year } } earnings { totalTokens } } }")
 
   """
   List aftermarket devices.

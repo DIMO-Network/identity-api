@@ -26,6 +26,7 @@ import (
 )
 
 //go:generate go run github.com/99designs/gqlgen generate
+//go:generate go run github.com/DIMO-Network/server-garage/cmd/mcpgen -schema ./schema/ -prefix identity -out mcp_tools_gen.go -package graph
 
 // This file will not be regenerated automatically.
 //
