@@ -91,9 +91,12 @@ func main() {
 		mcpHandler.ServeHTTP(w, r.WithContext(logger.WithContext(r.Context())))
 	})
 
+	// Dataloaders are attached per-request; MCP resolvers need them just like GraphQL.
+	mcpWithLoaders := loader.Middleware(dbs, mcpWithLogger, settings, &repoLogger)
+
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", srv)
-	http.Handle("/mcp", mcpWithLogger)
+	http.Handle("/mcp", mcpWithLoaders)
 
 	logger.Info().Msgf("Server started on port: %d", settings.Port)
 
