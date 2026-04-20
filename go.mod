@@ -150,7 +150,7 @@ require (
 )
 
 require (
-	github.com/DIMO-Network/server-garage v0.1.0
+	github.com/DIMO-Network/server-garage v0.1.1
 	github.com/modelcontextprotocol/go-sdk v1.4.1
 )
 

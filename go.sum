@@ -14,8 +14,8 @@ github.com/DIMO-Network/eventgen v0.2.1 h1:yvd7nLTqKAls2TJjFwxIJlVK4E8juWGcLdZaC
 github.com/DIMO-Network/eventgen v0.2.1/go.mod h1:yRoCDbRRU8n/eR/C339O1UXpBeN+7lF27et0LHwoU5s=
 github.com/DIMO-Network/mnemonic v0.0.0-20240611180925-eecaa65be2b9 h1:gzD4pkrKRhjP+KeGjnMLG+D1Py6bVNt3s6BSgB4D/c4=
 github.com/DIMO-Network/mnemonic v0.0.0-20240611180925-eecaa65be2b9/go.mod h1:CTxZYuVPhvEJgDL665oqZClsxB8TtVHQ7qNwpJfqTxk=
-github.com/DIMO-Network/server-garage v0.1.0 h1:AglbxOj0duQz/4Et2eSh+pPEq3qOfInREBycIJEBOTs=
-github.com/DIMO-Network/server-garage v0.1.0/go.mod h1:Z3A1KDUsXey+XhrPhmw/wyCidfrQvmEdWp7nShno7ZM=
+github.com/DIMO-Network/server-garage v0.1.1 h1:EYmyy+Fgi2BNW0Bufn04BViDtb8BCWaN7C7BbEuoI5s=
+github.com/DIMO-Network/server-garage v0.1.1/go.mod h1:Z3A1KDUsXey+XhrPhmw/wyCidfrQvmEdWp7nShno7ZM=
 github.com/DIMO-Network/shared v1.1.5 h1:cRI3BbeYOgolMkeBOSqbDVGxymnDfeP/q7xgIXJ5MkY=
 github.com/DIMO-Network/shared v1.1.5/go.mod h1:lDHUKwwT2LW6Zvd42Nb33dXklRNTmfyOlbUNx2dQfGY=
 github.com/DIMO-Network/yaml v0.1.0 h1:KQ3oKHUZETchR6Pxbmmol3e4ewrPv/q8cEwqxfwyZbU=
