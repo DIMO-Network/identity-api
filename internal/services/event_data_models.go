@@ -166,6 +166,12 @@ type PermissionsSetData struct {
 	Source      string
 }
 
+type PermissionsRenouncedData struct {
+	Asset   common.Address
+	TokenId *big.Int
+	Grantee common.Address
+}
+
 type PermissionsSetWithTemplateData struct {
 	Asset       common.Address
 	TokenId     *big.Int
