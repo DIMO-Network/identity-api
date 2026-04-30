@@ -1954,3 +1954,141 @@ func TestHandlePermissionsSetEventWithTemplate(t *testing.T) {
 	assert.Equal(t, template.ID, relatedTemplate.ID)
 	assert.Equal(t, template.Cid, relatedTemplate.Cid)
 }
+
+func TestHandlePermissionsRenouncedEventVehicle(t *testing.T) {
+	ctx := context.Background()
+	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
+
+	contractEventData.EventName = "PermissionsRenounced"
+	contractEventData.Contract = common.HexToAddress(sacdAddr)
+
+	grantee := common.HexToAddress("0x1234567890123456789012345678901234567890")
+	tokenID := big.NewInt(200)
+
+	settings := config.Settings{
+		VehicleNFTAddr:      vehicleIdAddr,
+		SACDAddress:         sacdAddr,
+		DIMORegistryAddr:    dimoRegistryAddr,
+		DIMORegistryChainID: contractEventData.ChainID,
+	}
+
+	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
+
+	manufacturer := models.Manufacturer{
+		ID:       131,
+		Name:     "Toyota",
+		Owner:    grantee.Bytes(),
+		MintedAt: time.Now(),
+		Slug:     "toyota",
+	}
+	require.NoError(t, manufacturer.Insert(ctx, pdb.DBS().Writer, boil.Infer()))
+
+	vehicle := models.Vehicle{
+		ID:             int(tokenID.Int64()),
+		OwnerAddress:   grantee.Bytes(),
+		MintedAt:       time.Now(),
+		ManufacturerID: 131,
+	}
+	require.NoError(t, vehicle.Insert(ctx, pdb.DBS().Writer, boil.Infer()))
+
+	existing := models.VehicleSacd{
+		VehicleID:   int(tokenID.Int64()),
+		Grantee:     grantee.Bytes(),
+		Permissions: big.NewInt(3888).Text(2),
+		Source:      "test-source",
+		CreatedAt:   time.Now(),
+		ExpiresAt:   time.Now().Add(24 * time.Hour),
+	}
+	require.NoError(t, existing.Insert(ctx, pdb.DBS().Writer, boil.Infer()))
+
+	renounceData := PermissionsRenouncedData{
+		Asset:   common.HexToAddress(vehicleIdAddr),
+		TokenId: tokenID,
+		Grantee: grantee,
+	}
+
+	consumer := NewContractsEventsConsumer(pdb, &logger, &settings)
+	e := prepareEvent(t, contractEventData, renounceData)
+	require.NoError(t, consumer.Process(ctx, &e))
+
+	count, err := models.VehicleSacds(
+		models.VehicleSacdWhere.VehicleID.EQ(int(tokenID.Int64())),
+		models.VehicleSacdWhere.Grantee.EQ(grantee.Bytes()),
+	).Count(ctx, pdb.DBS().Reader)
+	require.NoError(t, err)
+	assert.Equal(t, int64(0), count)
+}
+
+func TestHandlePermissionsRenouncedEventAccount(t *testing.T) {
+	ctx := context.Background()
+	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
+
+	contractEventData.EventName = "PermissionsRenounced"
+	contractEventData.Contract = common.HexToAddress(sacdAddr)
+
+	account := common.HexToAddress("0x00000000000000000000000000000000000000aa")
+	grantee := common.HexToAddress("0x1234567890123456789012345678901234567890")
+
+	settings := config.Settings{
+		VehicleNFTAddr:      vehicleIdAddr,
+		SACDAddress:         sacdAddr,
+		DIMORegistryAddr:    dimoRegistryAddr,
+		DIMORegistryChainID: contractEventData.ChainID,
+	}
+
+	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
+
+	existing := models.AccountSacd{
+		Account:     account.Bytes(),
+		Grantee:     grantee.Bytes(),
+		Permissions: big.NewInt(3888).Text(2),
+		Source:      "test-source",
+		CreatedAt:   time.Now(),
+		ExpiresAt:   time.Now().Add(24 * time.Hour),
+	}
+	require.NoError(t, existing.Insert(ctx, pdb.DBS().Writer, boil.Infer()))
+
+	renounceData := PermissionsRenouncedData{
+		Asset:   account,
+		TokenId: big.NewInt(0),
+		Grantee: grantee,
+	}
+
+	consumer := NewContractsEventsConsumer(pdb, &logger, &settings)
+	e := prepareEvent(t, contractEventData, renounceData)
+	require.NoError(t, consumer.Process(ctx, &e))
+
+	count, err := models.AccountSacds(
+		models.AccountSacdWhere.Account.EQ(account.Bytes()),
+		models.AccountSacdWhere.Grantee.EQ(grantee.Bytes()),
+	).Count(ctx, pdb.DBS().Reader)
+	require.NoError(t, err)
+	assert.Equal(t, int64(0), count)
+}
+
+func TestHandlePermissionsRenouncedEventNoExistingGrantIsNoop(t *testing.T) {
+	ctx := context.Background()
+	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
+
+	contractEventData.EventName = "PermissionsRenounced"
+	contractEventData.Contract = common.HexToAddress(sacdAddr)
+
+	settings := config.Settings{
+		VehicleNFTAddr:      vehicleIdAddr,
+		SACDAddress:         sacdAddr,
+		DIMORegistryAddr:    dimoRegistryAddr,
+		DIMORegistryChainID: contractEventData.ChainID,
+	}
+
+	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
+
+	renounceData := PermissionsRenouncedData{
+		Asset:   common.HexToAddress(vehicleIdAddr),
+		TokenId: big.NewInt(999),
+		Grantee: common.HexToAddress("0x1234567890123456789012345678901234567890"),
+	}
+
+	consumer := NewContractsEventsConsumer(pdb, &logger, &settings)
+	e := prepareEvent(t, contractEventData, renounceData)
+	require.NoError(t, consumer.Process(ctx, &e))
+}

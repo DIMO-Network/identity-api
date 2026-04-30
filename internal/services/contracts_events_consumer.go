@@ -48,7 +48,8 @@ const (
 	BeneficiarySetEvent EventName = "BeneficiarySet"
 
 	// SACD.
-	PermissionsSetEvent EventName = "PermissionsSet"
+	PermissionsSetEvent       EventName = "PermissionsSet"
+	PermissionsRenouncedEvent EventName = "PermissionsRenounced"
 
 	// Template.
 	TemplateCreatedEvent EventName = "TemplateCreated"
@@ -206,6 +207,8 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *cloudevent
 		switch eventName {
 		case PermissionsSetEvent:
 			return c.handlePermissionsSetEvent(ctx, &data)
+		case PermissionsRenouncedEvent:
+			return c.handlePermissionsRenouncedEvent(ctx, &data)
 		}
 	case templateAddr:
 		switch eventName {
@@ -688,6 +691,54 @@ func (c *ContractsEventsConsumer) handlePermissionsSetEvent(ctx context.Context,
 		Int64("vehicleId", args.TokenId.Int64()).
 		Str("grantee", args.Grantee.Hex()).
 		Msg("Vehicle SACD processed.")
+
+	return nil
+}
+
+func (c *ContractsEventsConsumer) handlePermissionsRenouncedEvent(ctx context.Context, e *cmodels.ContractEventData) error {
+	logger := c.log.With().Str("EventName", PermissionsRenouncedEvent.String()).Logger()
+
+	var args PermissionsRenouncedData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return fmt.Errorf("error unmarshaling PermissionsRenounced inputs: %w", err)
+	}
+
+	if args.TokenId.Sign() == 0 {
+		n, err := models.AccountSacds(
+			models.AccountSacdWhere.Account.EQ(args.Asset.Bytes()),
+			models.AccountSacdWhere.Grantee.EQ(args.Grantee.Bytes()),
+		).DeleteAll(ctx, c.dbs.DBS().Writer)
+		if err != nil {
+			return fmt.Errorf("error deleting account SACD: %w", err)
+		}
+
+		logger.Info().
+			Str("account", args.Asset.Hex()).
+			Str("grantee", args.Grantee.Hex()).
+			Int64("deleted", n).
+			Msg("Account SACD renounced.")
+
+		return nil
+	}
+
+	if args.Asset != common.HexToAddress(c.settings.VehicleNFTAddr) {
+		logger.Warn().Msgf("SACD renounced for non-vehicle asset %s.", args.Asset.Hex())
+		return nil
+	}
+
+	n, err := models.VehicleSacds(
+		models.VehicleSacdWhere.VehicleID.EQ(int(args.TokenId.Int64())),
+		models.VehicleSacdWhere.Grantee.EQ(args.Grantee.Bytes()),
+	).DeleteAll(ctx, c.dbs.DBS().Writer)
+	if err != nil {
+		return fmt.Errorf("error deleting vehicle SACD: %w", err)
+	}
+
+	logger.Info().
+		Int64("vehicleId", args.TokenId.Int64()).
+		Str("grantee", args.Grantee.Hex()).
+		Int64("deleted", n).
+		Msg("Vehicle SACD renounced.")
 
 	return nil
 }
