@@ -49,6 +49,18 @@ type Manufacturer implements Node {
   """
   mintedAt: Time!
   """
+  URI pointing to the manufacturer's logo image. Typically an `ipfs://Qm…`
+  link served via the DIMO gateway. May also be `https://…`.
+  """
+  imageURI: String
+  """
+  The clientId (Ethereum address) of the developer license authoritatively
+  associated with this manufacturer. Set on-chain via the manufacturer's
+  `devLicenseClientId` attribute. Lets SDKs resolve "which OEM is this dev
+  license?" in one query.
+  """
+  devLicenseClientId: Address
+  """
   A Relay-style connection listing any aftermarket devices associated with manufacturer.
   """
   aftermarketDevices(
@@ -96,6 +108,12 @@ input ManufacturerBy @oneOf {
   The DID of the manufacturer in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
   """
   tokenDID: String @goField(name: "TokenDID")
+  """
+  Look up a manufacturer by the clientId Address of its associated developer
+  license. Useful for SDKs that have a clientId in hand and need to discover
+  the OEM (name + logo) without a separate registry.
+  """
+  devLicenseClientId: Address
 }
 
 """

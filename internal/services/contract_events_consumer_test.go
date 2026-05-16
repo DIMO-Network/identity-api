@@ -137,6 +137,125 @@ func TestHandleAftermarketDeviceAttributeSetEvent(t *testing.T) {
 	assert.Equal(t, time.Time{}, ad.MintedAt)
 }
 
+func TestHandleManufacturerAttributeSetEvent(t *testing.T) {
+	ctx := context.Background()
+	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
+	settings := config.Settings{
+		DIMORegistryAddr:    contractEventData.Contract.String(),
+		DIMORegistryChainID: contractEventData.ChainID,
+	}
+
+	const tokenID = 131
+	devLicense := common.HexToAddress("0xb92d74B468B4047289AEa7c9B953066E39768C16")
+	imageURI := "ipfs://QmaYY8pNKDNbo8yHha9z3k3FU5ejwJyBJDbPBWSUwJYkue"
+
+	t.Run("sets imageURI", func(t *testing.T) {
+		contractEventData.EventName = string(ManufacturerAttributeSet)
+
+		pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
+		consumer := NewContractsEventsConsumer(pdb, &logger, &settings)
+
+		mfr := models.Manufacturer{
+			ID:    tokenID,
+			Name:  "Toyota",
+			Owner: common.FromHex("0xCED3c922200559128930180d3f0bfFd4d9f4F123"),
+			Slug:  "toyota",
+		}
+		require.NoError(t, mfr.Insert(ctx, pdb.DBS().Writer, boil.Infer()))
+
+		e := prepareEvent(t, contractEventData, ManufacturerAttributeSetData{
+			TokenID:   big.NewInt(tokenID),
+			Attribute: "imageURI",
+			Info:      imageURI,
+		})
+		require.NoError(t, consumer.Process(ctx, &e))
+
+		got, err := models.FindManufacturer(ctx, pdb.DBS().Reader, tokenID)
+		require.NoError(t, err)
+		assert.Equal(t, imageURI, got.ImageURI.String)
+		assert.True(t, got.ImageURI.Valid)
+	})
+
+	t.Run("sets devLicenseClientId", func(t *testing.T) {
+		contractEventData.EventName = string(ManufacturerAttributeSet)
+
+		pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
+		consumer := NewContractsEventsConsumer(pdb, &logger, &settings)
+
+		mfr := models.Manufacturer{
+			ID:    tokenID,
+			Name:  "Toyota",
+			Owner: common.FromHex("0xCED3c922200559128930180d3f0bfFd4d9f4F123"),
+			Slug:  "toyota",
+		}
+		require.NoError(t, mfr.Insert(ctx, pdb.DBS().Writer, boil.Infer()))
+
+		e := prepareEvent(t, contractEventData, ManufacturerAttributeSetData{
+			TokenID:   big.NewInt(tokenID),
+			Attribute: "devLicenseClientId",
+			Info:      devLicense.Hex(),
+		})
+		require.NoError(t, consumer.Process(ctx, &e))
+
+		got, err := models.FindManufacturer(ctx, pdb.DBS().Reader, tokenID)
+		require.NoError(t, err)
+		assert.Equal(t, devLicense.Bytes(), got.DevLicenseClientID)
+	})
+
+	t.Run("rejects malformed imageURI", func(t *testing.T) {
+		contractEventData.EventName = string(ManufacturerAttributeSet)
+
+		pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
+		consumer := NewContractsEventsConsumer(pdb, &logger, &settings)
+
+		mfr := models.Manufacturer{ID: tokenID, Name: "Toyota", Owner: common.FromHex("0x00"), Slug: "toyota"}
+		require.NoError(t, mfr.Insert(ctx, pdb.DBS().Writer, boil.Infer()))
+
+		e := prepareEvent(t, contractEventData, ManufacturerAttributeSetData{
+			TokenID:   big.NewInt(tokenID),
+			Attribute: "imageURI",
+			Info:      "not a uri",
+		})
+		err := consumer.Process(ctx, &e)
+		assert.Error(t, err)
+	})
+
+	t.Run("rejects malformed devLicenseClientId", func(t *testing.T) {
+		contractEventData.EventName = string(ManufacturerAttributeSet)
+
+		pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
+		consumer := NewContractsEventsConsumer(pdb, &logger, &settings)
+
+		mfr := models.Manufacturer{ID: tokenID, Name: "Toyota", Owner: common.FromHex("0x00"), Slug: "toyota"}
+		require.NoError(t, mfr.Insert(ctx, pdb.DBS().Writer, boil.Infer()))
+
+		e := prepareEvent(t, contractEventData, ManufacturerAttributeSetData{
+			TokenID:   big.NewInt(tokenID),
+			Attribute: "devLicenseClientId",
+			Info:      "deadbeef",
+		})
+		err := consumer.Process(ctx, &e)
+		assert.Error(t, err)
+	})
+
+	t.Run("ignores unknown attribute", func(t *testing.T) {
+		contractEventData.EventName = string(ManufacturerAttributeSet)
+
+		pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
+		consumer := NewContractsEventsConsumer(pdb, &logger, &settings)
+
+		mfr := models.Manufacturer{ID: tokenID, Name: "Toyota", Owner: common.FromHex("0x00"), Slug: "toyota"}
+		require.NoError(t, mfr.Insert(ctx, pdb.DBS().Writer, boil.Infer()))
+
+		e := prepareEvent(t, contractEventData, ManufacturerAttributeSetData{
+			TokenID:   big.NewInt(tokenID),
+			Attribute: "newFutureAttribute",
+			Info:      "whatever",
+		})
+		assert.NoError(t, consumer.Process(ctx, &e))
+	})
+}
+
 func TestHandleAftermarketDevicePairedEvent(t *testing.T) {
 	ctx := context.Background()
 	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()

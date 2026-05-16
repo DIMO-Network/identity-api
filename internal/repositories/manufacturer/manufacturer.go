@@ -51,14 +51,22 @@ func (r *Repository) ToAPI(m *models.Manufacturer) (*gmodel.Manufacturer, error)
 		TokenID:         new(big.Int).SetUint64(uint64(m.ID)),
 	}.String()
 
+	var devLicenseClientID *common.Address
+	if len(m.DevLicenseClientID) != 0 {
+		a := common.BytesToAddress(m.DevLicenseClientID)
+		devLicenseClientID = &a
+	}
+
 	return &gmodel.Manufacturer{
-		ID:       globalID,
-		TokenID:  m.ID,
-		TokenDID: tokenDID,
-		Owner:    common.BytesToAddress(m.Owner),
-		TableID:  m.TableID.Ptr(),
-		MintedAt: m.MintedAt,
-		Name:     m.Name,
+		ID:                 globalID,
+		TokenID:            m.ID,
+		TokenDID:           tokenDID,
+		Owner:              common.BytesToAddress(m.Owner),
+		TableID:            m.TableID.Ptr(),
+		MintedAt:           m.MintedAt,
+		Name:               m.Name,
+		ImageURI:           m.ImageURI.Ptr(),
+		DevLicenseClientID: devLicenseClientID,
 	}, nil
 }
 
@@ -74,8 +82,8 @@ func IDToToken(b []byte) (int, error) {
 }
 
 func (r *Repository) GetManufacturer(ctx context.Context, by gmodel.ManufacturerBy) (*gmodel.Manufacturer, error) {
-	if base.CountTrue(by.TokenID != nil, by.Name != nil, by.Slug != nil, by.TokenDID != nil) != 1 {
-		return nil, gqlerror.Errorf("Provide exactly one of `name`, `tokenID`, `slug`, or `tokenDID`.")
+	if base.CountTrue(by.TokenID != nil, by.Name != nil, by.Slug != nil, by.TokenDID != nil, by.DevLicenseClientID != nil) != 1 {
+		return nil, gqlerror.Errorf("Provide exactly one of `name`, `tokenID`, `slug`, `tokenDID`, or `devLicenseClientId`.")
 	}
 
 	var qm qm.QueryMod
@@ -86,6 +94,8 @@ func (r *Repository) GetManufacturer(ctx context.Context, by gmodel.Manufacturer
 		qm = models.ManufacturerWhere.Name.EQ(*by.Name)
 	case by.Slug != nil:
 		qm = models.ManufacturerWhere.Slug.EQ(*by.Slug)
+	case by.DevLicenseClientID != nil:
+		qm = models.ManufacturerWhere.DevLicenseClientID.EQ(by.DevLicenseClientID.Bytes())
 	case by.TokenDID != nil:
 		did, err := cloudevent.DecodeERC721DID(*by.TokenDID)
 		if err != nil {

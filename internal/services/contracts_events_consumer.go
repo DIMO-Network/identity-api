@@ -55,6 +55,7 @@ const (
 
 	// Manufacturers.
 	ManufacturerNodeMinted       EventName = "ManufacturerNodeMinted"
+	ManufacturerAttributeSet     EventName = "ManufacturerAttributeSet"
 	DeviceDefinitionTableCreated EventName = "DeviceDefinitionTableCreated"
 	ManufacturerTableSet         EventName = "ManufacturerTableSet"
 
@@ -157,6 +158,8 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *cloudevent
 		switch eventName {
 		case ManufacturerNodeMinted:
 			return c.handleManufacturerNodeMintedEvent(ctx, &data)
+		case ManufacturerAttributeSet:
+			return c.handleManufacturerAttributeSetEvent(ctx, &data)
 		case DeviceDefinitionTableCreated:
 			return c.handleDeviceDefinitionTableCreated(ctx, &data)
 		case ManufacturerTableSet:
@@ -302,6 +305,57 @@ func (c *ContractsEventsConsumer) handleDeviceDefinitionTableCreated(ctx context
 
 	_, err := mfr.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.ManufacturerColumns.TableID))
 	return err
+}
+
+// handleManufacturerAttributeSetEvent persists per-Manufacturer brand metadata
+// written on-chain via setManufacturerInfo. Two attributes are recognised today:
+//
+//   - "imageURI"           — URI for the OEM's logo (e.g. ipfs://Qm…).
+//   - "devLicenseClientId" — the dev license client id (an Ethereum address)
+//                            this manufacturer authoritatively maps to. Used
+//                            by SDKs to look up "which OEM is this dev
+//                            license?" without a separate registry.
+//
+// Unknown attributes are logged and ignored so future on-chain attribute
+// additions don't crash the consumer.
+func (c *ContractsEventsConsumer) handleManufacturerAttributeSetEvent(ctx context.Context, e *cmodels.ContractEventData) error {
+	var args ManufacturerAttributeSetData
+	if err := json.Unmarshal(e.Arguments, &args); err != nil {
+		return err
+	}
+
+	mfr := models.Manufacturer{ID: int(args.TokenID.Int64())}
+
+	switch args.Attribute {
+	case "imageURI":
+		var imageURI null.String
+		if args.Info != "" {
+			if _, err := url.ParseRequestURI(args.Info); err != nil {
+				return fmt.Errorf("invalid manufacturer imageURI %q: %w", args.Info, err)
+			}
+			imageURI = null.StringFrom(args.Info)
+		}
+		mfr.ImageURI = imageURI
+		_, err := mfr.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.ManufacturerColumns.ImageURI))
+		return err
+	case "devLicenseClientId":
+		var clientID []byte
+		if args.Info != "" {
+			if !common.IsHexAddress(args.Info) {
+				return fmt.Errorf("invalid manufacturer devLicenseClientId %q: not a 0x-prefixed 40-hex address", args.Info)
+			}
+			clientID = common.HexToAddress(args.Info).Bytes()
+		}
+		mfr.DevLicenseClientID = clientID
+		_, err := mfr.Update(ctx, c.dbs.DBS().Writer, boil.Whitelist(models.ManufacturerColumns.DevLicenseClientID))
+		return err
+	default:
+		c.log.Warn().
+			Str("attribute", args.Attribute).
+			Int64("tokenId", args.TokenID.Int64()).
+			Msg("Unrecognised manufacturer attribute; ignoring.")
+		return nil
+	}
 }
 
 func (c *ContractsEventsConsumer) handleManufacturerTableSet(ctx context.Context, e *cmodels.ContractEventData) error {
