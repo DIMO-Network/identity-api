@@ -42,6 +42,10 @@ type Connection {
   The block timestamp for the mint of the connection.
   """
   mintedAt: Time!
+  """
+  A Relay-style connection listing any active permission grants on this connection.
+  """
+  sacds(first: Int, after: String, last: Int, before: String): SacdConnection!
 }
 
 type ConnectionConnection {

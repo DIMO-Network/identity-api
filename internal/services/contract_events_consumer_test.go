@@ -33,6 +33,7 @@ const (
 	dimoRegistryAddr      = "0x4de1bcf2b7e851e31216fc07989caa902a604784"
 	sacdAddr              = "0x4E5F9320b1c7cB3DE5ebDD760aD67375B66cF8a3"
 	templateAddr          = "0xf369532e2144034E34Be08DBaA3A589C87dBbE3A"
+	connectionAddr        = "0xb83DE952D389f9A6806819434450324197712FDA"
 )
 
 var (
@@ -2091,4 +2092,121 @@ func TestHandlePermissionsRenouncedEventNoExistingGrantIsNoop(t *testing.T) {
 	consumer := NewContractsEventsConsumer(pdb, &logger, &settings)
 	e := prepareEvent(t, contractEventData, renounceData)
 	require.NoError(t, consumer.Process(ctx, &e))
+}
+
+func TestHandlePermissionsSetEventConnection(t *testing.T) {
+	ctx := context.Background()
+	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
+
+	contractEventData.EventName = "PermissionsSet"
+	contractEventData.Contract = common.HexToAddress(sacdAddr)
+
+	connectionID := big.NewInt(37747592896)
+	permissionsSetData := PermissionsSetData{
+		Asset:       common.HexToAddress(connectionAddr),
+		TokenId:     connectionID,
+		Permissions: big.NewInt(3888), // 11 11 00 11 00 00
+		Grantee:     common.HexToAddress("0x1234567890123456789012345678901234567890"),
+		Expiration:  big.NewInt(time.Now().Add(time.Hour * 24 * 30).Unix()),
+		Source:      "test-source",
+	}
+
+	settings := config.Settings{
+		VehicleNFTAddr:      vehicleIdAddr,
+		ConnectionAddr:      connectionAddr,
+		SACDAddress:         sacdAddr,
+		DIMORegistryAddr:    dimoRegistryAddr,
+		DIMORegistryChainID: contractEventData.ChainID,
+	}
+
+	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
+
+	connIDBytes, err := helpers.ConvertTokenIDToID(connectionID)
+	require.NoError(t, err)
+
+	conn := models.Connection{
+		ID:       connIDBytes,
+		Address:  common.HexToAddress(connectionAddr).Bytes(),
+		Owner:    permissionsSetData.Grantee.Bytes(),
+		MintedAt: time.Now(),
+	}
+	require.NoError(t, conn.Insert(ctx, pdb.DBS().Writer, boil.Infer()))
+
+	contractEventConsumer := NewContractsEventsConsumer(pdb, &logger, &settings)
+	e := prepareEvent(t, contractEventData, permissionsSetData)
+
+	require.NoError(t, contractEventConsumer.Process(ctx, &e))
+
+	sacd, err := models.ConnectionSacds(
+		models.ConnectionSacdWhere.ConnectionID.EQ(connIDBytes),
+		models.ConnectionSacdWhere.Grantee.EQ(permissionsSetData.Grantee.Bytes()),
+	).One(ctx, pdb.DBS().Reader)
+	require.NoError(t, err)
+
+	assert.Equal(t, connIDBytes, sacd.ConnectionID)
+	assert.Equal(t, permissionsSetData.Grantee.Bytes(), sacd.Grantee)
+	assert.Equal(t, permissionsSetData.Permissions.Text(2), sacd.Permissions)
+	assert.Equal(t, permissionsSetData.Source, sacd.Source)
+	assert.Equal(t, contractEventData.Block.Time.UTC().Truncate(time.Microsecond), sacd.CreatedAt.UTC().Truncate(time.Microsecond))
+	assert.Equal(t, time.Unix(permissionsSetData.Expiration.Int64(), 0).UTC().Truncate(time.Microsecond), sacd.ExpiresAt.UTC().Truncate(time.Microsecond))
+	assert.False(t, sacd.TemplateID.Valid)
+}
+
+func TestHandlePermissionsRenouncedEventConnection(t *testing.T) {
+	ctx := context.Background()
+	logger := zerolog.New(os.Stdout).With().Timestamp().Str("app", helpers.DBSettings.Name).Logger()
+
+	contractEventData.EventName = "PermissionsRenounced"
+	contractEventData.Contract = common.HexToAddress(sacdAddr)
+
+	grantee := common.HexToAddress("0x1234567890123456789012345678901234567890")
+	connectionID := big.NewInt(37747592897)
+
+	settings := config.Settings{
+		VehicleNFTAddr:      vehicleIdAddr,
+		ConnectionAddr:      connectionAddr,
+		SACDAddress:         sacdAddr,
+		DIMORegistryAddr:    dimoRegistryAddr,
+		DIMORegistryChainID: contractEventData.ChainID,
+	}
+
+	pdb, _ := helpers.StartContainerDatabase(ctx, t, migrationsDirRelPath)
+
+	connIDBytes, err := helpers.ConvertTokenIDToID(connectionID)
+	require.NoError(t, err)
+
+	conn := models.Connection{
+		ID:       connIDBytes,
+		Address:  common.HexToAddress(connectionAddr).Bytes(),
+		Owner:    grantee.Bytes(),
+		MintedAt: time.Now(),
+	}
+	require.NoError(t, conn.Insert(ctx, pdb.DBS().Writer, boil.Infer()))
+
+	existing := models.ConnectionSacd{
+		ConnectionID: connIDBytes,
+		Grantee:      grantee.Bytes(),
+		Permissions:  big.NewInt(3888).Text(2),
+		Source:       "test-source",
+		CreatedAt:    time.Now(),
+		ExpiresAt:    time.Now().Add(24 * time.Hour),
+	}
+	require.NoError(t, existing.Insert(ctx, pdb.DBS().Writer, boil.Infer()))
+
+	renounceData := PermissionsRenouncedData{
+		Asset:   common.HexToAddress(connectionAddr),
+		TokenId: connectionID,
+		Grantee: grantee,
+	}
+
+	consumer := NewContractsEventsConsumer(pdb, &logger, &settings)
+	e := prepareEvent(t, contractEventData, renounceData)
+	require.NoError(t, consumer.Process(ctx, &e))
+
+	count, err := models.ConnectionSacds(
+		models.ConnectionSacdWhere.ConnectionID.EQ(connIDBytes),
+		models.ConnectionSacdWhere.Grantee.EQ(grantee.Bytes()),
+	).Count(ctx, pdb.DBS().Reader)
+	require.NoError(t, err)
+	assert.Equal(t, int64(0), count)
 }

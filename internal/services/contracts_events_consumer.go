@@ -652,6 +652,50 @@ func (c *ContractsEventsConsumer) handlePermissionsSetEvent(ctx context.Context,
 		return nil
 	}
 
+	if args.Asset == common.HexToAddress(c.settings.ConnectionAddr) {
+		// Connection SACD.
+
+		connectionID, err := helpers.ConvertTokenIDToID(args.TokenId)
+		if err != nil {
+			return err
+		}
+
+		cs := models.ConnectionSacd{
+			ConnectionID: connectionID,
+			Grantee:      args.Grantee.Bytes(),
+			Permissions:  args.Permissions.Text(2),
+			Source:       args.Source,
+			CreatedAt:    e.Block.Time,
+			ExpiresAt:    time.Unix(args.Expiration.Int64(), 0),
+		}
+
+		if templateID != nil {
+			cs.TemplateID = null.BytesFrom(templateID)
+		}
+
+		err = cs.Upsert(ctx, c.dbs.DBS().Writer, true,
+			[]string{models.ConnectionSacdColumns.ConnectionID, models.ConnectionSacdColumns.Grantee},
+			boil.Whitelist(
+				models.ConnectionSacdColumns.Permissions,
+				models.ConnectionSacdColumns.Source,
+				models.ConnectionSacdColumns.CreatedAt,
+				models.ConnectionSacdColumns.ExpiresAt,
+				models.ConnectionSacdColumns.TemplateID,
+			),
+			boil.Infer(),
+		)
+		if err != nil {
+			return fmt.Errorf("error upserting connection SACD: %w", err)
+		}
+
+		logger.Info().
+			Int64("connectionId", args.TokenId.Int64()).
+			Str("grantee", args.Grantee.Hex()).
+			Msg("Connection SACD processed.")
+
+		return nil
+	}
+
 	if args.Asset != common.HexToAddress(c.settings.VehicleNFTAddr) {
 		logger.Warn().Msgf("SACD set for non-vehicle asset %s.", args.Asset.Hex())
 		return nil
@@ -717,6 +761,29 @@ func (c *ContractsEventsConsumer) handlePermissionsRenouncedEvent(ctx context.Co
 			Str("grantee", args.Grantee.Hex()).
 			Int64("deleted", n).
 			Msg("Account SACD renounced.")
+
+		return nil
+	}
+
+	if args.Asset == common.HexToAddress(c.settings.ConnectionAddr) {
+		connectionID, err := helpers.ConvertTokenIDToID(args.TokenId)
+		if err != nil {
+			return err
+		}
+
+		n, err := models.ConnectionSacds(
+			models.ConnectionSacdWhere.ConnectionID.EQ(connectionID),
+			models.ConnectionSacdWhere.Grantee.EQ(args.Grantee.Bytes()),
+		).DeleteAll(ctx, c.dbs.DBS().Writer)
+		if err != nil {
+			return fmt.Errorf("error deleting connection SACD: %w", err)
+		}
+
+		logger.Info().
+			Int64("connectionId", args.TokenId.Int64()).
+			Str("grantee", args.Grantee.Hex()).
+			Int64("deleted", n).
+			Msg("Connection SACD renounced.")
 
 		return nil
 	}
