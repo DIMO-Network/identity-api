@@ -129,8 +129,10 @@ type Connection struct {
 	// The DID for this connection's token ID in the format did:erc721:<chainID>:<contractAddress>:<tokenId>
 	TokenDID string `json:"tokenDID"`
 	// The block timestamp for the mint of the connection.
-	MintedAt      time.Time `json:"mintedAt"`
-	IntegrationID *int      `json:"-"`
+	MintedAt time.Time `json:"mintedAt"`
+	// A Relay-style connection listing any active permission grants on this connection.
+	Sacds         *SacdConnection `json:"sacds"`
+	IntegrationID *int            `json:"-"`
 }
 
 type ConnectionBy struct {

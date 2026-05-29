@@ -80,19 +80,38 @@ var ConnectionWhere = struct {
 
 // ConnectionRels is where relationship names are stored.
 var ConnectionRels = struct {
+	ConnectionSacds  string
 	SyntheticDevices string
 }{
+	ConnectionSacds:  "ConnectionSacds",
 	SyntheticDevices: "SyntheticDevices",
 }
 
 // connectionR is where relationships are stored.
 type connectionR struct {
+	ConnectionSacds  ConnectionSacdSlice  `boil:"ConnectionSacds" json:"ConnectionSacds" toml:"ConnectionSacds" yaml:"ConnectionSacds"`
 	SyntheticDevices SyntheticDeviceSlice `boil:"SyntheticDevices" json:"SyntheticDevices" toml:"SyntheticDevices" yaml:"SyntheticDevices"`
 }
 
 // NewStruct creates a new relationship struct
 func (*connectionR) NewStruct() *connectionR {
 	return &connectionR{}
+}
+
+func (o *Connection) GetConnectionSacds() ConnectionSacdSlice {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetConnectionSacds()
+}
+
+func (r *connectionR) GetConnectionSacds() ConnectionSacdSlice {
+	if r == nil {
+		return nil
+	}
+
+	return r.ConnectionSacds
 }
 
 func (o *Connection) GetSyntheticDevices() SyntheticDeviceSlice {
@@ -427,6 +446,20 @@ func (q connectionQuery) Exists(ctx context.Context, exec boil.ContextExecutor) 
 	return count > 0, nil
 }
 
+// ConnectionSacds retrieves all the connection_sacd's ConnectionSacds with an executor.
+func (o *Connection) ConnectionSacds(mods ...qm.QueryMod) connectionSacdQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"identity_api\".\"connection_sacds\".\"connection_id\"=?", o.ID),
+	)
+
+	return ConnectionSacds(queryMods...)
+}
+
 // SyntheticDevices retrieves all the synthetic_device's SyntheticDevices with an executor.
 func (o *Connection) SyntheticDevices(mods ...qm.QueryMod) syntheticDeviceQuery {
 	var queryMods []qm.QueryMod
@@ -439,6 +472,119 @@ func (o *Connection) SyntheticDevices(mods ...qm.QueryMod) syntheticDeviceQuery 
 	)
 
 	return SyntheticDevices(queryMods...)
+}
+
+// LoadConnectionSacds allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (connectionL) LoadConnectionSacds(ctx context.Context, e boil.ContextExecutor, singular bool, maybeConnection interface{}, mods queries.Applicator) error {
+	var slice []*Connection
+	var object *Connection
+
+	if singular {
+		var ok bool
+		object, ok = maybeConnection.(*Connection)
+		if !ok {
+			object = new(Connection)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeConnection)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeConnection))
+			}
+		}
+	} else {
+		s, ok := maybeConnection.(*[]*Connection)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeConnection)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeConnection))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &connectionR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &connectionR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`identity_api.connection_sacds`),
+		qm.WhereIn(`identity_api.connection_sacds.connection_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load connection_sacds")
+	}
+
+	var resultSlice []*ConnectionSacd
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice connection_sacds")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on connection_sacds")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for connection_sacds")
+	}
+
+	if len(connectionSacdAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.ConnectionSacds = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &connectionSacdR{}
+			}
+			foreign.R.Connection = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if queries.Equal(local.ID, foreign.ConnectionID) {
+				local.R.ConnectionSacds = append(local.R.ConnectionSacds, foreign)
+				if foreign.R == nil {
+					foreign.R = &connectionSacdR{}
+				}
+				foreign.R.Connection = local
+				break
+			}
+		}
+	}
+
+	return nil
 }
 
 // LoadSyntheticDevices allows an eager lookup of values, cached into the
@@ -551,6 +697,59 @@ func (connectionL) LoadSyntheticDevices(ctx context.Context, e boil.ContextExecu
 		}
 	}
 
+	return nil
+}
+
+// AddConnectionSacds adds the given related objects to the existing relationships
+// of the connection, optionally inserting them as new records.
+// Appends related to o.R.ConnectionSacds.
+// Sets related.R.Connection appropriately.
+func (o *Connection) AddConnectionSacds(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*ConnectionSacd) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			queries.Assign(&rel.ConnectionID, o.ID)
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"identity_api\".\"connection_sacds\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"connection_id"}),
+				strmangle.WhereClause("\"", "\"", 2, connectionSacdPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ConnectionID, rel.Grantee}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			queries.Assign(&rel.ConnectionID, o.ID)
+		}
+	}
+
+	if o.R == nil {
+		o.R = &connectionR{
+			ConnectionSacds: related,
+		}
+	} else {
+		o.R.ConnectionSacds = append(o.R.ConnectionSacds, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &connectionSacdR{
+				Connection: o,
+			}
+		} else {
+			rel.R.Connection = o
+		}
+	}
 	return nil
 }
 

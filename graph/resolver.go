@@ -9,6 +9,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/repositories/aftermarket"
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/internal/repositories/connection"
+	"github.com/DIMO-Network/identity-api/internal/repositories/connectionsacd"
 	"github.com/DIMO-Network/identity-api/internal/repositories/dcn"
 	"github.com/DIMO-Network/identity-api/internal/repositories/developerlicense"
 	"github.com/DIMO-Network/identity-api/internal/repositories/devicedefinition"
@@ -121,6 +122,10 @@ type AccountSacdRepository interface {
 	GetSacdsForAccount(ctx context.Context, address common.Address, first *int, after *string, last *int, before *string) (*model.SacdConnection, error)
 }
 
+type ConnectionSacdRepository interface {
+	GetSacdsForConnection(ctx context.Context, connectionID []byte, first *int, after *string, last *int, before *string) (*model.SacdConnection, error)
+}
+
 // Resolver holds the repositories for the graph resolvers.
 type Resolver struct {
 	aftermarket      AftermarketDeviceRepository
@@ -137,6 +142,7 @@ type Resolver struct {
 	connection       ConnectionRepository
 	template         TemplateRepository
 	accountsacd      AccountSacdRepository
+	connectionsacd   ConnectionSacdRepository
 	vehicleDefFetch  loader.VehicleDefinitionFetcher
 	log              *zerolog.Logger
 }
@@ -160,6 +166,7 @@ func NewResolver(baseRepo *base.Repository) *Resolver {
 		connection:       connection.New(baseRepo),
 		template:         template.New(baseRepo),
 		accountsacd:      &accountsacd.Repository{Repository: baseRepo},
+		connectionsacd:   &connectionsacd.Repository{Repository: baseRepo},
 		vehicleDefFetch:  loader.NewVehicleDefinitionFetcher(baseRepo.Settings, baseRepo.Log),
 		log:              baseRepo.Log,
 	}

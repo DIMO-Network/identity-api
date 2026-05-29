@@ -12,9 +12,20 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/DIMO-Network/identity-api/graph/model"
+	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/repositories"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 )
+
+// Sacds is the resolver for the sacds field.
+func (r *connectionResolver) Sacds(ctx context.Context, obj *model.Connection, first *int, after *string, last *int, before *string) (*model.SacdConnection, error) {
+	connectionID, err := helpers.ConvertTokenIDToID(obj.TokenID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.connectionsacd.GetSacdsForConnection(ctx, connectionID, first, after, last, before)
+}
 
 // Connections is the resolver for the connections field.
 func (r *queryResolver) Connections(ctx context.Context, first *int, after *string, last *int, before *string) (*model.ConnectionConnection, error) {
@@ -44,3 +55,8 @@ func (r *queryResolver) Connection(ctx context.Context, by model.ConnectionBy) (
 
 	return conn, err
 }
+
+// Connection returns ConnectionResolver implementation.
+func (r *Resolver) Connection() ConnectionResolver { return &connectionResolver{r} }
+
+type connectionResolver struct{ *Resolver }
