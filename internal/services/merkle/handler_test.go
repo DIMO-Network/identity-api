@@ -156,6 +156,31 @@ func TestHandlePoolCreatedAndBalanceEvents(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestHandleOverflowingArgumentsError(t *testing.T) {
+	ctx := context.Background()
+
+	// 2^64 does not fit in an int64. The guards run before any database
+	// access, so a bare handler suffices.
+	huge := new(big.Int).Lsh(big.NewInt(1), 64)
+	h := &Handler{}
+
+	err := h.Handle(ctx, eventData(t, PoolCreated, time.Now(), PoolCreatedData{
+		PoolId:      huge,
+		Token:       tokenAddr,
+		Admin:       adminAddr,
+		WeeklyLimit: big.NewInt(5000),
+	}))
+	assert.ErrorContains(t, err, "does not fit in an int64")
+
+	err = h.Handle(ctx, eventData(t, Claimed, time.Now(), ClaimedData{
+		PoolId:  big.NewInt(0),
+		Week:    huge,
+		Account: account1,
+		Amount:  big.NewInt(100),
+	}))
+	assert.ErrorContains(t, err, "does not fit in an int64")
+}
+
 func TestHandleRootSet(t *testing.T) {
 	tree, treeData := buildTree(t, 0, 214)
 	uri := "https://merkle.dimo.zone/pool-0/week-214.json"

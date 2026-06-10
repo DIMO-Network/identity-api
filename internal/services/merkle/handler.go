@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"math/big"
 
 	"github.com/DIMO-Network/identity-api/internal/dbtypes"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
@@ -27,6 +28,15 @@ type Handler struct {
 	DBS     db.Store
 	Logger  *zerolog.Logger
 	Fetcher TreeFetcher
+}
+
+// toInt converts a big.Int event argument to an int, returning an error if
+// the value does not fit in an int64.
+func toInt(name string, x *big.Int) (int, error) {
+	if !x.IsInt64() {
+		return 0, fmt.Errorf("event argument %s value %s does not fit in an int64", name, x)
+	}
+	return int(x.Int64()), nil
 }
 
 // Handle routes a MerkleDistributor contract event to the matching handler.
@@ -74,8 +84,13 @@ func (h *Handler) Handle(ctx context.Context, event *cmodels.ContractEventData) 
 }
 
 func (h *Handler) handlePoolCreated(ctx context.Context, e *cmodels.ContractEventData, args *PoolCreatedData) error {
+	poolID, err := toInt("poolId", args.PoolId)
+	if err != nil {
+		return err
+	}
+
 	pool := models.MerklePool{
-		PoolID:      int(args.PoolId.Int64()),
+		PoolID:      poolID,
 		Token:       args.Token.Bytes(),
 		Admin:       args.Admin.Bytes(),
 		WeeklyLimit: dbtypes.NullIntToDecimal(args.WeeklyLimit),
@@ -93,8 +108,13 @@ func (h *Handler) handlePoolCreated(ctx context.Context, e *cmodels.ContractEven
 }
 
 func (h *Handler) handleWeeklyLimitSet(ctx context.Context, e *cmodels.ContractEventData, args *WeeklyLimitSetData) error {
+	poolID, err := toInt("poolId", args.PoolId)
+	if err != nil {
+		return err
+	}
+
 	pool := models.MerklePool{
-		PoolID:      int(args.PoolId.Int64()),
+		PoolID:      poolID,
 		WeeklyLimit: dbtypes.NullIntToDecimal(args.Limit),
 	}
 
@@ -110,9 +130,14 @@ func (h *Handler) handleWeeklyLimitSet(ctx context.Context, e *cmodels.ContractE
 }
 
 func (h *Handler) handleFunded(ctx context.Context, e *cmodels.ContractEventData, args *FundedData) error {
+	poolID, err := toInt("poolId", args.PoolId)
+	if err != nil {
+		return err
+	}
+
 	res, err := h.DBS.DBS().Writer.ExecContext(ctx,
 		fmt.Sprintf("UPDATE %s SET balance = balance + $1 WHERE pool_id = $2", helpers.WithSchema(models.TableNames.MerklePools)),
-		dbtypes.IntToDecimal(args.Amount), int(args.PoolId.Int64()),
+		dbtypes.IntToDecimal(args.Amount), poolID,
 	)
 	if err != nil {
 		return err
@@ -129,8 +154,13 @@ func (h *Handler) handleFunded(ctx context.Context, e *cmodels.ContractEventData
 }
 
 func (h *Handler) handleSwept(ctx context.Context, e *cmodels.ContractEventData, args *SweptData) error {
+	poolID, err := toInt("poolId", args.PoolId)
+	if err != nil {
+		return err
+	}
+
 	pool := models.MerklePool{
-		PoolID:  int(args.PoolId.Int64()),
+		PoolID:  poolID,
 		Balance: dbtypes.IntToDecimal(args.NewBalance),
 	}
 
@@ -146,6 +176,15 @@ func (h *Handler) handleSwept(ctx context.Context, e *cmodels.ContractEventData,
 }
 
 func (h *Handler) handleRootSet(ctx context.Context, e *cmodels.ContractEventData, args *RootSetData) error {
+	poolID, err := toInt("poolId", args.PoolId)
+	if err != nil {
+		return err
+	}
+	epoch, err := toInt("week", args.Week)
+	if err != nil {
+		return err
+	}
+
 	logger := h.Logger.With().
 		Str("EventName", RootSet).
 		Str("poolId", args.PoolId.String()).
@@ -192,8 +231,8 @@ func (h *Handler) handleRootSet(ctx context.Context, e *cmodels.ContractEventDat
 	defer tx.Rollback() //nolint:errcheck
 
 	root := models.MerkleRoot{
-		PoolID:         int(args.PoolId.Int64()),
-		Epoch:          int(args.Week.Int64()),
+		PoolID:         poolID,
+		Epoch:          epoch,
 		Root:           args.Root[:],
 		Allocation:     dbtypes.IntToDecimal(args.Allocation),
 		RecipientCount: len(file.Leaves),
@@ -254,8 +293,14 @@ func (h *Handler) handleRootSet(ctx context.Context, e *cmodels.ContractEventDat
 }
 
 func (h *Handler) handleClaimed(ctx context.Context, e *cmodels.ContractEventData, args *ClaimedData) error {
-	poolID := int(args.PoolId.Int64())
-	epoch := int(args.Week.Int64())
+	poolID, err := toInt("poolId", args.PoolId)
+	if err != nil {
+		return err
+	}
+	epoch, err := toInt("week", args.Week)
+	if err != nil {
+		return err
+	}
 
 	tx, err := h.DBS.DBS().Writer.BeginTx(ctx, nil)
 	if err != nil {

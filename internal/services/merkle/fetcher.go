@@ -2,6 +2,7 @@ package merkle
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -28,7 +29,9 @@ type HTTPTreeFetcher struct {
 }
 
 // NewHTTPTreeFetcher creates an HTTPTreeFetcher from a comma-separated list of
-// allowed hosts.
+// allowed hosts. The given client is copied and fitted with a redirect check
+// that re-validates every redirect target against the allowlist, so redirects
+// cannot be used to escape it.
 func NewHTTPTreeFetcher(client *http.Client, allowedHosts string) *HTTPTreeFetcher {
 	var hosts []string
 	for h := range strings.SplitSeq(allowedHosts, ",") {
@@ -36,7 +39,31 @@ func NewHTTPTreeFetcher(client *http.Client, allowedHosts string) *HTTPTreeFetch
 			hosts = append(hosts, strings.ToLower(h))
 		}
 	}
-	return &HTTPTreeFetcher{Client: client, AllowedHosts: hosts}
+
+	f := &HTTPTreeFetcher{AllowedHosts: hosts}
+
+	guarded := *client
+	guarded.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		if len(via) >= 10 {
+			return errors.New("stopped after 10 redirects")
+		}
+		return f.validateURL(req.URL)
+	}
+	f.Client = &guarded
+
+	return f
+}
+
+// validateURL checks that the URL uses HTTPS and that its host is in the
+// allowlist.
+func (f *HTTPTreeFetcher) validateURL(u *url.URL) error {
+	if u.Scheme != "https" {
+		return fmt.Errorf("URL %q does not use https", u.Redacted())
+	}
+	if !slices.Contains(f.AllowedHosts, strings.ToLower(u.Host)) {
+		return fmt.Errorf("host %q is not in the allowed list", u.Host)
+	}
+	return nil
 }
 
 // Fetch retrieves the file at the given URI, enforcing the host allowlist and
@@ -46,11 +73,8 @@ func (f *HTTPTreeFetcher) Fetch(ctx context.Context, uri string) ([]byte, error)
 	if err != nil {
 		return nil, fmt.Errorf("parsing proofs URI %q: %w", uri, err)
 	}
-	if u.Scheme != "https" {
-		return nil, fmt.Errorf("proofs URI %q does not use https", uri)
-	}
-	if !slices.Contains(f.AllowedHosts, strings.ToLower(u.Host)) {
-		return nil, fmt.Errorf("proofs URI host %q is not in the allowed list", u.Host)
+	if err := f.validateURL(u); err != nil {
+		return nil, fmt.Errorf("proofs URI %q: %w", uri, err)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)

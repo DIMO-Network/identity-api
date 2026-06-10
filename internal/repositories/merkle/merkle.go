@@ -337,7 +337,9 @@ func (r *Repository) GetMerkleRewards(ctx context.Context, account common.Addres
 			return nil, err
 		}
 		queryMods = append(queryMods, qm.Where(rewardCursorColumns+" < (?, ?)", afterT.PoolID, afterT.Epoch))
-	} else if before != nil {
+	}
+
+	if before != nil {
 		beforeT, err := cursorHelper.DecodeCursor(*before)
 		if err != nil {
 			return nil, err

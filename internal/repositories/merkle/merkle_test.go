@@ -251,4 +251,10 @@ func TestGetMerkleRewards(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, next.Nodes, 1)
 	assert.Equal(t, 213, next.Nodes[0].Epoch)
+
+	// Both cursors set: only elements strictly between them. The window
+	// between epoch 214 and epoch 213 is empty.
+	both, err := repo.GetMerkleRewards(ctx, account1, nil, nil, &first, page.PageInfo.EndCursor, nil, next.PageInfo.EndCursor)
+	require.NoError(t, err)
+	assert.Empty(t, both.Nodes)
 }

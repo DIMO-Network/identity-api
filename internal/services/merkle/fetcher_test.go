@@ -40,6 +40,29 @@ func TestHTTPTreeFetcherHostAllowlist(t *testing.T) {
 	assert.ErrorContains(t, err, "does not use https")
 }
 
+func TestHTTPTreeFetcherRefusesRedirectToDisallowedHost(t *testing.T) {
+	ctx := context.Background()
+
+	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "https://evil.example.com/pool-0/week-214.json", http.StatusFound)
+	}))
+	defer srv.Close()
+
+	srvURL, err := url.Parse(srv.URL)
+	require.NoError(t, err)
+
+	client := srv.Client()
+	f := NewHTTPTreeFetcher(client, srvURL.Host)
+
+	// The original client must not be mutated.
+	assert.Nil(t, client.CheckRedirect)
+
+	// The initial host is allowed, but the redirect target is not.
+	_, err = f.Fetch(ctx, srv.URL+"/pool-0/week-214.json")
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "not in the allowed list")
+}
+
 func TestHTTPTreeFetcherStatusAndSizeLimits(t *testing.T) {
 	ctx := context.Background()
 
