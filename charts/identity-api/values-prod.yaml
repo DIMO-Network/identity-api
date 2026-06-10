@@ -26,6 +26,10 @@ env:
   DEV_LICENSE_ADDR: '0x9A9D2E717bB005B240094ba761Ff074d392C7C85'
   STAKING_ADDR: '0xB4538A8D6AFab2849Ef78D08D49Dc1cc5AC2eD83'
   FETCH_API_GRPC_ADDR: fetch-api-prod:8086
+  # TODO: replace placeholder with deployed MerkleDistributor address.
+  MERKLE_DISTRIBUTOR_ADDR: '0x0000000000000000000000000000000000000000'
+  # Comma-separated list of hosts from which RootSet Merkle tree files may be fetched.
+  MERKLE_TREE_ALLOWED_HOST: merkle.dimo.zone
 ingress:
   enabled: true
   className: nginx

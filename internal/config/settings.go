@@ -30,4 +30,8 @@ type Settings struct {
 	StorageNodeAddr       string      `yaml:"STORAGE_NODE_ADDR"`
 	TemplateAddr          string      `yaml:"TEMPLATE_ADDR"`
 	FetchAPIGRPCAddr      string      `yaml:"FETCH_API_GRPC_ADDR"`
+	MerkleDistributorAddr string      `yaml:"MERKLE_DISTRIBUTOR_ADDR"`
+	// MerkleTreeAllowedHost is a comma-separated list of hosts from which the
+	// consumer is willing to fetch Merkle tree files referenced by RootSet events.
+	MerkleTreeAllowedHost string `yaml:"MERKLE_TREE_ALLOWED_HOST"`
 }
