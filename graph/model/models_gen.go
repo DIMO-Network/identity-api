@@ -408,6 +408,98 @@ type ManufacturerEdge struct {
 	Cursor string        `json:"cursor"`
 }
 
+type MerkleEpoch struct {
+	// The epoch, also called the issuance week, of the root.
+	Epoch int `json:"epoch"`
+	// The Merkle root for the epoch.
+	Root []byte `json:"root"`
+	// The total amount of tokens, in wei, allocated for the epoch.
+	Allocation *big.Int `json:"allocation"`
+	// The total amount of tokens, in wei, claimed so far for the epoch.
+	TotalClaimed *big.Int `json:"totalClaimed"`
+	// The number of claims made so far for the epoch.
+	ClaimCount int `json:"claimCount"`
+	// The number of accounts with allocations in the epoch.
+	RecipientCount int `json:"recipientCount"`
+	// The URI of the Merkle tree file containing the proofs for the epoch.
+	ProofsURI string `json:"proofsURI"`
+	// The block timestamp for the transaction that set the root.
+	SetAt time.Time `json:"setAt"`
+}
+
+type MerkleEpochConnection struct {
+	TotalCount int                `json:"totalCount"`
+	Edges      []*MerkleEpochEdge `json:"edges"`
+	Nodes      []*MerkleEpoch     `json:"nodes"`
+	PageInfo   *PageInfo          `json:"pageInfo"`
+}
+
+type MerkleEpochEdge struct {
+	Node   *MerkleEpoch `json:"node"`
+	Cursor string       `json:"cursor"`
+}
+
+type MerklePool struct {
+	// The id of the pool on the MerkleDistributor contract.
+	PoolID int `json:"poolId"`
+	// The address of the ERC-20 token distributed by the pool.
+	Token common.Address `json:"token"`
+	// The admin of the pool.
+	Admin common.Address `json:"admin"`
+	// The maximum amount of tokens, in wei, that can be allocated to the pool in a week.
+	WeeklyLimit *big.Int `json:"weeklyLimit,omitempty"`
+	// The current token balance of the pool, in wei.
+	Balance *big.Int `json:"balance"`
+	// The block timestamp for the transaction that created the pool.
+	CreatedAt time.Time `json:"createdAt"`
+	// The epochs for which roots have been set on this pool. Sorts by epoch, descending.
+	Epochs *MerkleEpochConnection `json:"epochs"`
+}
+
+type MerklePoolConnection struct {
+	TotalCount int               `json:"totalCount"`
+	Edges      []*MerklePoolEdge `json:"edges"`
+	Nodes      []*MerklePool     `json:"nodes"`
+	PageInfo   *PageInfo         `json:"pageInfo"`
+}
+
+type MerklePoolEdge struct {
+	Node   *MerklePool `json:"node"`
+	Cursor string      `json:"cursor"`
+}
+
+type MerkleReward struct {
+	// The pool from which the reward can be claimed.
+	Pool *MerklePool `json:"pool"`
+	// The epoch, also called the issuance week, of the reward.
+	Epoch int `json:"epoch"`
+	// The account to which the reward was allocated.
+	Account common.Address `json:"account"`
+	// The amount of tokens allocated, in wei.
+	Amount *big.Int `json:"amount"`
+	// The Merkle proof for the claim, as 32-byte hex strings.
+	Proof []string `json:"proof"`
+	// Whether the reward has been claimed.
+	Claimed bool `json:"claimed"`
+	// The block timestamp for the transaction that claimed the reward, if it has been claimed.
+	ClaimedAt *time.Time `json:"claimedAt,omitempty"`
+	// The hash of the transaction that claimed the reward, if it has been claimed.
+	ClaimTx []byte `json:"claimTx,omitempty"`
+	PoolID  int    `json:"-"`
+}
+
+type MerkleRewardConnection struct {
+	TotalCount int                 `json:"totalCount"`
+	Edges      []*MerkleRewardEdge `json:"edges"`
+	Nodes      []*MerkleReward     `json:"nodes"`
+	PageInfo   *PageInfo           `json:"pageInfo"`
+}
+
+type MerkleRewardEdge struct {
+	Node   *MerkleReward `json:"node"`
+	Cursor string        `json:"cursor"`
+}
+
 type PageInfo struct {
 	StartCursor     *string `json:"startCursor,omitempty"`
 	EndCursor       *string `json:"endCursor,omitempty"`

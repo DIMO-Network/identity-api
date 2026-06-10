@@ -40,6 +40,8 @@ type ResolverRoot interface {
 	DeveloperLicense() DeveloperLicenseResolver
 	Earning() EarningResolver
 	Manufacturer() ManufacturerResolver
+	MerklePool() MerklePoolResolver
+	MerkleReward() MerkleRewardResolver
 	Query() QueryResolver
 	Stake() StakeResolver
 	SyntheticDevice() SyntheticDeviceResolver
@@ -248,6 +250,74 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	MerkleEpoch struct {
+		Allocation     func(childComplexity int) int
+		ClaimCount     func(childComplexity int) int
+		Epoch          func(childComplexity int) int
+		ProofsURI      func(childComplexity int) int
+		RecipientCount func(childComplexity int) int
+		Root           func(childComplexity int) int
+		SetAt          func(childComplexity int) int
+		TotalClaimed   func(childComplexity int) int
+	}
+
+	MerkleEpochConnection struct {
+		Edges      func(childComplexity int) int
+		Nodes      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	MerkleEpochEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	MerklePool struct {
+		Admin       func(childComplexity int) int
+		Balance     func(childComplexity int) int
+		CreatedAt   func(childComplexity int) int
+		Epochs      func(childComplexity int, first *int, after *string, last *int, before *string) int
+		PoolID      func(childComplexity int) int
+		Token       func(childComplexity int) int
+		WeeklyLimit func(childComplexity int) int
+	}
+
+	MerklePoolConnection struct {
+		Edges      func(childComplexity int) int
+		Nodes      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	MerklePoolEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	MerkleReward struct {
+		Account   func(childComplexity int) int
+		Amount    func(childComplexity int) int
+		ClaimTx   func(childComplexity int) int
+		Claimed   func(childComplexity int) int
+		ClaimedAt func(childComplexity int) int
+		Epoch     func(childComplexity int) int
+		Pool      func(childComplexity int) int
+		Proof     func(childComplexity int) int
+	}
+
+	MerkleRewardConnection struct {
+		Edges      func(childComplexity int) int
+		Nodes      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	MerkleRewardEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
 	PageInfo struct {
 		EndCursor       func(childComplexity int) int
 		HasNextPage     func(childComplexity int) int
@@ -287,6 +357,9 @@ type ComplexityRoot struct {
 		DeviceDefinition   func(childComplexity int, by model.DeviceDefinitionBy) int
 		Manufacturer       func(childComplexity int, by model.ManufacturerBy) int
 		Manufacturers      func(childComplexity int) int
+		MerklePool         func(childComplexity int, poolID int) int
+		MerklePools        func(childComplexity int, first *int, after *string, last *int, before *string) int
+		MerkleRewards      func(childComplexity int, account common.Address, poolID *int, claimed *bool, first *int, after *string, last *int, before *string) int
 		Node               func(childComplexity int, id string) int
 		Rewards            func(childComplexity int, user common.Address) int
 		Stakes             func(childComplexity int, first *int, after *string, last *int, before *string, filterBy *model.StakeFilterBy) int
@@ -510,6 +583,12 @@ type ManufacturerResolver interface {
 	AftermarketDevices(ctx context.Context, obj *model.Manufacturer, first *int, after *string, last *int, before *string, filterBy *model.AftermarketDevicesFilter) (*model.AftermarketDeviceConnection, error)
 	DeviceDefinitions(ctx context.Context, obj *model.Manufacturer, first *int, after *string, last *int, before *string, filterBy *model.DeviceDefinitionFilter) (*model.DeviceDefinitionConnection, error)
 }
+type MerklePoolResolver interface {
+	Epochs(ctx context.Context, obj *model.MerklePool, first *int, after *string, last *int, before *string) (*model.MerkleEpochConnection, error)
+}
+type MerkleRewardResolver interface {
+	Pool(ctx context.Context, obj *model.MerkleReward) (*model.MerklePool, error)
+}
 type QueryResolver interface {
 	Node(ctx context.Context, id string) (model.Node, error)
 	AftermarketDevice(ctx context.Context, by model.AftermarketDeviceBy) (*model.AftermarketDevice, error)
@@ -523,6 +602,9 @@ type QueryResolver interface {
 	DeviceDefinition(ctx context.Context, by model.DeviceDefinitionBy) (*model.DeviceDefinition, error)
 	Manufacturer(ctx context.Context, by model.ManufacturerBy) (*model.Manufacturer, error)
 	Manufacturers(ctx context.Context) (*model.ManufacturerConnection, error)
+	MerklePools(ctx context.Context, first *int, after *string, last *int, before *string) (*model.MerklePoolConnection, error)
+	MerklePool(ctx context.Context, poolID int) (*model.MerklePool, error)
+	MerkleRewards(ctx context.Context, account common.Address, poolID *int, claimed *bool, first *int, after *string, last *int, before *string) (*model.MerkleRewardConnection, error)
 	Rewards(ctx context.Context, user common.Address) (*model.UserRewards, error)
 	Stakes(ctx context.Context, first *int, after *string, last *int, before *string, filterBy *model.StakeFilterBy) (*model.StakeConnection, error)
 	SyntheticDevice(ctx context.Context, by model.SyntheticDeviceBy) (*model.SyntheticDevice, error)
@@ -1354,6 +1436,266 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.ManufacturerEdge.Node(childComplexity), true
 
+	case "MerkleEpoch.allocation":
+		if e.ComplexityRoot.MerkleEpoch.Allocation == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MerkleEpoch.Allocation(childComplexity), true
+	case "MerkleEpoch.claimCount":
+		if e.ComplexityRoot.MerkleEpoch.ClaimCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MerkleEpoch.ClaimCount(childComplexity), true
+	case "MerkleEpoch.epoch":
+		if e.ComplexityRoot.MerkleEpoch.Epoch == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MerkleEpoch.Epoch(childComplexity), true
+	case "MerkleEpoch.proofsURI":
+		if e.ComplexityRoot.MerkleEpoch.ProofsURI == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MerkleEpoch.ProofsURI(childComplexity), true
+	case "MerkleEpoch.recipientCount":
+		if e.ComplexityRoot.MerkleEpoch.RecipientCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MerkleEpoch.RecipientCount(childComplexity), true
+	case "MerkleEpoch.root":
+		if e.ComplexityRoot.MerkleEpoch.Root == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MerkleEpoch.Root(childComplexity), true
+	case "MerkleEpoch.setAt":
+		if e.ComplexityRoot.MerkleEpoch.SetAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MerkleEpoch.SetAt(childComplexity), true
+	case "MerkleEpoch.totalClaimed":
+		if e.ComplexityRoot.MerkleEpoch.TotalClaimed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MerkleEpoch.TotalClaimed(childComplexity), true
+
+	case "MerkleEpochConnection.edges":
+		if e.ComplexityRoot.MerkleEpochConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MerkleEpochConnection.Edges(childComplexity), true
+	case "MerkleEpochConnection.nodes":
+		if e.ComplexityRoot.MerkleEpochConnection.Nodes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MerkleEpochConnection.Nodes(childComplexity), true
+	case "MerkleEpochConnection.pageInfo":
+		if e.ComplexityRoot.MerkleEpochConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MerkleEpochConnection.PageInfo(childComplexity), true
+	case "MerkleEpochConnection.totalCount":
+		if e.ComplexityRoot.MerkleEpochConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MerkleEpochConnection.TotalCount(childComplexity), true
+
+	case "MerkleEpochEdge.cursor":
+		if e.ComplexityRoot.MerkleEpochEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MerkleEpochEdge.Cursor(childComplexity), true
+	case "MerkleEpochEdge.node":
+		if e.ComplexityRoot.MerkleEpochEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MerkleEpochEdge.Node(childComplexity), true
+
+	case "MerklePool.admin":
+		if e.ComplexityRoot.MerklePool.Admin == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MerklePool.Admin(childComplexity), true
+	case "MerklePool.balance":
+		if e.ComplexityRoot.MerklePool.Balance == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MerklePool.Balance(childComplexity), true
+	case "MerklePool.createdAt":
+		if e.ComplexityRoot.MerklePool.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MerklePool.CreatedAt(childComplexity), true
+	case "MerklePool.epochs":
+		if e.ComplexityRoot.MerklePool.Epochs == nil {
+			break
+		}
+
+		args, err := ec.field_MerklePool_epochs_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.MerklePool.Epochs(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
+	case "MerklePool.poolId":
+		if e.ComplexityRoot.MerklePool.PoolID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MerklePool.PoolID(childComplexity), true
+	case "MerklePool.token":
+		if e.ComplexityRoot.MerklePool.Token == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MerklePool.Token(childComplexity), true
+	case "MerklePool.weeklyLimit":
+		if e.ComplexityRoot.MerklePool.WeeklyLimit == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MerklePool.WeeklyLimit(childComplexity), true
+
+	case "MerklePoolConnection.edges":
+		if e.ComplexityRoot.MerklePoolConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MerklePoolConnection.Edges(childComplexity), true
+	case "MerklePoolConnection.nodes":
+		if e.ComplexityRoot.MerklePoolConnection.Nodes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MerklePoolConnection.Nodes(childComplexity), true
+	case "MerklePoolConnection.pageInfo":
+		if e.ComplexityRoot.MerklePoolConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MerklePoolConnection.PageInfo(childComplexity), true
+	case "MerklePoolConnection.totalCount":
+		if e.ComplexityRoot.MerklePoolConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MerklePoolConnection.TotalCount(childComplexity), true
+
+	case "MerklePoolEdge.cursor":
+		if e.ComplexityRoot.MerklePoolEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MerklePoolEdge.Cursor(childComplexity), true
+	case "MerklePoolEdge.node":
+		if e.ComplexityRoot.MerklePoolEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MerklePoolEdge.Node(childComplexity), true
+
+	case "MerkleReward.account":
+		if e.ComplexityRoot.MerkleReward.Account == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MerkleReward.Account(childComplexity), true
+	case "MerkleReward.amount":
+		if e.ComplexityRoot.MerkleReward.Amount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MerkleReward.Amount(childComplexity), true
+	case "MerkleReward.claimTx":
+		if e.ComplexityRoot.MerkleReward.ClaimTx == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MerkleReward.ClaimTx(childComplexity), true
+	case "MerkleReward.claimed":
+		if e.ComplexityRoot.MerkleReward.Claimed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MerkleReward.Claimed(childComplexity), true
+	case "MerkleReward.claimedAt":
+		if e.ComplexityRoot.MerkleReward.ClaimedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MerkleReward.ClaimedAt(childComplexity), true
+	case "MerkleReward.epoch":
+		if e.ComplexityRoot.MerkleReward.Epoch == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MerkleReward.Epoch(childComplexity), true
+	case "MerkleReward.pool":
+		if e.ComplexityRoot.MerkleReward.Pool == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MerkleReward.Pool(childComplexity), true
+	case "MerkleReward.proof":
+		if e.ComplexityRoot.MerkleReward.Proof == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MerkleReward.Proof(childComplexity), true
+
+	case "MerkleRewardConnection.edges":
+		if e.ComplexityRoot.MerkleRewardConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MerkleRewardConnection.Edges(childComplexity), true
+	case "MerkleRewardConnection.nodes":
+		if e.ComplexityRoot.MerkleRewardConnection.Nodes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MerkleRewardConnection.Nodes(childComplexity), true
+	case "MerkleRewardConnection.pageInfo":
+		if e.ComplexityRoot.MerkleRewardConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MerkleRewardConnection.PageInfo(childComplexity), true
+	case "MerkleRewardConnection.totalCount":
+		if e.ComplexityRoot.MerkleRewardConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MerkleRewardConnection.TotalCount(childComplexity), true
+
+	case "MerkleRewardEdge.cursor":
+		if e.ComplexityRoot.MerkleRewardEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MerkleRewardEdge.Cursor(childComplexity), true
+	case "MerkleRewardEdge.node":
+		if e.ComplexityRoot.MerkleRewardEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MerkleRewardEdge.Node(childComplexity), true
+
 	case "PageInfo.endCursor":
 		if e.ComplexityRoot.PageInfo.EndCursor == nil {
 			break
@@ -1570,6 +1912,39 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.Manufacturers(childComplexity), true
+	case "Query.merklePool":
+		if e.ComplexityRoot.Query.MerklePool == nil {
+			break
+		}
+
+		args, err := ec.field_Query_merklePool_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.MerklePool(childComplexity, args["poolId"].(int)), true
+	case "Query.merklePools":
+		if e.ComplexityRoot.Query.MerklePools == nil {
+			break
+		}
+
+		args, err := ec.field_Query_merklePools_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.MerklePools(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
+	case "Query.merkleRewards":
+		if e.ComplexityRoot.Query.MerkleRewards == nil {
+			break
+		}
+
+		args, err := ec.field_Query_merkleRewards_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.MerkleRewards(childComplexity, args["account"].(common.Address), args["poolId"].(*int), args["claimed"].(*bool), args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
 	case "Query.node":
 		if e.ComplexityRoot.Query.Node == nil {
 			break
@@ -2451,7 +2826,7 @@ func newExecutionContext(
 	}
 }
 
-//go:embed "schema/aftermarket.graphqls" "schema/connection.graphqls" "schema/dcn.graphqls" "schema/developerlicense.graphqls" "schema/devicedefinition.graphqls" "schema/directives.graphqls" "schema/manufacturer.graphqls" "schema/privilege.graphqls" "schema/reward.graphqls" "schema/sacd.graphqls" "schema/schema.graphqls" "schema/stakes.graphqls" "schema/storagenode.graphqls" "schema/synthetic.graphqls" "schema/template.graphqls" "schema/user.graphqls" "schema/vehicle.graphqls"
+//go:embed "schema/aftermarket.graphqls" "schema/connection.graphqls" "schema/dcn.graphqls" "schema/developerlicense.graphqls" "schema/devicedefinition.graphqls" "schema/directives.graphqls" "schema/manufacturer.graphqls" "schema/merkle.graphqls" "schema/privilege.graphqls" "schema/reward.graphqls" "schema/sacd.graphqls" "schema/schema.graphqls" "schema/stakes.graphqls" "schema/storagenode.graphqls" "schema/synthetic.graphqls" "schema/template.graphqls" "schema/user.graphqls" "schema/vehicle.graphqls"
 var sourcesFS embed.FS
 
 func sourceData(filename string) string {
@@ -2470,6 +2845,7 @@ var sources = []*ast.Source{
 	{Name: "schema/devicedefinition.graphqls", Input: sourceData("schema/devicedefinition.graphqls"), BuiltIn: false},
 	{Name: "schema/directives.graphqls", Input: sourceData("schema/directives.graphqls"), BuiltIn: false},
 	{Name: "schema/manufacturer.graphqls", Input: sourceData("schema/manufacturer.graphqls"), BuiltIn: false},
+	{Name: "schema/merkle.graphqls", Input: sourceData("schema/merkle.graphqls"), BuiltIn: false},
 	{Name: "schema/privilege.graphqls", Input: sourceData("schema/privilege.graphqls"), BuiltIn: false},
 	{Name: "schema/reward.graphqls", Input: sourceData("schema/reward.graphqls"), BuiltIn: false},
 	{Name: "schema/sacd.graphqls", Input: sourceData("schema/sacd.graphqls"), BuiltIn: false},
@@ -2650,6 +3026,32 @@ func (ec *executionContext) field_Manufacturer_deviceDefinitions_args(ctx contex
 		return nil, err
 	}
 	args["filterBy"] = arg4
+	return args, nil
+}
+
+func (ec *executionContext) field_MerklePool_epochs_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "first", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "after", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "last", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "before", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
 	return args, nil
 }
 
@@ -2857,6 +3259,84 @@ func (ec *executionContext) field_Query_manufacturer_args(ctx context.Context, r
 		return nil, err
 	}
 	args["by"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_merklePool_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "poolId", ec.unmarshalNInt2int)
+	if err != nil {
+		return nil, err
+	}
+	args["poolId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_merklePools_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "first", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "after", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "last", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "before", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_merkleRewards_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "account", ec.unmarshalNAddress2githubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress)
+	if err != nil {
+		return nil, err
+	}
+	args["account"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "poolId", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["poolId"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "claimed", ec.unmarshalOBoolean2ᚖbool)
+	if err != nil {
+		return nil, err
+	}
+	args["claimed"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "first", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "after", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg4
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "last", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg5
+	arg6, err := graphql.ProcessArgField(ctx, rawArgs, "before", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg6
 	return args, nil
 }
 
@@ -7471,6 +7951,1385 @@ func (ec *executionContext) fieldContext_ManufacturerEdge_cursor(_ context.Conte
 	return fc, nil
 }
 
+func (ec *executionContext) _MerkleEpoch_epoch(ctx context.Context, field graphql.CollectedField, obj *model.MerkleEpoch) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerkleEpoch_epoch,
+		func(ctx context.Context) (any, error) {
+			return obj.Epoch, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerkleEpoch_epoch(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerkleEpoch",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerkleEpoch_root(ctx context.Context, field graphql.CollectedField, obj *model.MerkleEpoch) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerkleEpoch_root,
+		func(ctx context.Context) (any, error) {
+			return obj.Root, nil
+		},
+		nil,
+		ec.marshalNBytes2ᚕbyte,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerkleEpoch_root(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerkleEpoch",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Bytes does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerkleEpoch_allocation(ctx context.Context, field graphql.CollectedField, obj *model.MerkleEpoch) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerkleEpoch_allocation,
+		func(ctx context.Context) (any, error) {
+			return obj.Allocation, nil
+		},
+		nil,
+		ec.marshalNBigInt2ᚖmathᚋbigᚐInt,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerkleEpoch_allocation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerkleEpoch",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type BigInt does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerkleEpoch_totalClaimed(ctx context.Context, field graphql.CollectedField, obj *model.MerkleEpoch) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerkleEpoch_totalClaimed,
+		func(ctx context.Context) (any, error) {
+			return obj.TotalClaimed, nil
+		},
+		nil,
+		ec.marshalNBigInt2ᚖmathᚋbigᚐInt,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerkleEpoch_totalClaimed(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerkleEpoch",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type BigInt does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerkleEpoch_claimCount(ctx context.Context, field graphql.CollectedField, obj *model.MerkleEpoch) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerkleEpoch_claimCount,
+		func(ctx context.Context) (any, error) {
+			return obj.ClaimCount, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerkleEpoch_claimCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerkleEpoch",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerkleEpoch_recipientCount(ctx context.Context, field graphql.CollectedField, obj *model.MerkleEpoch) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerkleEpoch_recipientCount,
+		func(ctx context.Context) (any, error) {
+			return obj.RecipientCount, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerkleEpoch_recipientCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerkleEpoch",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerkleEpoch_proofsURI(ctx context.Context, field graphql.CollectedField, obj *model.MerkleEpoch) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerkleEpoch_proofsURI,
+		func(ctx context.Context) (any, error) {
+			return obj.ProofsURI, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerkleEpoch_proofsURI(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerkleEpoch",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerkleEpoch_setAt(ctx context.Context, field graphql.CollectedField, obj *model.MerkleEpoch) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerkleEpoch_setAt,
+		func(ctx context.Context) (any, error) {
+			return obj.SetAt, nil
+		},
+		nil,
+		ec.marshalNTime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerkleEpoch_setAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerkleEpoch",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerkleEpochConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.MerkleEpochConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerkleEpochConnection_totalCount,
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerkleEpochConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerkleEpochConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerkleEpochConnection_edges(ctx context.Context, field graphql.CollectedField, obj *model.MerkleEpochConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerkleEpochConnection_edges,
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		ec.marshalNMerkleEpochEdge2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐMerkleEpochEdgeᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerkleEpochConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerkleEpochConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "node":
+				return ec.fieldContext_MerkleEpochEdge_node(ctx, field)
+			case "cursor":
+				return ec.fieldContext_MerkleEpochEdge_cursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MerkleEpochEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerkleEpochConnection_nodes(ctx context.Context, field graphql.CollectedField, obj *model.MerkleEpochConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerkleEpochConnection_nodes,
+		func(ctx context.Context) (any, error) {
+			return obj.Nodes, nil
+		},
+		nil,
+		ec.marshalNMerkleEpoch2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐMerkleEpochᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerkleEpochConnection_nodes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerkleEpochConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "epoch":
+				return ec.fieldContext_MerkleEpoch_epoch(ctx, field)
+			case "root":
+				return ec.fieldContext_MerkleEpoch_root(ctx, field)
+			case "allocation":
+				return ec.fieldContext_MerkleEpoch_allocation(ctx, field)
+			case "totalClaimed":
+				return ec.fieldContext_MerkleEpoch_totalClaimed(ctx, field)
+			case "claimCount":
+				return ec.fieldContext_MerkleEpoch_claimCount(ctx, field)
+			case "recipientCount":
+				return ec.fieldContext_MerkleEpoch_recipientCount(ctx, field)
+			case "proofsURI":
+				return ec.fieldContext_MerkleEpoch_proofsURI(ctx, field)
+			case "setAt":
+				return ec.fieldContext_MerkleEpoch_setAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MerkleEpoch", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerkleEpochConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.MerkleEpochConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerkleEpochConnection_pageInfo,
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		ec.marshalNPageInfo2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐPageInfo,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerkleEpochConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerkleEpochConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerkleEpochEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.MerkleEpochEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerkleEpochEdge_node,
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		ec.marshalNMerkleEpoch2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐMerkleEpoch,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerkleEpochEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerkleEpochEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "epoch":
+				return ec.fieldContext_MerkleEpoch_epoch(ctx, field)
+			case "root":
+				return ec.fieldContext_MerkleEpoch_root(ctx, field)
+			case "allocation":
+				return ec.fieldContext_MerkleEpoch_allocation(ctx, field)
+			case "totalClaimed":
+				return ec.fieldContext_MerkleEpoch_totalClaimed(ctx, field)
+			case "claimCount":
+				return ec.fieldContext_MerkleEpoch_claimCount(ctx, field)
+			case "recipientCount":
+				return ec.fieldContext_MerkleEpoch_recipientCount(ctx, field)
+			case "proofsURI":
+				return ec.fieldContext_MerkleEpoch_proofsURI(ctx, field)
+			case "setAt":
+				return ec.fieldContext_MerkleEpoch_setAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MerkleEpoch", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerkleEpochEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.MerkleEpochEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerkleEpochEdge_cursor,
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerkleEpochEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerkleEpochEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerklePool_poolId(ctx context.Context, field graphql.CollectedField, obj *model.MerklePool) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerklePool_poolId,
+		func(ctx context.Context) (any, error) {
+			return obj.PoolID, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerklePool_poolId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerklePool",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerklePool_token(ctx context.Context, field graphql.CollectedField, obj *model.MerklePool) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerklePool_token,
+		func(ctx context.Context) (any, error) {
+			return obj.Token, nil
+		},
+		nil,
+		ec.marshalNAddress2githubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerklePool_token(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerklePool",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Address does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerklePool_admin(ctx context.Context, field graphql.CollectedField, obj *model.MerklePool) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerklePool_admin,
+		func(ctx context.Context) (any, error) {
+			return obj.Admin, nil
+		},
+		nil,
+		ec.marshalNAddress2githubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerklePool_admin(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerklePool",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Address does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerklePool_weeklyLimit(ctx context.Context, field graphql.CollectedField, obj *model.MerklePool) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerklePool_weeklyLimit,
+		func(ctx context.Context) (any, error) {
+			return obj.WeeklyLimit, nil
+		},
+		nil,
+		ec.marshalOBigInt2ᚖmathᚋbigᚐInt,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerklePool_weeklyLimit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerklePool",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type BigInt does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerklePool_balance(ctx context.Context, field graphql.CollectedField, obj *model.MerklePool) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerklePool_balance,
+		func(ctx context.Context) (any, error) {
+			return obj.Balance, nil
+		},
+		nil,
+		ec.marshalNBigInt2ᚖmathᚋbigᚐInt,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerklePool_balance(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerklePool",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type BigInt does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerklePool_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.MerklePool) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerklePool_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNTime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerklePool_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerklePool",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerklePool_epochs(ctx context.Context, field graphql.CollectedField, obj *model.MerklePool) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerklePool_epochs,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.MerklePool().Epochs(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string))
+		},
+		nil,
+		ec.marshalNMerkleEpochConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐMerkleEpochConnection,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerklePool_epochs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerklePool",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_MerkleEpochConnection_totalCount(ctx, field)
+			case "edges":
+				return ec.fieldContext_MerkleEpochConnection_edges(ctx, field)
+			case "nodes":
+				return ec.fieldContext_MerkleEpochConnection_nodes(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_MerkleEpochConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MerkleEpochConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_MerklePool_epochs_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerklePoolConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.MerklePoolConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerklePoolConnection_totalCount,
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerklePoolConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerklePoolConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerklePoolConnection_edges(ctx context.Context, field graphql.CollectedField, obj *model.MerklePoolConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerklePoolConnection_edges,
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		ec.marshalNMerklePoolEdge2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐMerklePoolEdgeᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerklePoolConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerklePoolConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "node":
+				return ec.fieldContext_MerklePoolEdge_node(ctx, field)
+			case "cursor":
+				return ec.fieldContext_MerklePoolEdge_cursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MerklePoolEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerklePoolConnection_nodes(ctx context.Context, field graphql.CollectedField, obj *model.MerklePoolConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerklePoolConnection_nodes,
+		func(ctx context.Context) (any, error) {
+			return obj.Nodes, nil
+		},
+		nil,
+		ec.marshalNMerklePool2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐMerklePoolᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerklePoolConnection_nodes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerklePoolConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "poolId":
+				return ec.fieldContext_MerklePool_poolId(ctx, field)
+			case "token":
+				return ec.fieldContext_MerklePool_token(ctx, field)
+			case "admin":
+				return ec.fieldContext_MerklePool_admin(ctx, field)
+			case "weeklyLimit":
+				return ec.fieldContext_MerklePool_weeklyLimit(ctx, field)
+			case "balance":
+				return ec.fieldContext_MerklePool_balance(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_MerklePool_createdAt(ctx, field)
+			case "epochs":
+				return ec.fieldContext_MerklePool_epochs(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MerklePool", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerklePoolConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.MerklePoolConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerklePoolConnection_pageInfo,
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		ec.marshalNPageInfo2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐPageInfo,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerklePoolConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerklePoolConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerklePoolEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.MerklePoolEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerklePoolEdge_node,
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		ec.marshalNMerklePool2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐMerklePool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerklePoolEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerklePoolEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "poolId":
+				return ec.fieldContext_MerklePool_poolId(ctx, field)
+			case "token":
+				return ec.fieldContext_MerklePool_token(ctx, field)
+			case "admin":
+				return ec.fieldContext_MerklePool_admin(ctx, field)
+			case "weeklyLimit":
+				return ec.fieldContext_MerklePool_weeklyLimit(ctx, field)
+			case "balance":
+				return ec.fieldContext_MerklePool_balance(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_MerklePool_createdAt(ctx, field)
+			case "epochs":
+				return ec.fieldContext_MerklePool_epochs(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MerklePool", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerklePoolEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.MerklePoolEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerklePoolEdge_cursor,
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerklePoolEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerklePoolEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerkleReward_pool(ctx context.Context, field graphql.CollectedField, obj *model.MerkleReward) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerkleReward_pool,
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.MerkleReward().Pool(ctx, obj)
+		},
+		nil,
+		ec.marshalNMerklePool2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐMerklePool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerkleReward_pool(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerkleReward",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "poolId":
+				return ec.fieldContext_MerklePool_poolId(ctx, field)
+			case "token":
+				return ec.fieldContext_MerklePool_token(ctx, field)
+			case "admin":
+				return ec.fieldContext_MerklePool_admin(ctx, field)
+			case "weeklyLimit":
+				return ec.fieldContext_MerklePool_weeklyLimit(ctx, field)
+			case "balance":
+				return ec.fieldContext_MerklePool_balance(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_MerklePool_createdAt(ctx, field)
+			case "epochs":
+				return ec.fieldContext_MerklePool_epochs(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MerklePool", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerkleReward_epoch(ctx context.Context, field graphql.CollectedField, obj *model.MerkleReward) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerkleReward_epoch,
+		func(ctx context.Context) (any, error) {
+			return obj.Epoch, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerkleReward_epoch(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerkleReward",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerkleReward_account(ctx context.Context, field graphql.CollectedField, obj *model.MerkleReward) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerkleReward_account,
+		func(ctx context.Context) (any, error) {
+			return obj.Account, nil
+		},
+		nil,
+		ec.marshalNAddress2githubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerkleReward_account(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerkleReward",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Address does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerkleReward_amount(ctx context.Context, field graphql.CollectedField, obj *model.MerkleReward) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerkleReward_amount,
+		func(ctx context.Context) (any, error) {
+			return obj.Amount, nil
+		},
+		nil,
+		ec.marshalNBigInt2ᚖmathᚋbigᚐInt,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerkleReward_amount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerkleReward",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type BigInt does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerkleReward_proof(ctx context.Context, field graphql.CollectedField, obj *model.MerkleReward) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerkleReward_proof,
+		func(ctx context.Context) (any, error) {
+			return obj.Proof, nil
+		},
+		nil,
+		ec.marshalNString2ᚕstringᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerkleReward_proof(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerkleReward",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerkleReward_claimed(ctx context.Context, field graphql.CollectedField, obj *model.MerkleReward) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerkleReward_claimed,
+		func(ctx context.Context) (any, error) {
+			return obj.Claimed, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerkleReward_claimed(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerkleReward",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerkleReward_claimedAt(ctx context.Context, field graphql.CollectedField, obj *model.MerkleReward) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerkleReward_claimedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.ClaimedAt, nil
+		},
+		nil,
+		ec.marshalOTime2ᚖtimeᚐTime,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerkleReward_claimedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerkleReward",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerkleReward_claimTx(ctx context.Context, field graphql.CollectedField, obj *model.MerkleReward) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerkleReward_claimTx,
+		func(ctx context.Context) (any, error) {
+			return obj.ClaimTx, nil
+		},
+		nil,
+		ec.marshalOBytes2ᚕbyte,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerkleReward_claimTx(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerkleReward",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Bytes does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerkleRewardConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.MerkleRewardConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerkleRewardConnection_totalCount,
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerkleRewardConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerkleRewardConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerkleRewardConnection_edges(ctx context.Context, field graphql.CollectedField, obj *model.MerkleRewardConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerkleRewardConnection_edges,
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		ec.marshalNMerkleRewardEdge2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐMerkleRewardEdgeᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerkleRewardConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerkleRewardConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "node":
+				return ec.fieldContext_MerkleRewardEdge_node(ctx, field)
+			case "cursor":
+				return ec.fieldContext_MerkleRewardEdge_cursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MerkleRewardEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerkleRewardConnection_nodes(ctx context.Context, field graphql.CollectedField, obj *model.MerkleRewardConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerkleRewardConnection_nodes,
+		func(ctx context.Context) (any, error) {
+			return obj.Nodes, nil
+		},
+		nil,
+		ec.marshalNMerkleReward2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐMerkleRewardᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerkleRewardConnection_nodes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerkleRewardConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "pool":
+				return ec.fieldContext_MerkleReward_pool(ctx, field)
+			case "epoch":
+				return ec.fieldContext_MerkleReward_epoch(ctx, field)
+			case "account":
+				return ec.fieldContext_MerkleReward_account(ctx, field)
+			case "amount":
+				return ec.fieldContext_MerkleReward_amount(ctx, field)
+			case "proof":
+				return ec.fieldContext_MerkleReward_proof(ctx, field)
+			case "claimed":
+				return ec.fieldContext_MerkleReward_claimed(ctx, field)
+			case "claimedAt":
+				return ec.fieldContext_MerkleReward_claimedAt(ctx, field)
+			case "claimTx":
+				return ec.fieldContext_MerkleReward_claimTx(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MerkleReward", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerkleRewardConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.MerkleRewardConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerkleRewardConnection_pageInfo,
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		ec.marshalNPageInfo2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐPageInfo,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerkleRewardConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerkleRewardConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerkleRewardEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.MerkleRewardEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerkleRewardEdge_node,
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		ec.marshalNMerkleReward2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐMerkleReward,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerkleRewardEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerkleRewardEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "pool":
+				return ec.fieldContext_MerkleReward_pool(ctx, field)
+			case "epoch":
+				return ec.fieldContext_MerkleReward_epoch(ctx, field)
+			case "account":
+				return ec.fieldContext_MerkleReward_account(ctx, field)
+			case "amount":
+				return ec.fieldContext_MerkleReward_amount(ctx, field)
+			case "proof":
+				return ec.fieldContext_MerkleReward_proof(ctx, field)
+			case "claimed":
+				return ec.fieldContext_MerkleReward_claimed(ctx, field)
+			case "claimedAt":
+				return ec.fieldContext_MerkleReward_claimedAt(ctx, field)
+			case "claimTx":
+				return ec.fieldContext_MerkleReward_claimTx(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MerkleReward", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerkleRewardEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.MerkleRewardEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MerkleRewardEdge_cursor,
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MerkleRewardEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerkleRewardEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _PageInfo_startCursor(ctx context.Context, field graphql.CollectedField, obj *model.PageInfo) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -8567,6 +10426,165 @@ func (ec *executionContext) fieldContext_Query_manufacturers(_ context.Context, 
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ManufacturerConnection", field.Name)
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_merklePools(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_merklePools,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().MerklePools(ctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string))
+		},
+		nil,
+		ec.marshalNMerklePoolConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐMerklePoolConnection,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_merklePools(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_MerklePoolConnection_totalCount(ctx, field)
+			case "edges":
+				return ec.fieldContext_MerklePoolConnection_edges(ctx, field)
+			case "nodes":
+				return ec.fieldContext_MerklePoolConnection_nodes(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_MerklePoolConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MerklePoolConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_merklePools_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_merklePool(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_merklePool,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().MerklePool(ctx, fc.Args["poolId"].(int))
+		},
+		nil,
+		ec.marshalOMerklePool2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐMerklePool,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_merklePool(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "poolId":
+				return ec.fieldContext_MerklePool_poolId(ctx, field)
+			case "token":
+				return ec.fieldContext_MerklePool_token(ctx, field)
+			case "admin":
+				return ec.fieldContext_MerklePool_admin(ctx, field)
+			case "weeklyLimit":
+				return ec.fieldContext_MerklePool_weeklyLimit(ctx, field)
+			case "balance":
+				return ec.fieldContext_MerklePool_balance(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_MerklePool_createdAt(ctx, field)
+			case "epochs":
+				return ec.fieldContext_MerklePool_epochs(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MerklePool", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_merklePool_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_merkleRewards(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_merkleRewards,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().MerkleRewards(ctx, fc.Args["account"].(common.Address), fc.Args["poolId"].(*int), fc.Args["claimed"].(*bool), fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string))
+		},
+		nil,
+		ec.marshalNMerkleRewardConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐMerkleRewardConnection,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_merkleRewards(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_MerkleRewardConnection_totalCount(ctx, field)
+			case "edges":
+				return ec.fieldContext_MerkleRewardConnection_edges(ctx, field)
+			case "nodes":
+				return ec.fieldContext_MerkleRewardConnection_nodes(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_MerkleRewardConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MerkleRewardConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_merkleRewards_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -17060,6 +19078,570 @@ func (ec *executionContext) _ManufacturerEdge(ctx context.Context, sel ast.Selec
 	return out
 }
 
+var merkleEpochImplementors = []string{"MerkleEpoch"}
+
+func (ec *executionContext) _MerkleEpoch(ctx context.Context, sel ast.SelectionSet, obj *model.MerkleEpoch) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, merkleEpochImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("MerkleEpoch")
+		case "epoch":
+			out.Values[i] = ec._MerkleEpoch_epoch(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "root":
+			out.Values[i] = ec._MerkleEpoch_root(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "allocation":
+			out.Values[i] = ec._MerkleEpoch_allocation(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalClaimed":
+			out.Values[i] = ec._MerkleEpoch_totalClaimed(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "claimCount":
+			out.Values[i] = ec._MerkleEpoch_claimCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "recipientCount":
+			out.Values[i] = ec._MerkleEpoch_recipientCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "proofsURI":
+			out.Values[i] = ec._MerkleEpoch_proofsURI(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "setAt":
+			out.Values[i] = ec._MerkleEpoch_setAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var merkleEpochConnectionImplementors = []string{"MerkleEpochConnection"}
+
+func (ec *executionContext) _MerkleEpochConnection(ctx context.Context, sel ast.SelectionSet, obj *model.MerkleEpochConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, merkleEpochConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("MerkleEpochConnection")
+		case "totalCount":
+			out.Values[i] = ec._MerkleEpochConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "edges":
+			out.Values[i] = ec._MerkleEpochConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "nodes":
+			out.Values[i] = ec._MerkleEpochConnection_nodes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._MerkleEpochConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var merkleEpochEdgeImplementors = []string{"MerkleEpochEdge"}
+
+func (ec *executionContext) _MerkleEpochEdge(ctx context.Context, sel ast.SelectionSet, obj *model.MerkleEpochEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, merkleEpochEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("MerkleEpochEdge")
+		case "node":
+			out.Values[i] = ec._MerkleEpochEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cursor":
+			out.Values[i] = ec._MerkleEpochEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var merklePoolImplementors = []string{"MerklePool"}
+
+func (ec *executionContext) _MerklePool(ctx context.Context, sel ast.SelectionSet, obj *model.MerklePool) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, merklePoolImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("MerklePool")
+		case "poolId":
+			out.Values[i] = ec._MerklePool_poolId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "token":
+			out.Values[i] = ec._MerklePool_token(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "admin":
+			out.Values[i] = ec._MerklePool_admin(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "weeklyLimit":
+			out.Values[i] = ec._MerklePool_weeklyLimit(ctx, field, obj)
+		case "balance":
+			out.Values[i] = ec._MerklePool_balance(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "createdAt":
+			out.Values[i] = ec._MerklePool_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "epochs":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._MerklePool_epochs(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var merklePoolConnectionImplementors = []string{"MerklePoolConnection"}
+
+func (ec *executionContext) _MerklePoolConnection(ctx context.Context, sel ast.SelectionSet, obj *model.MerklePoolConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, merklePoolConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("MerklePoolConnection")
+		case "totalCount":
+			out.Values[i] = ec._MerklePoolConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "edges":
+			out.Values[i] = ec._MerklePoolConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "nodes":
+			out.Values[i] = ec._MerklePoolConnection_nodes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._MerklePoolConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var merklePoolEdgeImplementors = []string{"MerklePoolEdge"}
+
+func (ec *executionContext) _MerklePoolEdge(ctx context.Context, sel ast.SelectionSet, obj *model.MerklePoolEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, merklePoolEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("MerklePoolEdge")
+		case "node":
+			out.Values[i] = ec._MerklePoolEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cursor":
+			out.Values[i] = ec._MerklePoolEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var merkleRewardImplementors = []string{"MerkleReward"}
+
+func (ec *executionContext) _MerkleReward(ctx context.Context, sel ast.SelectionSet, obj *model.MerkleReward) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, merkleRewardImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("MerkleReward")
+		case "pool":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._MerkleReward_pool(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "epoch":
+			out.Values[i] = ec._MerkleReward_epoch(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "account":
+			out.Values[i] = ec._MerkleReward_account(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "amount":
+			out.Values[i] = ec._MerkleReward_amount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "proof":
+			out.Values[i] = ec._MerkleReward_proof(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "claimed":
+			out.Values[i] = ec._MerkleReward_claimed(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "claimedAt":
+			out.Values[i] = ec._MerkleReward_claimedAt(ctx, field, obj)
+		case "claimTx":
+			out.Values[i] = ec._MerkleReward_claimTx(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var merkleRewardConnectionImplementors = []string{"MerkleRewardConnection"}
+
+func (ec *executionContext) _MerkleRewardConnection(ctx context.Context, sel ast.SelectionSet, obj *model.MerkleRewardConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, merkleRewardConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("MerkleRewardConnection")
+		case "totalCount":
+			out.Values[i] = ec._MerkleRewardConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "edges":
+			out.Values[i] = ec._MerkleRewardConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "nodes":
+			out.Values[i] = ec._MerkleRewardConnection_nodes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._MerkleRewardConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var merkleRewardEdgeImplementors = []string{"MerkleRewardEdge"}
+
+func (ec *executionContext) _MerkleRewardEdge(ctx context.Context, sel ast.SelectionSet, obj *model.MerkleRewardEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, merkleRewardEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("MerkleRewardEdge")
+		case "node":
+			out.Values[i] = ec._MerkleRewardEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cursor":
+			out.Values[i] = ec._MerkleRewardEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var pageInfoImplementors = []string{"PageInfo"}
 
 func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet, obj *model.PageInfo) graphql.Marshaler {
@@ -17510,6 +20092,69 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_manufacturers(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "merklePools":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_merklePools(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "merklePool":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_merklePool(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "merkleRewards":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_merkleRewards(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -20548,6 +23193,208 @@ func (ec *executionContext) marshalNManufacturerEdge2ᚖgithubᚗcomᚋDIMOᚑNe
 	return ec._ManufacturerEdge(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNMerkleEpoch2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐMerkleEpochᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.MerkleEpoch) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNMerkleEpoch2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐMerkleEpoch(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNMerkleEpoch2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐMerkleEpoch(ctx context.Context, sel ast.SelectionSet, v *model.MerkleEpoch) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._MerkleEpoch(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNMerkleEpochConnection2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐMerkleEpochConnection(ctx context.Context, sel ast.SelectionSet, v model.MerkleEpochConnection) graphql.Marshaler {
+	return ec._MerkleEpochConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNMerkleEpochConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐMerkleEpochConnection(ctx context.Context, sel ast.SelectionSet, v *model.MerkleEpochConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._MerkleEpochConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNMerkleEpochEdge2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐMerkleEpochEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.MerkleEpochEdge) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNMerkleEpochEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐMerkleEpochEdge(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNMerkleEpochEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐMerkleEpochEdge(ctx context.Context, sel ast.SelectionSet, v *model.MerkleEpochEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._MerkleEpochEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNMerklePool2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐMerklePool(ctx context.Context, sel ast.SelectionSet, v model.MerklePool) graphql.Marshaler {
+	return ec._MerklePool(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNMerklePool2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐMerklePoolᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.MerklePool) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNMerklePool2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐMerklePool(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNMerklePool2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐMerklePool(ctx context.Context, sel ast.SelectionSet, v *model.MerklePool) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._MerklePool(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNMerklePoolConnection2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐMerklePoolConnection(ctx context.Context, sel ast.SelectionSet, v model.MerklePoolConnection) graphql.Marshaler {
+	return ec._MerklePoolConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNMerklePoolConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐMerklePoolConnection(ctx context.Context, sel ast.SelectionSet, v *model.MerklePoolConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._MerklePoolConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNMerklePoolEdge2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐMerklePoolEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.MerklePoolEdge) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNMerklePoolEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐMerklePoolEdge(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNMerklePoolEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐMerklePoolEdge(ctx context.Context, sel ast.SelectionSet, v *model.MerklePoolEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._MerklePoolEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNMerkleReward2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐMerkleRewardᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.MerkleReward) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNMerkleReward2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐMerkleReward(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNMerkleReward2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐMerkleReward(ctx context.Context, sel ast.SelectionSet, v *model.MerkleReward) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._MerkleReward(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNMerkleRewardConnection2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐMerkleRewardConnection(ctx context.Context, sel ast.SelectionSet, v model.MerkleRewardConnection) graphql.Marshaler {
+	return ec._MerkleRewardConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNMerkleRewardConnection2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐMerkleRewardConnection(ctx context.Context, sel ast.SelectionSet, v *model.MerkleRewardConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._MerkleRewardConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNMerkleRewardEdge2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐMerkleRewardEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.MerkleRewardEdge) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNMerkleRewardEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐMerkleRewardEdge(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNMerkleRewardEdge2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐMerkleRewardEdge(ctx context.Context, sel ast.SelectionSet, v *model.MerkleRewardEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._MerkleRewardEdge(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -20888,6 +23735,36 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNString2ᚕstringᚄ(ctx context.Context, v any) ([]string, error) {
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNString2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNString2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNString2string(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalNSyntheticDevice2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐSyntheticDeviceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SyntheticDevice) graphql.Marshaler {
@@ -21454,6 +24331,13 @@ func (ec *executionContext) marshalOManufacturer2ᚖgithubᚗcomᚋDIMOᚑNetwor
 		return graphql.Null
 	}
 	return ec._Manufacturer(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOMerklePool2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐMerklePool(ctx context.Context, sel ast.SelectionSet, v *model.MerklePool) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._MerklePool(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalONode2githubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐNode(ctx context.Context, sel ast.SelectionSet, v model.Node) graphql.Marshaler {

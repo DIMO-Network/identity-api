@@ -13,6 +13,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/repositories/developerlicense"
 	"github.com/DIMO-Network/identity-api/internal/repositories/devicedefinition"
 	"github.com/DIMO-Network/identity-api/internal/repositories/manufacturer"
+	"github.com/DIMO-Network/identity-api/internal/repositories/merkle"
 	"github.com/DIMO-Network/identity-api/internal/repositories/reward"
 	"github.com/DIMO-Network/identity-api/internal/repositories/stake"
 	"github.com/DIMO-Network/identity-api/internal/repositories/synthetic"
@@ -126,6 +127,7 @@ type Resolver struct {
 	aftermarket      AftermarketDeviceRepository
 	dcn              DCNRepository
 	manufacturer     ManufacturerRepository
+	merkle           merkle.Repository
 	reward           reward.Repository
 	synthetic        SyntheticRepository
 	vehicle          VehicleRepository
@@ -149,6 +151,7 @@ func NewResolver(baseRepo *base.Repository) *Resolver {
 		aftermarket:      aftermarket.New(baseRepo),
 		dcn:              dcn.New(baseRepo),
 		manufacturer:     manufacturer.New(baseRepo),
+		merkle:           merkle.Repository{Repository: baseRepo},
 		reward:           reward.Repository{Repository: baseRepo},
 		synthetic:        synthetic.New(baseRepo),
 		vehicle:          vehicle.New(baseRepo),

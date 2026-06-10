@@ -1,0 +1,176 @@
+# MerkleDistributor reward pool types
+
+extend type Query {
+  """
+  List Merkle reward pools. Sorts by pool id, descending.
+  """
+  merklePools(
+    first: Int
+    after: String
+    last: Int
+    before: String
+  ): MerklePoolConnection!
+  """
+  Look up a Merkle reward pool by its id.
+  """
+  merklePool(poolId: Int!): MerklePool
+  """
+  List Merkle rewards for an account, optionally filtered by pool and claim
+  status. Sorts by pool id and then epoch, descending.
+  """
+  merkleRewards(
+    """
+    The account to which the rewards were allocated.
+    """
+    account: Address!
+    """
+    If provided, only return rewards from this pool.
+    """
+    poolId: Int
+    """
+    If provided, only return rewards that have (true) or have not (false) been claimed.
+    """
+    claimed: Boolean
+    first: Int
+    after: String
+    last: Int
+    before: String
+  ): MerkleRewardConnection!
+}
+
+type MerklePool {
+  """
+  The id of the pool on the MerkleDistributor contract.
+  """
+  poolId: Int!
+  """
+  The address of the ERC-20 token distributed by the pool.
+  """
+  token: Address!
+  """
+  The admin of the pool.
+  """
+  admin: Address!
+  """
+  The maximum amount of tokens, in wei, that can be allocated to the pool in a week.
+  """
+  weeklyLimit: BigInt
+  """
+  The current token balance of the pool, in wei.
+  """
+  balance: BigInt!
+  """
+  The block timestamp for the transaction that created the pool.
+  """
+  createdAt: Time!
+  """
+  The epochs for which roots have been set on this pool. Sorts by epoch, descending.
+  """
+  epochs(first: Int, after: String, last: Int, before: String): MerkleEpochConnection!
+}
+
+type MerklePoolConnection {
+  totalCount: Int!
+  edges: [MerklePoolEdge!]!
+  nodes: [MerklePool!]!
+  pageInfo: PageInfo!
+}
+
+type MerklePoolEdge {
+  node: MerklePool!
+  cursor: String!
+}
+
+type MerkleEpoch {
+  """
+  The epoch, also called the issuance week, of the root.
+  """
+  epoch: Int!
+  """
+  The Merkle root for the epoch.
+  """
+  root: Bytes!
+  """
+  The total amount of tokens, in wei, allocated for the epoch.
+  """
+  allocation: BigInt!
+  """
+  The total amount of tokens, in wei, claimed so far for the epoch.
+  """
+  totalClaimed: BigInt!
+  """
+  The number of claims made so far for the epoch.
+  """
+  claimCount: Int!
+  """
+  The number of accounts with allocations in the epoch.
+  """
+  recipientCount: Int!
+  """
+  The URI of the Merkle tree file containing the proofs for the epoch.
+  """
+  proofsURI: String! @goField(name: "ProofsURI")
+  """
+  The block timestamp for the transaction that set the root.
+  """
+  setAt: Time!
+}
+
+type MerkleEpochConnection {
+  totalCount: Int!
+  edges: [MerkleEpochEdge!]!
+  nodes: [MerkleEpoch!]!
+  pageInfo: PageInfo!
+}
+
+type MerkleEpochEdge {
+  node: MerkleEpoch!
+  cursor: String!
+}
+
+type MerkleReward {
+  """
+  The pool from which the reward can be claimed.
+  """
+  pool: MerklePool!
+  """
+  The epoch, also called the issuance week, of the reward.
+  """
+  epoch: Int!
+  """
+  The account to which the reward was allocated.
+  """
+  account: Address!
+  """
+  The amount of tokens allocated, in wei.
+  """
+  amount: BigInt!
+  """
+  The Merkle proof for the claim, as 32-byte hex strings.
+  """
+  proof: [String!]!
+  """
+  Whether the reward has been claimed.
+  """
+  claimed: Boolean!
+  """
+  The block timestamp for the transaction that claimed the reward, if it has been claimed.
+  """
+  claimedAt: Time
+  """
+  The hash of the transaction that claimed the reward, if it has been claimed.
+  """
+  claimTx: Bytes
+}
+
+type MerkleRewardConnection {
+  totalCount: Int!
+  edges: [MerkleRewardEdge!]!
+  nodes: [MerkleReward!]!
+  pageInfo: PageInfo!
+}
+
+type MerkleRewardEdge {
+  node: MerkleReward!
+  cursor: String!
+}
