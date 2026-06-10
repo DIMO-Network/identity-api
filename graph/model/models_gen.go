@@ -763,9 +763,15 @@ type TemplateEdge struct {
 }
 
 type UserRewards struct {
-	TotalTokens *decimal.Big        `json:"totalTokens"`
-	History     *EarningsConnection `json:"history"`
-	User        common.Address      `json:"-"`
+	// Total tokens earned by the user across both reward eras: legacy weekly
+	// device rewards plus merkle-era allocations. Merkle-era amounts count as
+	// earned when the root is set, whether or not they have been claimed.
+	TotalTokens *decimal.Big `json:"totalTokens"`
+	// Weekly earnings from the legacy reward era only, including totalCount.
+	// Merkle-era earnings are not itemized here; use the merkleRewards query
+	// for per-epoch merkle data.
+	History *EarningsConnection `json:"history"`
+	User    common.Address      `json:"-"`
 }
 
 type Vehicle struct {

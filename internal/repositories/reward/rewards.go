@@ -248,21 +248,55 @@ func (r *Repository) PaginateAftermarketDeviceEarningsByID(ctx context.Context, 
 	return afterMarketDeviceEarnings.History, nil
 }
 
+// GetEarningsByUserAddress returns user-level earnings totals for the given address.
+//
+// TotalTokens spans both reward eras: legacy per-device push rewards (rewards
+// table) plus merkle-era allocations (merkle_claims). Merkle amounts count as
+// earned when the root is set, whether or not the user has claimed them.
+//
+// History edges and TotalCount intentionally cover the legacy era only; the
+// per-vehicle/per-device split does not exist in the merkle era. Merkle-era
+// weekly data is exposed separately via the merkleRewards query.
 func (r *Repository) GetEarningsByUserAddress(ctx context.Context, user common.Address) (*gmodel.UserRewards, error) {
 	summary, err := r.GetEarningsSummary(ctx, []qm.QueryMod{models.RewardWhere.ReceivedByAddress.EQ(null.BytesFrom(user.Bytes()))})
 	if err != nil {
 		return nil, err
 	}
 
+	merkleWei, err := r.getMerkleClaimsWeiSum(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+
+	totalWei := new(decimal.Big).Add(summary.TokenSum.Big, merkleWei)
+
 	earningsConn := &gmodel.EarningsConnection{
 		TotalCount: summary.TotalCount,
 	}
 
 	return &gmodel.UserRewards{
-		TotalTokens: weiToToken(summary.TokenSum),
+		TotalTokens: new(decimal.Big).Quo(totalWei, weiPerEther),
 		History:     earningsConn,
 		User:        user,
 	}, nil
+}
+
+// getMerkleClaimsWeiSum sums merkle-era reward allocations, in wei, for the
+// given account across all pools and epochs, claimed or not.
+func (r *Repository) getMerkleClaimsWeiSum(ctx context.Context, account common.Address) (*decimal.Big, error) {
+	var out struct {
+		WeiSum types.Decimal `boil:"wei_sum"`
+	}
+
+	err := models.MerkleClaims(
+		qm.Select("COALESCE(sum("+models.MerkleClaimColumns.Amount+"), 0) AS wei_sum"),
+		models.MerkleClaimWhere.Account.EQ(account.Bytes()),
+	).Bind(ctx, r.PDB.DBS().Reader, &out)
+	if err != nil {
+		return nil, err
+	}
+
+	return out.WeiSum.Big, nil
 }
 
 func (r *Repository) PaginateGetEarningsByUsersDevices(ctx context.Context, userDeviceEarnings *gmodel.UserRewards, first *int, after *string, last *int, before *string) (*gmodel.EarningsConnection, error) {
