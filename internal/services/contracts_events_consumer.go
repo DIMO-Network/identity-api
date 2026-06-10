@@ -14,6 +14,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/dbtypes"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
 	"github.com/DIMO-Network/identity-api/internal/services/connection"
+	"github.com/DIMO-Network/identity-api/internal/services/merkle"
 	cmodels "github.com/DIMO-Network/identity-api/internal/services/models"
 	"github.com/DIMO-Network/identity-api/internal/services/staking"
 	"github.com/DIMO-Network/identity-api/internal/services/storagenode"
@@ -35,6 +36,7 @@ type ContractsEventsConsumer struct {
 	stakingHandler     *staking.Handler
 	connsHandler       *connection.Handler
 	storageNodeHandler *storagenode.Handler
+	merkleHandler      *merkle.Handler
 }
 
 type EventName string
@@ -104,18 +106,25 @@ func (r EventName) String() string {
 const contractEventCEType = "zone.dimo.contract.event"
 
 func NewContractsEventsConsumer(dbs db.Store, log *zerolog.Logger, settings *config.Settings) *ContractsEventsConsumer {
+	httpClient := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+
 	return &ContractsEventsConsumer{
-		dbs:      dbs,
-		log:      log,
-		settings: settings,
-		httpClient: &http.Client{
-			Timeout: 10 * time.Second,
-		},
+		dbs:        dbs,
+		log:        log,
+		settings:   settings,
+		httpClient: httpClient,
 		stakingHandler: &staking.Handler{
 			DBS: dbs,
 		},
 		connsHandler:       &connection.Handler{DBS: dbs, Logger: log},
 		storageNodeHandler: &storagenode.Handler{DBS: dbs, Logger: log},
+		merkleHandler: &merkle.Handler{
+			DBS:     dbs,
+			Logger:  log,
+			Fetcher: merkle.NewHTTPTreeFetcher(httpClient, settings.MerkleTreeAllowedHost),
+		},
 	}
 }
 
@@ -142,6 +151,7 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *cloudevent
 	manufacturerAddr := common.HexToAddress(c.settings.ManufacturerNFTAddr)
 	storageNodeAddr := common.HexToAddress(c.settings.StorageNodeAddr)
 	templateAddr := common.HexToAddress(c.settings.TemplateAddr)
+	merkleDistributorAddr := common.HexToAddress(c.settings.MerkleDistributorAddr)
 
 	var data cmodels.ContractEventData
 	if err := json.Unmarshal(event.Data, &data); err != nil {
@@ -265,6 +275,8 @@ func (c *ContractsEventsConsumer) Process(ctx context.Context, event *cloudevent
 		return c.connsHandler.Handle(ctx, &data)
 	case storageNodeAddr:
 		return c.storageNodeHandler.Handle(ctx, &data)
+	case merkleDistributorAddr:
+		return c.merkleHandler.Handle(ctx, &data)
 	}
 
 	c.log.Debug().Str("event", data.EventName).Msg("Handler not provided for event.")
