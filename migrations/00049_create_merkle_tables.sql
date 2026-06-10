@@ -34,7 +34,13 @@ CREATE TABLE merkle_claims (
     CONSTRAINT merkle_claims_pool_id_epoch_fkey FOREIGN KEY (pool_id, epoch) REFERENCES merkle_roots (pool_id, epoch)
 );
 
-CREATE INDEX merkle_claims_account_idx ON merkle_claims (account);
+-- Serves the merkleRewards query: filter by account (optionally pool), with
+-- results and the pagination cursor ordered by (pool_id, epoch) descending.
+CREATE INDEX merkle_claims_account_pool_epoch_idx ON merkle_claims (account, pool_id, epoch DESC);
+
+-- The hot query is "unclaimed rewards for an account"; the partial index
+-- keeps it small since claimed rows dominate over time.
+CREATE INDEX merkle_claims_account_claimed_idx ON merkle_claims (account) WHERE claimed_at IS NULL;
 -- +goose StatementEnd
 
 -- +goose Down

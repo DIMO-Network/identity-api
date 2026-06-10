@@ -24,7 +24,15 @@ type PoolCreatedData struct {
 	WeeklyLimit *big.Int       `json:"weeklyLimit"`
 }
 
-// RootSetData represents RootSet(uint256 indexed poolId, uint256 indexed week, bytes32 root, uint256 allocation, string proofsURI).
+// RootSetData represents RootSet(uint256 indexed poolId, uint256 indexed week, bytes32 indexed root, uint256 allocation, string proofsURI).
+//
+// Note that root being indexed does not change its wire format:
+// contract-event-processor decodes indexed parameters with
+// abi.ParseTopicsIntoMap, and for a fixed-size bytes32 that falls through to
+// abi.toGoType, which yields a [32]byte — the same Go type UnpackIntoMap
+// produces for a non-indexed bytes32. Either way root arrives in the event
+// arguments JSON as an array of numbers, not a hex string. (Verified against
+// go-ethereum v1.15.11, the version contract-event-processor builds with.)
 type RootSetData struct {
 	PoolId     *big.Int `json:"poolId"`
 	Week       *big.Int `json:"week"`

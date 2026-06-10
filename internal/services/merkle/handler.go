@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/DIMO-Network/identity-api/internal/dbtypes"
 	"github.com/DIMO-Network/identity-api/internal/helpers"
@@ -20,6 +21,7 @@ import (
 	"github.com/aarondl/sqlboiler/v4/queries/qm"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/goccy/go-json"
+	"github.com/lib/pq"
 	"github.com/rs/zerolog"
 )
 
@@ -191,11 +193,13 @@ func (h *Handler) handleRootSet(ctx context.Context, e *cmodels.ContractEventDat
 		Str("week", args.Week.String()).
 		Logger()
 
+	fetchStart := time.Now()
 	data, err := h.Fetcher.Fetch(ctx, args.ProofsURI)
 	if err != nil {
 		logger.Err(err).Str("proofsURI", args.ProofsURI).Msg("Failed to fetch Merkle tree file.")
 		return fmt.Errorf("fetching tree file: %w", err)
 	}
+	fetchDuration := time.Since(fetchStart)
 
 	file, err := merkletree.UnmarshalTreeFile(data)
 	if err != nil {
@@ -209,6 +213,14 @@ func (h *Handler) handleRootSet(ctx context.Context, e *cmodels.ContractEventDat
 	}
 
 	if file.Root != common.Hash(args.Root) {
+		// Returning an error here means the Kafka consumer never commits the
+		// offset for this event, so it will be redelivered and fail forever
+		// until the file at proofsURI is replaced with one matching the
+		// on-chain root. That is deliberate: a published tree file that
+		// disagrees with the root the contract accepted must page an
+		// operator, and the endless redelivery errors are the alerting
+		// mechanism. Skipping the event instead would silently leave the
+		// epoch's claims unindexed.
 		err := fmt.Errorf("tree file root %s does not match event root %s", file.Root, common.Hash(args.Root))
 		logger.Err(err).Str("proofsURI", args.ProofsURI).Msg("Merkle tree file root mismatch.")
 		return err
@@ -223,6 +235,8 @@ func (h *Handler) handleRootSet(ctx context.Context, e *cmodels.ContractEventDat
 	if file.Distributor != e.Contract {
 		logger.Warn().Msgf("Tree file distributor %s does not match emitting contract %s.", file.Distributor, e.Contract)
 	}
+
+	dbWriteStart := time.Now()
 
 	tx, err := h.DBS.DBS().Writer.BeginTx(ctx, nil)
 	if err != nil {
@@ -252,42 +266,50 @@ func (h *Handler) handleRootSet(ctx context.Context, e *cmodels.ContractEventDat
 		return fmt.Errorf("upserting Merkle root: %w", err)
 	}
 
-	claimCols := models.MerkleClaimColumns
+	accounts := make([][]byte, len(file.Leaves))
+	amounts := make([]string, len(file.Leaves))
+	proofs := make([]string, len(file.Leaves))
 
-	for _, leaf := range file.Leaves {
+	for i, leaf := range file.Leaves {
 		proof := make([]string, len(leaf.Proof))
-		for i, p := range leaf.Proof {
-			proof[i] = p.Hex()
+		for j, p := range leaf.Proof {
+			proof[j] = p.Hex()
 		}
 		proofJSON, err := json.Marshal(proof)
 		if err != nil {
 			return fmt.Errorf("marshaling proof for account %s: %w", leaf.Account, err)
 		}
 
-		claim := models.MerkleClaim{
-			PoolID:  root.PoolID,
-			Epoch:   root.Epoch,
-			Account: leaf.Account.Bytes(),
-			Amount:  dbtypes.IntToDecimal(leaf.Amount),
-			Proof:   proofJSON,
-		}
+		accounts[i] = leaf.Account.Bytes()
+		amounts[i] = leaf.Amount.String()
+		proofs[i] = string(proofJSON)
+	}
 
-		// Preserve claimed_at and claim_tx if the leaf was already claimed.
-		err = claim.Upsert(ctx, tx, true,
-			[]string{claimCols.PoolID, claimCols.Epoch, claimCols.Account},
-			boil.Whitelist(claimCols.Amount, claimCols.Proof),
-			boil.Infer(),
-		)
-		if err != nil {
-			return fmt.Errorf("upserting Merkle claim for account %s: %w", leaf.Account, err)
-		}
+	// Upsert all leaves in a single statement. Only amount and proof are in
+	// the SET list, so claimed_at and claim_tx are preserved if the root is
+	// set again after some leaves have already been claimed.
+	_, err = tx.ExecContext(ctx,
+		fmt.Sprintf(`
+			INSERT INTO %s (pool_id, epoch, account, amount, proof)
+			SELECT $1, $2, unnest($3::bytea[]), unnest($4::numeric[]), unnest($5::jsonb[])
+			ON CONFLICT (pool_id, epoch, account)
+			DO UPDATE SET amount = EXCLUDED.amount, proof = EXCLUDED.proof`,
+			helpers.WithSchema(models.TableNames.MerkleClaims)),
+		root.PoolID, root.Epoch, pq.ByteaArray(accounts), pq.Array(amounts), pq.Array(proofs),
+	)
+	if err != nil {
+		return fmt.Errorf("upserting Merkle claims: %w", err)
 	}
 
 	if err := tx.Commit(); err != nil {
 		return err
 	}
 
-	logger.Info().Int("recipientCount", len(file.Leaves)).Msg("Merkle root set.")
+	logger.Info().
+		Int("recipientCount", len(file.Leaves)).
+		Int64("fetchDurationMs", fetchDuration.Milliseconds()).
+		Int64("dbWriteDurationMs", time.Since(dbWriteStart).Milliseconds()).
+		Msg("Merkle root set.")
 
 	return nil
 }

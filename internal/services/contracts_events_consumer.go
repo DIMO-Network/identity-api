@@ -107,7 +107,7 @@ const contractEventCEType = "zone.dimo.contract.event"
 
 func NewContractsEventsConsumer(dbs db.Store, log *zerolog.Logger, settings *config.Settings) *ContractsEventsConsumer {
 	httpClient := &http.Client{
-		Timeout: 10 * time.Second,
+		Timeout: merkle.FetchTimeout,
 	}
 
 	return &ContractsEventsConsumer{

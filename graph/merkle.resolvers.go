@@ -10,6 +10,7 @@ import (
 	"fmt"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
+	"github.com/DIMO-Network/identity-api/internal/loader"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -20,7 +21,7 @@ func (r *merklePoolResolver) Epochs(ctx context.Context, obj *model.MerklePool, 
 
 // Pool is the resolver for the pool field.
 func (r *merkleRewardResolver) Pool(ctx context.Context, obj *model.MerkleReward) (*model.MerklePool, error) {
-	pool, err := r.merkle.GetMerklePool(ctx, obj.PoolID)
+	pool, err := loader.GetMerklePoolByID(ctx, obj.PoolID)
 	if err != nil {
 		return nil, err
 	}

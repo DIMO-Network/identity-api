@@ -9,11 +9,20 @@ import (
 	"net/url"
 	"slices"
 	"strings"
+	"time"
 )
 
 // maxTreeFileSize is the maximum number of bytes we are willing to read from a
 // Merkle tree file referenced by a RootSet event.
 const maxTreeFileSize = 50 * 1024 * 1024
+
+// FetchTimeout bounds an entire tree file fetch. http.Client.Timeout spans
+// the whole exchange — dialing, TLS, redirects, and reading the complete
+// response body — so this must be long enough to download a tree file of up
+// to maxTreeFileSize (50 MiB) from an allowed host, not just to receive the
+// first byte. Tree files are served from hosts we control, so 10s is ample;
+// on a timeout the event is redelivered by Kafka and the fetch is retried.
+const FetchTimeout = 10 * time.Second
 
 // TreeFetcher retrieves the Merkle tree file referenced by a RootSet event's
 // proofsURI.

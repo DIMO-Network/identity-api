@@ -181,6 +181,29 @@ func TestHandleOverflowingArgumentsError(t *testing.T) {
 	assert.ErrorContains(t, err, "does not fit in an int64")
 }
 
+// TestRootSetDataWireFormat pins the wire format of the root argument:
+// contract-event-processor decodes the indexed bytes32 with
+// abi.ParseTopicsIntoMap, which yields a [32]byte that encoding/json
+// serializes as an array of numbers, not a hex string. See the RootSetData
+// docs before changing the field type.
+func TestRootSetDataWireFormat(t *testing.T) {
+	raw := []byte(`{
+		"poolId": 1,
+		"week": 2,
+		"root": [18,52,86,120,144,171,205,239,18,52,86,120,144,171,205,239,18,52,86,120,144,171,205,239,18,52,86,120,144,171,205,239],
+		"allocation": 600,
+		"proofsURI": "https://merkle.dimo.zone/pool-1/week-2.json"
+	}`)
+
+	var args RootSetData
+	require.NoError(t, json.Unmarshal(raw, &args))
+
+	assert.Equal(t, common.HexToHash("0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"), common.Hash(args.Root))
+	assert.Equal(t, "1", args.PoolId.String())
+	assert.Equal(t, "2", args.Week.String())
+	assert.Equal(t, "600", args.Allocation.String())
+}
+
 func TestHandleRootSet(t *testing.T) {
 	tree, treeData := buildTree(t, 0, 214)
 	uri := "https://merkle.dimo.zone/pool-0/week-214.json"
@@ -229,6 +252,74 @@ func TestHandleRootSet(t *testing.T) {
 	var stored []string
 	require.NoError(t, json.Unmarshal(claim.Proof, &stored))
 	assert.Equal(t, expected, stored)
+}
+
+// TestHandleRootSetManyLeaves exercises the single-statement batch upsert
+// with well over a hundred leaves, including re-setting the root so the
+// ON CONFLICT path runs for every row.
+func TestHandleRootSetManyLeaves(t *testing.T) {
+	const leafCount = 150
+
+	leaves := make([]merkletree.Leaf, leafCount)
+	for i := range leaves {
+		var addr common.Address
+		addr[19] = byte(i + 1)
+		addr[18] = byte((i + 1) >> 8)
+		leaves[i] = merkletree.Leaf{Account: addr, Amount: big.NewInt(int64((i + 1) * 10))}
+	}
+
+	tree, err := merkletree.New(distributorAddr, big.NewInt(0), big.NewInt(214), leaves)
+	require.NoError(t, err)
+	treeData, err := tree.MarshalJSON()
+	require.NoError(t, err)
+
+	uri := "https://merkle.dimo.zone/pool-0/week-214.json"
+
+	h, ctx := newTestHandler(t, &fakeFetcher{data: map[string][]byte{uri: treeData}})
+	createPool(t, ctx, h, 0)
+
+	rootSet := eventData(t, RootSet, time.Now(), RootSetData{
+		PoolId:     big.NewInt(0),
+		Week:       big.NewInt(214),
+		Root:       tree.Root(),
+		Allocation: big.NewInt(11325 * 10),
+		ProofsURI:  uri,
+	})
+
+	require.NoError(t, h.Handle(ctx, rootSet))
+
+	count, err := models.MerkleClaims().Count(ctx, h.DBS.DBS().Reader)
+	require.NoError(t, err)
+	assert.EqualValues(t, leafCount, count)
+
+	dbRoot, err := models.FindMerkleRoot(ctx, h.DBS.DBS().Reader, 0, 214)
+	require.NoError(t, err)
+	assert.Equal(t, leafCount, dbRoot.RecipientCount)
+
+	// Spot-check a leaf deep in the batch: amount and proof must round-trip.
+	target := leaves[137]
+	claim, err := models.FindMerkleClaim(ctx, h.DBS.DBS().Reader, 0, 214, target.Account.Bytes())
+	require.NoError(t, err)
+	assert.Equal(t, target.Amount.String(), claim.Amount.Big.String())
+
+	proof, err := tree.Proof(target.Account)
+	require.NoError(t, err)
+	expected := make([]string, len(proof))
+	for i, p := range proof {
+		expected[i] = p.Hex()
+	}
+
+	var stored []string
+	require.NoError(t, json.Unmarshal(claim.Proof, &stored))
+	assert.Equal(t, expected, stored)
+
+	// Redelivery hits the ON CONFLICT branch for all rows and must not
+	// duplicate or fail.
+	require.NoError(t, h.Handle(ctx, rootSet))
+
+	count, err = models.MerkleClaims().Count(ctx, h.DBS.DBS().Reader)
+	require.NoError(t, err)
+	assert.EqualValues(t, leafCount, count)
 }
 
 func TestHandleRootSetTamperedFile(t *testing.T) {
