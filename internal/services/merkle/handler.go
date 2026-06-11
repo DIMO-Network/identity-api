@@ -149,7 +149,7 @@ func (h *Handler) handleFunded(ctx context.Context, e *cmodels.ContractEventData
 		return err
 	}
 	if rowsAff == 0 {
-		return fmt.Errorf("Funded for unknown pool %d", args.PoolId)
+		return fmt.Errorf("funded event for unknown pool %d", args.PoolId)
 	}
 
 	return nil
@@ -171,7 +171,7 @@ func (h *Handler) handleSwept(ctx context.Context, e *cmodels.ContractEventData,
 		return err
 	}
 	if rowsAff == 0 {
-		return fmt.Errorf("Swept for unknown pool %d", pool.PoolID)
+		return fmt.Errorf("swept event for unknown pool %d", pool.PoolID)
 	}
 
 	return nil
@@ -338,7 +338,7 @@ func (h *Handler) handleClaimed(ctx context.Context, e *cmodels.ContractEventDat
 	).One(ctx, tx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return fmt.Errorf("Claimed for unknown leaf: pool %d, epoch %d, account %s", poolID, epoch, args.Account)
+			return fmt.Errorf("claimed event for unknown leaf: pool %d, epoch %d, account %s", poolID, epoch, args.Account)
 		}
 		return err
 	}

@@ -112,8 +112,8 @@ func TestHandlePoolCreatedAndBalanceEvents(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, tokenAddr.Bytes(), pool.Token)
 	assert.Equal(t, adminAddr.Bytes(), pool.Admin)
-	assert.Equal(t, "5000", pool.WeeklyLimit.Big.String())
-	assert.Equal(t, "0", pool.Balance.Big.String())
+	assert.Equal(t, "5000", pool.WeeklyLimit.String())
+	assert.Equal(t, "0", pool.Balance.String())
 	assert.WithinDuration(t, createdAt, pool.CreatedAt, time.Second)
 
 	// WeeklyLimitSet updates the limit.
@@ -132,8 +132,8 @@ func TestHandlePoolCreatedAndBalanceEvents(t *testing.T) {
 	require.NoError(t, err)
 
 	require.NoError(t, pool.Reload(ctx, h.DBS.DBS().Reader))
-	assert.Equal(t, "7000", pool.WeeklyLimit.Big.String())
-	assert.Equal(t, "1000", pool.Balance.Big.String())
+	assert.Equal(t, "7000", pool.WeeklyLimit.String())
+	assert.Equal(t, "1000", pool.Balance.String())
 
 	// Swept sets the balance to the new absolute value.
 	err = h.Handle(ctx, eventData(t, Swept, time.Now(), SweptData{
@@ -145,7 +145,7 @@ func TestHandlePoolCreatedAndBalanceEvents(t *testing.T) {
 	require.NoError(t, err)
 
 	require.NoError(t, pool.Reload(ctx, h.DBS.DBS().Reader))
-	assert.Equal(t, "400", pool.Balance.Big.String())
+	assert.Equal(t, "400", pool.Balance.String())
 
 	// Balance events for unknown pools are errors.
 	err = h.Handle(ctx, eventData(t, Funded, time.Now(), FundedData{
@@ -226,10 +226,10 @@ func TestHandleRootSet(t *testing.T) {
 	dbRoot, err := models.FindMerkleRoot(ctx, h.DBS.DBS().Reader, 0, 214)
 	require.NoError(t, err)
 	assert.Equal(t, root[:], dbRoot.Root)
-	assert.Equal(t, "600", dbRoot.Allocation.Big.String())
+	assert.Equal(t, "600", dbRoot.Allocation.String())
 	assert.Equal(t, 3, dbRoot.RecipientCount)
 	assert.Equal(t, 0, dbRoot.ClaimCount)
-	assert.Equal(t, "0", dbRoot.TotalClaimed.Big.String())
+	assert.Equal(t, "0", dbRoot.TotalClaimed.String())
 	assert.Equal(t, uri, dbRoot.ProofsURI)
 	assert.WithinDuration(t, setAt, dbRoot.SetAt, time.Second)
 
@@ -239,7 +239,7 @@ func TestHandleRootSet(t *testing.T) {
 
 	claim, err := models.FindMerkleClaim(ctx, h.DBS.DBS().Reader, 0, 214, account1.Bytes())
 	require.NoError(t, err)
-	assert.Equal(t, "100", claim.Amount.Big.String())
+	assert.Equal(t, "100", claim.Amount.String())
 	assert.False(t, claim.ClaimedAt.Valid)
 
 	proof, err := tree.Proof(account1)
@@ -300,7 +300,7 @@ func TestHandleRootSetManyLeaves(t *testing.T) {
 	target := leaves[137]
 	claim, err := models.FindMerkleClaim(ctx, h.DBS.DBS().Reader, 0, 214, target.Account.Bytes())
 	require.NoError(t, err)
-	assert.Equal(t, target.Amount.String(), claim.Amount.Big.String())
+	assert.Equal(t, target.Amount.String(), claim.Amount.String())
 
 	proof, err := tree.Proof(target.Account)
 	require.NoError(t, err)
@@ -421,11 +421,11 @@ func TestHandleClaimedIdempotent(t *testing.T) {
 		root, err := models.FindMerkleRoot(ctx, h.DBS.DBS().Reader, 0, 214)
 		require.NoError(t, err)
 		assert.Equal(t, 1, root.ClaimCount)
-		assert.Equal(t, "100", root.TotalClaimed.Big.String())
+		assert.Equal(t, "100", root.TotalClaimed.String())
 
 		pool, err := models.FindMerklePool(ctx, h.DBS.DBS().Reader, 0)
 		require.NoError(t, err)
-		assert.Equal(t, "900", pool.Balance.Big.String())
+		assert.Equal(t, "900", pool.Balance.String())
 	}
 
 	checkState()
