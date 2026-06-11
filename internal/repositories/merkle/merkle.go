@@ -35,7 +35,7 @@ type RewardCursor struct {
 var rewardCursorColumns = "(" + models.MerkleClaimColumns.PoolID + ", " + models.MerkleClaimColumns.Epoch + ")"
 
 func decimalToBig(d types.Decimal) *big.Int {
-	return d.Big.Int(nil)
+	return d.Int(nil)
 }
 
 // PoolToAPI converts a database Merkle pool row to its GraphQL form.
@@ -49,7 +49,7 @@ func PoolToAPI(pool *models.MerklePool) *gmodel.MerklePool {
 	}
 
 	if pool.WeeklyLimit.Big != nil {
-		out.WeeklyLimit = pool.WeeklyLimit.Big.Int(nil)
+		out.WeeklyLimit = pool.WeeklyLimit.Int(nil)
 	}
 
 	return out

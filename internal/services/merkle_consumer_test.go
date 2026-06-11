@@ -52,6 +52,6 @@ func TestHandleMerklePoolCreatedEvent(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, args.Token.Bytes(), pool.Token)
 	assert.Equal(t, args.Admin.Bytes(), pool.Admin)
-	assert.Equal(t, "5000", pool.WeeklyLimit.Big.String())
-	assert.Equal(t, "0", pool.Balance.Big.String())
+	assert.Equal(t, "5000", pool.WeeklyLimit.String())
+	assert.Equal(t, "0", pool.Balance.String())
 }
