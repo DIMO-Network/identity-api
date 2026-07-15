@@ -92,6 +92,12 @@ input VehiclesFilter {
   Filter for vehicles by device definition id.
   """
   deviceDefinitionId: String
+
+  """
+  Filter for vehicles paired with a synthetic device that belongs to the connection at
+  this address.
+  """
+  connection: Address
 }
 
 type Vehicle implements Node {

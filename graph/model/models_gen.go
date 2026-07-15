@@ -762,4 +762,7 @@ type VehiclesFilter struct {
 	ManufacturerTokenID *int `json:"manufacturerTokenId,omitempty"`
 	// Filter for vehicles by device definition id.
 	DeviceDefinitionID *string `json:"deviceDefinitionId,omitempty"`
+	// Filter for vehicles paired with a synthetic device that belongs to the connection at
+	// this address.
+	Connection *common.Address `json:"connection,omitempty"`
 }

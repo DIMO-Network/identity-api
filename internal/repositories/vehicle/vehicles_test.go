@@ -1223,6 +1223,55 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 		}
 	}
 
+	// Two connections, each paired with a vehicle through a synthetic device. Vehicles 2 and 4
+	// have no synthetic device, so they never match a connection filter.
+	connectionAddr1 := common.HexToAddress("0x1111111111111111111111111111111111111111")
+	connectionAddr2 := common.HexToAddress("0x2222222222222222222222222222222222222222")
+
+	connections := []models.Connection{
+		{
+			ID:       common.FromHex("0x0000000000000000000000000000000000000000000000000000000000000001"),
+			Address:  connectionAddr1.Bytes(),
+			Owner:    wallet1.Bytes(),
+			MintedAt: currTime,
+		},
+		{
+			ID:       common.FromHex("0x0000000000000000000000000000000000000000000000000000000000000002"),
+			Address:  connectionAddr2.Bytes(),
+			Owner:    wallet1.Bytes(),
+			MintedAt: currTime,
+		},
+	}
+	for _, c := range connections {
+		if err := c.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer()); err != nil {
+			o.Require().NoError(err)
+		}
+	}
+
+	syntheticDevices := []models.SyntheticDevice{
+		{
+			ID:            1,
+			IntegrationID: 1,
+			VehicleID:     testVehicle1.ID,
+			DeviceAddress: common.HexToAddress("0xaaaa000000000000000000000000000000000001").Bytes(),
+			MintedAt:      currTime,
+			ConnectionID:  null.BytesFrom(connections[0].ID),
+		},
+		{
+			ID:            2,
+			IntegrationID: 1,
+			VehicleID:     testVehicle3.ID,
+			DeviceAddress: common.HexToAddress("0xaaaa000000000000000000000000000000000003").Bytes(),
+			MintedAt:      currTime,
+			ConnectionID:  null.BytesFrom(connections[1].ID),
+		},
+	}
+	for _, sd := range syntheticDevices {
+		if err := sd.Insert(o.ctx, o.pdb.DBS().Writer, boil.Infer()); err != nil {
+			o.Require().NoError(err)
+		}
+	}
+
 	// create table of tests for testing the o.repo.GetVehicles function
 	tests := []struct {
 		name    string
@@ -1389,6 +1438,33 @@ func (o *AccessibleVehiclesRepoTestSuite) Test_GetAccessibleVehiclesFilters() {
 				{Node: vehicle1AsAPI},
 				{Node: vehicle3AsAPI},
 			},
+		},
+		{
+			name: "Filter by Connection",
+			filter: &gmodel.VehiclesFilter{
+				Connection: &connectionAddr1,
+			},
+			results: []*gmodel.VehicleEdge{
+				{Node: vehicle1AsAPI},
+			},
+		},
+		{
+			name: "Filter by Connection and Owner",
+			filter: &gmodel.VehiclesFilter{
+				Connection: &connectionAddr2,
+				Owner:      wallet2,
+			},
+			results: []*gmodel.VehicleEdge{
+				{Node: vehicle3AsAPI},
+			},
+		},
+		{
+			name: "Filter by Connection no results",
+			filter: &gmodel.VehiclesFilter{
+				Connection: &connectionAddr2,
+				Owner:      wallet1,
+			},
+			results: []*gmodel.VehicleEdge{},
 		},
 	}
 

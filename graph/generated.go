@@ -15266,7 +15266,7 @@ func (ec *executionContext) unmarshalInputVehiclesFilter(ctx context.Context, ob
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"privileged", "owner", "make", "model", "year", "manufacturerTokenId", "deviceDefinitionId"}
+	fieldsInOrder := [...]string{"privileged", "owner", "make", "model", "year", "manufacturerTokenId", "deviceDefinitionId", "connection"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -15322,6 +15322,13 @@ func (ec *executionContext) unmarshalInputVehiclesFilter(ctx context.Context, ob
 				return it, err
 			}
 			it.DeviceDefinitionID = data
+		case "connection":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("connection"))
+			data, err := ec.unmarshalOAddress2ᚖgithubᚗcomᚋethereumᚋgoᚑethereumᚋcommonᚐAddress(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Connection = data
 		}
 	}
 	return it, nil
