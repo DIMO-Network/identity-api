@@ -307,6 +307,21 @@ func (r *Repository) queryModsFromFilters(filter *gmodel.VehiclesFilter) ([]qm.Q
 	if filter.DeviceDefinitionID != nil {
 		queryMods = append(queryMods, models.VehicleWhere.DeviceDefinitionID.EQ(null.StringFrom(*filter.DeviceDefinitionID)))
 	}
+	if filter.Connection != nil {
+		// A vehicle is linked to a connection through its synthetic device, so join
+		// vehicles -> synthetic_devices -> connections and filter on the connection address.
+		queryMods = append(queryMods,
+			qm.InnerJoin(
+				helpers.WithSchema(models.TableNames.SyntheticDevices)+" ON "+
+					models.SyntheticDeviceTableColumns.VehicleID+" = "+models.VehicleTableColumns.ID,
+			),
+			qm.InnerJoin(
+				helpers.WithSchema(models.TableNames.Connections)+" ON "+
+					models.ConnectionTableColumns.ID+" = "+models.SyntheticDeviceTableColumns.ConnectionID,
+			),
+			models.ConnectionWhere.Address.EQ(filter.Connection.Bytes()),
+		)
+	}
 
 	return queryMods, nil
 }
