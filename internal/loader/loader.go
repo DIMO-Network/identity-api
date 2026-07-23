@@ -11,6 +11,7 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/repositories/connection"
 	"github.com/DIMO-Network/identity-api/internal/repositories/dcn"
 	"github.com/DIMO-Network/identity-api/internal/repositories/manufacturer"
+	"github.com/DIMO-Network/identity-api/internal/repositories/merkle"
 	"github.com/DIMO-Network/identity-api/internal/repositories/stake"
 	"github.com/DIMO-Network/identity-api/internal/repositories/storagenode"
 	"github.com/DIMO-Network/identity-api/internal/repositories/synthetic"
@@ -38,6 +39,7 @@ type Loaders struct {
 	StakeByVehicleID             dataloader.Interface[int, *model.Stake]
 	ConnectionByID               dataloader.Interface[ConnectionQueryKey, *model.Connection]
 	StorageNodeByID              dataloader.Interface[[32]byte, *model.StorageNode]
+	MerklePoolByID               dataloader.Interface[int, *model.MerklePool]
 }
 
 // NewDataLoader returns the instantiated Loaders struct for use in a request
@@ -57,6 +59,7 @@ func NewDataLoaderWithFetcher(dbs db.Store, settings config.Settings, log *zerol
 	stake := NewStakeLoader(stake.New(baseRepo))
 	connection := ConnectionLoader{repo: connection.New(baseRepo)}
 	storageNode := NewStorageNodeLoader(storagenode.New(baseRepo))
+	merklePool := NewMerklePoolLoader(&merkle.Repository{Repository: baseRepo})
 
 	// return the DataLoader
 	return &Loaders{
@@ -99,6 +102,10 @@ func NewDataLoaderWithFetcher(dbs db.Store, settings config.Settings, log *zerol
 		StorageNodeByID: dataloader.NewBatchedLoader(
 			storageNode.BatchGetStorageNodesByIDs,
 			dataloader.WithClearCacheOnBatch[[32]byte, *model.StorageNode](),
+		),
+		MerklePoolByID: dataloader.NewBatchedLoader(
+			merklePool.BatchGetMerklePoolsByID,
+			dataloader.WithClearCacheOnBatch[int, *model.MerklePool](),
 		),
 	}
 }

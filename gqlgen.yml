@@ -229,3 +229,14 @@ models:
     extraFields:
       VehicleID:
         type: "*int"
+  MerklePool:
+    fields:
+      epochs:
+        resolver: true
+  MerkleReward:
+    fields:
+      pool:
+        resolver: true
+    extraFields:
+      PoolID:
+        type: "int"

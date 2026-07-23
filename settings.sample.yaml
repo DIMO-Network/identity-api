@@ -20,3 +20,7 @@ TEMPLATE_ADDR: "0x0000000000000000000000000000000000000000"
 BASE_IMAGE_URL: "https://devices-api.dev.dimo.zone/v1/"
 TABLELAND_API_GATEWAY: "https://testnets.tableland.network/"
 ETHEREUM_RPC_URL: "http://127.0.0.1:8545"
+# TODO: replace placeholder with deployed MerkleDistributor address.
+MERKLE_DISTRIBUTOR_ADDR: "0x0000000000000000000000000000000000000000"
+# Comma-separated list of hosts from which RootSet Merkle tree files may be fetched, e.g. merkle.dimo.zone.
+MERKLE_TREE_ALLOWED_HOST: ""
