@@ -22,7 +22,7 @@ type Settings struct {
 	RewardsContractAddr   string      `yaml:"REWARDS_CONTRACT_ADDRESS"`
 	BaseImageURL          string      `yaml:"BASE_IMAGE_URL"`
 	BaseVehicleDataURI    string      `yaml:"BASE_VEHICLE_DATA_URI"`
-	TablelandAPIGateway   string      `yaml:"TABLELAND_API_GATEWAY"`
+	DefinitionsCatalogURL string      `yaml:"DEFINITIONS_CATALOG_URL"`
 	EthereumRPCURL        string      `yaml:"ETHEREUM_RPC_URL"`
 	DevLicenseAddr        string      `yaml:"DEV_LICENSE_ADDR"`
 	StakingAddr           string      `yaml:"STAKING_ADDR"`

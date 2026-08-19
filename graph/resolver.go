@@ -81,7 +81,7 @@ type VehicleRepository interface {
 //go:generate mockgen -destination=./mock_devicedefinition_test.go -package=graph github.com/DIMO-Network/identity-api/graph DeviceDefinitionRepository
 type DeviceDefinitionRepository interface {
 	GetDeviceDefinition(ctx context.Context, by model.DeviceDefinitionBy) (*model.DeviceDefinition, error)
-	GetDeviceDefinitions(ctx context.Context, tableID, first *int, after *string, last *int, before *string, filterBy *model.DeviceDefinitionFilter) (*model.DeviceDefinitionConnection, error)
+	GetDeviceDefinitions(ctx context.Context, manufacturerTokenID int, first *int, after *string, last *int, before *string, filterBy *model.DeviceDefinitionFilter) (*model.DeviceDefinitionConnection, error)
 }
 
 // DeveloperLicenseRepository interface for mocking devicedefinition.Repository.
@@ -149,7 +149,7 @@ type Resolver struct {
 
 // NewResolver creates a new Resolver with allocated repositories.
 func NewResolver(baseRepo *base.Repository) *Resolver {
-	tablelandApiService := services.NewTablelandApiService(baseRepo.Log, &baseRepo.Settings)
+	definitionsCatalog := services.NewDefinitionsCatalogService(baseRepo.Log, &baseRepo.Settings)
 
 	return &Resolver{
 		aftermarket:      aftermarket.New(baseRepo),
@@ -160,7 +160,7 @@ func NewResolver(baseRepo *base.Repository) *Resolver {
 		vehicle:          vehicle.New(baseRepo),
 		vehicleprivilege: vehicleprivilege.Repository{Repository: baseRepo},
 		vehiclesacd:      vehiclesacd.Repository{Repository: baseRepo},
-		deviceDefinition: devicedefinition.New(baseRepo, tablelandApiService),
+		deviceDefinition: devicedefinition.New(baseRepo, definitionsCatalog),
 		developerLicense: developerlicense.New(baseRepo),
 		stake:            stake.New(baseRepo),
 		connection:       connection.New(baseRepo),
