@@ -167,6 +167,12 @@ func (s *DefinitionsCatalogService) ensureFresh(ctx context.Context) error {
 
 	var m catalogManifest
 	if err := json.NewDecoder(resp.Body).Decode(&m); err != nil {
+		// A corrupt 200 body must not take reads down when a snapshot exists.
+		if len(s.byID) != 0 {
+			s.log.Warn().Err(err).Msg("definitions manifest decode failed, serving stale catalog")
+			s.lastFetch = time.Now()
+			return nil
+		}
 		return fmt.Errorf("failed to decode definitions manifest: %w", err)
 	}
 
