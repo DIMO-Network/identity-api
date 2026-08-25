@@ -97,7 +97,7 @@ func NewDefinitionsCatalogService(log *zerolog.Logger, settings *config.Settings
 		log:             log,
 		// Every neighbouring catalog setting in values.yaml carries a trailing
 		// slash; "//manifest.json" does not match the worker's exact route.
-		url:             strings.TrimSuffix(settings.DefinitionsCatalogURL, "/"),
+		url:             strings.TrimRight(settings.DefinitionsCatalogURL, "/"),
 		client:          &http.Client{Timeout: 30 * time.Second},
 		refreshInterval: time.Minute,
 		byID:            map[string]*CatalogDefinition{},
@@ -214,6 +214,10 @@ func (s *DefinitionsCatalogService) ensureFresh(ctx context.Context) error {
 		return nil
 	}
 	if len(defs) == 0 && len(m.Definitions) != 0 {
+		// Rate-limit the retry. Without this every request on a cold pod
+		// re-enters ensureFresh, takes the write lock and re-downloads the
+		// whole manifest, serialising the entire service behind one mutex.
+		s.lastFetch = time.Now()
 		return fmt.Errorf("every definition in the manifest failed to decode (%d elements)", len(m.Definitions))
 	}
 
