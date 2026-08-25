@@ -183,25 +183,6 @@ func (s *DefinitionsCatalogService) ensureFresh(ctx context.Context) error {
 		return fmt.Errorf("failed to decode definitions manifest: %w", err)
 	}
 
-	// A well-formed but degenerate manifest must not replace a good snapshot.
-	// Count is the manifest's own claim about its size, so a mismatch means the
-	// object is truncated or was rewritten from partial state; and a manifest
-	// that lost every definition is not a catalog that legitimately emptied.
-	// Adopting either turns every device-definition query into a successful,
-	// empty answer instead of an error anyone would notice.
-	if m.Count != len(m.Definitions) || (len(m.Definitions) == 0 && len(s.byID) != 0) {
-		if len(s.byID) != 0 {
-			s.log.Warn().
-				Int("count", m.Count).
-				Int("definitions", len(m.Definitions)).
-				Int("held", len(s.byID)).
-				Msg("definitions manifest looks degenerate, serving stale catalog")
-			s.lastFetch = time.Now()
-			return nil
-		}
-		return fmt.Errorf("definitions manifest is degenerate: count=%d definitions=%d", m.Count, len(m.Definitions))
-	}
-
 	defs := make([]CatalogDefinition, 0, len(m.Definitions))
 	skipped := 0
 	for _, raw := range m.Definitions {
@@ -215,6 +196,25 @@ func (s *DefinitionsCatalogService) ensureFresh(ctx context.Context) error {
 	if skipped > 0 {
 		s.log.Warn().Int("skipped", skipped).Int("kept", len(defs)).
 			Msg("skipped malformed definitions in the catalog manifest")
+	}
+
+	// Guard on the definitions we would actually publish, not on the raw
+	// elements: skipping malformed entries happens after decoding, so counting
+	// raw elements would wave through a manifest whose every element failed.
+	// The check is proportional because a partial manifest is internally
+	// consistent -- the producer sets count to the length it wrote -- so size
+	// relative to what we already hold is the only signal that it shrank.
+	if held := len(s.byID); held != 0 && len(defs)*2 < held {
+		s.log.Warn().
+			Int("definitions", len(defs)).
+			Int("skipped", skipped).
+			Int("held", held).
+			Msg("definitions manifest lost most of the catalog, serving stale")
+		s.lastFetch = time.Now()
+		return nil
+	}
+	if len(defs) == 0 && len(m.Definitions) != 0 {
+		return fmt.Errorf("every definition in the manifest failed to decode (%d elements)", len(m.Definitions))
 	}
 
 	byID := make(map[string]*CatalogDefinition, len(defs))

@@ -156,3 +156,49 @@ func TestCatalogURLTolerantOfTrailingSlash(t *testing.T) {
 	require.NotNil(t, d)
 	assert.Equal(t, "/manifest.json", gotPath)
 }
+
+// The degenerate-manifest guard and the per-element decode were added together
+// and defeated each other: the guard counted raw elements while the snapshot is
+// built from decoded survivors. A producer-side type change fails every element,
+// so the guard sees a full manifest, the skip loop discards all of it, and the
+// catalog is replaced with an empty map -- a fleet-wide outage from a good
+// snapshot voluntarily thrown away.
+func TestCatalogKeepsSnapshotWhenEveryDefinitionFailsToDecode(t *testing.T) {
+	good := `{"updatedAt":"t","count":1,"definitions":[
+	  {"id":"toyota_camry_2020","ksuid":"K","model":"Camry","year":2020,
+	   "devicetype":"vehicle","imageuri":"","metadata":null,
+	   "manufacturer":{"tokenId":131,"slug":"toyota","name":"Toyota"}}]}`
+
+	// Same element count, but every one is undecodable (year became a string).
+	allBad := `{"updatedAt":"t","count":1,"definitions":[
+	  {"id":"toyota_camry_2020","year":"2020"}]}`
+
+	mode := "good"
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		if mode == "good" {
+			_, _ = w.Write([]byte(good))
+			return
+		}
+		_, _ = w.Write([]byte(allBad))
+	}))
+	defer srv.Close()
+
+	logger := zerolog.Nop()
+	svc := NewDefinitionsCatalogService(&logger, &config.Settings{DefinitionsCatalogURL: srv.URL})
+	ctx := context.Background()
+
+	d, err := svc.GetDefinitionByID(ctx, "toyota_camry_2020")
+	require.NoError(t, err)
+	require.NotNil(t, d)
+
+	mode = "bad"
+	svc.mu.Lock()
+	svc.lastFetch = time.Time{}
+	svc.etag = ""
+	svc.mu.Unlock()
+
+	d, err = svc.GetDefinitionByID(ctx, "toyota_camry_2020")
+	require.NoError(t, err)
+	require.NotNil(t, d, "a manifest whose definitions all fail to decode must not empty the catalog")
+	assert.Equal(t, "Camry", d.Model)
+}
