@@ -202,3 +202,56 @@ func TestCatalogKeepsSnapshotWhenEveryDefinitionFailsToDecode(t *testing.T) {
 	require.NotNil(t, d, "a manifest whose definitions all fail to decode must not empty the catalog")
 	assert.Equal(t, "Camry", d.Model)
 }
+
+// A large shrink must be refused once, then adopted if the catalog still
+// reports it. Refusing indefinitely means a legitimate purge is never picked up
+// by running pods while any pod that restarts adopts it, so the same query
+// answers differently depending on which replica serves it -- with no escape
+// short of an undocumented rollout restart.
+func TestCatalogAdoptsALargeShrinkOnceItIsConfirmed(t *testing.T) {
+	big := `{"updatedAt":"t","count":4,"definitions":[
+	  {"id":"toyota_a_2020","model":"A","year":2020,"manufacturer":{"tokenId":1,"slug":"t","name":"T"}},
+	  {"id":"toyota_b_2020","model":"B","year":2020,"manufacturer":{"tokenId":1,"slug":"t","name":"T"}},
+	  {"id":"toyota_c_2020","model":"C","year":2020,"manufacturer":{"tokenId":1,"slug":"t","name":"T"}},
+	  {"id":"toyota_d_2020","model":"D","year":2020,"manufacturer":{"tokenId":1,"slug":"t","name":"T"}}]}`
+	small := `{"updatedAt":"t","count":1,"definitions":[
+	  {"id":"toyota_a_2020","model":"A","year":2020,"manufacturer":{"tokenId":1,"slug":"t","name":"T"}}]}`
+
+	body := big
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(body))
+	}))
+	defer srv.Close()
+
+	logger := zerolog.Nop()
+	svc := NewDefinitionsCatalogService(&logger, &config.Settings{DefinitionsCatalogURL: srv.URL})
+	ctx := context.Background()
+
+	d, err := svc.GetDefinitionByID(ctx, "toyota_d_2020")
+	require.NoError(t, err)
+	require.NotNil(t, d)
+
+	forceRefresh := func() {
+		svc.mu.Lock()
+		svc.lastFetch = time.Time{}
+		svc.etag = ""
+		svc.mu.Unlock()
+	}
+
+	// First sighting of the shrink is refused; the old catalog still serves.
+	body = small
+	forceRefresh()
+	d, err = svc.GetDefinitionByID(ctx, "toyota_d_2020")
+	require.NoError(t, err)
+	require.NotNil(t, d, "a large shrink must not be adopted on first sight")
+
+	// Still reporting the same size: it is real, so adopt it.
+	forceRefresh()
+	d, err = svc.GetDefinitionByID(ctx, "toyota_d_2020")
+	require.NoError(t, err)
+	assert.Nil(t, d, "a confirmed shrink must be adopted rather than refused forever")
+
+	kept, err := svc.GetDefinitionByID(ctx, "toyota_a_2020")
+	require.NoError(t, err)
+	require.NotNil(t, kept)
+}
