@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/rs/zerolog"
@@ -54,4 +55,104 @@ func TestCatalogServesStaleOnBadRefresh(t *testing.T) {
 	d, err = svc.GetDefinitionByID(ctx, "toyota_camry_2020")
 	require.NoError(t, err)
 	assert.NotNil(t, d)
+}
+
+// A well-formed 200 whose body is empty (or whose count disagrees with the
+// definitions it carries) must not replace a good snapshot. The worker can
+// produce a truncated manifest -- a lost read of manifest.json makes it rewrite
+// the object from a single change -- and adopting that silently turns every
+// device-definition query into a successful, empty answer rather than an error.
+func TestCatalogRejectsDegenerateManifest(t *testing.T) {
+	good := `{"updatedAt":"t","count":1,"definitions":[
+	  {"id":"toyota_camry_2020","ksuid":"K","model":"Camry","year":2020,
+	   "devicetype":"vehicle","imageuri":"","metadata":null,
+	   "manufacturer":{"tokenId":131,"slug":"toyota","name":"Toyota"}}]}`
+
+	mode := "good"
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		switch mode {
+		case "good":
+			_, _ = w.Write([]byte(good))
+		case "empty":
+			_, _ = w.Write([]byte(`{"updatedAt":"t","count":0,"definitions":[]}`))
+		default: // count disagrees with the payload
+			_, _ = w.Write([]byte(`{"updatedAt":"t","count":9000,"definitions":[]}`))
+		}
+	}))
+	defer srv.Close()
+
+	logger := zerolog.Nop()
+	svc := NewDefinitionsCatalogService(&logger, &config.Settings{DefinitionsCatalogURL: srv.URL})
+	ctx := context.Background()
+
+	d, err := svc.GetDefinitionByID(ctx, "toyota_camry_2020")
+	require.NoError(t, err)
+	require.NotNil(t, d)
+
+	for _, m := range []string{"empty", "mismatch"} {
+		mode = m
+		svc.mu.Lock()
+		svc.lastFetch = time.Time{} // force a refresh
+		svc.etag = ""
+		svc.mu.Unlock()
+
+		d, err = svc.GetDefinitionByID(ctx, "toyota_camry_2020")
+		require.NoError(t, err, m)
+		require.NotNil(t, d, "%s: snapshot must survive a degenerate manifest", m)
+		assert.Equal(t, "Camry", d.Model, m)
+	}
+}
+
+// One malformed definition must not cost the whole catalog. Decoding the
+// manifest as a single document means a single bad element aborts everything:
+// warm pods freeze on a stale snapshot and a cold pod fails every query.
+func TestCatalogSkipsMalformedDefinitions(t *testing.T) {
+	body := `{"updatedAt":"t","count":3,"definitions":[
+	  {"id":"toyota_camry_2020","ksuid":"K","model":"Camry","year":2020,
+	   "devicetype":"vehicle","imageuri":"","metadata":null,
+	   "manufacturer":{"tokenId":131,"slug":"toyota","name":"Toyota"}},
+	  {"id":"toyota_broken_2020","year":"not-a-number"},
+	  {"id":"toyota_supra_2021","ksuid":"K2","model":"Supra","year":2021,
+	   "devicetype":"vehicle","imageuri":"","metadata":null,
+	   "manufacturer":{"tokenId":131,"slug":"toyota","name":"Toyota"}}]}`
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(body))
+	}))
+	defer srv.Close()
+
+	logger := zerolog.Nop()
+	svc := NewDefinitionsCatalogService(&logger, &config.Settings{DefinitionsCatalogURL: srv.URL})
+	ctx := context.Background()
+
+	good, err := svc.GetDefinitionByID(ctx, "toyota_camry_2020")
+	require.NoError(t, err)
+	require.NotNil(t, good, "a good definition must survive a malformed sibling")
+	assert.Equal(t, "Camry", good.Model)
+
+	other, err := svc.GetDefinitionByID(ctx, "toyota_supra_2021")
+	require.NoError(t, err)
+	require.NotNil(t, other, "definitions after the malformed one must still load")
+}
+
+// Every neighbouring catalog setting in values.yaml carries a trailing slash.
+func TestCatalogURLTolerantOfTrailingSlash(t *testing.T) {
+	body := `{"updatedAt":"t","count":1,"definitions":[
+	  {"id":"toyota_camry_2020","ksuid":"K","model":"Camry","year":2020,
+	   "devicetype":"vehicle","imageuri":"","metadata":null,
+	   "manufacturer":{"tokenId":131,"slug":"toyota","name":"Toyota"}}]}`
+
+	var gotPath string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		_, _ = w.Write([]byte(body))
+	}))
+	defer srv.Close()
+
+	logger := zerolog.Nop()
+	svc := NewDefinitionsCatalogService(&logger, &config.Settings{DefinitionsCatalogURL: srv.URL + "/"})
+	d, err := svc.GetDefinitionByID(context.Background(), "toyota_camry_2020")
+	require.NoError(t, err)
+	require.NotNil(t, d)
+	assert.Equal(t, "/manifest.json", gotPath)
 }

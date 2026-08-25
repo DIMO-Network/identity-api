@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -66,9 +67,13 @@ func (d *CatalogDefinition) UnmarshalJSON(data []byte) error {
 }
 
 type catalogManifest struct {
-	UpdatedAt   string              `json:"updatedAt"`
-	Count       int                 `json:"count"`
-	Definitions []CatalogDefinition `json:"definitions"`
+	UpdatedAt string `json:"updatedAt"`
+	Count     int    `json:"count"`
+	// Held raw so one malformed definition costs that definition rather than
+	// the whole catalog: decoding the manifest as a single document lets a
+	// single bad element abort everything, which freezes warm pods on a stale
+	// snapshot and makes a cold pod fail every device-definition query.
+	Definitions []json.RawMessage `json:"definitions"`
 }
 
 // DefinitionsCatalogService keeps the R2 definitions manifest in memory,
@@ -90,7 +95,9 @@ type DefinitionsCatalogService struct {
 func NewDefinitionsCatalogService(log *zerolog.Logger, settings *config.Settings) *DefinitionsCatalogService {
 	return &DefinitionsCatalogService{
 		log:             log,
-		url:             settings.DefinitionsCatalogURL,
+		// Every neighbouring catalog setting in values.yaml carries a trailing
+		// slash; "//manifest.json" does not match the worker's exact route.
+		url:             strings.TrimSuffix(settings.DefinitionsCatalogURL, "/"),
 		client:          &http.Client{Timeout: 30 * time.Second},
 		refreshInterval: time.Minute,
 		byID:            map[string]*CatalogDefinition{},
@@ -176,10 +183,44 @@ func (s *DefinitionsCatalogService) ensureFresh(ctx context.Context) error {
 		return fmt.Errorf("failed to decode definitions manifest: %w", err)
 	}
 
-	byID := make(map[string]*CatalogDefinition, len(m.Definitions))
+	// A well-formed but degenerate manifest must not replace a good snapshot.
+	// Count is the manifest's own claim about its size, so a mismatch means the
+	// object is truncated or was rewritten from partial state; and a manifest
+	// that lost every definition is not a catalog that legitimately emptied.
+	// Adopting either turns every device-definition query into a successful,
+	// empty answer instead of an error anyone would notice.
+	if m.Count != len(m.Definitions) || (len(m.Definitions) == 0 && len(s.byID) != 0) {
+		if len(s.byID) != 0 {
+			s.log.Warn().
+				Int("count", m.Count).
+				Int("definitions", len(m.Definitions)).
+				Int("held", len(s.byID)).
+				Msg("definitions manifest looks degenerate, serving stale catalog")
+			s.lastFetch = time.Now()
+			return nil
+		}
+		return fmt.Errorf("definitions manifest is degenerate: count=%d definitions=%d", m.Count, len(m.Definitions))
+	}
+
+	defs := make([]CatalogDefinition, 0, len(m.Definitions))
+	skipped := 0
+	for _, raw := range m.Definitions {
+		var d CatalogDefinition
+		if err := json.Unmarshal(raw, &d); err != nil {
+			skipped++
+			continue
+		}
+		defs = append(defs, d)
+	}
+	if skipped > 0 {
+		s.log.Warn().Int("skipped", skipped).Int("kept", len(defs)).
+			Msg("skipped malformed definitions in the catalog manifest")
+	}
+
+	byID := make(map[string]*CatalogDefinition, len(defs))
 	byMfr := map[int][]*CatalogDefinition{}
-	for i := range m.Definitions {
-		d := &m.Definitions[i]
+	for i := range defs {
+		d := &defs[i]
 		byID[d.ID] = d
 		byMfr[d.Manufacturer.TokenID] = append(byMfr[d.Manufacturer.TokenID], d)
 	}
