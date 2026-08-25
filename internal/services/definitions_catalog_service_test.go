@@ -203,23 +203,14 @@ func TestCatalogKeepsSnapshotWhenEveryDefinitionFailsToDecode(t *testing.T) {
 	assert.Equal(t, "Camry", d.Model)
 }
 
-// A large shrink must be refused once, then adopted if the catalog still
-// reports it. Refusing indefinitely means a legitimate purge is never picked up
-// by running pods while any pod that restarts adopts it, so the same query
-// answers differently depending on which replica serves it -- with no escape
-// short of an undocumented rollout restart.
-func TestCatalogAdoptsALargeShrinkOnceItIsConfirmed(t *testing.T) {
-	big := `{"updatedAt":"t","count":4,"definitions":[
-	  {"id":"toyota_a_2020","model":"A","year":2020,"manufacturer":{"tokenId":1,"slug":"t","name":"T"}},
-	  {"id":"toyota_b_2020","model":"B","year":2020,"manufacturer":{"tokenId":1,"slug":"t","name":"T"}},
-	  {"id":"toyota_c_2020","model":"C","year":2020,"manufacturer":{"tokenId":1,"slug":"t","name":"T"}},
-	  {"id":"toyota_d_2020","model":"D","year":2020,"manufacturer":{"tokenId":1,"slug":"t","name":"T"}}]}`
-	small := `{"updatedAt":"t","count":1,"definitions":[
-	  {"id":"toyota_a_2020","model":"A","year":2020,"manufacturer":{"tokenId":1,"slug":"t","name":"T"}}]}`
-
-	body := big
+// Rate-limiting a failed refresh must not make the failure look like success.
+// lastFetch feeds the freshness short-circuit, so setting it on an error path
+// suppressed the error for the rest of the interval while the catalog was still
+// empty: one request per minute got a real error and every other request got a
+// confident "no such definition" with no error at all.
+func TestCatalogKeepsReportingAColdStartFailure(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		_, _ = w.Write([]byte(body))
+		w.WriteHeader(http.StatusBadGateway)
 	}))
 	defer srv.Close()
 
@@ -227,31 +218,63 @@ func TestCatalogAdoptsALargeShrinkOnceItIsConfirmed(t *testing.T) {
 	svc := NewDefinitionsCatalogService(&logger, &config.Settings{DefinitionsCatalogURL: srv.URL})
 	ctx := context.Background()
 
-	d, err := svc.GetDefinitionByID(ctx, "toyota_d_2020")
-	require.NoError(t, err)
-	require.NotNil(t, d)
-
-	forceRefresh := func() {
-		svc.mu.Lock()
-		svc.lastFetch = time.Time{}
-		svc.etag = ""
-		svc.mu.Unlock()
+	for i := 1; i <= 3; i++ {
+		d, err := svc.GetDefinitionByID(ctx, "toyota_camry_2020")
+		require.Error(t, err, "request %d must report the outage, not answer emptily", i)
+		assert.Nil(t, d)
 	}
 
-	// First sighting of the shrink is refused; the old catalog still serves.
-	body = small
-	forceRefresh()
-	d, err = svc.GetDefinitionByID(ctx, "toyota_d_2020")
-	require.NoError(t, err)
-	require.NotNil(t, d, "a large shrink must not be adopted on first sight")
+	defs, err := svc.DefinitionsByManufacturer(ctx, 131)
+	require.Error(t, err, "an unreachable catalog must not look like a manufacturer with no definitions")
+	assert.Empty(t, defs)
+}
 
-	// Still reporting the same size: it is real, so adopt it.
-	forceRefresh()
-	d, err = svc.GetDefinitionByID(ctx, "toyota_d_2020")
-	require.NoError(t, err)
-	assert.Nil(t, d, "a confirmed shrink must be adopted rather than refused forever")
+// A floor the operator sets, checked on every pod including a cold one. The
+// proportional guard could not protect a cold pod (nothing held to compare
+// against), which is exactly the pod that adopts a one-definition manifest
+// published during a rebuild.
+func TestCatalogRefusesAManifestBelowTheConfiguredFloor(t *testing.T) {
+	one := `{"updatedAt":"t","count":1,"definitions":[
+	  {"id":"toyota_camry_2020","model":"Camry","year":2020,
+	   "manufacturer":{"tokenId":131,"slug":"toyota","name":"Toyota"}}]}`
 
-	kept, err := svc.GetDefinitionByID(ctx, "toyota_a_2020")
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(one))
+	}))
+	defer srv.Close()
+
+	logger := zerolog.Nop()
+	svc := NewDefinitionsCatalogService(&logger, &config.Settings{
+		DefinitionsCatalogURL: srv.URL,
+		DefinitionsMinCount:   100,
+	})
+
+	// Cold pod: nothing held, so there is no proportional comparison to make.
+	d, err := svc.GetDefinitionByID(context.Background(), "toyota_camry_2020")
+	require.Error(t, err, "a manifest below the floor must be refused even with nothing held")
+	assert.Nil(t, d)
+	assert.Contains(t, err.Error(), "below the configured minimum")
+}
+
+func TestCatalogAcceptsAManifestAtOrAboveTheFloor(t *testing.T) {
+	two := `{"updatedAt":"t","count":2,"definitions":[
+	  {"id":"toyota_camry_2020","model":"Camry","year":2020,
+	   "manufacturer":{"tokenId":131,"slug":"toyota","name":"Toyota"}},
+	  {"id":"toyota_supra_2021","model":"Supra","year":2021,
+	   "manufacturer":{"tokenId":131,"slug":"toyota","name":"Toyota"}}]}`
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(two))
+	}))
+	defer srv.Close()
+
+	logger := zerolog.Nop()
+	svc := NewDefinitionsCatalogService(&logger, &config.Settings{
+		DefinitionsCatalogURL: srv.URL,
+		DefinitionsMinCount:   2,
+	})
+
+	d, err := svc.GetDefinitionByID(context.Background(), "toyota_camry_2020")
 	require.NoError(t, err)
-	require.NotNil(t, kept)
+	require.NotNil(t, d)
 }

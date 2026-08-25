@@ -14,14 +14,6 @@ import (
 	"github.com/rs/zerolog"
 )
 
-// Adopt a manifest retaining at least three quarters of what is already held.
-// Below that, wait for a second sighting of the same size before believing it:
-// a corrupt or truncated manifest is transient, a real purge is not.
-const (
-	shrinkRetainNumerator   = 3
-	shrinkRetainDenominator = 4
-)
-
 // CatalogManufacturer identifies the manufacturer a definition belongs to.
 type CatalogManufacturer struct {
 	TokenID int    `json:"tokenId"`
@@ -92,26 +84,30 @@ type DefinitionsCatalogService struct {
 	url             string
 	client          *http.Client
 	refreshInterval time.Duration
+	minCount        int
 
-	mu sync.RWMutex
-	// Size of a shrunken manifest already refused once. A shrink that persists
-	// across refreshes is real and gets adopted on the second sighting.
-	refusedCount int
-	refusedSeen  bool
-	etag         string
-	lastFetch    time.Time
-	byID       map[string]*CatalogDefinition
-	byMfrToken map[int][]*CatalogDefinition
+	mu        sync.RWMutex
+	etag      string
+	lastFetch time.Time
+	// A failed refresh rate-limits the retry through lastAttempt, never through
+	// lastFetch: lastFetch drives the freshness short-circuit, so recording a
+	// failure there reports the failure once and then answers emptily and
+	// successfully for the rest of the interval.
+	lastAttempt time.Time
+	lastErr     error
+	byID        map[string]*CatalogDefinition
+	byMfrToken  map[int][]*CatalogDefinition
 }
 
 func NewDefinitionsCatalogService(log *zerolog.Logger, settings *config.Settings) *DefinitionsCatalogService {
 	return &DefinitionsCatalogService{
-		log:             log,
+		log: log,
 		// Every neighbouring catalog setting in values.yaml carries a trailing
 		// slash; "//manifest.json" does not match the worker's exact route.
 		url:             strings.TrimRight(settings.DefinitionsCatalogURL, "/"),
 		client:          &http.Client{Timeout: 30 * time.Second},
 		refreshInterval: time.Minute,
+		minCount:        settings.DefinitionsMinCount,
 		byID:            map[string]*CatalogDefinition{},
 		byMfrToken:      map[int][]*CatalogDefinition{},
 	}
@@ -137,18 +133,37 @@ func (s *DefinitionsCatalogService) DefinitionsByManufacturer(ctx context.Contex
 	return s.byMfrToken[manufacturerTokenID], nil
 }
 
+// failedAttempt records a refresh that produced nothing usable. It rate-limits
+// the retry without touching lastFetch, so callers keep seeing the error rather
+// than an empty catalog reported as success. Caller holds the write lock.
+func (s *DefinitionsCatalogService) failedAttempt(err error) {
+	s.lastAttempt = time.Now()
+	s.lastErr = err
+}
+
 func (s *DefinitionsCatalogService) ensureFresh(ctx context.Context) error {
 	s.mu.RLock()
 	fresh := time.Since(s.lastFetch) < s.refreshInterval
+	held := len(s.byID) != 0
+	backoff := !held && s.lastErr != nil && time.Since(s.lastAttempt) < s.refreshInterval
+	lastErr := s.lastErr
 	s.mu.RUnlock()
 	if fresh {
 		return nil
+	}
+	// Nothing loaded and the last attempt failed recently: keep reporting that
+	// failure rather than re-fetching on every request -- but keep reporting it.
+	if backoff {
+		return lastErr
 	}
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if time.Since(s.lastFetch) < s.refreshInterval {
 		return nil
+	}
+	if len(s.byID) == 0 && s.lastErr != nil && time.Since(s.lastAttempt) < s.refreshInterval {
+		return s.lastErr
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.url+"/manifest.json", nil)
@@ -166,9 +181,7 @@ func (s *DefinitionsCatalogService) ensureFresh(ctx context.Context) error {
 			s.lastFetch = time.Now()
 			return nil
 		}
-		// Rate-limit the retry: without this every request on a cold pod
-		// re-enters ensureFresh, takes the write lock and re-downloads.
-		s.lastFetch = time.Now()
+		s.failedAttempt(err)
 		return fmt.Errorf("failed to fetch definitions manifest: %w", err)
 	}
 	defer resp.Body.Close() //nolint:errcheck
@@ -184,9 +197,7 @@ func (s *DefinitionsCatalogService) ensureFresh(ctx context.Context) error {
 			s.lastFetch = time.Now()
 			return nil
 		}
-		// Rate-limit the retry: without this every request on a cold pod
-		// re-enters ensureFresh, takes the write lock and re-downloads.
-		s.lastFetch = time.Now()
+		s.failedAttempt(err)
 		return fmt.Errorf("definitions catalog returned %d for manifest", resp.StatusCode)
 	}
 
@@ -198,9 +209,7 @@ func (s *DefinitionsCatalogService) ensureFresh(ctx context.Context) error {
 			s.lastFetch = time.Now()
 			return nil
 		}
-		// Rate-limit the retry: without this every request on a cold pod
-		// re-enters ensureFresh, takes the write lock and re-downloads.
-		s.lastFetch = time.Now()
+		s.failedAttempt(err)
 		return fmt.Errorf("failed to decode definitions manifest: %w", err)
 	}
 
@@ -219,59 +228,36 @@ func (s *DefinitionsCatalogService) ensureFresh(ctx context.Context) error {
 			Msg("skipped malformed definitions in the catalog manifest")
 	}
 
-	// Guard on the definitions we would actually publish, not on the raw
-	// elements: skipping malformed entries happens after decoding, so counting
-	// raw elements would wave through a manifest whose every element failed.
-	// A partial manifest is internally consistent -- the producer sets count to
-	// the length it wrote -- so size relative to what we hold is the only
-	// signal that it shrank.
-	if held := len(s.byID); held != 0 {
-		switch {
-		case len(defs) == 0:
-			// Never trade a populated catalog for an empty one. Serving stale
-			// keeps every query answering correctly; adopting this makes them
-			// all answer successfully and emptily, which nothing alerts on.
-			s.log.Error().
-				Int("skipped", skipped).
-				Int("held", held).
-				Msg("definitions manifest is empty, refusing to adopt it over a populated catalog")
+	// One operator-set floor, checked on every pod. A proportional guard cannot
+	// help the pod that matters most -- a cold one has nothing to compare
+	// against, and that is exactly the pod that adopts a stub manifest
+	// published while the catalog is being rebuilt. Confirming a shrink across
+	// refreshes does not help either: every realistic way to produce a short
+	// manifest is deterministic, so it reports the same size again and gets
+	// confirmed, while the one transient case is caught by the decoder first.
+	if s.minCount > 0 && len(defs) < s.minCount {
+		err := fmt.Errorf("manifest carries %d definitions, below the configured minimum of %d", len(defs), s.minCount)
+		if len(s.byID) != 0 {
+			s.log.Error().Err(err).Int("held", len(s.byID)).
+				Msg("refusing a short definitions manifest, serving stale")
 			s.lastFetch = time.Now()
 			return nil
-
-		// Multiplied rather than divided: held*3/4 truncates to zero for a
-		// small catalog, which would disable the guard entirely.
-		case len(defs)*shrinkRetainDenominator < held*shrinkRetainNumerator:
-			// Refuse the first sighting only. A corrupt or truncated manifest
-			// is transient; a real purge keeps reporting the same size, and
-			// refusing it forever leaves running pods serving a catalog that no
-			// longer exists while restarted pods serve the new one -- the same
-			// query answering differently per replica, escapable only by a
-			// rollout restart nobody documented.
-			if !s.refusedSeen || s.refusedCount != len(defs) {
-				s.refusedSeen = true
-				s.refusedCount = len(defs)
-				s.log.Warn().
-					Int("definitions", len(defs)).
-					Int("skipped", skipped).
-					Int("held", held).
-					Msg("definitions manifest lost much of the catalog, serving stale pending confirmation")
-				s.lastFetch = time.Now()
-				return nil
-			}
-			s.log.Error().
-				Int("definitions", len(defs)).
-				Int("held", held).
-				Msg("definitions manifest shrank and stayed shrunk, adopting it")
 		}
+		s.failedAttempt(err)
+		return err
 	}
-	s.refusedSeen = false
-	s.refusedCount = 0
-	if len(defs) == 0 && len(m.Definitions) != 0 {
-		// Rate-limit the retry. Without this every request on a cold pod
-		// re-enters ensureFresh, takes the write lock and re-downloads the
-		// whole manifest, serialising the entire service behind one mutex.
+
+	// Never trade a populated catalog for an empty one, floor or no floor.
+	if len(defs) == 0 && len(s.byID) != 0 {
+		s.log.Error().Int("skipped", skipped).Int("held", len(s.byID)).
+			Msg("definitions manifest is empty, refusing to adopt it over a populated catalog")
 		s.lastFetch = time.Now()
-		return fmt.Errorf("every definition in the manifest failed to decode (%d elements)", len(m.Definitions))
+		return nil
+	}
+	if len(defs) == 0 && len(m.Definitions) != 0 {
+		err := fmt.Errorf("every definition in the manifest failed to decode (%d elements)", len(m.Definitions))
+		s.failedAttempt(err)
+		return err
 	}
 	// A cold pod has nothing to compare against, so an empty catalog is
 	// adopted; say so loudly, because it makes every device-definition query
@@ -295,6 +281,7 @@ func (s *DefinitionsCatalogService) ensureFresh(ctx context.Context) error {
 	s.byMfrToken = byMfr
 	s.etag = resp.Header.Get("Etag")
 	s.lastFetch = time.Now()
+	s.lastErr = nil
 	s.log.Debug().Int("definitions", len(byID)).Msg("refreshed definitions catalog manifest")
 	return nil
 }
