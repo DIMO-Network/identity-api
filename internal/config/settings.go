@@ -22,7 +22,10 @@ type Settings struct {
 	RewardsContractAddr   string      `yaml:"REWARDS_CONTRACT_ADDRESS"`
 	BaseImageURL          string      `yaml:"BASE_IMAGE_URL"`
 	BaseVehicleDataURI    string      `yaml:"BASE_VEHICLE_DATA_URI"`
-	TablelandAPIGateway   string      `yaml:"TABLELAND_API_GATEWAY"`
+	DefinitionsCatalogURL string      `yaml:"DEFINITIONS_CATALOG_URL"`
+	// Smallest definition count worth believing. A manifest carrying fewer is
+	// refused on every pod, cold or warm. Zero disables the check.
+	DefinitionsMinCount int `yaml:"DEFINITIONS_MIN_COUNT"`
 	EthereumRPCURL        string      `yaml:"ETHEREUM_RPC_URL"`
 	DevLicenseAddr        string      `yaml:"DEV_LICENSE_ADDR"`
 	StakingAddr           string      `yaml:"STAKING_ADDR"`
