@@ -11,6 +11,9 @@ var TableNames = struct {
 	DCNS               string
 	DeveloperLicenses  string
 	Manufacturers      string
+	MerkleClaims       string
+	MerklePools        string
+	MerkleRoots        string
 	Privileges         string
 	RedirectUris       string
 	Rewards            string
@@ -29,6 +32,9 @@ var TableNames = struct {
 	DCNS:               "dcns",
 	DeveloperLicenses:  "developer_licenses",
 	Manufacturers:      "manufacturers",
+	MerkleClaims:       "merkle_claims",
+	MerklePools:        "merkle_pools",
+	MerkleRoots:        "merkle_roots",
 	Privileges:         "privileges",
 	RedirectUris:       "redirect_uris",
 	Rewards:            "rewards",

@@ -1679,6 +1679,144 @@ func (r *RewardsRepoTestSuite) Test_GetEarningsByUserAddress_MultipleVehicle_Fwd
 
 }
 
+// createMerkleClaims seeds a merkle pool, one root per amount, and one claim
+// per root for the given account. Even-indexed claims are left unclaimed and
+// odd-indexed ones are marked claimed, since both must count toward earnings.
+// Returns the total amount in wei.
+func (r *RewardsRepoTestSuite) createMerkleClaims(account common.Address, amounts []*big.Int) *big.Int {
+	pool := models.MerklePool{
+		PoolID:    1,
+		Token:     common.HexToAddress("E261D618a959aFfFd53168Cd07D12E37B26761db").Bytes(),
+		Admin:     common.HexToAddress("46a3A41bd932244Dd08186e4c19F1a7E48cbcDf4").Bytes(),
+		Balance:   dbtypes.IntToDecimal(big.NewInt(0)),
+		CreatedAt: time.Now(),
+	}
+	r.NoError(pool.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer()))
+
+	total := big.NewInt(0)
+
+	for i, amount := range amounts {
+		epoch := 213 + i
+
+		root := models.MerkleRoot{
+			PoolID:         1,
+			Epoch:          epoch,
+			Root:           common.HexToHash("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa").Bytes(),
+			Allocation:     dbtypes.IntToDecimal(amount),
+			RecipientCount: 1,
+			ProofsURI:      fmt.Sprintf("https://merkle.dimo.zone/pool-1/week-%d.json", epoch),
+			SetAt:          time.Now(),
+		}
+		r.NoError(root.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer()))
+
+		claim := models.MerkleClaim{
+			PoolID:  1,
+			Epoch:   epoch,
+			Account: account.Bytes(),
+			Amount:  dbtypes.IntToDecimal(amount),
+			Proof:   types.JSON(`["0x1111111111111111111111111111111111111111111111111111111111111111"]`),
+		}
+		if i%2 == 1 {
+			claim.ClaimedAt = null.TimeFrom(time.Now())
+		}
+		r.NoError(claim.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer()))
+
+		total.Add(total, amount)
+	}
+
+	return total
+}
+
+func (r *RewardsRepoTestSuite) Test_GetEarningsByUserAddress_MergesLegacyAndMerkle() {
+	_, beneficiary, err := helpers.GenerateWallet()
+	r.NoError(err)
+
+	currTime := time.Now().UTC().Truncate(time.Second)
+
+	r.createDependentRecords()
+
+	legacyEarned := big.NewInt(0)
+
+	rw, err := r.createRewardsRecords(2, createRewardsRecordsInput{
+		beneficiary:         *beneficiary,
+		dateTime:            currTime,
+		afterMarketDeviceID: 1,
+	})
+	r.NoError(err)
+
+	for _, rr := range rw {
+		baseAmt, ok := new(big.Int).SetString("59147051345528509681", 10)
+		r.NotZero(ok)
+
+		aftEarn := new(big.Int).Add(baseAmt, big.NewInt(30))
+		strkEarn := new(big.Int).Add(baseAmt, big.NewInt(50))
+		syntEarn := new(big.Int).Add(baseAmt, big.NewInt(10))
+
+		rr.AftermarketEarnings = dbtypes.IntToDecimal(aftEarn)
+		rr.StreakEarnings = dbtypes.IntToDecimal(strkEarn)
+		rr.SyntheticEarnings = dbtypes.IntToDecimal(syntEarn)
+
+		legacyEarned.Add(legacyEarned, aftEarn)
+		legacyEarned.Add(legacyEarned, strkEarn)
+		legacyEarned.Add(legacyEarned, syntEarn)
+
+		err = rr.Insert(r.ctx, r.pdb.DBS().Writer, boil.Infer())
+		r.NoError(err)
+	}
+
+	amount1, ok := new(big.Int).SetString("41000000000000000000", 10)
+	r.True(ok)
+	amount2, ok := new(big.Int).SetString("17500000000000000000", 10)
+	r.True(ok)
+
+	merkleEarned := r.createMerkleClaims(*beneficiary, []*big.Int{amount1, amount2})
+
+	rwrd, err := r.repo.GetEarningsByUserAddress(r.ctx, *beneficiary)
+	r.NoError(err)
+
+	expected := bigWeiToToken(new(big.Int).Add(legacyEarned, merkleEarned))
+	r.Zero(rwrd.TotalTokens.Cmp(expected), "totalTokens = %s, want %s", rwrd.TotalTokens, expected)
+
+	// History remains legacy-only: totalCount counts only legacy reward rows.
+	r.Equal(2, rwrd.History.TotalCount)
+}
+
+func (r *RewardsRepoTestSuite) Test_GetEarningsByUserAddress_MerkleOnly() {
+	_, beneficiary, err := helpers.GenerateWallet()
+	r.NoError(err)
+
+	amount1, ok := new(big.Int).SetString("63000000000000000000", 10)
+	r.True(ok)
+	amount2, ok := new(big.Int).SetString("9250000000000000000", 10)
+	r.True(ok)
+
+	merkleEarned := r.createMerkleClaims(*beneficiary, []*big.Int{amount1, amount2})
+
+	rwrd, err := r.repo.GetEarningsByUserAddress(r.ctx, *beneficiary)
+	r.NoError(err)
+
+	expected := bigWeiToToken(merkleEarned)
+	r.Zero(rwrd.TotalTokens.Cmp(expected), "totalTokens = %s, want %s", rwrd.TotalTokens, expected)
+	r.Equal(0, rwrd.History.TotalCount)
+
+	first := 10
+	paginatedEarnings, err := r.repo.PaginateGetEarningsByUsersDevices(r.ctx, rwrd, &first, nil, nil, nil)
+	r.NoError(err)
+	r.Empty(paginatedEarnings.Edges)
+	r.Empty(paginatedEarnings.Nodes)
+}
+
+func (r *RewardsRepoTestSuite) Test_GetEarningsByUserAddress_NoEarnings() {
+	_, beneficiary, err := helpers.GenerateWallet()
+	r.NoError(err)
+
+	rwrd, err := r.repo.GetEarningsByUserAddress(r.ctx, *beneficiary)
+	r.NoError(err)
+
+	r.Zero(rwrd.TotalTokens.Cmp(decimal.New(0, 0)), "totalTokens = %s, want 0", rwrd.TotalTokens)
+	r.Equal(0, rwrd.History.TotalCount)
+}
+
 func bigWeiToToken(wei *big.Int) *decimal.Big {
 	bigDec := new(decimal.Big).SetBigMantScale(wei, 0)
 	return weiToToken(types.NewDecimal(bigDec))

@@ -68,7 +68,17 @@ type EarningsConnection {
 }
 
 type UserRewards {
+  """
+  Total tokens earned by the user across both reward eras: legacy weekly
+  device rewards plus merkle-era allocations. Merkle-era amounts count as
+  earned when the root is set, whether or not they have been claimed.
+  """
   totalTokens: BigDecimal!
+  """
+  Weekly earnings from the legacy reward era only, including totalCount.
+  Merkle-era earnings are not itemized here; use the merkleRewards query
+  for per-epoch merkle data.
+  """
   history(
     first: Int
     after: String
