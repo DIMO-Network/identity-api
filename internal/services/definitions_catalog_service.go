@@ -207,13 +207,16 @@ func (s *DefinitionsCatalogService) ensureFresh(ctx context.Context) error {
 		return nil
 	case http.StatusOK:
 	default:
+		// err is nil here -- client.Do succeeded -- so build the failure first;
+		// recording nil left lastErr empty and the cold-start backoff off.
+		statusErr := fmt.Errorf("definitions catalog returned %d for manifest", resp.StatusCode)
 		if len(s.byID) != 0 {
 			s.log.Warn().Int("status", resp.StatusCode).Msg("definitions manifest refresh failed, serving stale catalog")
 			s.lastFetch = time.Now()
 			return nil
 		}
-		s.failedAttempt(err)
-		return fmt.Errorf("definitions catalog returned %d for manifest", resp.StatusCode)
+		s.failedAttempt(statusErr)
+		return statusErr
 	}
 
 	var m catalogManifest

@@ -439,3 +439,64 @@ func TestCatalogRefreshHonoursItsOwnTimeout(t *testing.T) {
 	require.Error(t, err)
 	assert.Equal(t, int32(1), hits.Load())
 }
+
+// The non-2xx branch passed failedAttempt the nil error left over from a
+// successful client.Do, so lastErr stayed nil and the cold-start backoff never
+// engaged: every query on a cold pod re-downloaded the manifest during an
+// outage. A 5xx must be recorded so the retry is rate-limited, and once a
+// snapshot is held a 5xx must keep serving it.
+func TestCatalogBacksOffAfterAColdStartServerError(t *testing.T) {
+	good := `{"updatedAt":"t","count":1,"definitions":[
+	  {"id":"toyota_camry_2020","ksuid":"K","model":"Camry","year":2020,
+	   "devicetype":"vehicle","imageuri":"","metadata":null,
+	   "manufacturer":{"tokenId":131,"slug":"toyota","name":"Toyota"}}]}`
+
+	var hits atomic.Int32
+	mode := "bad"
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		hits.Add(1)
+		if mode == "good" {
+			_, _ = w.Write([]byte(good))
+			return
+		}
+		w.WriteHeader(http.StatusBadGateway)
+	}))
+	defer srv.Close()
+
+	logger := zerolog.Nop()
+	svc := NewDefinitionsCatalogService(&logger, &config.Settings{DefinitionsCatalogURL: srv.URL})
+	ctx := context.Background()
+
+	// Cold pod: the first 502 is recorded and the next queries back off on it.
+	for i := 1; i <= 3; i++ {
+		d, err := svc.GetDefinitionByID(ctx, "toyota_camry_2020")
+		require.Error(t, err, "request %d must report the outage", i)
+		assert.Nil(t, d)
+		assert.Contains(t, err.Error(), "returned 502")
+	}
+	assert.Equal(t, int32(1), hits.Load(), "a cold pod must not re-download on every query during an outage")
+	svc.mu.RLock()
+	assert.Error(t, svc.lastErr, "a 5xx on a cold pod must be recorded so the backoff engages")
+	svc.mu.RUnlock()
+
+	// Outage over, backoff window lifted: the catalog loads.
+	mode = "good"
+	svc.mu.Lock()
+	svc.lastAttempt = time.Time{}
+	svc.mu.Unlock()
+	d, err := svc.GetDefinitionByID(ctx, "toyota_camry_2020")
+	require.NoError(t, err)
+	require.NotNil(t, d)
+
+	// Warm pod: a 5xx on refresh keeps serving the held snapshot.
+	mode = "bad"
+	svc.mu.Lock()
+	svc.lastFetch = time.Time{}
+	svc.etag = ""
+	svc.mu.Unlock()
+	d, err = svc.GetDefinitionByID(ctx, "toyota_camry_2020")
+	require.NoError(t, err, "a 5xx must not fail reads once a snapshot is held")
+	require.NotNil(t, d)
+	assert.Equal(t, "Camry", d.Model)
+	assert.Equal(t, int32(3), hits.Load())
+}
