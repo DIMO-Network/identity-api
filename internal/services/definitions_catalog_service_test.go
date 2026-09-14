@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -277,4 +278,164 @@ func TestCatalogAcceptsAManifestAtOrAboveTheFloor(t *testing.T) {
 	d, err := svc.GetDefinitionByID(context.Background(), "toyota_camry_2020")
 	require.NoError(t, err)
 	require.NotNil(t, d)
+}
+
+// The refresh is shared by every caller queued behind the lock, so it must not
+// die with the caller that happened to trigger it. On a cold pod the first
+// query after a deploy often comes from a client with a short timeout; when
+// net/http cancelled that request's context mid-download the context.Canceled
+// was recorded as a failed attempt and the backoff answered every request with
+// "context canceled" for a full interval without re-fetching.
+func TestCatalogColdRefreshSurvivesTheFirstCallerDisconnecting(t *testing.T) {
+	good := `{"updatedAt":"t","count":1,"definitions":[
+	  {"id":"toyota_camry_2020","ksuid":"K","model":"Camry","year":2020,
+	   "devicetype":"vehicle","imageuri":"","metadata":null,
+	   "manufacturer":{"tokenId":131,"slug":"toyota","name":"Toyota"}}]}`
+
+	var (
+		hits    atomic.Int32
+		started = make(chan struct{})
+		release = make(chan struct{})
+	)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		if hits.Add(1) == 1 {
+			// Hold the first download until the caller has given up on it.
+			close(started)
+			<-release
+		}
+		_, _ = w.Write([]byte(good))
+	}))
+	defer srv.Close()
+
+	logger := zerolog.Nop()
+	svc := NewDefinitionsCatalogService(&logger, &config.Settings{DefinitionsCatalogURL: srv.URL})
+
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		<-started
+		cancel()
+		close(release)
+	}()
+
+	d, err := svc.GetDefinitionByID(ctx, "toyota_camry_2020")
+	require.NoError(t, err, "the shared refresh must finish even though the caller that started it went away")
+	require.NotNil(t, d)
+
+	svc.mu.RLock()
+	assert.NoError(t, svc.lastErr, "a caller's own cancellation must never be recorded as a failed attempt")
+	assert.True(t, svc.lastAttempt.IsZero(), "a caller's own cancellation must never rate-limit the retry")
+	svc.mu.RUnlock()
+
+	// The next caller, with a healthy context, is served from the freshly
+	// loaded catalog: no backoff error and no second download.
+	d, err = svc.GetDefinitionByID(context.Background(), "toyota_camry_2020")
+	require.NoError(t, err)
+	require.NotNil(t, d)
+	assert.Equal(t, int32(1), hits.Load(), "the catalog loaded by the interrupted refresh must be served, not fetched again")
+}
+
+// Same disconnect on a warm pod: the stale-serve path used to see the caller's
+// context.Canceled, mark the cache fresh and silently skip the refresh for an
+// interval. The refresh must complete and the new manifest must be adopted.
+func TestCatalogWarmRefreshSurvivesTheCallerDisconnecting(t *testing.T) {
+	v1 := `{"updatedAt":"t","count":1,"definitions":[
+	  {"id":"toyota_camry_2020","ksuid":"K","model":"Camry","year":2020,
+	   "devicetype":"vehicle","imageuri":"","metadata":null,
+	   "manufacturer":{"tokenId":131,"slug":"toyota","name":"Toyota"}}]}`
+	v2Head := `{"updatedAt":"t2","count":2,"definitions":[
+	  {"id":"toyota_camry_2020","ksuid":"K","model":"Camry","year":2020,
+	   "devicetype":"vehicle","imageuri":"","metadata":null,
+	   "manufacturer":{"tokenId":131,"slug":"toyota","name":"Toyota"}},`
+	v2Tail := `
+	  {"id":"toyota_supra_2021","ksuid":"K2","model":"Supra","year":2021,
+	   "devicetype":"vehicle","imageuri":"","metadata":null,
+	   "manufacturer":{"tokenId":131,"slug":"toyota","name":"Toyota"}}]}`
+
+	var (
+		hits    atomic.Int32
+		started = make(chan struct{})
+		release = make(chan struct{})
+	)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		if hits.Add(1) == 1 {
+			_, _ = w.Write([]byte(v1))
+			return
+		}
+		// Second download: send half the body, then hold the rest until the
+		// caller has given up, so the cancellation lands mid-decode.
+		_, _ = w.Write([]byte(v2Head))
+		w.(http.Flusher).Flush()
+		close(started)
+		<-release
+		_, _ = w.Write([]byte(v2Tail))
+	}))
+	defer srv.Close()
+
+	logger := zerolog.Nop()
+	svc := NewDefinitionsCatalogService(&logger, &config.Settings{DefinitionsCatalogURL: srv.URL})
+
+	d, err := svc.GetDefinitionByID(context.Background(), "toyota_camry_2020")
+	require.NoError(t, err)
+	require.NotNil(t, d)
+
+	svc.mu.Lock()
+	svc.lastFetch = time.Time{}
+	svc.etag = ""
+	svc.mu.Unlock()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		<-started
+		cancel()
+		close(release)
+	}()
+	_, err = svc.GetDefinitionByID(ctx, "toyota_camry_2020")
+	require.NoError(t, err)
+
+	svc.mu.RLock()
+	assert.NoError(t, svc.lastErr)
+	svc.mu.RUnlock()
+
+	// The interrupted refresh finished and its manifest was adopted, so the
+	// definition it added is visible without another download.
+	supra, err := svc.GetDefinitionByID(context.Background(), "toyota_supra_2021")
+	require.NoError(t, err)
+	require.NotNil(t, supra, "the refresh a disconnecting caller started must still be adopted")
+	assert.Equal(t, int32(2), hits.Load())
+}
+
+// Detaching from the caller must not mean waiting forever: the refresh carries
+// its own deadline, and running past it is a real failure that is recorded so
+// the cold-start backoff engages.
+func TestCatalogRefreshHonoursItsOwnTimeout(t *testing.T) {
+	var hits atomic.Int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hits.Add(1)
+		select {
+		case <-r.Context().Done():
+		case <-time.After(5 * time.Second):
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+
+	logger := zerolog.Nop()
+	svc := NewDefinitionsCatalogService(&logger, &config.Settings{DefinitionsCatalogURL: srv.URL})
+	svc.refreshTimeout = 50 * time.Millisecond
+
+	start := time.Now()
+	d, err := svc.GetDefinitionByID(context.Background(), "toyota_camry_2020")
+	require.Error(t, err)
+	assert.Nil(t, d)
+	assert.ErrorIs(t, err, context.DeadlineExceeded)
+	assert.Less(t, time.Since(start), 2*time.Second, "the refresh must give up at its own deadline")
+
+	svc.mu.RLock()
+	assert.Error(t, svc.lastErr, "a refresh that ran past its deadline is a failed attempt")
+	svc.mu.RUnlock()
+
+	// The failure rate-limits the retry like any other cold-start failure.
+	_, err = svc.GetDefinitionByID(context.Background(), "toyota_camry_2020")
+	require.Error(t, err)
+	assert.Equal(t, int32(1), hits.Load())
 }

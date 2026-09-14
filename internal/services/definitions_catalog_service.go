@@ -84,7 +84,11 @@ type DefinitionsCatalogService struct {
 	url             string
 	client          *http.Client
 	refreshInterval time.Duration
-	minCount        int
+	// refreshTimeout bounds one manifest download. The refresh is shared by
+	// every caller queued behind the lock, so it runs detached from the
+	// caller's context and carries this deadline instead.
+	refreshTimeout time.Duration
+	minCount       int
 
 	mu        sync.RWMutex
 	etag      string
@@ -107,6 +111,7 @@ func NewDefinitionsCatalogService(log *zerolog.Logger, settings *config.Settings
 		url:             strings.TrimRight(settings.DefinitionsCatalogURL, "/"),
 		client:          &http.Client{Timeout: 30 * time.Second},
 		refreshInterval: time.Minute,
+		refreshTimeout:  30 * time.Second,
 		minCount:        settings.DefinitionsMinCount,
 		byID:            map[string]*CatalogDefinition{},
 		byMfrToken:      map[int][]*CatalogDefinition{},
@@ -166,7 +171,17 @@ func (s *DefinitionsCatalogService) ensureFresh(ctx context.Context) error {
 		return s.lastErr
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.url+"/manifest.json", nil)
+	// The download serves every caller queued behind the lock, not only the
+	// one that triggered it, so it must not die with that caller's request. It
+	// used to: a client that gave up mid-download cancelled the shared fetch,
+	// and on a cold pod the context.Canceled was recorded as a failed attempt
+	// that the backoff then answered every query with for a full interval,
+	// while on a warm pod the stale-serve path marked the cache fresh and
+	// skipped the refresh for an interval. Detach from the caller and bound
+	// the download with our own deadline instead.
+	fetchCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), s.refreshTimeout)
+	defer cancel()
+	req, err := http.NewRequestWithContext(fetchCtx, http.MethodGet, s.url+"/manifest.json", nil)
 	if err != nil {
 		return err
 	}
