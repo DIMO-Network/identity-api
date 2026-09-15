@@ -102,6 +102,15 @@ func newTemplateLookups() *templateLookups {
 // routinely 25h old.
 const minDefinitionsMaxBuildAge = 26 * time.Hour
 
+// errNoCatalogPublished marks the one state in which neither catalog surface
+// exists. It is a deploy run out of order, not an origin fault, so it is
+// reported at Error from the first occurrence rather than after five.
+var errNoCatalogPublished = errors.New("most likely a worker deployed with no build published yet: the cutover publishes and smokes a build (definitions-worker docs/superpowers/2026-09-14-trim-template-cutover.md, Phase 2) before the Go services deploy (Phase 3)")
+
+// errLegacyManifestMissing is refreshLegacy's 404, which only its one caller
+// sees and only ever as half of that state.
+var errLegacyManifestMissing = errors.New("the flat definitions manifest does not exist")
+
 // catalogFailuresBeforeError is how many refreshes must fail in a row before
 // the failure is logged at Error. One is noise: an origin hiccup, a rolling
 // deploy. Five in a row is an outage that the staleness bound will turn into
@@ -570,7 +579,9 @@ func (s *DefinitionsCatalogService) recordAttempt(source string, err error) {
 	case err != nil:
 		catalogRefreshFailures.WithLabelValues(source).Inc()
 		level := zerolog.WarnLevel
-		if failures >= catalogFailuresBeforeError {
+		if failures >= catalogFailuresBeforeError || errors.Is(err, errNoCatalogPublished) {
+			// A catalog with no surface at all is not an origin hiccup to
+			// wait out: no pod in the deployment can ever load one.
 			level = zerolog.ErrorLevel
 		}
 		s.log.WithLevel(level).Err(err).Int("consecutiveFailures", failures).Str("source", source).
@@ -635,7 +646,17 @@ func (s *DefinitionsCatalogService) refresh(ctx context.Context) (string, error)
 
 	switch resp.StatusCode {
 	case http.StatusNotFound:
-		return sourceLegacy, s.refreshLegacy(ctx, held)
+		// No index: either this deployment still publishes only the flat
+		// manifest, which is what prod answers today, or a worker that no
+		// longer serves one has been deployed before anything was published.
+		// The fallback tells the two apart, and it is the real source until
+		// the cutover, so it stays.
+		err := s.refreshLegacy(ctx, held)
+		if errors.Is(err, errLegacyManifestMissing) {
+			return sourceLegacy, fmt.Errorf("the definitions catalog has nothing to read: %s and %s both answered 404 -- %w",
+				s.baseURL+catalogIndexPath, s.baseURL+legacyManifestPath, errNoCatalogPublished)
+		}
+		return sourceLegacy, err
 	case http.StatusNotModified:
 		if held == nil || held.source != sourceTemplate {
 			return sourceTemplate, errors.New("definitions index answered 304 for a build that is not held")
@@ -840,6 +861,10 @@ func (s *DefinitionsCatalogService) refreshLegacy(ctx context.Context, held *cat
 		}
 		s.confirm(held, resp.Header.Get("Etag"))
 		return nil
+	case http.StatusNotFound:
+		// Reported by the caller, which knows this was reached only because
+		// the index was missing too.
+		return errLegacyManifestMissing
 	case http.StatusOK:
 	default:
 		return fmt.Errorf("definitions catalog returned %d for manifest", resp.StatusCode)

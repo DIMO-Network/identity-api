@@ -473,7 +473,7 @@ func TestCatalogStalenessBoundTurnsIntoErrors(t *testing.T) {
 	_, err = svc.GetDefinitionByID(ctx, "toyota_camry_2020")
 	require.Error(t, err, "past the bound a stale catalog must fail, not answer from frozen data")
 	assert.ErrorContains(t, err, "DEFINITIONS_MAX_STALENESS")
-	assert.ErrorContains(t, err, "returned 404", "the staleness error carries the failure that caused it")
+	assert.ErrorContains(t, err, "both answered 404", "the staleness error carries the failure that caused it")
 	_, err = svc.DefinitionsByManufacturer(ctx, 131)
 	assert.Error(t, err)
 
@@ -872,6 +872,33 @@ func TestCatalogFallsBackToTheLegacyManifestWhenTheIndexIsMissing(t *testing.T) 
 	d, err = svc.GetDefinitionByID(ctx, "toyota_camry_2020")
 	require.NoError(t, err)
 	require.NotNil(t, d)
+}
+
+// Between the worker deploy and the first hand-run publish, both surfaces
+// answer 404: the index does not exist yet and /manifest.json is a route the
+// same migration deleted. The 404-means-legacy branch turned a missing index
+// into a second guaranteed failure, and reported it as "definitions catalog
+// returned 404 for manifest" -- which names neither URL and reads like a
+// transient origin error rather than a deploy run out of order.
+func TestCatalogSaysSoWhenNothingIsPublished(t *testing.T) {
+	srv := newCatalogServer(t)
+	svc := manualCatalog(t, srv, config.Settings{})
+
+	err := svc.refreshOnce()
+	require.Error(t, err)
+	assert.ErrorContains(t, err, srv.URL+catalogIndexPath)
+	assert.ErrorContains(t, err, srv.URL+legacyManifestPath)
+	assert.ErrorContains(t, err, "no build published")
+	assert.ErrorIs(t, err, errNoCatalogPublished)
+
+	_, err = svc.GetDefinitionByID(context.Background(), "toyota_camry_2020")
+	assert.ErrorIs(t, err, errNoCatalogPublished, "a cold pod reports why it has no catalog")
+
+	// The fallback is still the real source before the cutover, so a manifest
+	// that exists is read as before.
+	srv.serve(legacyManifestPath, manifestOf(camryDoc))
+	require.NoError(t, svc.refreshOnce())
+	assert.Equal(t, sourceLegacy, svc.snap.Load().source)
 }
 
 // A listing only changes when a build is published, so a definition created
