@@ -1,6 +1,15 @@
 package config
 
-import "github.com/DIMO-Network/shared/pkg/db"
+import (
+	"errors"
+	"fmt"
+	"net/url"
+	"strconv"
+	"strings"
+	"unicode"
+
+	"github.com/DIMO-Network/shared/pkg/db"
+)
 
 // Settings contains the application config
 type Settings struct {
@@ -23,14 +32,85 @@ type Settings struct {
 	BaseImageURL          string      `yaml:"BASE_IMAGE_URL"`
 	BaseVehicleDataURI    string      `yaml:"BASE_VEHICLE_DATA_URI"`
 	DefinitionsCatalogURL string      `yaml:"DEFINITIONS_CATALOG_URL"`
-	// Smallest definition count worth believing. A manifest carrying fewer is
-	// refused on every pod, cold or warm. Zero disables the check.
-	DefinitionsMinCount int `yaml:"DEFINITIONS_MIN_COUNT"`
-	EthereumRPCURL        string      `yaml:"ETHEREUM_RPC_URL"`
-	DevLicenseAddr        string      `yaml:"DEV_LICENSE_ADDR"`
-	StakingAddr           string      `yaml:"STAKING_ADDR"`
-	ConnectionAddr        string      `yaml:"CONNECTION_ADDR"`
-	StorageNodeAddr       string      `yaml:"STORAGE_NODE_ADDR"`
-	TemplateAddr          string      `yaml:"TEMPLATE_ADDR"`
-	FetchAPIGRPCAddr      string      `yaml:"FETCH_API_GRPC_ADDR"`
+	// Smallest valid-definition count worth believing. A catalog carrying
+	// fewer is refused on every pod, cold or warm. Empty or "0" disables the
+	// check. Held as a string because the shared loader turns an unparseable
+	// int into 0 without an error, which silently disabled the floor;
+	// DefinitionsCatalog parses it strictly.
+	DefinitionsMinCount string `yaml:"DEFINITIONS_MIN_COUNT"`
+	EthereumRPCURL      string `yaml:"ETHEREUM_RPC_URL"`
+	DevLicenseAddr      string `yaml:"DEV_LICENSE_ADDR"`
+	StakingAddr         string `yaml:"STAKING_ADDR"`
+	ConnectionAddr      string `yaml:"CONNECTION_ADDR"`
+	StorageNodeAddr     string `yaml:"STORAGE_NODE_ADDR"`
+	TemplateAddr        string `yaml:"TEMPLATE_ADDR"`
+	FetchAPIGRPCAddr    string `yaml:"FETCH_API_GRPC_ADDR"`
+}
+
+// DefinitionsCatalogConfig is the validated form of the DEFINITIONS_* settings.
+type DefinitionsCatalogConfig struct {
+	// URL is the catalog base URL with any trailing slashes removed.
+	URL string
+	// MinCount is the valid-definition floor. Zero disables it.
+	MinCount int
+}
+
+// DefinitionsCatalog validates the DEFINITIONS_* settings and returns their
+// parsed form. The shared loader cannot: it assigns strings verbatim, so a
+// quoted Helm value with a trailing space or newline reaches the pod intact,
+// and it turns a malformed int into 0 with no error. Call it at startup and
+// refuse to start on an error.
+func (s *Settings) DefinitionsCatalog() (DefinitionsCatalogConfig, error) {
+	catalogURL, err := parseDefinitionsCatalogURL(s.DefinitionsCatalogURL)
+	if err != nil {
+		return DefinitionsCatalogConfig{}, err
+	}
+	minCount, err := parseDefinitionsMinCount(s.DefinitionsMinCount)
+	if err != nil {
+		return DefinitionsCatalogConfig{}, err
+	}
+	return DefinitionsCatalogConfig{URL: catalogURL, MinCount: minCount}, nil
+}
+
+func parseDefinitionsCatalogURL(raw string) (string, error) {
+	if raw == "" {
+		return "", errors.New("DEFINITIONS_CATALOG_URL is required")
+	}
+	if i := strings.IndexFunc(raw, func(r rune) bool { return unicode.IsSpace(r) || unicode.IsControl(r) }); i >= 0 {
+		return "", fmt.Errorf("DEFINITIONS_CATALOG_URL %q contains whitespace or a control character at byte %d", raw, i)
+	}
+	// Every neighbouring catalog setting in values.yaml carries a trailing
+	// slash, and "//manifest.json" does not match the worker's exact routes.
+	trimmed := strings.TrimRight(raw, "/")
+	// Paths are appended to the base, so a query or fragment would swallow them.
+	if strings.ContainsAny(trimmed, "?#") {
+		return "", fmt.Errorf("DEFINITIONS_CATALOG_URL %q must not carry a query or fragment", raw)
+	}
+	u, err := url.Parse(trimmed)
+	if err != nil {
+		return "", fmt.Errorf("DEFINITIONS_CATALOG_URL %q is not a valid URL: %w", raw, err)
+	}
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return "", fmt.Errorf("DEFINITIONS_CATALOG_URL %q must use http or https", raw)
+	}
+	if u.Host == "" {
+		return "", fmt.Errorf("DEFINITIONS_CATALOG_URL %q has no host", raw)
+	}
+	return trimmed, nil
+}
+
+func parseDefinitionsMinCount(raw string) (int, error) {
+	if raw == "" {
+		return 0, nil
+	}
+	for _, r := range raw {
+		if r < '0' || r > '9' {
+			return 0, fmt.Errorf("DEFINITIONS_MIN_COUNT %q must be a non-negative base-10 integer: digits only, with no sign, separator or whitespace", raw)
+		}
+	}
+	n, err := strconv.Atoi(raw)
+	if err != nil {
+		return 0, fmt.Errorf("DEFINITIONS_MIN_COUNT %q: %w", raw, err)
+	}
+	return n, nil
 }

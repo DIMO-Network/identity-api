@@ -61,6 +61,12 @@ func main() {
 		return
 	}
 
+	catalogSettings, err := settings.DefinitionsCatalog()
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Invalid device definitions catalog settings.")
+	}
+	logger.Info().Str("url", catalogSettings.URL).Int("minCount", catalogSettings.MinCount).Msg("Device definitions catalog configured.")
+
 	dbs := db.NewDbConnectionFromSettings(context.Background(), &settings.DB, true)
 	dbs.WaitForDB(logger)
 
@@ -69,7 +75,11 @@ func main() {
 	repoLogger := logger.With().Str("component", "repository").Logger()
 	baseRepo := base.NewRepository(dbs, settings, &repoLogger)
 
-	cfg := graph.Config{Resolvers: graph.NewResolver(baseRepo)}
+	resolver, err := graph.NewResolver(baseRepo)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Couldn't create the GraphQL resolver.")
+	}
+	cfg := graph.Config{Resolvers: resolver}
 
 	serveMonitoring(strconv.Itoa(settings.MonPort), &logger)
 

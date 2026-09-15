@@ -2,6 +2,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/loader"
@@ -147,9 +148,13 @@ type Resolver struct {
 	log              *zerolog.Logger
 }
 
-// NewResolver creates a new Resolver with allocated repositories.
-func NewResolver(baseRepo *base.Repository) *Resolver {
-	definitionsCatalog := services.NewDefinitionsCatalogService(baseRepo.Log, &baseRepo.Settings)
+// NewResolver creates a new Resolver with allocated repositories. It fails when
+// the device definitions catalog settings are invalid.
+func NewResolver(baseRepo *base.Repository) (*Resolver, error) {
+	definitionsCatalog, err := services.NewDefinitionsCatalogService(baseRepo.Log, &baseRepo.Settings)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create the device definitions catalog: %w", err)
+	}
 
 	return &Resolver{
 		aftermarket:      aftermarket.New(baseRepo),
@@ -169,5 +174,5 @@ func NewResolver(baseRepo *base.Repository) *Resolver {
 		connectionsacd:   &connectionsacd.Repository{Repository: baseRepo},
 		vehicleDefFetch:  loader.NewVehicleDefinitionFetcher(baseRepo.Settings, baseRepo.Log),
 		log:              baseRepo.Log,
-	}
+	}, nil
 }

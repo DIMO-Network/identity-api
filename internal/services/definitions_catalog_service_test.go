@@ -35,8 +35,7 @@ func TestCatalogServesStaleOnBadRefresh(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	logger := zerolog.Nop()
-	svc := NewDefinitionsCatalogService(&logger, &config.Settings{DefinitionsCatalogURL: srv.URL})
+	svc := newTestCatalog(t, config.Settings{DefinitionsCatalogURL: srv.URL})
 	ctx := context.Background()
 
 	d, err := svc.GetDefinitionByID(ctx, "toyota_camry_2020")
@@ -82,8 +81,7 @@ func TestCatalogRejectsDegenerateManifest(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	logger := zerolog.Nop()
-	svc := NewDefinitionsCatalogService(&logger, &config.Settings{DefinitionsCatalogURL: srv.URL})
+	svc := newTestCatalog(t, config.Settings{DefinitionsCatalogURL: srv.URL})
 	ctx := context.Background()
 
 	d, err := svc.GetDefinitionByID(ctx, "toyota_camry_2020")
@@ -122,8 +120,7 @@ func TestCatalogSkipsMalformedDefinitions(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	logger := zerolog.Nop()
-	svc := NewDefinitionsCatalogService(&logger, &config.Settings{DefinitionsCatalogURL: srv.URL})
+	svc := newTestCatalog(t, config.Settings{DefinitionsCatalogURL: srv.URL})
 	ctx := context.Background()
 
 	good, err := svc.GetDefinitionByID(ctx, "toyota_camry_2020")
@@ -150,8 +147,7 @@ func TestCatalogURLTolerantOfTrailingSlash(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	logger := zerolog.Nop()
-	svc := NewDefinitionsCatalogService(&logger, &config.Settings{DefinitionsCatalogURL: srv.URL + "/"})
+	svc := newTestCatalog(t, config.Settings{DefinitionsCatalogURL: srv.URL + "/"})
 	d, err := svc.GetDefinitionByID(context.Background(), "toyota_camry_2020")
 	require.NoError(t, err)
 	require.NotNil(t, d)
@@ -184,8 +180,7 @@ func TestCatalogKeepsSnapshotWhenEveryDefinitionFailsToDecode(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	logger := zerolog.Nop()
-	svc := NewDefinitionsCatalogService(&logger, &config.Settings{DefinitionsCatalogURL: srv.URL})
+	svc := newTestCatalog(t, config.Settings{DefinitionsCatalogURL: srv.URL})
 	ctx := context.Background()
 
 	d, err := svc.GetDefinitionByID(ctx, "toyota_camry_2020")
@@ -215,8 +210,7 @@ func TestCatalogKeepsReportingAColdStartFailure(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	logger := zerolog.Nop()
-	svc := NewDefinitionsCatalogService(&logger, &config.Settings{DefinitionsCatalogURL: srv.URL})
+	svc := newTestCatalog(t, config.Settings{DefinitionsCatalogURL: srv.URL})
 	ctx := context.Background()
 
 	for i := 1; i <= 3; i++ {
@@ -244,10 +238,9 @@ func TestCatalogRefusesAManifestBelowTheConfiguredFloor(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	logger := zerolog.Nop()
-	svc := NewDefinitionsCatalogService(&logger, &config.Settings{
+	svc := newTestCatalog(t, config.Settings{
 		DefinitionsCatalogURL: srv.URL,
-		DefinitionsMinCount:   100,
+		DefinitionsMinCount:   "100",
 	})
 
 	// Cold pod: nothing held, so there is no proportional comparison to make.
@@ -269,10 +262,9 @@ func TestCatalogAcceptsAManifestAtOrAboveTheFloor(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	logger := zerolog.Nop()
-	svc := NewDefinitionsCatalogService(&logger, &config.Settings{
+	svc := newTestCatalog(t, config.Settings{
 		DefinitionsCatalogURL: srv.URL,
-		DefinitionsMinCount:   2,
+		DefinitionsMinCount:   "2",
 	})
 
 	d, err := svc.GetDefinitionByID(context.Background(), "toyota_camry_2020")
@@ -307,8 +299,7 @@ func TestCatalogColdRefreshSurvivesTheFirstCallerDisconnecting(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	logger := zerolog.Nop()
-	svc := NewDefinitionsCatalogService(&logger, &config.Settings{DefinitionsCatalogURL: srv.URL})
+	svc := newTestCatalog(t, config.Settings{DefinitionsCatalogURL: srv.URL})
 
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
@@ -371,8 +362,7 @@ func TestCatalogWarmRefreshSurvivesTheCallerDisconnecting(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	logger := zerolog.Nop()
-	svc := NewDefinitionsCatalogService(&logger, &config.Settings{DefinitionsCatalogURL: srv.URL})
+	svc := newTestCatalog(t, config.Settings{DefinitionsCatalogURL: srv.URL})
 
 	d, err := svc.GetDefinitionByID(context.Background(), "toyota_camry_2020")
 	require.NoError(t, err)
@@ -419,8 +409,7 @@ func TestCatalogRefreshHonoursItsOwnTimeout(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	logger := zerolog.Nop()
-	svc := NewDefinitionsCatalogService(&logger, &config.Settings{DefinitionsCatalogURL: srv.URL})
+	svc := newTestCatalog(t, config.Settings{DefinitionsCatalogURL: srv.URL})
 	svc.refreshTimeout = 50 * time.Millisecond
 
 	start := time.Now()
@@ -463,8 +452,7 @@ func TestCatalogBacksOffAfterAColdStartServerError(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	logger := zerolog.Nop()
-	svc := NewDefinitionsCatalogService(&logger, &config.Settings{DefinitionsCatalogURL: srv.URL})
+	svc := newTestCatalog(t, config.Settings{DefinitionsCatalogURL: srv.URL})
 	ctx := context.Background()
 
 	// Cold pod: the first 502 is recorded and the next queries back off on it.
@@ -499,4 +487,30 @@ func TestCatalogBacksOffAfterAColdStartServerError(t *testing.T) {
 	require.NotNil(t, d)
 	assert.Equal(t, "Camry", d.Model)
 	assert.Equal(t, int32(3), hits.Load())
+}
+
+func newTestCatalog(t *testing.T, settings config.Settings) *DefinitionsCatalogService {
+	t.Helper()
+	logger := zerolog.Nop()
+	svc, err := NewDefinitionsCatalogService(&logger, &settings)
+	require.NoError(t, err)
+	return svc
+}
+
+// A malformed DEFINITIONS_CATALOG_URL used to reach every query as a request
+// that failed to build: no backoff, no context, no log. It now fails
+// construction, and with it startup, as does a floor the loader cannot parse.
+func TestCatalogRefusesMalformedSettingsAtConstruction(t *testing.T) {
+	logger := zerolog.Nop()
+	for _, raw := range []string{"", "https://definitions.dimo.org ", "https://definitions.dimo.org\n", "definitions.dimo.org", "ftp://definitions.dimo.org", "https://"} {
+		svc, err := NewDefinitionsCatalogService(&logger, &config.Settings{DefinitionsCatalogURL: raw})
+		assert.Error(t, err, "%q must be refused", raw)
+		assert.Nil(t, svc)
+	}
+
+	_, err := NewDefinitionsCatalogService(&logger, &config.Settings{
+		DefinitionsCatalogURL: "https://definitions.dimo.org",
+		DefinitionsMinCount:   "15,000",
+	})
+	assert.ErrorContains(t, err, "DEFINITIONS_MIN_COUNT")
 }

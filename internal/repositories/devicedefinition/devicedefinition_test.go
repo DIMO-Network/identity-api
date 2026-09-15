@@ -79,7 +79,9 @@ func startCatalog(t *testing.T) *services.DefinitionsCatalogService {
 	}))
 	t.Cleanup(srv.Close)
 	logger := zerolog.Nop()
-	return services.NewDefinitionsCatalogService(&logger, &config.Settings{DefinitionsCatalogURL: srv.URL})
+	catalog, err := services.NewDefinitionsCatalogService(&logger, &config.Settings{DefinitionsCatalogURL: srv.URL})
+	require.NoError(t, err)
+	return catalog
 }
 
 func Test_GetDeviceDefinitions_Query(t *testing.T) {

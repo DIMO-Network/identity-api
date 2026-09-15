@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
-	"strings"
 	"sync"
 	"time"
 
@@ -103,19 +102,25 @@ type DefinitionsCatalogService struct {
 	byMfrToken  map[int][]*CatalogDefinition
 }
 
-func NewDefinitionsCatalogService(log *zerolog.Logger, settings *config.Settings) *DefinitionsCatalogService {
+// NewDefinitionsCatalogService validates the DEFINITIONS_* settings and builds
+// the service. A malformed catalog URL or floor fails construction, and with it
+// startup, instead of starting a pod whose every device-definition query fails
+// or whose floor is silently disabled.
+func NewDefinitionsCatalogService(log *zerolog.Logger, settings *config.Settings) (*DefinitionsCatalogService, error) {
+	cfg, err := settings.DefinitionsCatalog()
+	if err != nil {
+		return nil, err
+	}
 	return &DefinitionsCatalogService{
-		log: log,
-		// Every neighbouring catalog setting in values.yaml carries a trailing
-		// slash; "//manifest.json" does not match the worker's exact route.
-		url:             strings.TrimRight(settings.DefinitionsCatalogURL, "/"),
+		log:             log,
+		url:             cfg.URL,
 		client:          &http.Client{Timeout: 30 * time.Second},
 		refreshInterval: time.Minute,
 		refreshTimeout:  30 * time.Second,
-		minCount:        settings.DefinitionsMinCount,
+		minCount:        cfg.MinCount,
 		byID:            map[string]*CatalogDefinition{},
 		byMfrToken:      map[int][]*CatalogDefinition{},
-	}
+	}, nil
 }
 
 // GetDefinitionByID returns the definition with the given slug id, or nil.
@@ -183,6 +188,11 @@ func (s *DefinitionsCatalogService) ensureFresh(ctx context.Context) error {
 	defer cancel()
 	req, err := http.NewRequestWithContext(fetchCtx, http.MethodGet, s.url+"/manifest.json", nil)
 	if err != nil {
+		// Recorded like every other failure, so it is logged and carries context
+		// instead of re-running bare on every query.
+		err = fmt.Errorf("failed to build definitions manifest request: %w", err)
+		s.log.Error().Err(err).Msg("definitions manifest refresh failed")
+		s.failedAttempt(err)
 		return err
 	}
 	if s.etag != "" {

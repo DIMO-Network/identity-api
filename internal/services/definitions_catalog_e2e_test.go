@@ -21,7 +21,8 @@ func TestCatalogE2E(t *testing.T) {
 	}
 	ctx := context.Background()
 	logger := zerolog.Nop()
-	svc := NewDefinitionsCatalogService(&logger, &config.Settings{DefinitionsCatalogURL: url})
+	svc, err := NewDefinitionsCatalogService(&logger, &config.Settings{DefinitionsCatalogURL: url})
+	require.NoError(t, err)
 
 	def, err := svc.GetDefinitionByID(ctx, "dodge_town-&-country_2012")
 	require.NoError(t, err)
