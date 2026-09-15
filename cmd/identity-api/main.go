@@ -65,7 +65,12 @@ func main() {
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Invalid device definitions catalog settings.")
 	}
-	logger.Info().Str("url", catalogSettings.URL).Int("minCount", catalogSettings.MinCount).Msg("Device definitions catalog configured.")
+	maxStaleness := "disabled"
+	if catalogSettings.MaxStaleness > 0 {
+		maxStaleness = catalogSettings.MaxStaleness.String()
+	}
+	logger.Info().Str("url", catalogSettings.URL).Int("minCount", catalogSettings.MinCount).
+		Str("maxStaleness", maxStaleness).Msg("Device definitions catalog configured.")
 
 	dbs := db.NewDbConnectionFromSettings(context.Background(), &settings.DB, true)
 	dbs.WaitForDB(logger)
@@ -79,6 +84,10 @@ func main() {
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Couldn't create the GraphQL resolver.")
 	}
+	// Before the server starts listening, so a pod warms its catalog rather
+	// than loading it on the first query that needs it.
+	resolver.StartBackground()
+
 	cfg := graph.Config{Resolvers: resolver}
 
 	serveMonitoring(strconv.Itoa(settings.MonPort), &logger)

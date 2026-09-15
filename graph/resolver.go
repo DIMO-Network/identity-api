@@ -145,7 +145,10 @@ type Resolver struct {
 	accountsacd      AccountSacdRepository
 	connectionsacd   ConnectionSacdRepository
 	vehicleDefFetch  loader.VehicleDefinitionFetcher
-	log              *zerolog.Logger
+	// definitionsCatalog is held so StartBackground can warm it at process
+	// start; the device definition repository is what reads from it.
+	definitionsCatalog *services.DefinitionsCatalogService
+	log                *zerolog.Logger
 }
 
 // NewResolver creates a new Resolver with allocated repositories. It fails when
@@ -173,6 +176,16 @@ func NewResolver(baseRepo *base.Repository) (*Resolver, error) {
 		accountsacd:      &accountsacd.Repository{Repository: baseRepo},
 		connectionsacd:   &connectionsacd.Repository{Repository: baseRepo},
 		vehicleDefFetch:  loader.NewVehicleDefinitionFetcher(baseRepo.Settings, baseRepo.Log),
-		log:              baseRepo.Log,
+
+		definitionsCatalog: definitionsCatalog,
+		log:                baseRepo.Log,
 	}, nil
+}
+
+// StartBackground starts the resolver's background work. Call it once at
+// process start: it warms the device definitions catalog and keeps it
+// refreshed, so a pod loads the catalog before it takes traffic rather than on
+// the first query that needs it.
+func (r *Resolver) StartBackground() {
+	r.definitionsCatalog.Start()
 }

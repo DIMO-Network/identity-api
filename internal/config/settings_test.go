@@ -2,6 +2,7 @@ package config
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -47,6 +48,26 @@ func TestDefinitionsCatalogSettings(t *testing.T) {
 		}
 		for _, raw := range invalid {
 			_, err := (&Settings{DefinitionsCatalogURL: raw}).DefinitionsCatalog()
+			assert.Error(t, err, "%q must be refused", raw)
+		}
+	})
+
+	t.Run("max staleness", func(t *testing.T) {
+		valid := map[string]time.Duration{
+			"":      DefaultDefinitionsMaxStaleness,
+			"0":     0,
+			"24h":   24 * time.Hour,
+			"90m":   90 * time.Minute,
+			"1h30m": 90 * time.Minute,
+		}
+		for raw, want := range valid {
+			got, err := (&Settings{DefinitionsCatalogURL: "https://definitions.dimo.org", DefinitionsMaxStaleness: raw}).DefinitionsCatalog()
+			require.NoError(t, err, raw)
+			assert.Equal(t, want, got.MaxStaleness, raw)
+		}
+
+		for _, raw := range []string{"-1h", "24 h", " 24h", "24hours", "day", "24"} {
+			_, err := (&Settings{DefinitionsCatalogURL: "https://definitions.dimo.org", DefinitionsMaxStaleness: raw}).DefinitionsCatalog()
 			assert.Error(t, err, "%q must be refused", raw)
 		}
 	})
