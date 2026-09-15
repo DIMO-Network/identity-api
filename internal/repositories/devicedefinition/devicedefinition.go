@@ -3,9 +3,7 @@ package devicedefinition
 import (
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
-	"fmt"
 	"slices"
 	"strings"
 
@@ -16,81 +14,38 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/repositories/base"
 	"github.com/DIMO-Network/identity-api/internal/services"
 	"github.com/DIMO-Network/identity-api/models"
-	"github.com/doug-martin/goqu/v9"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 )
 
 // TokenPrefix is the prefix for a global token id for Device Definition.
 const TokenPrefix = "DD"
 
-type DeviceDefinitionTablelandCountModel struct {
-	Count int `json:"count(*)"`
-}
-
-type DeviceDefinitionTablelandModel struct {
-	ID         string                    `json:"id"`
-	KSUID      string                    `json:"ksuid"`
-	Model      string                    `json:"model"`
-	Year       int                       `json:"year"`
-	DeviceType string                    `json:"devicetype"`
-	ImageURI   string                    `json:"imageuri"`
-	Metadata   *DeviceDefinitionMetadata `json:"metadata"`
-}
-
-type DeviceDefinitionMetadata struct {
-	DeviceAttributes []struct {
-		Name  string `json:"name"`
-		Value string `json:"value"`
-	} `json:"device_attributes"`
-}
-
-// UnmarshalJSON customizes the unmarshaling of DeviceDefinitionTablelandModel to handle cases where metadata is an empty string.
-func (d *DeviceDefinitionTablelandModel) UnmarshalJSON(data []byte) error {
-	type Alias DeviceDefinitionTablelandModel // Create an alias to avoid recursion
-
-	aux := &struct {
-		Metadata json.RawMessage `json:"metadata"`
-		*Alias
-	}{
-		Alias: (*Alias)(d),
-	}
-
-	if err := json.Unmarshal(data, &aux); err != nil {
-		return err
-	}
-
-	if len(aux.Metadata) > 0 && string(aux.Metadata) != `""` {
-		metadata := new(DeviceDefinitionMetadata)
-		if err := json.Unmarshal(aux.Metadata, metadata); err != nil {
-			return err
-		}
-		d.Metadata = metadata
-	}
-
-	return nil
-}
-
 type Repository struct {
 	*base.Repository
-	TablelandApiService *services.TablelandApiService
-	ManufacturerRepo    *manufacturer.Repository
+	Catalog          *services.DefinitionsCatalogService
+	ManufacturerRepo *manufacturer.Repository
 }
 
 // New creates a new device definition repository.
-func New(db *base.Repository, tablelandAPI *services.TablelandApiService) *Repository {
+func New(db *base.Repository, catalog *services.DefinitionsCatalogService) *Repository {
 	return &Repository{
-		Repository:          db,
-		TablelandApiService: tablelandAPI,
-		ManufacturerRepo:    manufacturer.New(db),
+		Repository:       db,
+		Catalog:          catalog,
+		ManufacturerRepo: manufacturer.New(db),
 	}
 }
 
-func (r *Repository) ToAPI(v *DeviceDefinitionTablelandModel, mfr *models.Manufacturer) (*gmodel.DeviceDefinition, error) {
+func (r *Repository) ToAPI(v *services.CatalogDefinition, mfr *models.Manufacturer) (*gmodel.DeviceDefinition, error) {
 	var result = gmodel.DeviceDefinition{
 		DeviceDefinitionID: v.ID,
-		LegacyID:           &v.KSUID,
 		Year:               v.Year,
 		Model:              v.Model,
+	}
+	// A template carries no ksuid and legacyId is nullable, so leave it null
+	// rather than answering with an empty legacy id that resolves to nothing.
+	if v.KSUID != "" {
+		ksuid := v.KSUID
+		result.LegacyID = &ksuid
 	}
 	if mfr != nil {
 		gmfr, err := r.ManufacturerRepo.ToAPI(mfr)
@@ -101,24 +56,24 @@ func (r *Repository) ToAPI(v *DeviceDefinitionTablelandModel, mfr *models.Manufa
 	}
 
 	if v.ImageURI != "" {
-		result.ImageURI = &v.ImageURI
+		imageURI := v.ImageURI
+		result.ImageURI = &imageURI
 	}
 
 	if v.DeviceType != "" {
-		result.DeviceType = &v.DeviceType
+		deviceType := v.DeviceType
+		result.DeviceType = &deviceType
 	}
 
-	if v.Metadata != nil {
-		for _, attr := range v.Metadata.DeviceAttributes {
-			// No idea where this <nil> is coming from.
-			if attr.Name == "" || attr.Value == "" || attr.Value == "<nil>" {
-				continue
-			}
-			result.Attributes = append(result.Attributes, &gmodel.DeviceDefinitionAttribute{
-				Name:  attr.Name,
-				Value: attr.Value,
-			})
+	for _, attr := range v.Metadata.DeviceAttributes {
+		// No idea where this <nil> is coming from.
+		if attr.Name == "" || attr.Value == "" || attr.Value == "<nil>" {
+			continue
 		}
+		result.Attributes = append(result.Attributes, &gmodel.DeviceDefinitionAttribute{
+			Name:  attr.Name,
+			Value: attr.Value,
+		})
 	}
 
 	return &result, nil
@@ -139,81 +94,50 @@ func (r *Repository) GetDeviceDefinition(ctx context.Context, by gmodel.DeviceDe
 		return nil, err
 	}
 
-	if !mfr.TableID.Valid {
-		return nil, fmt.Errorf("manufacturer %d does not have a device definition table", mfr.ID)
-	}
-
-	table := fmt.Sprintf("_%d_%d", r.Settings.DIMORegistryChainID, mfr.TableID.Int)
-
-	sql, _, err := goqu.Dialect("sqlite3").From(table).Where(goqu.Ex{"id": by.ID}).ToSQL()
+	def, err := r.Catalog.GetDefinitionByID(ctx, by.ID)
 	if err != nil {
 		return nil, err
 	}
-
-	var modelTableland []DeviceDefinitionTablelandModel
-
-	if err = r.TablelandApiService.Query(ctx, sql, &modelTableland); err != nil {
-		return nil, err
-	}
-
-	if len(modelTableland) == 0 {
+	if def == nil {
 		return nil, errors.New("no device definition found with that id")
 	}
 
-	return r.ToAPI(&modelTableland[0], mfr)
+	return r.ToAPI(def, mfr)
 }
 
-func (r *Repository) GetDeviceDefinitions(ctx context.Context, tableID, first *int, after *string, last *int, before *string, filterBy *gmodel.DeviceDefinitionFilter) (*gmodel.DeviceDefinitionConnection, error) {
+func (r *Repository) GetDeviceDefinitions(ctx context.Context, manufacturerTokenID int, first *int, after *string, last *int, before *string, filterBy *gmodel.DeviceDefinitionFilter) (*gmodel.DeviceDefinitionConnection, error) {
 	limit, err := helpers.ValidateFirstLast(first, last, base.MaxPageSize)
 	if err != nil {
 		return nil, err
 	}
 
-	if tableID == nil {
-		return &gmodel.DeviceDefinitionConnection{
-			Edges:      make([]*gmodel.DeviceDefinitionEdge, 0),
-			Nodes:      make([]*gmodel.DeviceDefinition, 0),
-			PageInfo:   &gmodel.PageInfo{},
-			TotalCount: 0,
-		}, nil
-	}
-
-	table := fmt.Sprintf("_%d_%d", r.Settings.DIMORegistryChainID, *tableID)
-
-	sqlBuild := goqu.Dialect("sqlite3").From(table)
-
-	if filterBy != nil {
-		if filterBy.Year != nil {
-			sqlBuild = sqlBuild.Where(goqu.Ex{"year": *filterBy.Year})
-		}
-
-		if filterBy.Model != nil {
-			sqlBuild = sqlBuild.Where(goqu.L("model = ? COLLATE NOCASE", *filterBy.Model))
-		}
-	}
-
-	countSQL, _, err := sqlBuild.Select(goqu.COUNT("*")).ToSQL()
+	defs, err := r.Catalog.DefinitionsByManufacturer(ctx, manufacturerTokenID)
 	if err != nil {
-		return nil, fmt.Errorf("error constructing count SQL: %w", err)
-	}
-
-	var modelCountTableland []DeviceDefinitionTablelandCountModel
-	if err = r.TablelandApiService.Query(ctx, countSQL, &modelCountTableland); err != nil {
 		return nil, err
 	}
 
-	if len(modelCountTableland) == 0 {
-		return nil, errors.New("error from Tableland")
+	// Filter; defs is already sorted by id ascending.
+	all := make([]*services.CatalogDefinition, 0, len(defs))
+	for _, d := range defs {
+		if filterBy != nil {
+			if filterBy.Year != nil && d.Year != *filterBy.Year {
+				continue
+			}
+			if filterBy.Model != nil && !strings.EqualFold(d.Model, *filterBy.Model) {
+				continue
+			}
+		}
+		all = append(all, d)
 	}
 
-	totalCount := modelCountTableland[0].Count
+	totalCount := len(all)
 
 	if after != nil {
 		afterID, err := cursorToID(*after)
 		if err != nil {
 			return nil, err
 		}
-		sqlBuild = sqlBuild.Where(goqu.C("id").Gt(afterID))
+		all = slices.DeleteFunc(slices.Clone(all), func(d *services.CatalogDefinition) bool { return d.ID <= afterID })
 	}
 
 	if before != nil {
@@ -221,38 +145,24 @@ func (r *Repository) GetDeviceDefinitions(ctx context.Context, tableID, first *i
 		if err != nil {
 			return nil, err
 		}
-
-		sqlBuild = sqlBuild.Where(goqu.C("id").Lt(beforeID))
+		all = slices.DeleteFunc(slices.Clone(all), func(d *services.CatalogDefinition) bool { return d.ID >= beforeID })
 	}
 
 	if last != nil {
-		sqlBuild = sqlBuild.Order(goqu.I("id").Desc())
-	} else {
-		sqlBuild = sqlBuild.Order(goqu.I("id").Asc())
-	}
-
-	sqlBuild = sqlBuild.Limit(uint(limit) + 1)
-
-	allSQL, _, err := sqlBuild.ToSQL()
-	if err != nil {
-		return nil, fmt.Errorf("error constructing selection SQL: %w", err)
-	}
-
-	var all []DeviceDefinitionTablelandModel
-	if err = r.TablelandApiService.Query(ctx, allSQL, &all); err != nil {
-		return nil, err
+		slices.Reverse(all)
 	}
 
 	// We assume that cursors come from real elements.
 	hasNext := before != nil
 	hasPrevious := after != nil
 
-	if first != nil && len(all) == limit+1 {
-		hasNext = true
+	if len(all) > limit {
 		all = all[:limit]
-	} else if last != nil && len(all) == limit+1 {
-		hasPrevious = true
-		all = all[:limit]
+		if last != nil {
+			hasPrevious = true
+		} else {
+			hasNext = true
+		}
 	}
 
 	if last != nil {
@@ -272,23 +182,16 @@ func (r *Repository) GetDeviceDefinitions(ctx context.Context, tableID, first *i
 	edges := make([]*gmodel.DeviceDefinitionEdge, len(all))
 	nodes := make([]*gmodel.DeviceDefinition, len(all))
 
-	mfrs := make(map[string]*models.Manufacturer)
+	mfrs, err := r.manufacturersForPage(ctx, all)
+	if err != nil {
+		return nil, err
+	}
 
 	for i, dv := range all {
-		// get the manufacturer and cache it in a map outside the loop, using the cached mfr when exists
-		var mfr *models.Manufacturer
-		mfrSlug, _, found := strings.Cut(dv.ID, "_")
-		if found {
-			ok := false
-			if mfr, ok = mfrs[mfrSlug]; !ok {
-				mfr, err = models.Manufacturers(models.ManufacturerWhere.Slug.EQ(mfrSlug)).One(ctx, r.PDB.DBS().Reader)
-				if err != nil {
-					return nil, err
-				}
-			}
-		}
-
-		gv, err := r.ToAPI(&dv, mfr)
+		mfrSlug, _, _ := strings.Cut(dv.ID, "_")
+		// A definition whose id prefix named no row is served without a
+		// manufacturer, which ToAPI leaves null.
+		gv, err := r.ToAPI(dv, mfrs[mfrSlug])
 		if err != nil {
 			errList = append(errList, gqlerror.Wrap(err))
 			continue
@@ -311,7 +214,7 @@ func (r *Repository) GetDeviceDefinitions(ctx context.Context, tableID, first *i
 			HasPreviousPage: hasPrevious,
 			StartCursor:     startCur,
 		},
-		TotalCount: int(totalCount),
+		TotalCount: totalCount,
 	}
 
 	if errList != nil {
@@ -319,6 +222,72 @@ func (r *Repository) GetDeviceDefinitions(ctx context.Context, tableID, first *i
 	}
 
 	return res, nil
+}
+
+// manufacturersForPage fetches, in one query, the manufacturers the ids on
+// this page name, keyed by slug.
+//
+// A slug with no row is not an error. The catalog's idea of a manufacturer's
+// slug and this database's can differ: checkChain adopts a catalog in which up
+// to 5% of the manufacturers shared with this chain carry a different slug, so
+// an id prefix that resolves to nothing is reachable by design. Resolving each
+// definition with its own .One() turned one such definition into a raw
+// sql.ErrNoRows that failed the whole page -- every other definition included.
+func (r *Repository) manufacturersForPage(ctx context.Context, defs []*services.CatalogDefinition) (map[string]*models.Manufacturer, error) {
+	slugs := manufacturerSlugs(defs)
+	if len(slugs) == 0 {
+		return nil, nil
+	}
+
+	rows, err := models.Manufacturers(models.ManufacturerWhere.Slug.IN(slugs)).All(ctx, r.PDB.DBS().Reader)
+	if err != nil {
+		return nil, err
+	}
+
+	bySlug, missing := indexManufacturers(slugs, rows)
+	if len(missing) > 0 {
+		r.Log.Warn().Strs("slugs", missing).Int("definitions", len(defs)).
+			Msg("device definitions name manufacturer slugs this database does not have; serving them without a manufacturer")
+	}
+	return bySlug, nil
+}
+
+// manufacturerSlugs returns the distinct manufacturer slugs this page's ids
+// name, in the order they first appear. A definition id is
+// <manufacturer slug>_<model>_<year>; an id not in that shape names no
+// manufacturer to look up.
+func manufacturerSlugs(defs []*services.CatalogDefinition) []string {
+	var slugs []string
+	seen := make(map[string]struct{}, len(defs))
+	for _, d := range defs {
+		slug, _, found := strings.Cut(d.ID, "_")
+		if !found || slug == "" {
+			continue
+		}
+		if _, ok := seen[slug]; ok {
+			continue
+		}
+		seen[slug] = struct{}{}
+		slugs = append(slugs, slug)
+	}
+	return slugs
+}
+
+// indexManufacturers keys the rows the query returned by slug, and names the
+// requested slugs it returned nothing for.
+func indexManufacturers(slugs []string, rows models.ManufacturerSlice) (map[string]*models.Manufacturer, []string) {
+	bySlug := make(map[string]*models.Manufacturer, len(rows))
+	for _, m := range rows {
+		bySlug[m.Slug] = m
+	}
+
+	var missing []string
+	for _, slug := range slugs {
+		if _, ok := bySlug[slug]; !ok {
+			missing = append(missing, slug)
+		}
+	}
+	return bySlug, missing
 }
 
 func idToCursor(id string) string {

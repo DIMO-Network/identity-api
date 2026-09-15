@@ -37,9 +37,10 @@ func TestVehicleDefinitionFetchConsistencyAcrossQueryShapes(t *testing.T) {
 
 	logger := zerolog.Nop()
 	settings := config.Settings{
-		DIMORegistryChainID: 1,
-		DIMORegistryAddr:    common.HexToAddress("0xB9").Hex(),
-		VehicleNFTAddr:      common.HexToAddress("0x4e").Hex(),
+		DefinitionsCatalogURL: "http://definitions.invalid",
+		DIMORegistryChainID:   1,
+		DIMORegistryAddr:      common.HexToAddress("0xB9").Hex(),
+		VehicleNFTAddr:        common.HexToAddress("0x4e").Hex(),
 	}
 
 	mfr := models.Manufacturer{
@@ -85,7 +86,8 @@ func TestVehicleDefinitionFetchConsistencyAcrossQueryShapes(t *testing.T) {
 	require.NoError(t, ad.Insert(ctx, pdb.DBS().Writer, boil.Infer()))
 
 	repo := base.NewRepository(pdb, settings, &logger)
-	resolver := NewResolver(repo)
+	resolver, err := NewResolver(repo)
+	require.NoError(t, err)
 
 	vehicleDID := cloudevent.ERC721DID{
 		ChainID:         uint64(settings.DIMORegistryChainID),

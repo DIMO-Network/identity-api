@@ -23,6 +23,7 @@ import (
 	"github.com/goccy/go-json"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
@@ -109,11 +110,13 @@ func TestResolver(t *testing.T) {
 	assert.NoError(err)
 	vehicleAddress := common.HexToAddress("0x123")
 	settings := config.Settings{
-		VehicleNFTAddr: vehicleAddress.String(),
+		DefinitionsCatalogURL: "http://definitions.invalid",
+		VehicleNFTAddr:        vehicleAddress.String(),
 	}
 	logger := zerolog.Nop()
 	repo := base.NewRepository(pdb, settings, &logger)
-	resolver := NewResolver(repo)
+	resolver, err := NewResolver(repo)
+	require.NoError(t, err)
 	c := client.New(loader.Middleware(pdb, NewDefaultServer(NewExecutableSchema(Config{Resolvers: resolver})), settings, &logger))
 
 	t.Run("ownedAftermarketDevices, return only one response", func(t *testing.T) {
