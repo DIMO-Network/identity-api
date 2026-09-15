@@ -61,17 +61,15 @@ func (r *Repository) ToAPI(v *services.CatalogDefinition, mfr *models.Manufactur
 		result.DeviceType = &deviceType
 	}
 
-	if v.Metadata != nil {
-		for _, attr := range v.Metadata.DeviceAttributes {
-			// No idea where this <nil> is coming from.
-			if attr.Name == "" || attr.Value == "" || attr.Value == "<nil>" {
-				continue
-			}
-			result.Attributes = append(result.Attributes, &gmodel.DeviceDefinitionAttribute{
-				Name:  attr.Name,
-				Value: attr.Value,
-			})
+	for _, attr := range v.Metadata.DeviceAttributes {
+		// No idea where this <nil> is coming from.
+		if attr.Name == "" || attr.Value == "" || attr.Value == "<nil>" {
+			continue
 		}
+		result.Attributes = append(result.Attributes, &gmodel.DeviceDefinitionAttribute{
+			Name:  attr.Name,
+			Value: attr.Value,
+		})
 	}
 
 	return &result, nil

@@ -57,12 +57,15 @@ func TestCatalogServesStaleOnBadRefresh(t *testing.T) {
 	assert.NotNil(t, d)
 }
 
-// A well-formed 200 whose body is empty (or whose count disagrees with the
-// definitions it carries) must not replace a good snapshot. The worker can
-// produce a truncated manifest -- a lost read of manifest.json makes it rewrite
-// the object from a single change -- and adopting that silently turns every
-// device-definition query into a successful, empty answer rather than an error.
-func TestCatalogRejectsDegenerateManifest(t *testing.T) {
+// A well-formed 200 carrying no definitions must not replace a good snapshot.
+// Adopting it turns every device-definition query into a successful, empty
+// answer rather than an error, and nothing alerts on that.
+//
+// The manifest's count plays no part in the decision: it is not read at all,
+// so a manifest claiming 9000 definitions while carrying none is refused by
+// the empty rule and by nothing else. The earlier version of this test read
+// that refusal as a count check and asserted a guarantee that never existed.
+func TestCatalogRefusesAnEmptyManifestOverAHeldCatalog(t *testing.T) {
 	good := `{"updatedAt":"t","count":1,"definitions":[
 	  {"id":"toyota_camry_2020","ksuid":"K","model":"Camry","year":2020,
 	   "devicetype":"vehicle","imageuri":"","metadata":null,
@@ -75,7 +78,7 @@ func TestCatalogRejectsDegenerateManifest(t *testing.T) {
 			_, _ = w.Write([]byte(good))
 		case "empty":
 			_, _ = w.Write([]byte(`{"updatedAt":"t","count":0,"definitions":[]}`))
-		default: // count disagrees with the payload
+		default: // count claims definitions the payload does not carry
 			_, _ = w.Write([]byte(`{"updatedAt":"t","count":9000,"definitions":[]}`))
 		}
 	}))
@@ -88,7 +91,7 @@ func TestCatalogRejectsDegenerateManifest(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, d)
 
-	for _, m := range []string{"empty", "mismatch"} {
+	for _, m := range []string{"empty", "count claims 9000"} {
 		mode = m
 		svc.mu.Lock()
 		svc.lastFetch = time.Time{} // force a refresh
@@ -97,9 +100,51 @@ func TestCatalogRejectsDegenerateManifest(t *testing.T) {
 
 		d, err = svc.GetDefinitionByID(ctx, "toyota_camry_2020")
 		require.NoError(t, err, m)
-		require.NotNil(t, d, "%s: snapshot must survive a degenerate manifest", m)
+		require.NotNil(t, d, "%s: snapshot must survive an empty manifest", m)
 		assert.Equal(t, "Camry", d.Model, m)
 	}
+}
+
+// count and updatedAt are neither read nor strictly decoded, so a manifest is
+// judged on the definitions it carries. One carrying fewer than the snapshot
+// held, with a count that disagrees with both and an updatedAt of a different
+// type, is adopted: the configured floor is what refuses a short manifest, and
+// a producer type change in those two fields cannot fail the whole decode.
+func TestCatalogIgnoresManifestCountAndUpdatedAt(t *testing.T) {
+	two := `{"updatedAt":"t","count":2,"definitions":[
+	  {"id":"toyota_camry_2020","model":"Camry","year":2020,
+	   "manufacturer":{"tokenId":131,"slug":"toyota","name":"Toyota"}},
+	  {"id":"toyota_supra_2021","model":"Supra","year":2021,
+	   "manufacturer":{"tokenId":131,"slug":"toyota","name":"Toyota"}}]}`
+	one := `{"updatedAt":1756124820,"count":"9000","definitions":[
+	  {"id":"toyota_camry_2020","model":"Camry","year":2020,
+	   "manufacturer":{"tokenId":131,"slug":"toyota","name":"Toyota"}}]}`
+
+	body := two
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(body))
+	}))
+	defer srv.Close()
+
+	svc := newTestCatalog(t, config.Settings{DefinitionsCatalogURL: srv.URL})
+	ctx := context.Background()
+
+	supra, err := svc.GetDefinitionByID(ctx, "toyota_supra_2021")
+	require.NoError(t, err)
+	require.NotNil(t, supra)
+
+	body = one
+	svc.mu.Lock()
+	svc.lastFetch = time.Time{}
+	svc.etag = ""
+	svc.mu.Unlock()
+
+	camry, err := svc.GetDefinitionByID(ctx, "toyota_camry_2020")
+	require.NoError(t, err)
+	require.NotNil(t, camry, "a manifest whose count and updatedAt changed type must still decode")
+	supra, err = svc.GetDefinitionByID(ctx, "toyota_supra_2021")
+	require.NoError(t, err)
+	assert.Nil(t, supra, "the shorter manifest is adopted: no rule compares it with the count")
 }
 
 // One malformed definition must not cost the whole catalog. Decoding the

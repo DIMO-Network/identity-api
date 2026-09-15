@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"sort"
@@ -12,68 +11,6 @@ import (
 	"github.com/DIMO-Network/identity-api/internal/config"
 	"github.com/rs/zerolog"
 )
-
-// CatalogManufacturer identifies the manufacturer a definition belongs to.
-type CatalogManufacturer struct {
-	TokenID int    `json:"tokenId"`
-	Slug    string `json:"slug"`
-	Name    string `json:"name"`
-}
-
-// CatalogDefinitionAttribute is a single device attribute name/value pair.
-type CatalogDefinitionAttribute struct {
-	Name  string `json:"name"`
-	Value string `json:"value"`
-}
-
-// CatalogDefinitionMetadata holds the device-specific attribute list.
-type CatalogDefinitionMetadata struct {
-	DeviceAttributes []CatalogDefinitionAttribute `json:"device_attributes"`
-}
-
-// CatalogDefinition is one device definition document from the R2 catalog.
-// JSON keys match the documents the definitions-worker writes.
-type CatalogDefinition struct {
-	ID           string                     `json:"id"`
-	KSUID        string                     `json:"ksuid"`
-	Model        string                     `json:"model"`
-	Year         int                        `json:"year"`
-	DeviceType   string                     `json:"devicetype"`
-	ImageURI     string                     `json:"imageuri"`
-	Metadata     *CatalogDefinitionMetadata `json:"metadata"`
-	Manufacturer CatalogManufacturer        `json:"manufacturer"`
-}
-
-// UnmarshalJSON tolerates metadata being an empty string, which legacy
-// Tableland rows carried and may survive in backfilled documents.
-func (d *CatalogDefinition) UnmarshalJSON(data []byte) error {
-	type alias CatalogDefinition
-	aux := &struct {
-		Metadata json.RawMessage `json:"metadata"`
-		*alias
-	}{alias: (*alias)(d)}
-	if err := json.Unmarshal(data, aux); err != nil {
-		return err
-	}
-	if len(aux.Metadata) != 0 && string(aux.Metadata) != `""` && string(aux.Metadata) != "null" {
-		var md CatalogDefinitionMetadata
-		if err := json.Unmarshal(aux.Metadata, &md); err != nil {
-			return err
-		}
-		d.Metadata = &md
-	}
-	return nil
-}
-
-type catalogManifest struct {
-	UpdatedAt string `json:"updatedAt"`
-	Count     int    `json:"count"`
-	// Held raw so one malformed definition costs that definition rather than
-	// the whole catalog: decoding the manifest as a single document lets a
-	// single bad element abort everything, which freezes warm pods on a stale
-	// snapshot and makes a cold pod fail every device-definition query.
-	Definitions []json.RawMessage `json:"definitions"`
-}
 
 // DefinitionsCatalogService keeps the R2 definitions manifest in memory,
 // refreshing it periodically with an ETag-conditional fetch. It replaces the
@@ -229,8 +166,9 @@ func (s *DefinitionsCatalogService) ensureFresh(ctx context.Context) error {
 		return statusErr
 	}
 
-	var m catalogManifest
-	if err := json.NewDecoder(resp.Body).Decode(&m); err != nil {
+	c := &catalogCandidate{}
+	if err := decodeLegacyManifest(resp.Body, c.visit); err != nil {
+		err = fmt.Errorf("failed to decode definitions manifest: %w", err)
 		// A corrupt 200 body must not take reads down when a snapshot exists.
 		if len(s.byID) != 0 {
 			s.log.Warn().Err(err).Msg("definitions manifest decode failed, serving stale catalog")
@@ -238,55 +176,23 @@ func (s *DefinitionsCatalogService) ensureFresh(ctx context.Context) error {
 			return nil
 		}
 		s.failedAttempt(err)
-		return fmt.Errorf("failed to decode definitions manifest: %w", err)
+		return err
 	}
-
-	defs := make([]CatalogDefinition, 0, len(m.Definitions))
-	skipped := 0
-	for _, raw := range m.Definitions {
-		var d CatalogDefinition
-		if err := json.Unmarshal(raw, &d); err != nil {
-			skipped++
-			continue
-		}
-		defs = append(defs, d)
+	if c.invalid > 0 {
+		s.log.Warn().Int("invalid", c.invalid).Int("kept", len(c.defs)).Strs("first", c.examples).
+			Msg("skipped invalid elements in the definitions manifest")
 	}
-	if skipped > 0 {
-		s.log.Warn().Int("skipped", skipped).Int("kept", len(defs)).
-			Msg("skipped malformed definitions in the catalog manifest")
-	}
-
-	// One operator-set floor, checked on every pod. A proportional guard cannot
-	// help the pod that matters most -- a cold one has nothing to compare
-	// against, and that is exactly the pod that adopts a stub manifest
-	// published while the catalog is being rebuilt. Confirming a shrink across
-	// refreshes does not help either: every realistic way to produce a short
-	// manifest is deterministic, so it reports the same size again and gets
-	// confirmed, while the one transient case is caught by the decoder first.
-	if s.minCount > 0 && len(defs) < s.minCount {
-		err := fmt.Errorf("manifest carries %d definitions, below the configured minimum of %d", len(defs), s.minCount)
+	if err := c.vet(s.minCount, len(s.byID)); err != nil {
+		err = fmt.Errorf("refusing the definitions manifest: %w", err)
 		if len(s.byID) != 0 {
-			s.log.Error().Err(err).Int("held", len(s.byID)).
-				Msg("refusing a short definitions manifest, serving stale")
+			s.log.Error().Err(err).Int("held", len(s.byID)).Msg("serving the stale definitions catalog")
 			s.lastFetch = time.Now()
 			return nil
 		}
 		s.failedAttempt(err)
 		return err
 	}
-
-	// Never trade a populated catalog for an empty one, floor or no floor.
-	if len(defs) == 0 && len(s.byID) != 0 {
-		s.log.Error().Int("skipped", skipped).Int("held", len(s.byID)).
-			Msg("definitions manifest is empty, refusing to adopt it over a populated catalog")
-		s.lastFetch = time.Now()
-		return nil
-	}
-	if len(defs) == 0 && len(m.Definitions) != 0 {
-		err := fmt.Errorf("every definition in the manifest failed to decode (%d elements)", len(m.Definitions))
-		s.failedAttempt(err)
-		return err
-	}
+	defs := c.defs
 	// A cold pod has nothing to compare against, so an empty catalog is
 	// adopted; say so loudly, because it makes every device-definition query
 	// answer successfully and emptily.
