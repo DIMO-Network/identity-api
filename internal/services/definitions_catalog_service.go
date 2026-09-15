@@ -51,6 +51,20 @@ const catalogShardConcurrency = 8
 const (
 	catalogFoundCacheSize   = 1024
 	catalogMissingCacheSize = 4096
+	// catalogFoundTTL is how long a template fetched by id is answered from
+	// memory. The document can change under it: this path answers only for
+	// definitions newer than the current build, which are exactly the ones a
+	// curator is still correcting, and the worker purges the CDN on every
+	// write so that this fallback sees the edit.
+	//
+	// A minute is the refresh interval, so a correction reaches a replica
+	// about as quickly as a new build would, and it costs at most one request
+	// per id per replica per minute -- on a path that fires only for the
+	// definitions newer than the build, and against a CDN edge rather than
+	// R2. It is deliberately no longer than catalogMissingTTL: a stale
+	// negative answer resolves itself the moment the caller asks again, while
+	// a stale positive one is served as fact.
+	catalogFoundTTL = time.Minute
 	// catalogMissingTTL is short because an id that misses is usually one that
 	// was just created, and it becomes reachable the moment it is published.
 	catalogMissingTTL = 5 * time.Minute
@@ -83,14 +97,26 @@ type buildManifest struct {
 // templateLookups caches what the by-id fallback learned about one build. A new
 // build gets a new set: its listing already carries whatever the fallback went
 // to find, and a definition deleted since must not survive in a cache.
+//
+// Both halves expire, because a build is not the only thing that changes what
+// the fallback would find: the definitions it answers for are the newest ones
+// there are, and a curator correcting one is why the worker purges the CDN on
+// every write.
 type templateLookups struct {
-	found   *lru.Cache[string, *CatalogDefinition]
+	found   *lru.Cache[string, cachedTemplate]
 	missing *lru.Cache[string, time.Time]
+}
+
+// cachedTemplate is one definition the fallback fetched, with the moment it
+// stops being answered from memory.
+type cachedTemplate struct {
+	def     *CatalogDefinition
+	expires time.Time
 }
 
 func newTemplateLookups() *templateLookups {
 	// lru.New only fails on a size below one, and both sizes are constants.
-	found, _ := lru.New[string, *CatalogDefinition](catalogFoundCacheSize)
+	found, _ := lru.New[string, cachedTemplate](catalogFoundCacheSize)
 	missing, _ := lru.New[string, time.Time](catalogMissingCacheSize)
 	return &templateLookups{found: found, missing: missing}
 }
@@ -289,8 +315,10 @@ type DefinitionsCatalogService struct {
 	// waits for the refresh in flight. Without it a persistently failing
 	// catalog would hang every device-definition query instead of failing it.
 	coldWait time.Duration
-	// lookupTimeout and missingTTL bound the by-id fallback.
+	// lookupTimeout bounds one by-id fetch; foundTTL and missingTTL bound how
+	// long its two answers are served from memory.
 	lookupTimeout time.Duration
+	foundTTL      time.Duration
 	missingTTL    time.Duration
 	// manufacturerSlugs is the chain check's view of this deployment. Optional:
 	// without it a candidate is adopted unchecked.
@@ -353,6 +381,7 @@ func NewDefinitionsCatalogService(log *zerolog.Logger, settings *config.Settings
 		initialBackoff:  time.Second,
 		coldWait:        10 * time.Second,
 		lookupTimeout:   catalogLookupTimeout,
+		foundTTL:        catalogFoundTTL,
 		missingTTL:      catalogMissingTTL,
 		loopCtx:         loopCtx,
 		stop:            stop,
@@ -821,8 +850,11 @@ func (s *DefinitionsCatalogService) fetchShard(ctx context.Context, key string) 
 // lookupTemplate answers a by-id miss from the template document itself.
 func (s *DefinitionsCatalogService) lookupTemplate(ctx context.Context, id string) (*CatalogDefinition, error) {
 	lookups := s.lookups.Load()
-	if d, ok := lookups.found.Get(id); ok {
-		return d, nil
+	if entry, ok := lookups.found.Get(id); ok {
+		if time.Now().Before(entry.expires) {
+			return entry.def, nil
+		}
+		lookups.found.Remove(id)
 	}
 	if expiry, ok := lookups.missing.Get(id); ok {
 		if time.Now().Before(expiry) {
@@ -888,7 +920,7 @@ func (s *DefinitionsCatalogService) fetchTemplate(ctx context.Context, lookups *
 	if d.ID != id {
 		return nil, fmt.Errorf("template requested as %q carries the id %q", id, d.ID)
 	}
-	lookups.found.Add(id, &d)
+	lookups.found.Add(id, cachedTemplate{def: &d, expires: time.Now().Add(s.foundTTL)})
 	return &d, nil
 }
 

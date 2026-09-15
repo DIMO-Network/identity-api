@@ -1080,7 +1080,36 @@ func TestCatalogLooksUpAMissingDefinitionByID(t *testing.T) {
 		}
 		assert.Equal(t, 2, srv.hitsFor("/t/toyota_phantom_2020.json"), "an expired entry must not answer a later query")
 	})
+	// The positive entry needs a bound of its own. This path only ever answers
+	// for a definition newer than the current build -- exactly the one a
+	// curator is still correcting -- and the worker purges the CDN on the
+	// write so that this fallback sees the edit. With no expiry the first
+	// version answered was served until the next build was published, up to
+	// 23 hours, and only on the replicas that had answered once, so the same
+	// query returned different documents depending on which pod took it.
+	t.Run("a found entry expires and is refetched", func(t *testing.T) {
+		const id = "ineos_grenadier_2026"
+		const path = "/t/" + id + ".json"
+		srv.serve(path, grenadierTemplate("Grenadeer"))
 
+		// The lifetime is stamped on the entry when it is written, so it has
+		// to be set before the first lookup of this id.
+		t.Cleanup(func() { svc.foundTTL = catalogFoundTTL })
+		svc.foundTTL = -time.Second
+
+		d, err := svc.GetDefinitionByID(ctx, id)
+		require.NoError(t, err)
+		require.NotNil(t, d)
+		require.Equal(t, "Grenadeer", d.Model)
+
+		// A curator fixes the model name; the worker writes v2 and purges.
+		srv.serve(path, grenadierTemplate("Grenadier"))
+		d, err = svc.GetDefinitionByID(ctx, id)
+		require.NoError(t, err)
+		require.NotNil(t, d)
+		assert.Equal(t, "Grenadier", d.Model, "an expired entry must be refetched, not answered from memory")
+		assert.Equal(t, 2, srv.hitsFor(path))
+	})
 }
 
 // In legacy mode there is nothing to fall back to: the manifest is the whole
