@@ -945,9 +945,24 @@ func TestCatalogLooksUpAMissingDefinitionByID(t *testing.T) {
 		_, err := svc.GetDefinitionByID(ctx, "toyota_broken_2020")
 		require.ErrorContains(t, err, "returned 500")
 
+		srv.serve("/t/toyota_mislabelled_2020.json", supraTemplate)
+		_, err = svc.GetDefinitionByID(ctx, "toyota_mislabelled_2020")
+		require.ErrorContains(t, err, "carries the id")
+	})
+
+	// A manufacturer token id is required, and the producer side enforces it.
+	// A stored document that lacks one is still bad data rather than a bad
+	// request: it is skipped in a listing, so by id it is missing too, not a
+	// 500 for the caller to make sense of.
+	t.Run("a template that fails validation is missing, not an error", func(t *testing.T) {
 		srv.serve("/t/toyota_invalid_2020.json", `{"id":"toyota_invalid_2020","model":"X","manufacturer":{"slug":"toyota"}}`)
-		_, err = svc.GetDefinitionByID(ctx, "toyota_invalid_2020")
-		require.ErrorContains(t, err, "cannot be served")
+		for range 3 {
+			d, err := svc.GetDefinitionByID(ctx, "toyota_invalid_2020")
+			require.NoError(t, err)
+			assert.Nil(t, d)
+		}
+		assert.Equal(t, 1, srv.hitsFor("/t/toyota_invalid_2020.json"),
+			"an unservable document is remembered like a 404, so it is not refetched per query")
 	})
 
 	t.Run("a new build clears what the fallback learned", func(t *testing.T) {

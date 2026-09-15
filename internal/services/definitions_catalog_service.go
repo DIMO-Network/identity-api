@@ -837,7 +837,16 @@ func (s *DefinitionsCatalogService) fetchTemplate(ctx context.Context, lookups *
 		return nil, fmt.Errorf("failed to decode template %q: %w", id, err)
 	}
 	if reason := invalidReason(&d); reason != "" {
-		return nil, fmt.Errorf("template %q cannot be served: %s", id, reason)
+		// Bad stored data, not a bad request. A listing skips an element that
+		// fails validation, so answering a by-id lookup for the same document
+		// with a 500 would make one definition two different kinds of absent
+		// depending on how it was asked for. Remembered like a 404 so a client
+		// polling for it does not refetch it on every query, and logged so the
+		// document is fixed rather than quietly vanishing.
+		s.log.Warn().Str("definition", id).Str("reason", reason).
+			Msg("a definitions catalog template cannot be served and is answered as missing")
+		lookups.missing.Add(id, time.Now().Add(s.missingTTL))
+		return nil, nil
 	}
 	if d.ID != id {
 		return nil, fmt.Errorf("template requested as %q carries the id %q", id, d.ID)
