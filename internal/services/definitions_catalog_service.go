@@ -2,11 +2,14 @@ package services
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"math/rand/v2"
 	"net/http"
+	"net/url"
+	"regexp"
 	"slices"
 	"strings"
 	"sync"
@@ -14,15 +17,74 @@ import (
 	"time"
 
 	"github.com/DIMO-Network/identity-api/internal/config"
+	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/rs/zerolog"
+	"golang.org/x/sync/errgroup"
+	"golang.org/x/sync/singleflight"
 )
 
-// sourceLegacy is the flat manifest.json the deployed worker serves.
-const sourceLegacy = "legacy"
+// The two catalog layouts this service can read.
+const (
+	// sourceTemplate is the published template build: an index naming a build,
+	// and that build's immutable shards of Template documents.
+	sourceTemplate = "template"
+	// sourceLegacy is the flat manifest.json the deployed worker serves today.
+	sourceLegacy = "legacy"
+)
 
-const legacyManifestPath = "/manifest.json"
+const (
+	catalogIndexPath   = "/idx/current.json"
+	legacyManifestPath = "/manifest.json"
+	templatePathPrefix = "/t/"
+)
+
+// catalogShardConcurrency is how many shards of a build are fetched at once. A
+// build runs to about a hundred shards, and a refresh has refreshTimeout for
+// all of them.
+const catalogShardConcurrency = 8
+
+// Bounds on the by-id fallback caches. They keep a burst of lookups for the
+// same few ids off the origin; they do not mirror the catalog.
+const (
+	catalogFoundCacheSize   = 1024
+	catalogMissingCacheSize = 4096
+	// catalogMissingTTL is short because an id that misses is usually one that
+	// was just created, and it becomes reachable the moment it is published.
+	catalogMissingTTL = 5 * time.Minute
+	// catalogLookupTimeout bounds one by-id fetch whatever the caller's
+	// deadline: the fetch is shared, so it is not the first caller's to cancel.
+	catalogLookupTimeout = 10 * time.Second
+)
+
+// shardKeyRE matches the shard keys a build manifest lists,
+// idx/<build>/shard-<n>.json (definitions-worker src/build.ts, shardKey).
+var shardKeyRE = regexp.MustCompile(`^idx/([A-Za-z0-9_-]+)/shard-[0-9]+\.json$`)
+
+// buildManifest is the part of the worker's BuildManifest (definitions-worker
+// src/build.ts) this service reads. count and createdAt are deliberately not
+// decoded: nothing here depends on them, and decoding them strictly would let a
+// type change in either fail the whole index.
+type buildManifest struct {
+	Build  string   `json:"build"`
+	Shards []string `json:"shards"`
+}
+
+// templateLookups caches what the by-id fallback learned about one build. A new
+// build gets a new set: its listing already carries whatever the fallback went
+// to find, and a definition deleted since must not survive in a cache.
+type templateLookups struct {
+	found   *lru.Cache[string, *CatalogDefinition]
+	missing *lru.Cache[string, time.Time]
+}
+
+func newTemplateLookups() *templateLookups {
+	// lru.New only fails on a size below one, and both sizes are constants.
+	found, _ := lru.New[string, *CatalogDefinition](catalogFoundCacheSize)
+	missing, _ := lru.New[string, time.Time](catalogMissingCacheSize)
+	return &templateLookups{found: found, missing: missing}
+}
 
 // catalogFailuresBeforeError is how many refreshes must fail in a row before
 // the failure is logged at Error. One is noise: an origin hiccup, a rolling
@@ -130,12 +192,19 @@ type DefinitionsCatalogService struct {
 	// waits for the refresh in flight. Without it a persistently failing
 	// catalog would hang every device-definition query instead of failing it.
 	coldWait time.Duration
+	// lookupTimeout and missingTTL bound the by-id fallback.
+	lookupTimeout time.Duration
+	missingTTL    time.Duration
 
 	startOnce sync.Once
 	loopCtx   context.Context
 	stop      context.CancelFunc
 
 	snap atomic.Pointer[catalogSnapshot]
+
+	// lookups serves the by-id fallback for the build snap holds.
+	lookups     atomic.Pointer[templateLookups]
+	lookupGroup singleflight.Group
 
 	mu sync.Mutex
 	// lastErr is the latest failure, stored exactly as callers receive it.
@@ -176,10 +245,13 @@ func NewDefinitionsCatalogService(log *zerolog.Logger, settings *config.Settings
 		refreshTimeout:  30 * time.Second,
 		initialBackoff:  time.Second,
 		coldWait:        10 * time.Second,
+		lookupTimeout:   catalogLookupTimeout,
+		missingTTL:      catalogMissingTTL,
 		loopCtx:         loopCtx,
 		stop:            stop,
 		attemptDone:     make(chan struct{}),
 	}
+	s.lookups.Store(newTemplateLookups())
 	if s.maxStaleness > 0 && s.maxStaleness < s.refreshInterval {
 		stop()
 		return nil, fmt.Errorf("DEFINITIONS_MAX_STALENESS %s is shorter than the %s refresh interval: every replica would report a stale catalog between refreshes", s.maxStaleness, s.refreshInterval)
@@ -198,16 +270,31 @@ func (s *DefinitionsCatalogService) Close() {
 }
 
 // GetDefinitionByID returns the definition with the given slug id, or nil.
+//
+// In template mode the listing only changes when a build is published, so a
+// definition created since that build is not in the snapshot. A miss falls back
+// to the template document itself, which the worker writes as soon as the
+// definition is created.
 func (s *DefinitionsCatalogService) GetDefinitionByID(ctx context.Context, id string) (*CatalogDefinition, error) {
 	snap, err := s.snapshot(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return snap.byID[id], nil
+	if d := snap.byID[id]; d != nil {
+		return d, nil
+	}
+	if snap.source != sourceTemplate || id == "" {
+		return nil, nil
+	}
+	return s.lookupTemplate(ctx, id)
 }
 
 // DefinitionsByManufacturer returns the manufacturer's definitions sorted by
-// id. It answers from the snapshot alone.
+// id. It answers from the snapshot alone, with no per-query fallback: a listing
+// is a page of results, and going to the origin for it would put the catalog
+// back in the request path, which is what this service exists to avoid. A
+// definition published since the last build is reachable by id, and joins the
+// listing at the next build.
 func (s *DefinitionsCatalogService) DefinitionsByManufacturer(ctx context.Context, manufacturerTokenID int) ([]*CatalogDefinition, error) {
 	snap, err := s.snapshot(ctx)
 	if err != nil {
@@ -397,10 +484,181 @@ func (s *DefinitionsCatalogService) observe() {
 	catalogSnapshotAge.WithLabelValues(snap.source).Set(time.Since(snap.lastSuccess).Seconds())
 }
 
-// refresh reads the catalog once and adopts what it finds, returning the
-// source it read and the failure, if any.
+// refresh reads the catalog once and adopts what it finds, returning the source
+// it read and the failure, if any.
+//
+// The index is asked for first. A 200 means this deployment publishes template
+// builds; a 404 means the worker still serves only the flat manifest, which is
+// read instead. Any other answer is a failure: an origin error must never be
+// read as "this deployment has no index" and flip a pod to the other source.
 func (s *DefinitionsCatalogService) refresh(ctx context.Context) (string, error) {
-	return sourceLegacy, s.refreshLegacy(ctx, s.snap.Load())
+	held := s.snap.Load()
+	resp, err := s.get(ctx, s.baseURL+catalogIndexPath, held.etagFor(sourceTemplate))
+	if err != nil {
+		return sourceTemplate, err
+	}
+	defer drain(resp.Body)
+
+	switch resp.StatusCode {
+	case http.StatusNotFound:
+		return sourceLegacy, s.refreshLegacy(ctx, held)
+	case http.StatusNotModified:
+		if held == nil || held.source != sourceTemplate {
+			return sourceTemplate, errors.New("definitions index answered 304 for a build that is not held")
+		}
+		s.confirm(held, resp.Header.Get("Etag"))
+		return sourceTemplate, nil
+	case http.StatusOK:
+		return sourceTemplate, s.refreshTemplates(ctx, held, resp)
+	default:
+		return sourceTemplate, fmt.Errorf("definitions index returned %d", resp.StatusCode)
+	}
+}
+
+// refreshTemplates adopts the build the index names. A build id that has not
+// changed means the catalog has not changed: shards are immutable, so there is
+// nothing to fetch.
+func (s *DefinitionsCatalogService) refreshTemplates(ctx context.Context, held *catalogSnapshot, resp *http.Response) error {
+	var m buildManifest
+	if err := json.NewDecoder(resp.Body).Decode(&m); err != nil {
+		return fmt.Errorf("failed to decode the definitions index: %w", err)
+	}
+	if m.Build == "" {
+		return errors.New("the definitions index names no build")
+	}
+	etag := resp.Header.Get("Etag")
+	if held != nil && held.source == sourceTemplate && held.build == m.Build {
+		s.confirm(held, etag)
+		return nil
+	}
+
+	c, err := s.loadBuild(ctx, &m)
+	if err != nil {
+		return err
+	}
+	return s.adopt(held, c, sourceTemplate, m.Build, etag)
+}
+
+// loadBuild fetches every shard of a build and flattens the templates in it.
+func (s *DefinitionsCatalogService) loadBuild(ctx context.Context, m *buildManifest) (*catalogCandidate, error) {
+	if len(m.Shards) == 0 {
+		return nil, fmt.Errorf("build %s lists no shards", m.Build)
+	}
+	// The index is data from the network: a key is only ever read as this
+	// build's own shard, never as a URL of the producer's choosing.
+	for _, key := range m.Shards {
+		match := shardKeyRE.FindStringSubmatch(key)
+		if match == nil || match[1] != m.Build {
+			return nil, fmt.Errorf("build %s lists %q, which is not one of its shard keys", m.Build, key)
+		}
+	}
+
+	parts := make([]*catalogCandidate, len(m.Shards))
+	g, gctx := errgroup.WithContext(ctx)
+	g.SetLimit(catalogShardConcurrency)
+	for i, key := range m.Shards {
+		g.Go(func() error {
+			part, err := s.fetchShard(gctx, key)
+			if err != nil {
+				return err
+			}
+			parts[i] = part
+			return nil
+		})
+	}
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+
+	// A build is vetted whole: a shard that lost half its templates is a
+	// catalog that lost them, not a shard to serve around.
+	c := &catalogCandidate{}
+	for _, part := range parts {
+		c.merge(part)
+	}
+	return c, nil
+}
+
+func (s *DefinitionsCatalogService) fetchShard(ctx context.Context, key string) (*catalogCandidate, error) {
+	resp, err := s.get(ctx, s.baseURL+"/"+key, "")
+	if err != nil {
+		return nil, err
+	}
+	defer drain(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("definitions catalog returned %d for shard %s", resp.StatusCode, key)
+	}
+
+	c := &catalogCandidate{where: key + " "}
+	if err := decodeShard(resp.Body, c.visit); err != nil {
+		return nil, fmt.Errorf("failed to decode shard %s: %w", key, err)
+	}
+	return c, nil
+}
+
+// lookupTemplate answers a by-id miss from the template document itself.
+func (s *DefinitionsCatalogService) lookupTemplate(ctx context.Context, id string) (*CatalogDefinition, error) {
+	lookups := s.lookups.Load()
+	if d, ok := lookups.found.Get(id); ok {
+		return d, nil
+	}
+	if expiry, ok := lookups.missing.Get(id); ok {
+		if time.Now().Before(expiry) {
+			return nil, nil
+		}
+		lookups.missing.Remove(id)
+	}
+
+	// One fetch per id however many callers arrive at once, and it outlives the
+	// caller that started it, because the others are waiting on it.
+	shared := s.lookupGroup.DoChan(id, func() (any, error) {
+		fetchCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), s.lookupTimeout)
+		defer cancel()
+		return s.fetchTemplate(fetchCtx, lookups, id)
+	})
+	select {
+	case <-ctx.Done():
+		return nil, fmt.Errorf("looking up definition %q: %w", id, ctx.Err())
+	case res := <-shared:
+		if res.Err != nil {
+			return nil, res.Err
+		}
+		d, _ := res.Val.(*CatalogDefinition)
+		return d, nil
+	}
+}
+
+func (s *DefinitionsCatalogService) fetchTemplate(ctx context.Context, lookups *templateLookups, id string) (*CatalogDefinition, error) {
+	target := s.baseURL + templatePathPrefix + url.PathEscape(id) + ".json"
+	resp, err := s.get(ctx, target, "")
+	if err != nil {
+		return nil, fmt.Errorf("looking up definition %q: %w", id, err)
+	}
+	defer drain(resp.Body)
+
+	switch resp.StatusCode {
+	case http.StatusNotFound:
+		// Remembered briefly, so a client polling for a definition that does
+		// not exist does not turn every query into a request.
+		lookups.missing.Add(id, time.Now().Add(s.missingTTL))
+		return nil, nil
+	case http.StatusOK:
+	default:
+		return nil, fmt.Errorf("definitions catalog returned %d for template %q", resp.StatusCode, id)
+	}
+
+	d, err := decodeTemplate(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode template %q: %w", id, err)
+	}
+	if reason := invalidReason(&d); reason != "" {
+		return nil, fmt.Errorf("template %q cannot be served: %s", id, reason)
+	}
+	if d.ID != id {
+		return nil, fmt.Errorf("template requested as %q carries the id %q", id, d.ID)
+	}
+	lookups.found.Add(id, &d)
+	return &d, nil
 }
 
 // refreshLegacy reads the flat manifest.json.
@@ -478,6 +736,9 @@ func (s *DefinitionsCatalogService) adopt(held *catalogSnapshot, c *catalogCandi
 
 	next := newCatalogSnapshot(c.defs, source, build, etag)
 	s.snap.Store(next)
+	if held == nil || held.source != next.source || held.build != next.build {
+		s.lookups.Store(newTemplateLookups())
+	}
 
 	level := zerolog.DebugLevel
 	if held == nil || held.source != next.source || held.build != next.build || held.size() != next.size() {

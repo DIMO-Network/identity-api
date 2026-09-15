@@ -566,3 +566,270 @@ func TestCatalogStartsLazilyOnFirstRead(t *testing.T) {
 		return err == nil && supra != nil
 	}, 5*time.Second, time.Millisecond, "the loop must pick up a changed manifest")
 }
+
+const (
+	camryTemplate = `{"id":"toyota_camry_2020","deviceType":"vehicle",
+	   "manufacturer":{"tokenId":131,"slug":"toyota","name":"Toyota"},
+	   "model":"Camry","year":2020,"imageURI":"https://img/camry","hardwareTemplateId":"130",
+	   "attributes":{"powertrain_type":"ICE","fuel_tank_capacity_gal":15.8,"driven_wheels":4,"has_tow_package":true},
+	   "trims":[{"name":"XSE V6","attributes":{"number_of_doors":4}}],
+	   "version":3,"author":"0x0000000000000000000000000000000000000001","createdAt":"t","updatedAt":"t"}`
+	supraTemplate = `{"id":"toyota_supra_2021","deviceType":"vehicle",
+	   "manufacturer":{"tokenId":131,"slug":"toyota","name":"Toyota"},
+	   "model":"Supra","year":2021,"attributes":{},"trims":[{"name":"3.0","attributes":{}}],
+	   "version":1,"createdAt":"t","updatedAt":"t"}`
+)
+
+func shardKeyFor(build string, n int) string  { return fmt.Sprintf("idx/%s/shard-%d.json", build, n) }
+func shardPathFor(build string, n int) string { return "/" + shardKeyFor(build, n) }
+
+func buildIndexOf(build string, shards ...string) string {
+	quoted := make([]string, len(shards))
+	for i, key := range shards {
+		quoted[i] = fmt.Sprintf("%q", key)
+	}
+	return fmt.Sprintf(`{"build":%q,"createdAt":"t","count":%d,"shards":[%s]}`, build, len(shards), strings.Join(quoted, ","))
+}
+
+// serveBuild publishes a build: the index that names it and one shard holding
+// the given template documents.
+func serveBuild(srv *catalogServer, build string, templates ...string) {
+	srv.serve(catalogIndexPath, buildIndexOf(build, shardKeyFor(build, 0)))
+	srv.serve(shardPathFor(build, 0), "["+strings.Join(templates, ",")+"]")
+}
+
+// The published build is the catalog once the worker serves an index, and its
+// templates flatten exactly as device-definitions-api flattens them.
+func TestCatalogAdoptsATemplateBuild(t *testing.T) {
+	srv := newCatalogServer(t)
+	srv.serve(catalogIndexPath, buildIndexOf("b1", shardKeyFor("b1", 0), shardKeyFor("b1", 1)))
+	srv.serve(shardPathFor("b1", 0), "["+camryTemplate+"]")
+	srv.serve(shardPathFor("b1", 1), "["+supraTemplate+"]")
+	svc := manualCatalog(t, srv, config.Settings{})
+	ctx := context.Background()
+
+	require.NoError(t, svc.refreshOnce())
+	assert.Zero(t, srv.hitsFor(legacyManifestPath), "the flat manifest must not be read when an index exists")
+
+	d, err := svc.GetDefinitionByID(ctx, "toyota_camry_2020")
+	require.NoError(t, err)
+	require.NotNil(t, d)
+	assert.Equal(t, "Camry", d.Model)
+	assert.Equal(t, 2020, d.Year)
+	assert.Equal(t, "vehicle", d.DeviceType)
+	assert.Equal(t, "https://img/camry", d.ImageURI)
+	assert.Equal(t, CatalogManufacturer{TokenID: 131, Slug: "toyota", Name: "Toyota"}, d.Manufacturer)
+	assert.Empty(t, d.KSUID, "templates have no ksuid, and inventing one would fill an identifier field")
+	assert.Equal(t, []CatalogDefinitionAttribute{
+		{Name: "driven_wheels", Value: "4"},
+		{Name: "fuel_tank_capacity_gal", Value: "15.8"},
+		{Name: "has_tow_package", Value: "true"},
+		{Name: "powertrain_type", Value: "ICE"},
+	}, d.Metadata.DeviceAttributes, "template attributes only, sorted by name, rendered as dd-api renders them")
+
+	defs, err := svc.DefinitionsByManufacturer(ctx, 131)
+	require.NoError(t, err)
+	require.Len(t, defs, 2, "every shard of the build is part of the catalog")
+	assert.Equal(t, "toyota_camry_2020", defs[0].ID)
+	assert.Equal(t, "toyota_supra_2021", defs[1].ID)
+	assert.Equal(t, sourceTemplate, svc.snap.Load().source)
+}
+
+// Shards are immutable, so a build id that has not changed means there is
+// nothing to fetch. Refreshing a 17,000-definition catalog every minute
+// because the index was re-read is exactly the download this design removes.
+func TestCatalogSkipsTheShardsWhenTheBuildIsUnchanged(t *testing.T) {
+	srv := newCatalogServer(t)
+	index := buildIndexOf("b1", shardKeyFor("b1", 0))
+	srv.handle(catalogIndexPath, func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Etag", `W/"b1"`)
+		if r.Header.Get("If-None-Match") == `W/"b1"` {
+			w.WriteHeader(http.StatusNotModified)
+			return
+		}
+		_, _ = io.WriteString(w, index)
+	})
+	srv.serve(shardPathFor("b1", 0), "["+camryTemplate+"]")
+	svc := manualCatalog(t, srv, config.Settings{})
+
+	require.NoError(t, svc.refreshOnce())
+	require.Equal(t, 1, srv.hitsFor(shardPathFor("b1", 0)))
+
+	// A 304 on the index: unchanged, and the snapshot's age restarts.
+	require.NoError(t, svc.refreshOnce())
+	assert.Equal(t, 1, srv.hitsFor(shardPathFor("b1", 0)), "a 304 must not refetch the build")
+
+	// A 200 naming the build already held: still nothing to fetch.
+	srv.serve(catalogIndexPath, index)
+	require.NoError(t, svc.refreshOnce())
+	assert.Equal(t, 1, srv.hitsFor(shardPathFor("b1", 0)), "an unchanged build id must not refetch the build")
+	assert.Equal(t, 3, srv.hitsFor(catalogIndexPath))
+
+	// A new build is fetched.
+	serveBuild(srv, "b2", camryTemplate, supraTemplate)
+	require.NoError(t, svc.refreshOnce())
+	assert.Equal(t, 1, srv.hitsFor(shardPathFor("b2", 0)))
+	assert.Equal(t, "b2", svc.snap.Load().build)
+}
+
+// The deployed worker serves only manifest.json and answers 404 for the index,
+// so identity has to read either layout and pick per refresh. A 5xx is not a
+// missing index and must never flip the source.
+func TestCatalogFallsBackToTheLegacyManifestWhenTheIndexIsMissing(t *testing.T) {
+	srv := newCatalogServer(t)
+	srv.serve(legacyManifestPath, manifestOf(camryDoc))
+	svc := manualCatalog(t, srv, config.Settings{})
+	ctx := context.Background()
+
+	// No index deployed yet: the flat manifest is the catalog.
+	require.NoError(t, svc.refreshOnce())
+	assert.Equal(t, sourceLegacy, svc.snap.Load().source)
+	d, err := svc.GetDefinitionByID(ctx, "toyota_camry_2020")
+	require.NoError(t, err)
+	require.NotNil(t, d)
+
+	// The worker is deployed: the build takes over.
+	serveBuild(srv, "b1", camryTemplate, supraTemplate)
+	require.NoError(t, svc.refreshOnce())
+	assert.Equal(t, sourceTemplate, svc.snap.Load().source)
+	assert.Equal(t, "b1", svc.snap.Load().build)
+
+	// The origin breaks: the held build stays, and the legacy manifest is not
+	// read behind its back.
+	legacyHits := srv.hitsFor(legacyManifestPath)
+	srv.fail(catalogIndexPath, http.StatusServiceUnavailable)
+	require.ErrorContains(t, svc.refreshOnce(), "definitions index returned 503")
+	assert.Equal(t, legacyHits, srv.hitsFor(legacyManifestPath), "a 5xx on the index must not flip the source")
+	assert.Equal(t, sourceTemplate, svc.snap.Load().source)
+	d, err = svc.GetDefinitionByID(ctx, "toyota_camry_2020")
+	require.NoError(t, err)
+	require.NotNil(t, d)
+}
+
+// A listing only changes when a build is published, so a definition created
+// since then is missing from the snapshot. By id, it is fetched from the
+// template document the worker wrote when it was created.
+func TestCatalogLooksUpAMissingDefinitionByID(t *testing.T) {
+	srv := newCatalogServer(t)
+	serveBuild(srv, "b1", camryTemplate)
+	svc := manualCatalog(t, srv, config.Settings{})
+	ctx := context.Background()
+	require.NoError(t, svc.refreshOnce())
+
+	t.Run("found, then answered from the cache", func(t *testing.T) {
+		srv.serve("/t/toyota_supra_2021.json", supraTemplate)
+		for range 3 {
+			d, err := svc.GetDefinitionByID(ctx, "toyota_supra_2021")
+			require.NoError(t, err)
+			require.NotNil(t, d)
+			assert.Equal(t, "Supra", d.Model)
+			assert.Equal(t, 131, d.Manufacturer.TokenID)
+		}
+		assert.Equal(t, 1, srv.hitsFor("/t/toyota_supra_2021.json"), "a found template is cached for this build")
+	})
+
+	t.Run("missing, then answered from the negative cache", func(t *testing.T) {
+		for range 3 {
+			d, err := svc.GetDefinitionByID(ctx, "toyota_ghost_2020")
+			require.NoError(t, err, "a definition that does not exist is not an error")
+			assert.Nil(t, d)
+		}
+		assert.Equal(t, 1, srv.hitsFor("/t/toyota_ghost_2020.json"), "a 404 is remembered for its TTL")
+	})
+
+	t.Run("an id that needs escaping", func(t *testing.T) {
+		srv.serve("/t/dodge_town-&-country_2012.json", strings.Replace(camryTemplate, "toyota_camry_2020", "dodge_town-&-country_2012", 1))
+		d, err := svc.GetDefinitionByID(ctx, "dodge_town-&-country_2012")
+		require.NoError(t, err)
+		require.NotNil(t, d)
+		assert.Equal(t, "dodge_town-&-country_2012", d.ID)
+	})
+
+	t.Run("any other failure is reported", func(t *testing.T) {
+		srv.fail("/t/toyota_broken_2020.json", http.StatusInternalServerError)
+		_, err := svc.GetDefinitionByID(ctx, "toyota_broken_2020")
+		require.ErrorContains(t, err, "returned 500")
+
+		srv.serve("/t/toyota_invalid_2020.json", `{"id":"toyota_invalid_2020","model":"X","manufacturer":{"slug":"toyota"}}`)
+		_, err = svc.GetDefinitionByID(ctx, "toyota_invalid_2020")
+		require.ErrorContains(t, err, "cannot be served")
+	})
+
+	t.Run("a new build clears what the fallback learned", func(t *testing.T) {
+		before := srv.hitsFor("/t/toyota_supra_2021.json")
+		serveBuild(srv, "b2", camryTemplate)
+		require.NoError(t, svc.refreshOnce())
+
+		d, err := svc.GetDefinitionByID(ctx, "toyota_supra_2021")
+		require.NoError(t, err)
+		require.NotNil(t, d)
+		assert.Equal(t, before+1, srv.hitsFor("/t/toyota_supra_2021.json"))
+
+		d, err = svc.GetDefinitionByID(ctx, "toyota_ghost_2020")
+		require.NoError(t, err)
+		assert.Nil(t, d)
+		assert.Equal(t, 2, srv.hitsFor("/t/toyota_ghost_2020.json"))
+	})
+
+	t.Run("expired negative entries are refetched", func(t *testing.T) {
+		// The TTL is stamped on the entry when it is written, so an id that has
+		// not been looked up yet is the one that shows expiry working.
+		svc.missingTTL = -time.Second
+		for range 2 {
+			d, err := svc.GetDefinitionByID(ctx, "toyota_phantom_2020")
+			require.NoError(t, err)
+			assert.Nil(t, d)
+		}
+		assert.Equal(t, 2, srv.hitsFor("/t/toyota_phantom_2020.json"), "an expired entry must not answer a later query")
+	})
+}
+
+// In legacy mode there is nothing to fall back to: the manifest is the whole
+// catalog, and a miss is a miss.
+func TestCatalogDoesNotLookUpTemplatesInLegacyMode(t *testing.T) {
+	srv := newCatalogServer(t)
+	srv.serve(legacyManifestPath, manifestOf(camryDoc))
+	srv.serve("/t/toyota_supra_2021.json", supraTemplate)
+	svc := manualCatalog(t, srv, config.Settings{})
+	require.NoError(t, svc.refreshOnce())
+
+	d, err := svc.GetDefinitionByID(context.Background(), "toyota_supra_2021")
+	require.NoError(t, err)
+	assert.Nil(t, d)
+	assert.Zero(t, srv.hitsFor("/t/toyota_supra_2021.json"))
+}
+
+func TestCatalogRefusesABrokenBuild(t *testing.T) {
+	srv := newCatalogServer(t)
+	ctx := context.Background()
+
+	for name, tc := range map[string]struct {
+		index  string
+		expect string
+	}{
+		"no build":      {index: `{"shards":["idx/b1/shard-0.json"]}`, expect: "names no build"},
+		"no shards":     {index: `{"build":"b1","shards":[]}`, expect: "lists no shards"},
+		"foreign shard": {index: buildIndexOf("b1", "idx/b2/shard-0.json"), expect: "not one of its shard keys"},
+		"absolute url":  {index: buildIndexOf("b1", "https://elsewhere.example/shard-0.json"), expect: "not one of its shard keys"},
+		"path escape":   {index: buildIndexOf("b1", "idx/b1/../../secret.json"), expect: "not one of its shard keys"},
+		"broken index":  {index: `{"build":`, expect: "failed to decode the definitions index"},
+	} {
+		srv.serve(catalogIndexPath, tc.index)
+		svc := manualCatalog(t, srv, config.Settings{})
+		require.ErrorContains(t, svc.refreshOnce(), tc.expect, name)
+		_, err := svc.GetDefinitionByID(ctx, "toyota_camry_2020")
+		assert.Error(t, err, "%s: a pod with no catalog reports why", name)
+	}
+
+	t.Run("a shard that cannot be read fails the build", func(t *testing.T) {
+		srv.serve(catalogIndexPath, buildIndexOf("b1", shardKeyFor("b1", 0), shardKeyFor("b1", 1)))
+		srv.serve(shardPathFor("b1", 0), "["+camryTemplate+"]")
+		srv.fail(shardPathFor("b1", 1), http.StatusInternalServerError)
+		svc := manualCatalog(t, srv, config.Settings{})
+		require.ErrorContains(t, svc.refreshOnce(), "returned 500 for shard")
+
+		srv.serve(shardPathFor("b1", 1), `[{"id":`)
+		svc = manualCatalog(t, srv, config.Settings{})
+		require.ErrorContains(t, svc.refreshOnce(), "failed to decode shard")
+	})
+}

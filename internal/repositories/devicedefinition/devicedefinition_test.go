@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
@@ -70,18 +71,53 @@ const manifestBody = `{
   ]
 }`
 
-func startCatalog(t *testing.T) *services.DefinitionsCatalogService {
+// catalogFixture serves the legacy manifest these tests are written against
+// and records anything else that was asked for.
+type catalogFixture struct {
+	*services.DefinitionsCatalogService
+	mu         sync.Mutex
+	unexpected []string
+}
+
+func startCatalog(t *testing.T) *catalogFixture {
 	t.Helper()
+	f := &catalogFixture{}
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		require.Equal(t, "/manifest.json", r.URL.Path)
-		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(manifestBody))
+		switch r.URL.Path {
+		case "/manifest.json":
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(manifestBody))
+		case "/idx/current.json":
+			// No template index here, so the catalog reads the flat manifest
+			// these tests are written against.
+			http.NotFound(w, r)
+		default:
+			// This runs on a server goroutine, where require's FailNow would
+			// call runtime.Goexit and kill the connection instead of failing
+			// the test, leaving a confusing EOF for the test goroutine to trip
+			// over. Record it and assert on the test goroutine instead.
+			f.mu.Lock()
+			f.unexpected = append(f.unexpected, r.URL.Path)
+			f.mu.Unlock()
+			http.NotFound(w, r)
+		}
 	}))
 	t.Cleanup(srv.Close)
+
 	logger := zerolog.Nop()
 	catalog, err := services.NewDefinitionsCatalogService(&logger, &config.Settings{DefinitionsCatalogURL: srv.URL})
 	require.NoError(t, err)
-	return catalog
+	t.Cleanup(catalog.Close)
+	f.DefinitionsCatalogService = catalog
+	return f
+}
+
+// assertOnlyExpectedPaths runs on the test goroutine, after the queries.
+func (f *catalogFixture) assertOnlyExpectedPaths(t *testing.T) {
+	t.Helper()
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	assert.Empty(t, f.unexpected, "the catalog asked for paths this fixture does not serve")
 }
 
 func Test_GetDeviceDefinitions_Query(t *testing.T) {
@@ -106,7 +142,8 @@ func Test_GetDeviceDefinitions_Query(t *testing.T) {
 
 	logger := zerolog.Nop()
 	repo := base.NewRepository(pdb, config.Settings{}, &logger)
-	adController := New(repo, startCatalog(t))
+	catalog := startCatalog(t)
+	adController := New(repo, catalog.DefinitionsCatalogService)
 
 	// Last 2 BMW definitions before the cursor for bmw_x7_2020.
 	last := 2
@@ -131,6 +168,8 @@ func Test_GetDeviceDefinitions_Query(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 1, res.TotalCount)
 	assert.Equal(t, "bmw_x7_2020", res.Nodes[0].DeviceDefinitionID)
+
+	catalog.assertOnlyExpectedPaths(t)
 }
 
 func Test_GetDeviceDefinition_Query(t *testing.T) {
@@ -148,7 +187,8 @@ func Test_GetDeviceDefinition_Query(t *testing.T) {
 
 	logger := zerolog.Nop()
 	repo := base.NewRepository(pdb, config.Settings{}, &logger)
-	adController := New(repo, startCatalog(t))
+	catalog := startCatalog(t)
+	adController := New(repo, catalog.DefinitionsCatalogService)
 
 	res, err := adController.GetDeviceDefinition(ctx, model.DeviceDefinitionBy{ID: "alfa-romeo_147_2007"})
 	require.NoError(t, err)
@@ -162,4 +202,6 @@ func Test_GetDeviceDefinition_Query(t *testing.T) {
 	require.Len(t, res.Attributes, 1)
 	assert.Equal(t, "powertrain_type", res.Attributes[0].Name)
 	assert.Equal(t, "ICE", res.Attributes[0].Value)
+
+	catalog.assertOnlyExpectedPaths(t)
 }

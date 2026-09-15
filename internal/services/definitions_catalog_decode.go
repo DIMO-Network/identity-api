@@ -5,6 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
+	"slices"
+	"strconv"
 	"strings"
 )
 
@@ -117,6 +120,81 @@ func decodeElements[T any](dec *json.Decoder, visit func(T, error)) error {
 	return expectDelim(dec, ']')
 }
 
+// catalogTemplate is the part of a definitions-worker Template document this
+// service reads (definitions-worker schema/template.schema.json). Trims,
+// version, author and the timestamps are deliberately not decoded: a flattened
+// definition has nowhere to put them.
+type catalogTemplate struct {
+	ID           string              `json:"id"`
+	DeviceType   string              `json:"deviceType"`
+	Manufacturer CatalogManufacturer `json:"manufacturer"`
+	Model        string              `json:"model"`
+	Year         int                 `json:"year"`
+	ImageURI     string              `json:"imageURI"`
+	Attributes   map[string]any      `json:"attributes"`
+}
+
+// templateToDefinition flattens a template the way device-definitions-api does
+// (internal/infrastructure/gateways/device_definition_catalog_service.go,
+// templateToDefinitionModel), so the same template describes the same
+// definition whichever service a client asks. Template-level attributes only,
+// sorted by name: a trim's attributes belong to that trim, not to the
+// model-year. KSUID stays empty because templates have none, and inventing one
+// would put a value into a field consumers read as an identifier.
+func templateToDefinition(t *catalogTemplate) CatalogDefinition {
+	attrs := make([]CatalogDefinitionAttribute, 0, len(t.Attributes))
+	for _, name := range slices.Sorted(maps.Keys(t.Attributes)) {
+		attrs = append(attrs, CatalogDefinitionAttribute{Name: name, Value: attributeString(t.Attributes[name])})
+	}
+	return CatalogDefinition{
+		ID:           t.ID,
+		Model:        t.Model,
+		Year:         t.Year,
+		DeviceType:   t.DeviceType,
+		ImageURI:     t.ImageURI,
+		Metadata:     CatalogDefinitionMetadata{DeviceAttributes: attrs},
+		Manufacturer: t.Manufacturer,
+	}
+}
+
+// attributeString renders a typed attribute for the string-valued legacy
+// shape, matching dd-api's attributeString: strconv rather than fmt, so 15.8
+// renders as "15.8" and not "1.58e+01". dd-api also handles int, which a JSON
+// decode into map[string]any never produces.
+func attributeString(v any) string {
+	switch t := v.(type) {
+	case string:
+		return t
+	case bool:
+		return strconv.FormatBool(t)
+	case float64:
+		return strconv.FormatFloat(t, 'f', -1, 64)
+	default:
+		return fmt.Sprint(v)
+	}
+}
+
+// decodeShard streams one build shard, a JSON array of Template documents,
+// flattening each into a definition as it is decoded.
+func decodeShard(r io.Reader, visit func(CatalogDefinition, error)) error {
+	return decodeElements(json.NewDecoder(r), func(t catalogTemplate, err error) {
+		if err != nil {
+			visit(CatalogDefinition{ID: t.ID}, err)
+			return
+		}
+		visit(templateToDefinition(&t), nil)
+	})
+}
+
+// decodeTemplate decodes the single template document served at /t/<id>.json.
+func decodeTemplate(r io.Reader) (CatalogDefinition, error) {
+	var t catalogTemplate
+	if err := json.NewDecoder(r).Decode(&t); err != nil {
+		return CatalogDefinition{}, err
+	}
+	return templateToDefinition(&t), nil
+}
+
 func expectDelim(dec *json.Decoder, want json.Delim) error {
 	tok, err := dec.Token()
 	if err != nil {
@@ -148,6 +226,9 @@ const maxInvalidExamples = 5
 
 // catalogCandidate is a decoded catalog that has not been adopted yet.
 type catalogCandidate struct {
+	// where names what was decoded, so an example from a build says which
+	// shard it came from.
+	where string
 	// defs holds the valid definitions only.
 	defs []CatalogDefinition
 	// elements counts every element seen, valid or not.
@@ -172,7 +253,21 @@ func (c *catalogCandidate) visit(d CatalogDefinition, err error) {
 	}
 	c.invalid++
 	if len(c.examples) < maxInvalidExamples {
-		c.examples = append(c.examples, fmt.Sprintf("element %d (id %q): %s", index, d.ID, reason))
+		c.examples = append(c.examples, fmt.Sprintf("%selement %d (id %q): %s", c.where, index, d.ID, reason))
+	}
+}
+
+// merge folds one shard's candidate into c, keeping the running counts and the
+// first few examples, so a build is vetted as a whole.
+func (c *catalogCandidate) merge(part *catalogCandidate) {
+	c.defs = append(c.defs, part.defs...)
+	c.elements += part.elements
+	c.invalid += part.invalid
+	for _, example := range part.examples {
+		if len(c.examples) >= maxInvalidExamples {
+			break
+		}
+		c.examples = append(c.examples, example)
 	}
 }
 

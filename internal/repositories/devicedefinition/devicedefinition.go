@@ -36,12 +36,16 @@ func New(db *base.Repository, catalog *services.DefinitionsCatalogService) *Repo
 }
 
 func (r *Repository) ToAPI(v *services.CatalogDefinition, mfr *models.Manufacturer) (*gmodel.DeviceDefinition, error) {
-	ksuid := v.KSUID
 	var result = gmodel.DeviceDefinition{
 		DeviceDefinitionID: v.ID,
-		LegacyID:           &ksuid,
 		Year:               v.Year,
 		Model:              v.Model,
+	}
+	// A template carries no ksuid and legacyId is nullable, so leave it null
+	// rather than answering with an empty legacy id that resolves to nothing.
+	if v.KSUID != "" {
+		ksuid := v.KSUID
+		result.LegacyID = &ksuid
 	}
 	if mfr != nil {
 		gmfr, err := r.ManufacturerRepo.ToAPI(mfr)
