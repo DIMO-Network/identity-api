@@ -113,6 +113,21 @@ func (r *Repository) GetManufacturer(ctx context.Context, by gmodel.Manufacturer
 	return r.ToAPI(m)
 }
 
+// SlugsByTokenID returns every manufacturer's slug keyed by token id. The
+// device definitions catalog is checked against it: the catalog carries no
+// chain marker, and the same slug has different token ids on different chains.
+func (r *Repository) SlugsByTokenID(ctx context.Context) (map[int]string, error) {
+	ms, err := models.Manufacturers(qm.Select(models.ManufacturerColumns.ID, models.ManufacturerColumns.Slug)).All(ctx, r.PDB.DBS().Reader)
+	if err != nil {
+		return nil, fmt.Errorf("error reading manufacturers: %w", err)
+	}
+	slugs := make(map[int]string, len(ms))
+	for _, m := range ms {
+		slugs[m.ID] = m.Slug
+	}
+	return slugs, nil
+}
+
 func (r *Repository) GetManufacturers(ctx context.Context) (*gmodel.ManufacturerConnection, error) {
 	ms, err := models.Manufacturers().All(ctx, r.PDB.DBS().Reader)
 	if err != nil {

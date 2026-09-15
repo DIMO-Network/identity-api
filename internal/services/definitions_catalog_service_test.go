@@ -2,8 +2,10 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -79,10 +81,10 @@ func (c *catalogServer) hitsFor(path string) int {
 	return c.hits[path]
 }
 
-func newTestCatalog(t *testing.T, settings config.Settings) *DefinitionsCatalogService {
+func newTestCatalog(t *testing.T, settings config.Settings, opts ...DefinitionsCatalogOption) *DefinitionsCatalogService {
 	t.Helper()
 	logger := zerolog.Nop()
-	svc, err := NewDefinitionsCatalogService(&logger, &settings)
+	svc, err := NewDefinitionsCatalogService(&logger, &settings, opts...)
 	require.NoError(t, err)
 	t.Cleanup(svc.Close)
 	return svc
@@ -90,12 +92,12 @@ func newTestCatalog(t *testing.T, settings config.Settings) *DefinitionsCatalogS
 
 // manualCatalog builds a service whose refresh loop never starts, so the test
 // drives each refresh with refreshOnce and no assertion races a goroutine.
-func manualCatalog(t *testing.T, srv *catalogServer, settings config.Settings) *DefinitionsCatalogService {
+func manualCatalog(t *testing.T, srv *catalogServer, settings config.Settings, opts ...DefinitionsCatalogOption) *DefinitionsCatalogService {
 	t.Helper()
 	if settings.DefinitionsCatalogURL == "" {
 		settings.DefinitionsCatalogURL = srv.URL
 	}
-	svc := newTestCatalog(t, settings)
+	svc := newTestCatalog(t, settings, opts...)
 	svc.startOnce.Do(func() {}) // claim the once: Start and reads no longer start the loop
 	svc.coldWait = 10 * time.Millisecond
 	return svc
@@ -831,5 +833,92 @@ func TestCatalogRefusesABrokenBuild(t *testing.T) {
 		srv.serve(shardPathFor("b1", 1), `[{"id":`)
 		svc = manualCatalog(t, srv, config.Settings{})
 		require.ErrorContains(t, svc.refreshOnce(), "failed to decode shard")
+	})
+}
+
+// The catalog carries no chain marker, and nothing ties DEFINITIONS_CATALOG_URL
+// to DIMO_REGISTRY_CHAIN_ID. 108 of the 123 slugs dev and prod share have
+// different token ids, so a deployment pointed at the other chain's catalog
+// used to list another make's definitions under every manufacturer, silently.
+func TestCatalogChecksACandidateAgainstThisChain(t *testing.T) {
+	chain := map[int]string{}
+	docs := make([]string, 0, 40)
+	for token := 1; token <= 40; token++ {
+		slug := fmt.Sprintf("mfr%d", token)
+		chain[token] = slug
+		docs = append(docs, fmt.Sprintf(`{"id":"%s_model_2020","model":"M","year":2020,
+		  "manufacturer":{"tokenId":%d,"slug":%q,"name":"M"}}`, slug, token, slug))
+	}
+
+	srv := newCatalogServer(t)
+	srv.serve(legacyManifestPath, manifestOf(docs...))
+	ctx := context.Background()
+
+	// renamed returns this chain's manufacturers with n of them renamed, as a
+	// catalog from another chain would look: the same token ids, other slugs.
+	renamed := func(n int) map[int]string {
+		out := make(map[int]string, len(chain))
+		maps.Copy(out, chain)
+		for token := 1; token <= n; token++ {
+			out[token] = fmt.Sprintf("other%d", token)
+		}
+		return out
+	}
+	lookup := func(slugs map[int]string, err error) ManufacturerSlugs {
+		return func(context.Context) (map[int]string, error) { return slugs, err }
+	}
+	adopted := func(t *testing.T, svc *DefinitionsCatalogService) {
+		t.Helper()
+		d, err := svc.GetDefinitionByID(ctx, "mfr1_model_2020")
+		require.NoError(t, err)
+		assert.NotNil(t, d)
+	}
+
+	t.Run("a catalog that agrees is adopted", func(t *testing.T) {
+		svc := manualCatalog(t, srv, config.Settings{}, WithManufacturerSlugs(lookup(chain, nil)))
+		require.NoError(t, svc.refreshOnce())
+		adopted(t, svc)
+	})
+
+	t.Run("a renamed slug or two is drift, not another chain", func(t *testing.T) {
+		svc := manualCatalog(t, srv, config.Settings{}, WithManufacturerSlugs(lookup(renamed(2), nil)))
+		require.NoError(t, svc.refreshOnce())
+		adopted(t, svc)
+	})
+
+	t.Run("a catalog from another chain is refused", func(t *testing.T) {
+		svc := manualCatalog(t, srv, config.Settings{}, WithManufacturerSlugs(lookup(renamed(3), nil)))
+		err := svc.refreshOnce()
+		require.ErrorContains(t, err, "carry a different slug")
+		assert.ErrorContains(t, err, `token 1 is "other1" here and "mfr1" in the catalog`)
+
+		_, err = svc.GetDefinitionByID(ctx, "mfr1_model_2020")
+		assert.Error(t, err, "nothing from the other chain is served")
+	})
+
+	t.Run("only manufacturers this chain has are compared", func(t *testing.T) {
+		// Five shared token ids, all agreeing: the other 35 say nothing about
+		// which chain the catalog belongs to.
+		few := map[int]string{1: "mfr1", 2: "mfr2", 3: "mfr3", 4: "mfr4", 5: "mfr5"}
+		svc := manualCatalog(t, srv, config.Settings{}, WithManufacturerSlugs(lookup(few, nil)))
+		require.NoError(t, svc.refreshOnce())
+		adopted(t, svc)
+
+		// Three of those five disagreeing is past the limit of two.
+		few[1], few[2], few[3] = "other1", "other2", "other3"
+		svc = manualCatalog(t, srv, config.Settings{}, WithManufacturerSlugs(lookup(few, nil)))
+		require.ErrorContains(t, svc.refreshOnce(), "3 of the 5 manufacturers shared with this chain")
+	})
+
+	t.Run("a lookup failure adopts anyway", func(t *testing.T) {
+		svc := manualCatalog(t, srv, config.Settings{}, WithManufacturerSlugs(lookup(nil, errors.New("database is down"))))
+		require.NoError(t, svc.refreshOnce(), "the database is this check's second opinion, not the catalog's source")
+		adopted(t, svc)
+	})
+
+	t.Run("no lookup configured adopts", func(t *testing.T) {
+		svc := manualCatalog(t, srv, config.Settings{})
+		require.NoError(t, svc.refreshOnce())
+		adopted(t, svc)
 	})
 }

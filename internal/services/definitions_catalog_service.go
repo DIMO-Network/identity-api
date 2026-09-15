@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"math/rand/v2"
 	"net/http"
 	"net/url"
@@ -167,6 +168,19 @@ func (s *catalogSnapshot) etagFor(source string) string {
 	return s.etag
 }
 
+// ManufacturerSlugs returns every manufacturer's slug keyed by token id, as
+// this deployment's chain knows them.
+type ManufacturerSlugs func(ctx context.Context) (map[int]string, error)
+
+// DefinitionsCatalogOption configures the service at construction.
+type DefinitionsCatalogOption func(*DefinitionsCatalogService)
+
+// WithManufacturerSlugs gives the service its chain check: a candidate catalog
+// is compared with the manufacturers this deployment has before it is adopted.
+func WithManufacturerSlugs(lookup ManufacturerSlugs) DefinitionsCatalogOption {
+	return func(s *DefinitionsCatalogService) { s.manufacturerSlugs = lookup }
+}
+
 // DefinitionsCatalogService keeps the R2 device definitions catalog in memory.
 // One goroutine refreshes it and swaps in an immutable snapshot; reads are
 // served from that snapshot and never wait on network I/O. It replaces the
@@ -195,6 +209,9 @@ type DefinitionsCatalogService struct {
 	// lookupTimeout and missingTTL bound the by-id fallback.
 	lookupTimeout time.Duration
 	missingTTL    time.Duration
+	// manufacturerSlugs is the chain check's view of this deployment. Optional:
+	// without it a candidate is adopted unchecked.
+	manufacturerSlugs ManufacturerSlugs
 
 	startOnce sync.Once
 	loopCtx   context.Context
@@ -227,7 +244,7 @@ type DefinitionsCatalogService struct {
 // It contacts nothing: call Start at process start so a pod warms before it
 // takes traffic. A first read starts the refresh too, so a caller that never
 // calls Start still works.
-func NewDefinitionsCatalogService(log *zerolog.Logger, settings *config.Settings) (*DefinitionsCatalogService, error) {
+func NewDefinitionsCatalogService(log *zerolog.Logger, settings *config.Settings, opts ...DefinitionsCatalogOption) (*DefinitionsCatalogService, error) {
 	cfg, err := settings.DefinitionsCatalog()
 	if err != nil {
 		return nil, err
@@ -250,6 +267,9 @@ func NewDefinitionsCatalogService(log *zerolog.Logger, settings *config.Settings
 		loopCtx:         loopCtx,
 		stop:            stop,
 		attemptDone:     make(chan struct{}),
+	}
+	for _, opt := range opts {
+		opt(s)
 	}
 	s.lookups.Store(newTemplateLookups())
 	if s.maxStaleness > 0 && s.maxStaleness < s.refreshInterval {
@@ -536,7 +556,7 @@ func (s *DefinitionsCatalogService) refreshTemplates(ctx context.Context, held *
 	if err != nil {
 		return err
 	}
-	return s.adopt(held, c, sourceTemplate, m.Build, etag)
+	return s.adopt(ctx, held, c, sourceTemplate, m.Build, etag)
 }
 
 // loadBuild fetches every shard of a build and flattens the templates in it.
@@ -685,7 +705,7 @@ func (s *DefinitionsCatalogService) refreshLegacy(ctx context.Context, held *cat
 	if err := decodeLegacyManifest(resp.Body, c.visit); err != nil {
 		return fmt.Errorf("failed to decode definitions manifest: %w", err)
 	}
-	return s.adopt(held, c, sourceLegacy, "", resp.Header.Get("Etag"))
+	return s.adopt(ctx, held, c, sourceLegacy, "", resp.Header.Get("Etag"))
 }
 
 // get issues one conditional GET. A request that cannot even be built is a
@@ -725,12 +745,15 @@ func (s *DefinitionsCatalogService) confirm(held *catalogSnapshot, etag string) 
 }
 
 // adopt vets a candidate and swaps it in, or reports why it was refused.
-func (s *DefinitionsCatalogService) adopt(held *catalogSnapshot, c *catalogCandidate, source, build, etag string) error {
+func (s *DefinitionsCatalogService) adopt(ctx context.Context, held *catalogSnapshot, c *catalogCandidate, source, build, etag string) error {
 	if c.invalid > 0 {
 		s.log.Warn().Int("invalid", c.invalid).Int("kept", len(c.defs)).Strs("first", c.examples).
 			Msg("skipped invalid elements in the definitions catalog")
 	}
 	if err := c.vet(s.minCount, held.size()); err != nil {
+		return fmt.Errorf("refusing the %s definitions catalog: %w", source, err)
+	}
+	if err := s.checkChain(ctx, c.defs); err != nil {
 		return fmt.Errorf("refusing the %s definitions catalog: %w", source, err)
 	}
 
@@ -753,5 +776,61 @@ func (s *DefinitionsCatalogService) adopt(held *catalogSnapshot, c *catalogCandi
 	if next.size() == 0 {
 		s.log.Error().Msg("adopted an empty definitions catalog: every device-definition query will return nothing")
 	}
+	return nil
+}
+
+// checkChain refuses a catalog that belongs to another chain. Definitions are
+// grouped by the document's manufacturer token id and looked up by the token id
+// this deployment's database holds, and the catalog carries no chain marker:
+// 108 of the 123 slugs dev and prod share have different token ids, so a dev
+// deployment pointed at the prod catalog lists another make's definitions under
+// every manufacturer, with no error anywhere. The old _<chainID>_<tableID>
+// table name made that mismatch fail loudly.
+func (s *DefinitionsCatalogService) checkChain(ctx context.Context, defs []CatalogDefinition) error {
+	if s.manufacturerSlugs == nil {
+		return nil
+	}
+	onChain, err := s.manufacturerSlugs(ctx)
+	if err != nil {
+		// The database is this check's second opinion, not the catalog's
+		// source. Failing the refresh on a query error would let a database
+		// blip stop the catalog from updating at all.
+		s.log.Warn().Err(err).
+			Msg("could not read manufacturers to check the definitions catalog against this chain; adopting it unchecked")
+		return nil
+	}
+
+	shared := map[int]struct{}{}
+	mismatched := map[int]string{}
+	for i := range defs {
+		m := defs[i].Manufacturer
+		chainSlug, ok := onChain[m.TokenID]
+		if !ok {
+			// A manufacturer this deployment does not have says nothing about
+			// which chain the catalog belongs to.
+			continue
+		}
+		shared[m.TokenID] = struct{}{}
+		if m.Slug != chainSlug {
+			mismatched[m.TokenID] = fmt.Sprintf("token %d is %q here and %q in the catalog", m.TokenID, chainSlug, m.Slug)
+		}
+	}
+	if len(mismatched) == 0 {
+		return nil
+	}
+
+	tokens := slices.Sorted(maps.Keys(mismatched))
+	examples := make([]string, 0, maxInvalidExamples)
+	for _, token := range tokens[:min(len(tokens), maxInvalidExamples)] {
+		examples = append(examples, mismatched[token])
+	}
+	// A renamed slug or two is drift worth logging. A large share of them is a
+	// catalog that belongs to another chain.
+	if limit := max(2, len(shared)*5/100); len(mismatched) > limit {
+		return fmt.Errorf("%d of the %d manufacturers shared with this chain carry a different slug, above the limit of %d: %s",
+			len(mismatched), len(shared), limit, strings.Join(examples, "; "))
+	}
+	s.log.Warn().Int("mismatched", len(mismatched)).Int("shared", len(shared)).Strs("first", examples).
+		Msg("definitions catalog manufacturers disagree with this chain")
 	return nil
 }

@@ -154,7 +154,11 @@ type Resolver struct {
 // NewResolver creates a new Resolver with allocated repositories. It fails when
 // the device definitions catalog settings are invalid.
 func NewResolver(baseRepo *base.Repository) (*Resolver, error) {
-	definitionsCatalog, err := services.NewDefinitionsCatalogService(baseRepo.Log, &baseRepo.Settings)
+	manufacturerRepo := manufacturer.New(baseRepo)
+	definitionsCatalog, err := services.NewDefinitionsCatalogService(baseRepo.Log, &baseRepo.Settings,
+		// The catalog carries no chain marker, so a candidate is compared with
+		// the manufacturers this deployment has before it is adopted.
+		services.WithManufacturerSlugs(manufacturerRepo.SlugsByTokenID))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create the device definitions catalog: %w", err)
 	}
@@ -162,7 +166,7 @@ func NewResolver(baseRepo *base.Repository) (*Resolver, error) {
 	return &Resolver{
 		aftermarket:      aftermarket.New(baseRepo),
 		dcn:              dcn.New(baseRepo),
-		manufacturer:     manufacturer.New(baseRepo),
+		manufacturer:     manufacturerRepo,
 		reward:           reward.Repository{Repository: baseRepo},
 		synthetic:        synthetic.New(baseRepo),
 		vehicle:          vehicle.New(baseRepo),
