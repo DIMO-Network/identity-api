@@ -492,6 +492,114 @@ func TestCatalogStalenessBoundTurnsIntoErrors(t *testing.T) {
 	require.NotNil(t, d)
 }
 
+// DEFINITIONS_MAX_STALENESS is a reachability bound: confirm() restarts the
+// snapshot's age on every 304 and every unchanged build, so a worker whose
+// scheduled rebuild has been failing for three weeks -- while idx/current.json
+// stays perfectly reachable -- used to read as fresh on every replica. The
+// build's own createdAt is the data age, and it needs a bound of its own.
+func TestCatalogBoundsTheAgeOfTheBuildItIsServing(t *testing.T) {
+	ctx := context.Background()
+	recent := time.Now().Add(-25 * time.Hour).UTC().Format(time.RFC3339)
+	ancient := time.Now().Add(-21 * 24 * time.Hour).UTC().Format(time.RFC3339)
+
+	t.Run("a build a healthy worker would publish is served", func(t *testing.T) {
+		// The worker rebuilds when the live build is 23h old and the walk takes
+		// about two hours, so 25h is what a working catalog looks like.
+		srv := newCatalogServer(t)
+		srv.serve(catalogIndexPath, buildIndexAt("b1", recent, shardKeyFor("b1", 0)))
+		srv.serve(shardPathFor("b1", 0), "["+camryTemplate+"]")
+		svc := manualCatalog(t, srv, config.Settings{})
+
+		require.NoError(t, svc.refreshOnce())
+		d, err := svc.GetDefinitionByID(ctx, "toyota_camry_2020")
+		require.NoError(t, err)
+		assert.NotNil(t, d)
+	})
+
+	t.Run("a build published three weeks ago fails, however reachable the index is", func(t *testing.T) {
+		srv := newCatalogServer(t)
+		srv.serve(catalogIndexPath, buildIndexAt("b1", ancient, shardKeyFor("b1", 0)))
+		srv.serve(shardPathFor("b1", 0), "["+camryTemplate+"]")
+		svc := manualCatalog(t, srv, config.Settings{})
+
+		// Every refresh succeeds: the index is up, it simply names a build
+		// nobody has replaced.
+		require.NoError(t, svc.refreshOnce())
+		require.NoError(t, svc.refreshOnce())
+		assert.Zero(t, consecutiveFailures(svc))
+
+		_, err := svc.GetDefinitionByID(ctx, "toyota_camry_2020")
+		require.Error(t, err, "data this old must fail rather than be served silently")
+		assert.ErrorContains(t, err, "DEFINITIONS_MAX_BUILD_AGE")
+		assert.ErrorContains(t, err, "b1")
+		_, err = svc.DefinitionsByManufacturer(ctx, 131)
+		assert.Error(t, err)
+
+		assert.Greater(t, testutil.ToFloat64(catalogBuildAge.WithLabelValues(sourceTemplate)), float64(20*24*time.Hour/time.Second),
+			"the build age is its own metric, so the alert does not wait for queries to fail")
+
+		// Zero disables the bound; the reachability bound is untouched.
+		svc.maxBuildAge = 0
+		d, err := svc.GetDefinitionByID(ctx, "toyota_camry_2020")
+		require.NoError(t, err)
+		assert.NotNil(t, d)
+	})
+
+	t.Run("a new build restores freshness", func(t *testing.T) {
+		srv := newCatalogServer(t)
+		srv.serve(catalogIndexPath, buildIndexAt("b1", ancient, shardKeyFor("b1", 0)))
+		srv.serve(shardPathFor("b1", 0), "["+camryTemplate+"]")
+		svc := manualCatalog(t, srv, config.Settings{})
+		require.NoError(t, svc.refreshOnce())
+		_, err := svc.GetDefinitionByID(ctx, "toyota_camry_2020")
+		require.Error(t, err)
+
+		srv.serve(catalogIndexPath, buildIndexAt("b2", recent, shardKeyFor("b2", 0)))
+		srv.serve(shardPathFor("b2", 0), "["+camryTemplate+"]")
+		require.NoError(t, svc.refreshOnce())
+		d, err := svc.GetDefinitionByID(ctx, "toyota_camry_2020")
+		require.NoError(t, err)
+		assert.NotNil(t, d)
+	})
+
+	t.Run("the flat manifest has no data age, so only reachability bounds it", func(t *testing.T) {
+		// updatedAt moves only when someone writes a definition, so a quiet
+		// week and a dead producer look identical. Bounding on it would fail
+		// every query on a catalog nobody happened to edit.
+		srv := newCatalogServer(t)
+		srv.serve(legacyManifestPath, manifestOf(camryDoc))
+		svc := manualCatalog(t, srv, config.Settings{})
+
+		require.NoError(t, svc.refreshOnce())
+		d, err := svc.GetDefinitionByID(ctx, "toyota_camry_2020")
+		require.NoError(t, err)
+		require.NotNil(t, d)
+		assert.Equal(t, float64(0), testutil.ToFloat64(catalogBuildAge.WithLabelValues(sourceLegacy)),
+			"legacy mode publishes no build age rather than a made-up one")
+	})
+
+	t.Run("a build with no usable createdAt is served, and bounded only by reachability", func(t *testing.T) {
+		srv := newCatalogServer(t)
+		srv.serve(catalogIndexPath, buildIndexAt("b1", "not a timestamp", shardKeyFor("b1", 0)))
+		srv.serve(shardPathFor("b1", 0), "["+camryTemplate+"]")
+		svc := manualCatalog(t, srv, config.Settings{})
+
+		require.NoError(t, svc.refreshOnce(), "a producer that changes the field type must not take the catalog down")
+		d, err := svc.GetDefinitionByID(ctx, "toyota_camry_2020")
+		require.NoError(t, err)
+		assert.NotNil(t, d)
+	})
+
+	t.Run("a bound a healthy worker would trip is refused at construction", func(t *testing.T) {
+		logger := zerolog.Nop()
+		_, err := NewDefinitionsCatalogService(&logger, &config.Settings{
+			DefinitionsCatalogURL:  "https://definitions.dimo.org",
+			DefinitionsMaxBuildAge: "12h",
+		})
+		assert.ErrorContains(t, err, "DEFINITIONS_MAX_BUILD_AGE")
+	})
+}
+
 // Malformed settings must fail construction, and with it startup: a bad URL
 // used to reach every query as a request that failed to build, with no
 // backoff, no context and no log.

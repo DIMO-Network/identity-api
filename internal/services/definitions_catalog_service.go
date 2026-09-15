@@ -95,6 +95,13 @@ func newTemplateLookups() *templateLookups {
 	return &templateLookups{found: found, missing: missing}
 }
 
+// minDefinitionsMaxBuildAge is the smallest data-age bound that does not fire
+// on a deployment working exactly as designed. The worker rebuilds when the
+// live build is 23h old (definitions-worker src/scheduled.ts, REBUILD_AFTER_MS)
+// and that walk takes about two hours, so the build a healthy catalog serves is
+// routinely 25h old.
+const minDefinitionsMaxBuildAge = 26 * time.Hour
+
 // catalogFailuresBeforeError is how many refreshes must fail in a row before
 // the failure is logged at Error. One is noise: an origin hiccup, a rolling
 // deploy. Five in a row is an outage that the staleness bound will turn into
@@ -116,6 +123,13 @@ var (
 		Help:      "Age of the snapshot being served, as of the last refresh attempt.",
 	}, []string{"source"})
 
+	catalogBuildAge = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: "identity",
+		Subsystem: "definitions_catalog",
+		Name:      "build_age_seconds",
+		Help:      "Age of the published build being served, from the build's own createdAt. Template mode only: no series is published while the catalog carries no build timestamp.",
+	}, []string{"source"})
+
 	catalogRefreshFailures = promauto.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "identity",
 		Subsystem: "definitions_catalog",
@@ -135,6 +149,11 @@ type catalogOrigin struct {
 	// empty in legacy mode. Part of the build's identity because a republished
 	// build keeps its id and gets a new one.
 	createdAt string
+	// builtAt is createdAt parsed, and the only true measure of how old the
+	// data is. Zero when the catalog carries no build timestamp: in legacy
+	// mode always, and in template mode when the producer wrote one this
+	// cannot read.
+	builtAt time.Time
 	// shards is the shard list the index named, in the order it named them:
 	// assembleManifest sorts them numerically before writing, so equal lists
 	// mean equal sets. A republish after more pages landed names more.
@@ -230,6 +249,7 @@ type DefinitionsCatalogService struct {
 
 	minCount     int
 	maxStaleness time.Duration
+	maxBuildAge  time.Duration
 
 	refreshInterval time.Duration
 	// refreshTimeout bounds one refresh. A refresh is nobody's request: it runs
@@ -296,6 +316,7 @@ func NewDefinitionsCatalogService(log *zerolog.Logger, settings *config.Settings
 		client:          &http.Client{},
 		minCount:        cfg.MinCount,
 		maxStaleness:    cfg.MaxStaleness,
+		maxBuildAge:     cfg.MaxBuildAge,
 		refreshInterval: time.Minute,
 		refreshTimeout:  30 * time.Second,
 		initialBackoff:  time.Second,
@@ -313,6 +334,10 @@ func NewDefinitionsCatalogService(log *zerolog.Logger, settings *config.Settings
 	if s.maxStaleness > 0 && s.maxStaleness < s.refreshInterval {
 		stop()
 		return nil, fmt.Errorf("DEFINITIONS_MAX_STALENESS %s is shorter than the %s refresh interval: every replica would report a stale catalog between refreshes", s.maxStaleness, s.refreshInterval)
+	}
+	if s.maxBuildAge > 0 && s.maxBuildAge < minDefinitionsMaxBuildAge {
+		stop()
+		return nil, fmt.Errorf("DEFINITIONS_MAX_BUILD_AGE %s is below %s: the worker rebuilds when the live build is 23h old and the walk it then runs takes about two hours, so a healthy catalog routinely serves a build 25h old and every replica would refuse it", s.maxBuildAge, minDefinitionsMaxBuildAge)
 	}
 	return s, nil
 }
@@ -411,11 +436,24 @@ func (s *DefinitionsCatalogService) unavailable(waitErr error) error {
 	return errors.New("definitions catalog has not loaded yet")
 }
 
-// stale refuses a snapshot older than DEFINITIONS_MAX_STALENESS. Without a
-// bound, a warm replica serves arbitrarily old data with no signal while a
-// restarted replica fails every query, so the same request answers differently
-// depending on which replica takes it.
+// stale refuses a snapshot that is past either bound. Without them, a warm
+// replica serves arbitrarily old data with no signal while a restarted replica
+// fails every query, so the same request answers differently depending on which
+// replica takes it.
+//
+// The two bounds measure different failures and neither implies the other.
 func (s *DefinitionsCatalogService) stale(snap *catalogSnapshot) error {
+	if err := s.unreachable(snap); err != nil {
+		return err
+	}
+	return s.tooOld(snap)
+}
+
+// unreachable refuses a snapshot this replica has not been able to confirm for
+// DEFINITIONS_MAX_STALENESS. This is a bound on reachability alone: confirm()
+// restarts it on every 304 and every unchanged build, so a catalog that is up
+// and serving a build nobody has replaced never trips it.
+func (s *DefinitionsCatalogService) unreachable(snap *catalogSnapshot) error {
 	if s.maxStaleness <= 0 {
 		return nil
 	}
@@ -429,6 +467,34 @@ func (s *DefinitionsCatalogService) stale(snap *catalogSnapshot) error {
 	}
 	return fmt.Errorf("definitions catalog last refreshed %s ago, beyond DEFINITIONS_MAX_STALENESS %s: %w",
 		age.Round(time.Second), s.maxStaleness, cause)
+}
+
+// tooOld refuses data older than DEFINITIONS_MAX_BUILD_AGE, measured on the
+// build's own createdAt. This is the failure the reachability bound cannot see:
+// the worker's scheduled rebuild stops -- a Typesense outage, a walk that can
+// no longer finish inside its page budget -- while idx/current.json keeps
+// answering with a build published weeks ago. Every refresh succeeds, so
+// nothing else here would ever say so.
+//
+// Legacy mode has no such timestamp and so is bounded only by reachability: the
+// flat manifest's updatedAt moves when someone writes a definition, not when
+// the catalog is rebuilt, so a quiet week and a dead producer are
+// indistinguishable and bounding on it would fail queries against a catalog
+// nobody happened to edit.
+func (s *DefinitionsCatalogService) tooOld(snap *catalogSnapshot) error {
+	if s.maxBuildAge <= 0 || snap.builtAt.IsZero() {
+		return nil
+	}
+	age := time.Since(snap.builtAt)
+	if age <= s.maxBuildAge {
+		return nil
+	}
+	err := fmt.Errorf("definitions catalog build %s was published %s ago, beyond DEFINITIONS_MAX_BUILD_AGE %s: the catalog is reachable but nothing has published a newer build",
+		snap.build, age.Round(time.Second), s.maxBuildAge)
+	if cause := s.latestErr(); cause != nil {
+		return fmt.Errorf("%w: %w", err, cause)
+	}
+	return err
 }
 
 func (s *DefinitionsCatalogService) latestErr() error {
@@ -525,7 +591,7 @@ func (s *DefinitionsCatalogService) wake() {
 	s.mu.Unlock()
 }
 
-// observe publishes the size and age of the snapshot being served. It runs
+// observe publishes the size and the two ages of the snapshot being served. It runs
 // after every attempt, so the age gauge is as coarse as the refresh cadence,
 // which is enough to alert on a catalog that stopped updating hours ago.
 func (s *DefinitionsCatalogService) observe() {
@@ -536,10 +602,20 @@ func (s *DefinitionsCatalogService) observe() {
 	if s.metricSource != "" && s.metricSource != snap.source {
 		catalogDefinitions.DeleteLabelValues(s.metricSource)
 		catalogSnapshotAge.DeleteLabelValues(s.metricSource)
+		catalogBuildAge.DeleteLabelValues(s.metricSource)
 	}
 	s.metricSource = snap.source
 	catalogDefinitions.WithLabelValues(snap.source).Set(float64(snap.size()))
 	catalogSnapshotAge.WithLabelValues(snap.source).Set(time.Since(snap.lastSuccess).Seconds())
+	// Two different quantities, so two different series: how long it has been
+	// since this replica could reach the catalog, and how old the data in it
+	// is. A catalog that is perfectly reachable and three weeks old reads as
+	// healthy on the first and alarming on the second.
+	if snap.builtAt.IsZero() {
+		catalogBuildAge.DeleteLabelValues(snap.source)
+	} else {
+		catalogBuildAge.WithLabelValues(snap.source).Set(time.Since(snap.builtAt).Seconds())
+	}
 }
 
 // refresh reads the catalog once and adopts what it finds, returning the source
@@ -600,9 +676,31 @@ func (s *DefinitionsCatalogService) refreshTemplates(ctx context.Context, held *
 		source:    sourceTemplate,
 		build:     m.Build,
 		createdAt: m.CreatedAt,
+		builtAt:   s.buildTimestamp(&m),
 		shards:    m.Shards,
 		etag:      etag,
 	})
+}
+
+// buildTimestamp reads the moment this build was published. The worker writes
+// it with Date.prototype.toISOString (definitions-worker src/index.ts), which
+// RFC 3339 covers. A value this cannot read leaves the data-age bound with
+// nothing to measure -- it is not a reason to refuse a catalog whose shards
+// are perfectly readable, so it is logged and the reachability bound carries
+// the weight alone.
+func (s *DefinitionsCatalogService) buildTimestamp(m *buildManifest) time.Time {
+	if m.CreatedAt == "" {
+		s.log.Warn().Str("build", m.Build).
+			Msg("the definitions index names a build with no createdAt; its age cannot be bounded")
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC3339, m.CreatedAt)
+	if err != nil {
+		s.log.Warn().Err(err).Str("build", m.Build).Str("createdAt", m.CreatedAt).
+			Msg("the definitions index carries a createdAt this cannot read; the build's age cannot be bounded")
+		return time.Time{}
+	}
+	return t
 }
 
 // loadBuild fetches every shard of a build and flattens the templates in it.
@@ -779,8 +877,10 @@ func drain(body io.ReadCloser) {
 }
 
 // confirm records that the held snapshot is still the current one: the catalog
-// was read successfully, it had simply not changed. Its age restarts, so an
-// unchanged catalog never trips the staleness bound.
+// was read successfully, it had simply not changed. Its reachability age
+// restarts, so an unchanged catalog never trips DEFINITIONS_MAX_STALENESS. The
+// build's own age is not restarted -- nothing republished it -- and remains
+// bounded by DEFINITIONS_MAX_BUILD_AGE.
 func (s *DefinitionsCatalogService) confirm(held *catalogSnapshot, etag string) {
 	next := *held
 	next.lastSuccess = time.Now()

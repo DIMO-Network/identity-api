@@ -39,22 +39,39 @@ type Settings struct {
 	// int into 0 without an error, which silently disabled the floor;
 	// DefinitionsCatalog parses it strictly.
 	DefinitionsMinCount string `yaml:"DEFINITIONS_MIN_COUNT"`
-	// How old the catalog a replica serves may get while refreshes fail. Past
-	// this, device-definition queries fail instead of quietly serving data
-	// that stopped changing. A Go duration string; empty means 24h and "0"
-	// disables the bound.
+	// How long a replica may go without reaching the catalog. Past this,
+	// device-definition queries fail instead of quietly serving a snapshot
+	// nothing has been able to confirm. This bounds REACHABILITY, not data
+	// age: a catalog that answers every read with the same build is fresh by
+	// this measure -- see DefinitionsMaxBuildAge. A Go duration string; empty
+	// means 24h and "0" disables the bound.
 	DefinitionsMaxStaleness string `yaml:"DEFINITIONS_MAX_STALENESS"`
-	EthereumRPCURL          string `yaml:"ETHEREUM_RPC_URL"`
-	DevLicenseAddr          string `yaml:"DEV_LICENSE_ADDR"`
-	StakingAddr             string `yaml:"STAKING_ADDR"`
-	ConnectionAddr          string `yaml:"CONNECTION_ADDR"`
-	StorageNodeAddr         string `yaml:"STORAGE_NODE_ADDR"`
-	TemplateAddr            string `yaml:"TEMPLATE_ADDR"`
-	FetchAPIGRPCAddr        string `yaml:"FETCH_API_GRPC_ADDR"`
+	// How old the data itself may get: the age of the published build a
+	// replica is serving, from the build's own createdAt. Template mode only,
+	// because the flat manifest carries no timestamp that moves on its own.
+	// Necessarily a looser bound than DEFINITIONS_MAX_STALENESS -- the worker
+	// rebuilds when the live build is 23h old and the walk takes about two
+	// hours, so a healthy build is routinely 25h old. A Go duration string;
+	// empty means 72h and "0" disables the bound.
+	DefinitionsMaxBuildAge string `yaml:"DEFINITIONS_MAX_BUILD_AGE"`
+	EthereumRPCURL         string `yaml:"ETHEREUM_RPC_URL"`
+	DevLicenseAddr         string `yaml:"DEV_LICENSE_ADDR"`
+	StakingAddr            string `yaml:"STAKING_ADDR"`
+	ConnectionAddr         string `yaml:"CONNECTION_ADDR"`
+	StorageNodeAddr        string `yaml:"STORAGE_NODE_ADDR"`
+	TemplateAddr           string `yaml:"TEMPLATE_ADDR"`
+	FetchAPIGRPCAddr       string `yaml:"FETCH_API_GRPC_ADDR"`
 }
 
 // DefaultDefinitionsMaxStaleness applies when DEFINITIONS_MAX_STALENESS is unset.
 const DefaultDefinitionsMaxStaleness = 24 * time.Hour
+
+// DefaultDefinitionsMaxBuildAge applies when DEFINITIONS_MAX_BUILD_AGE is
+// unset. Three days: the worker rebuilds every 23 hours, so this is about
+// three missed rebuilds, far enough past the ~25h a healthy build reaches to
+// leave room for a failed one, and short enough that three weeks of frozen
+// data cannot pass for current.
+const DefaultDefinitionsMaxBuildAge = 72 * time.Hour
 
 // DefinitionsCatalogConfig is the validated form of the DEFINITIONS_* settings.
 type DefinitionsCatalogConfig struct {
@@ -62,8 +79,12 @@ type DefinitionsCatalogConfig struct {
 	URL string
 	// MinCount is the valid-definition floor. Zero disables it.
 	MinCount int
-	// MaxStaleness bounds how old a served catalog may be. Zero disables it.
+	// MaxStaleness bounds how long a replica may go without reaching the
+	// catalog. Zero disables it.
 	MaxStaleness time.Duration
+	// MaxBuildAge bounds the age of the published build being served, from the
+	// build's own createdAt. Zero disables it.
+	MaxBuildAge time.Duration
 }
 
 // DefinitionsCatalog validates the DEFINITIONS_* settings and returns their
@@ -84,7 +105,16 @@ func (s *Settings) DefinitionsCatalog() (DefinitionsCatalogConfig, error) {
 	if err != nil {
 		return DefinitionsCatalogConfig{}, err
 	}
-	return DefinitionsCatalogConfig{URL: catalogURL, MinCount: minCount, MaxStaleness: maxStaleness}, nil
+	maxBuildAge, err := parseDefinitionsDuration("DEFINITIONS_MAX_BUILD_AGE", s.DefinitionsMaxBuildAge, DefaultDefinitionsMaxBuildAge)
+	if err != nil {
+		return DefinitionsCatalogConfig{}, err
+	}
+	return DefinitionsCatalogConfig{
+		URL:          catalogURL,
+		MinCount:     minCount,
+		MaxStaleness: maxStaleness,
+		MaxBuildAge:  maxBuildAge,
+	}, nil
 }
 
 func parseDefinitionsCatalogURL(raw string) (string, error) {
@@ -131,15 +161,23 @@ func parseDefinitionsMinCount(raw string) (int, error) {
 }
 
 func parseDefinitionsMaxStaleness(raw string) (time.Duration, error) {
+	return parseDefinitionsDuration("DEFINITIONS_MAX_STALENESS", raw, DefaultDefinitionsMaxStaleness)
+}
+
+// parseDefinitionsDuration parses one of the catalog's duration bounds. Empty
+// takes the default, "0" disables the bound, and anything else must be a Go
+// duration: the shared loader would accept "24" or "3days" verbatim and leave
+// the bound to fail at use.
+func parseDefinitionsDuration(name, raw string, fallback time.Duration) (time.Duration, error) {
 	if raw == "" {
-		return DefaultDefinitionsMaxStaleness, nil
+		return fallback, nil
 	}
 	d, err := time.ParseDuration(raw)
 	if err != nil {
-		return 0, fmt.Errorf("DEFINITIONS_MAX_STALENESS %q must be a Go duration such as 24h, or 0 to disable the bound: %w", raw, err)
+		return 0, fmt.Errorf("%s %q must be a Go duration such as %s, or 0 to disable the bound: %w", name, raw, fallback, err)
 	}
 	if d < 0 {
-		return 0, fmt.Errorf("DEFINITIONS_MAX_STALENESS %q must not be negative", raw)
+		return 0, fmt.Errorf("%s %q must not be negative", name, raw)
 	}
 	return d, nil
 }

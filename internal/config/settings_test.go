@@ -72,6 +72,25 @@ func TestDefinitionsCatalogSettings(t *testing.T) {
 		}
 	})
 
+	t.Run("max build age", func(t *testing.T) {
+		valid := map[string]time.Duration{
+			"":     DefaultDefinitionsMaxBuildAge,
+			"0":    0,
+			"72h":  72 * time.Hour,
+			"168h": 168 * time.Hour,
+		}
+		for raw, want := range valid {
+			got, err := (&Settings{DefinitionsCatalogURL: "https://definitions.dimo.org", DefinitionsMaxBuildAge: raw}).DefinitionsCatalog()
+			require.NoError(t, err, raw)
+			assert.Equal(t, want, got.MaxBuildAge, raw)
+		}
+
+		for _, raw := range []string{"-1h", "72 h", " 72h", "3days", "72"} {
+			_, err := (&Settings{DefinitionsCatalogURL: "https://definitions.dimo.org", DefinitionsMaxBuildAge: raw}).DefinitionsCatalog()
+			assert.Error(t, err, "%q must be refused", raw)
+		}
+	})
+
 	t.Run("min count", func(t *testing.T) {
 		valid := map[string]int{"": 0, "0": 0, "8000": 8000, "15000": 15000, "007": 7}
 		for raw, want := range valid {
