@@ -111,6 +111,13 @@ var errNoCatalogPublished = errors.New("most likely a worker deployed with no bu
 // sees and only ever as half of that state.
 var errLegacyManifestMissing = errors.New("the flat definitions manifest does not exist")
 
+// errCatalogWouldDowngrade is the refusal to read the flat manifest on a pod
+// that is already serving a template build. A deployment deliberately rolled
+// back to a worker that serves only the manifest is one pod restart away from
+// reading it again, which is why the message says so: a restarted pod holds no
+// build and bootstraps from the manifest as it always has.
+var errCatalogWouldDowngrade = errors.New("refusing to fall back to the flat manifest, which is the pre-cutover layout: it would replace the build's data with the flat documents, turn the by-id template fallback off, and leave DEFINITIONS_MAX_BUILD_AGE with no build timestamp to measure. A missing index is a failed refresh, not a catalog to switch to; if the index is gone deliberately, restart the pods and they will read the manifest again")
+
 // catalogFailuresBeforeError is how many refreshes must fail in a row before
 // the failure is logged at Error. One is noise: an origin hiccup, a rolling
 // deploy. Five in a row is an outage that the staleness bound will turn into
@@ -218,6 +225,15 @@ func (s *catalogSnapshot) sameOrigin(o catalogOrigin) bool {
 	return s.build == o.build && s.createdAt == o.createdAt && slices.Equal(s.shards, o.shards)
 }
 
+// buildID names the build a snapshot was read from, for a message. Empty when
+// there is no snapshot, and in legacy mode.
+func (s *catalogSnapshot) buildID() string {
+	if s == nil {
+		return ""
+	}
+	return s.build
+}
+
 func (s *catalogSnapshot) size() int {
 	if s == nil {
 		return 0
@@ -285,6 +301,12 @@ type DefinitionsCatalogService struct {
 	stop      context.CancelFunc
 
 	snap atomic.Pointer[catalogSnapshot]
+
+	// adoptedTemplate records that this pod has served a template build at
+	// some point. It only ever goes from false to true: the fallback to the
+	// flat manifest is a bootstrap, and a pod that has read a build must never
+	// be talked back down to the pre-cutover layout by a missing index.
+	adoptedTemplate atomic.Bool
 
 	// lookups serves the by-id fallback for the build snap holds.
 	lookups     atomic.Pointer[templateLookups]
@@ -633,9 +655,12 @@ func (s *DefinitionsCatalogService) observe() {
 // it read and the failure, if any.
 //
 // The index is asked for first. A 200 means this deployment publishes template
-// builds; a 404 means the worker still serves only the flat manifest, which is
-// read instead. Any other answer is a failure: an origin error must never be
-// read as "this deployment has no index" and flip a pod to the other source.
+// builds. A 404 means either that the worker still serves only the flat
+// manifest or that this pod caught the index mid-publish, and the two are told
+// apart by what the pod already holds: the fallback bootstraps a pod that has
+// never read a build, and is refused on one that has. Any other answer is a
+// failure: an origin error must never be read as "this deployment has no
+// index" and flip a pod to the other source.
 func (s *DefinitionsCatalogService) refresh(ctx context.Context) (string, error) {
 	held := s.snap.Load()
 	resp, err := s.get(ctx, s.baseURL+catalogIndexPath, held.etagFor(sourceTemplate))
@@ -646,11 +671,23 @@ func (s *DefinitionsCatalogService) refresh(ctx context.Context) (string, error)
 
 	switch resp.StatusCode {
 	case http.StatusNotFound:
-		// No index: either this deployment still publishes only the flat
-		// manifest, which is what prod answers today, or a worker that no
-		// longer serves one has been deployed before anything was published.
-		// The fallback tells the two apart, and it is the real source until
-		// the cutover, so it stays.
+		// A pod already serving a build keeps it. idx/current.json is served
+		// with a minute of max-age and an R2 get of it can return null while
+		// a publish rewrites it, so one 404 is a refresh that failed -- while
+		// /manifest.json may well still answer 200 from an edge that cached
+		// it before the route was deleted. Answering that with a source
+		// switch would trade the build for the flat documents and silence
+		// both the by-id fallback and the data-age bound, leaving a single
+		// adoption line as the only sign it happened.
+		if s.adoptedTemplate.Load() {
+			return sourceTemplate, fmt.Errorf("%s answered 404 while this pod serves template build %q: %w",
+				s.baseURL+catalogIndexPath, held.buildID(), errCatalogWouldDowngrade)
+		}
+		// No index and no build ever read: either this deployment still
+		// publishes only the flat manifest, which is what prod answers today,
+		// or a worker that no longer serves one has been deployed before
+		// anything was published. The fallback tells the two apart, and it is
+		// the real source until the cutover, so it stays.
 		err := s.refreshLegacy(ctx, held)
 		if errors.Is(err, errLegacyManifestMissing) {
 			return sourceLegacy, fmt.Errorf("the definitions catalog has nothing to read: %s and %s both answered 404 -- %w",
@@ -940,6 +977,9 @@ func (s *DefinitionsCatalogService) adopt(ctx context.Context, held *catalogSnap
 
 	next := newCatalogSnapshot(c.defs, origin)
 	s.snap.Store(next)
+	if origin.source == sourceTemplate {
+		s.adoptedTemplate.Store(true)
+	}
 	// A republished build keeps its id while its contents change, so what the
 	// by-id fallback learned about the old one -- above all that a definition
 	// was missing -- has to go with it.

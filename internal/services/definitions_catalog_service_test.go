@@ -690,6 +690,16 @@ const (
 	   "version":1,"createdAt":"t","updatedAt":"t"}`
 )
 
+// grenadierTemplate is a definition created since the current build: the only
+// kind the by-id fallback ever answers for. The model varies so a test can
+// serve a curator's correction of one.
+func grenadierTemplate(model string) string {
+	return fmt.Sprintf(`{"id":"ineos_grenadier_2026","deviceType":"vehicle",
+	   "manufacturer":{"tokenId":142,"slug":"ineos","name":"INEOS"},
+	   "model":%q,"year":2026,"attributes":{},"trims":[],
+	   "version":1,"createdAt":"t","updatedAt":"t"}`, model)
+}
+
 func shardKeyFor(build string, n int) string  { return fmt.Sprintf("idx/%s/shard-%d.json", build, n) }
 func shardPathFor(build string, n int) string { return "/" + shardKeyFor(build, n) }
 
@@ -874,6 +884,84 @@ func TestCatalogFallsBackToTheLegacyManifestWhenTheIndexIsMissing(t *testing.T) 
 	require.NotNil(t, d)
 }
 
+// The fallback may bootstrap a pod, and may never downgrade one. idx/current.json
+// is served with a minute of max-age and an R2 get can return null while a
+// publish rewrites it, so a single 404 on it is a refresh that failed, not a
+// deployment that publishes no builds -- while /manifest.json can still answer
+// 200 from an edge that cached it before the route was deleted. Reading it
+// would swap the build this pod serves for the pre-cutover flat documents,
+// turn the by-id template fallback off, and stop the data-age bound measuring
+// anything, all at once: legacy mode has no build timestamp, and every
+// successful legacy refresh restarts the reachability bound, so nothing after
+// the swap would ever say so.
+func TestCatalogNeverDowngradesAHeldTemplateBuildToTheLegacyManifest(t *testing.T) {
+	srv := newCatalogServer(t)
+	serveBuild(srv, "b1", camryTemplate, supraTemplate)
+	srv.serve(legacyManifestPath, manifestOf(camryDoc, supraDoc))
+	svc := manualCatalog(t, srv, config.Settings{})
+	ctx := context.Background()
+
+	require.NoError(t, svc.refreshOnce())
+	require.Equal(t, sourceTemplate, svc.snap.Load().source)
+	legacyHits := srv.hitsFor(legacyManifestPath)
+
+	srv.fail(catalogIndexPath, http.StatusNotFound)
+	err := svc.refreshOnce()
+	require.Error(t, err, "once a build has been adopted, a missing index is a refresh failure")
+	assert.ErrorIs(t, err, errCatalogWouldDowngrade)
+	assert.ErrorContains(t, err, srv.URL+catalogIndexPath, "the failure names what answered 404")
+	assert.ErrorContains(t, err, "b1", "and the build it is refusing to give up")
+	assert.Equal(t, legacyHits, srv.hitsFor(legacyManifestPath), "the flat manifest must not even be read")
+	assert.Equal(t, 1, consecutiveFailures(svc),
+		"the failure is recorded, so the staleness bound turns a lasting one into errors")
+
+	snap := svc.snap.Load()
+	assert.Equal(t, sourceTemplate, snap.source)
+	assert.Equal(t, "b1", snap.build)
+	assert.False(t, snap.builtAt.IsZero(), "the data-age bound still has a timestamp to measure")
+	d, err := svc.GetDefinitionByID(ctx, "toyota_camry_2020")
+	require.NoError(t, err)
+	require.NotNil(t, d)
+	assert.Equal(t, "https://img/camry", d.ImageURI, "still the build's data, not the flat manifest's")
+
+	t.Run("the by-id fallback still answers while the index is missing", func(t *testing.T) {
+		srv.serve("/t/ineos_grenadier_2026.json", grenadierTemplate("Grenadier"))
+		d, err := svc.GetDefinitionByID(ctx, "ineos_grenadier_2026")
+		require.NoError(t, err)
+		require.NotNil(t, d, "the pod is still in template mode, so a miss is still looked up")
+	})
+
+	t.Run("the index coming back is a recovery, not a new build", func(t *testing.T) {
+		before := srv.hitsFor(shardPathFor("b1", 0))
+		serveBuild(srv, "b1", camryTemplate, supraTemplate)
+		require.NoError(t, svc.refreshOnce())
+		assert.Zero(t, consecutiveFailures(svc))
+		assert.Equal(t, sourceTemplate, svc.snap.Load().source)
+		assert.Equal(t, before, srv.hitsFor(shardPathFor("b1", 0)), "the same build is confirmed, not refetched")
+	})
+
+	// The other direction: the gate must not keep a pod that holds nothing
+	// from bootstrapping, which is the state every pod is in before the
+	// cutover and after every restart until the first index answers.
+	t.Run("a pod that holds no snapshot still bootstraps from the flat manifest", func(t *testing.T) {
+		srv.fail(catalogIndexPath, http.StatusNotFound)
+		cold := manualCatalog(t, srv, config.Settings{})
+
+		require.NoError(t, cold.refreshOnce())
+		require.Equal(t, sourceLegacy, cold.snap.Load().source)
+		d, err := cold.GetDefinitionByID(ctx, "toyota_camry_2020")
+		require.NoError(t, err)
+		require.NotNil(t, d)
+
+		// And keeps refreshing it, so the gate costs the pre-cutover
+		// deployment nothing.
+		before := srv.hitsFor(legacyManifestPath)
+		require.NoError(t, cold.refreshOnce())
+		assert.Equal(t, before+1, srv.hitsFor(legacyManifestPath))
+		assert.Equal(t, sourceLegacy, cold.snap.Load().source)
+	})
+}
+
 // Between the worker deploy and the first hand-run publish, both surfaces
 // answer 404: the index does not exist yet and /manifest.json is a route the
 // same migration deleted. The 404-means-legacy branch turned a missing index
@@ -992,6 +1080,7 @@ func TestCatalogLooksUpAMissingDefinitionByID(t *testing.T) {
 		}
 		assert.Equal(t, 2, srv.hitsFor("/t/toyota_phantom_2020.json"), "an expired entry must not answer a later query")
 	})
+
 }
 
 // In legacy mode there is nothing to fall back to: the manifest is the whole
