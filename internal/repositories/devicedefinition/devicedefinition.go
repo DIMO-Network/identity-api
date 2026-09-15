@@ -182,24 +182,16 @@ func (r *Repository) GetDeviceDefinitions(ctx context.Context, manufacturerToken
 	edges := make([]*gmodel.DeviceDefinitionEdge, len(all))
 	nodes := make([]*gmodel.DeviceDefinition, len(all))
 
-	mfrs := make(map[string]*models.Manufacturer)
+	mfrs, err := r.manufacturersForPage(ctx, all)
+	if err != nil {
+		return nil, err
+	}
 
 	for i, dv := range all {
-		// get the manufacturer and cache it in a map outside the loop, using the cached mfr when exists
-		var mfr *models.Manufacturer
-		mfrSlug, _, found := strings.Cut(dv.ID, "_")
-		if found {
-			ok := false
-			if mfr, ok = mfrs[mfrSlug]; !ok {
-				mfr, err = models.Manufacturers(models.ManufacturerWhere.Slug.EQ(mfrSlug)).One(ctx, r.PDB.DBS().Reader)
-				if err != nil {
-					return nil, err
-				}
-				mfrs[mfrSlug] = mfr
-			}
-		}
-
-		gv, err := r.ToAPI(dv, mfr)
+		mfrSlug, _, _ := strings.Cut(dv.ID, "_")
+		// A definition whose id prefix named no row is served without a
+		// manufacturer, which ToAPI leaves null.
+		gv, err := r.ToAPI(dv, mfrs[mfrSlug])
 		if err != nil {
 			errList = append(errList, gqlerror.Wrap(err))
 			continue
@@ -230,6 +222,72 @@ func (r *Repository) GetDeviceDefinitions(ctx context.Context, manufacturerToken
 	}
 
 	return res, nil
+}
+
+// manufacturersForPage fetches, in one query, the manufacturers the ids on
+// this page name, keyed by slug.
+//
+// A slug with no row is not an error. The catalog's idea of a manufacturer's
+// slug and this database's can differ: checkChain adopts a catalog in which up
+// to 5% of the manufacturers shared with this chain carry a different slug, so
+// an id prefix that resolves to nothing is reachable by design. Resolving each
+// definition with its own .One() turned one such definition into a raw
+// sql.ErrNoRows that failed the whole page -- every other definition included.
+func (r *Repository) manufacturersForPage(ctx context.Context, defs []*services.CatalogDefinition) (map[string]*models.Manufacturer, error) {
+	slugs := manufacturerSlugs(defs)
+	if len(slugs) == 0 {
+		return nil, nil
+	}
+
+	rows, err := models.Manufacturers(models.ManufacturerWhere.Slug.IN(slugs)).All(ctx, r.PDB.DBS().Reader)
+	if err != nil {
+		return nil, err
+	}
+
+	bySlug, missing := indexManufacturers(slugs, rows)
+	if len(missing) > 0 {
+		r.Log.Warn().Strs("slugs", missing).Int("definitions", len(defs)).
+			Msg("device definitions name manufacturer slugs this database does not have; serving them without a manufacturer")
+	}
+	return bySlug, nil
+}
+
+// manufacturerSlugs returns the distinct manufacturer slugs this page's ids
+// name, in the order they first appear. A definition id is
+// <manufacturer slug>_<model>_<year>; an id not in that shape names no
+// manufacturer to look up.
+func manufacturerSlugs(defs []*services.CatalogDefinition) []string {
+	var slugs []string
+	seen := make(map[string]struct{}, len(defs))
+	for _, d := range defs {
+		slug, _, found := strings.Cut(d.ID, "_")
+		if !found || slug == "" {
+			continue
+		}
+		if _, ok := seen[slug]; ok {
+			continue
+		}
+		seen[slug] = struct{}{}
+		slugs = append(slugs, slug)
+	}
+	return slugs
+}
+
+// indexManufacturers keys the rows the query returned by slug, and names the
+// requested slugs it returned nothing for.
+func indexManufacturers(slugs []string, rows models.ManufacturerSlice) (map[string]*models.Manufacturer, []string) {
+	bySlug := make(map[string]*models.Manufacturer, len(rows))
+	for _, m := range rows {
+		bySlug[m.Slug] = m
+	}
+
+	var missing []string
+	for _, slug := range slugs {
+		if _, ok := bySlug[slug]; !ok {
+			missing = append(missing, slug)
+		}
+	}
+	return bySlug, missing
 }
 
 func idToCursor(id string) string {

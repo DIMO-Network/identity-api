@@ -22,12 +22,23 @@ import (
 
 const migrationsDir = "../../../migrations"
 
-// manifest with three BMW definitions and one Alfa Romeo; note metadata ""
-// tolerance for backfilled legacy rows.
+// manifest with three BMW definitions, one Alfa Romeo, and one definition
+// whose id prefix is a manufacturer slug this database does not have; note
+// metadata "" tolerance for backfilled legacy rows.
 const manifestBody = `{
   "updatedAt": "2026-08-19T00:00:00.000Z",
-  "count": 4,
+  "count": 5,
   "definitions": [
+    {
+      "id": "bmw-m_z4_2021",
+      "ksuid": "12G3iFH7Xc9Wvsw7pg6sD7uzoNN",
+      "model": "Z4",
+      "year": 2021,
+      "devicetype": "vehicle",
+      "imageuri": "https://image",
+      "metadata": null,
+      "manufacturer": {"tokenId": 13, "slug": "bmw-m", "name": "BMW M"}
+    },
     {
       "id": "alfa-romeo_147_2007",
       "ksuid": "26G3iFH7Xc9Wvsw7pg6sD7uzoSS",
@@ -120,6 +131,49 @@ func (f *catalogFixture) assertOnlyExpectedPaths(t *testing.T) {
 	assert.Empty(t, f.unexpected, "the catalog asked for paths this fixture does not serve")
 }
 
+// One query per page, not one per manufacturer slug: the ids are known before
+// any of them is resolved.
+func Test_manufacturerSlugs(t *testing.T) {
+	defs := func(ids ...string) []*services.CatalogDefinition {
+		out := make([]*services.CatalogDefinition, len(ids))
+		for i, id := range ids {
+			out[i] = &services.CatalogDefinition{ID: id}
+		}
+		return out
+	}
+
+	assert.Nil(t, manufacturerSlugs(nil))
+	assert.Equal(t, []string{"bmw"}, manufacturerSlugs(defs("bmw_x5_2019", "bmw_x6_2019", "bmw_x7_2020")),
+		"a page of one manufacturer is one slug, however many definitions it holds")
+	assert.Equal(t, []string{"bmw", "alfa-romeo"}, manufacturerSlugs(defs("bmw_x5_2019", "alfa-romeo_147_2007", "bmw_x6_2019")),
+		"distinct, in first-seen order")
+	assert.Empty(t, manufacturerSlugs(defs("48682", "", "_orphan_2020")),
+		"an id that names no manufacturer contributes no slug to look up")
+	assert.Equal(t, []string{"dodge"}, manufacturerSlugs(defs("dodge_town-&-country_2012")))
+}
+
+// checkChain adopts a catalog in which up to 5% of the manufacturers shared
+// with this chain carry a different slug, so an id prefix that matches no row
+// is reachable by design. It used to fail the whole page with a raw
+// sql.ErrNoRows.
+func Test_indexManufacturers(t *testing.T) {
+	bmw := &models.Manufacturer{ID: 13, Name: "BMW", Slug: "bmw"}
+	alfa := &models.Manufacturer{ID: 137, Name: "Alfa Romeo", Slug: "alfa-romeo"}
+
+	bySlug, missing := indexManufacturers([]string{"bmw", "alfa-romeo"}, models.ManufacturerSlice{bmw, alfa})
+	assert.Equal(t, map[string]*models.Manufacturer{"bmw": bmw, "alfa-romeo": alfa}, bySlug)
+	assert.Empty(t, missing)
+
+	bySlug, missing = indexManufacturers([]string{"bmw", "renamed", "alfa-romeo"}, models.ManufacturerSlice{bmw, alfa})
+	assert.Equal(t, bmw, bySlug["bmw"], "the definitions that do resolve still resolve")
+	assert.Nil(t, bySlug["renamed"], "a definition with no manufacturer row has no manufacturer")
+	assert.Equal(t, []string{"renamed"}, missing, "and the page says which, once, rather than failing")
+
+	bySlug, missing = indexManufacturers([]string{"gone"}, nil)
+	assert.Empty(t, bySlug)
+	assert.Equal(t, []string{"gone"}, missing)
+}
+
 func Test_GetDeviceDefinitions_Query(t *testing.T) {
 	ctx := context.Background()
 
@@ -153,7 +207,7 @@ func Test_GetDeviceDefinitions_Query(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Len(t, res.Edges, 2)
-	assert.Equal(t, 3, res.TotalCount)
+	assert.Equal(t, 4, res.TotalCount)
 
 	assert.Equal(t, "bmw_x5_2019", res.Edges[0].Node.DeviceDefinitionID)
 	assert.Equal(t, "12G3iFH7Xc9Wvsw7pg6sD7uzoKK", *res.Edges[0].Node.LegacyID)
@@ -168,6 +222,19 @@ func Test_GetDeviceDefinitions_Query(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 1, res.TotalCount)
 	assert.Equal(t, "bmw_x7_2020", res.Nodes[0].DeviceDefinitionID)
+
+	// bmw-m_z4_2021's id prefix matches no manufacturer row. The whole page
+	// used to fail with a raw sql.ErrNoRows; it is now one definition served
+	// without a manufacturer.
+	res, err = adController.GetDeviceDefinitions(ctx, 13, &first, nil, nil, nil, nil)
+	require.NoError(t, err, "one unresolvable manufacturer must not fail the page")
+	require.Len(t, res.Nodes, 4)
+	assert.Equal(t, "bmw-m_z4_2021", res.Nodes[0].DeviceDefinitionID)
+	assert.Nil(t, res.Nodes[0].Manufacturer)
+	for _, node := range res.Nodes[1:] {
+		require.NotNil(t, node.Manufacturer, node.DeviceDefinitionID)
+		assert.Equal(t, 13, node.Manufacturer.TokenID)
+	}
 
 	catalog.assertOnlyExpectedPaths(t)
 }
