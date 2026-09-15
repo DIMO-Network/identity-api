@@ -586,11 +586,17 @@ func shardKeyFor(build string, n int) string  { return fmt.Sprintf("idx/%s/shard
 func shardPathFor(build string, n int) string { return "/" + shardKeyFor(build, n) }
 
 func buildIndexOf(build string, shards ...string) string {
+	return buildIndexAt(build, "2026-09-14T00:00:00.000Z", shards...)
+}
+
+// buildIndexAt is the index the worker publishes: a build id, the timestamp
+// that publish stamped on it, and the shards it named.
+func buildIndexAt(build, createdAt string, shards ...string) string {
 	quoted := make([]string, len(shards))
 	for i, key := range shards {
 		quoted[i] = fmt.Sprintf("%q", key)
 	}
-	return fmt.Sprintf(`{"build":%q,"createdAt":"t","count":%d,"shards":[%s]}`, build, len(shards), strings.Join(quoted, ","))
+	return fmt.Sprintf(`{"build":%q,"createdAt":%q,"count":%d,"shards":[%s]}`, build, createdAt, len(shards), strings.Join(quoted, ","))
 }
 
 // serveBuild publishes a build: the index that names it and one shard holding
@@ -637,9 +643,10 @@ func TestCatalogAdoptsATemplateBuild(t *testing.T) {
 	assert.Equal(t, sourceTemplate, svc.snap.Load().source)
 }
 
-// Shards are immutable, so a build id that has not changed means there is
-// nothing to fetch. Refreshing a 17,000-definition catalog every minute
-// because the index was re-read is exactly the download this design removes.
+// Shards are immutable, so an index that names the same build, published at
+// the same moment, with the same shards, means there is nothing to fetch.
+// Refreshing a 17,000-definition catalog every minute because the index was
+// re-read is exactly the download this design removes.
 func TestCatalogSkipsTheShardsWhenTheBuildIsUnchanged(t *testing.T) {
 	srv := newCatalogServer(t)
 	index := buildIndexOf("b1", shardKeyFor("b1", 0))
@@ -664,7 +671,7 @@ func TestCatalogSkipsTheShardsWhenTheBuildIsUnchanged(t *testing.T) {
 	// A 200 naming the build already held: still nothing to fetch.
 	srv.serve(catalogIndexPath, index)
 	require.NoError(t, svc.refreshOnce())
-	assert.Equal(t, 1, srv.hitsFor(shardPathFor("b1", 0)), "an unchanged build id must not refetch the build")
+	assert.Equal(t, 1, srv.hitsFor(shardPathFor("b1", 0)), "an unchanged index must not refetch the build")
 	assert.Equal(t, 3, srv.hitsFor(catalogIndexPath))
 
 	// A new build is fetched.
@@ -672,6 +679,57 @@ func TestCatalogSkipsTheShardsWhenTheBuildIsUnchanged(t *testing.T) {
 	require.NoError(t, svc.refreshOnce())
 	assert.Equal(t, 1, srv.hitsFor(shardPathFor("b2", 0)))
 	assert.Equal(t, "b2", svc.snap.Load().build)
+}
+
+// A build id is not a version: idx/current.json and idx/<build>/manifest.json
+// are rewritten on every publish of the same id (definitions-worker
+// src/idx.ts, "Not write-once, so not immutable ... a publish repeated after
+// more pages landed names more shards"). Keying freshness on the id alone
+// served the short catalog of an early publish forever.
+func TestCatalogReloadsARepublishedBuild(t *testing.T) {
+	srv := newCatalogServer(t)
+	srv.serve(catalogIndexPath, buildIndexAt("b1", "2026-09-14T00:00:00.000Z", shardKeyFor("b1", 0)))
+	srv.serve(shardPathFor("b1", 0), "["+camryTemplate+"]")
+	srv.serve("/t/toyota_ghost_2020.json", "")
+	svc := manualCatalog(t, srv, config.Settings{})
+	ctx := context.Background()
+
+	require.NoError(t, svc.refreshOnce())
+	require.Equal(t, 1, svc.snap.Load().size())
+
+	// The by-id fallback learns that a definition is missing. The longer
+	// catalog below holds it, so a republish has to clear what it learned.
+	srv.fail("/t/toyota_supra_2021.json", http.StatusNotFound)
+	d, err := svc.GetDefinitionByID(ctx, "toyota_supra_2021")
+	require.NoError(t, err)
+	require.Nil(t, d)
+
+	// The operator published b1 before the walk finished, then finished it and
+	// published b1 again: the same id, a new createdAt, a longer shard list.
+	srv.serve(catalogIndexPath, buildIndexAt("b1", "2026-09-14T02:00:00.000Z", shardKeyFor("b1", 0), shardKeyFor("b1", 1)))
+	srv.serve(shardPathFor("b1", 1), "["+supraTemplate+"]")
+	require.NoError(t, svc.refreshOnce())
+
+	assert.Equal(t, 2, svc.snap.Load().size(), "a republished build must be reloaded")
+	assert.Equal(t, 1, srv.hitsFor(shardPathFor("b1", 1)))
+	d, err = svc.GetDefinitionByID(ctx, "toyota_supra_2021")
+	require.NoError(t, err)
+	require.NotNil(t, d, "the republished build must clear what the by-id fallback learned about the old one")
+
+	t.Run("a retried publish that adds no shards still reloads", func(t *testing.T) {
+		before := srv.hitsFor(shardPathFor("b1", 0))
+		srv.serve(catalogIndexPath, buildIndexAt("b1", "2026-09-14T03:00:00.000Z", shardKeyFor("b1", 0), shardKeyFor("b1", 1)))
+		require.NoError(t, svc.refreshOnce())
+		assert.Equal(t, before+1, srv.hitsFor(shardPathFor("b1", 0)), "a new createdAt is a new publish")
+	})
+
+	t.Run("an index naming the same build unchanged fetches nothing", func(t *testing.T) {
+		before := srv.hitsFor(shardPathFor("b1", 0))
+		require.NoError(t, svc.refreshOnce())
+		require.NoError(t, svc.refreshOnce())
+		assert.Equal(t, before, srv.hitsFor(shardPathFor("b1", 0)),
+			"an identical index must not refetch a 17,000-definition catalog every minute")
+	})
 }
 
 // The deployed worker serves only manifest.json and answers 404 for the index,

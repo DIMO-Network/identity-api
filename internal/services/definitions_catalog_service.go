@@ -64,12 +64,20 @@ const (
 var shardKeyRE = regexp.MustCompile(`^idx/([A-Za-z0-9_-]+)/shard-[0-9]+\.json$`)
 
 // buildManifest is the part of the worker's BuildManifest (definitions-worker
-// src/build.ts) this service reads. count and createdAt are deliberately not
-// decoded: nothing here depends on them, and decoding them strictly would let a
-// type change in either fail the whole index.
+// src/build.ts) this service reads. count is deliberately not decoded: nothing
+// here depends on it, and decoding it strictly would let a type change fail the
+// whole index.
+//
+// createdAt and the shard list are part of the build's identity, not
+// decoration. A build id is not a version: assembleManifest rewrites
+// idx/<build>/manifest.json and idx/current.json on every publish of that id,
+// so a publish repeated after more pages landed names more shards under the
+// same id, with a new createdAt (definitions-worker src/idx.ts: "Not
+// write-once, so not immutable"). Only the shards themselves are immutable.
 type buildManifest struct {
-	Build  string   `json:"build"`
-	Shards []string `json:"shards"`
+	Build     string   `json:"build"`
+	CreatedAt string   `json:"createdAt"`
+	Shards    []string `json:"shards"`
 }
 
 // templateLookups caches what the by-id fallback learned about one build. A new
@@ -116,22 +124,45 @@ var (
 	}, []string{"source"})
 )
 
+// catalogOrigin identifies the document a snapshot was read from, completely
+// enough that two origins compare equal only when there is nothing to refetch.
+type catalogOrigin struct {
+	// source is which catalog layout this was read from.
+	source string
+	// build is the template build this was read from; empty in legacy mode.
+	build string
+	// createdAt is the timestamp the publish stamped on that build, verbatim;
+	// empty in legacy mode. Part of the build's identity because a republished
+	// build keeps its id and gets a new one.
+	createdAt string
+	// shards is the shard list the index named, in the order it named them:
+	// assembleManifest sorts them numerically before writing, so equal lists
+	// mean equal sets. A republish after more pages landed names more.
+	shards []string
+	// etag conditions the next read of whatever document produced it.
+	etag string
+}
+
+// sameBuild reports whether the index names exactly the build already held, so
+// that there is nothing to fetch. The build id alone does not settle it: only
+// the shards are immutable, and a republish of the same id names a longer list
+// of them under a new createdAt.
+func (o catalogOrigin) sameBuild(m *buildManifest) bool {
+	return o.source == sourceTemplate && o.build == m.Build &&
+		o.createdAt == m.CreatedAt && slices.Equal(o.shards, m.Shards)
+}
+
 // catalogSnapshot is an immutable view of the catalog. The refresh goroutine
 // builds a new one and swaps it in; a reader loads the pointer and takes no
 // lock, so a refresh cannot block a query however long it runs.
 type catalogSnapshot struct {
 	byID       map[string]*CatalogDefinition
 	byMfrToken map[int][]*CatalogDefinition
-	// source is which catalog layout this was read from.
-	source string
-	// build is the template build this was read from; empty in legacy mode.
-	build string
-	// etag conditions the next read of whatever document produced it.
-	etag        string
+	catalogOrigin
 	lastSuccess time.Time
 }
 
-func newCatalogSnapshot(defs []CatalogDefinition, source, build, etag string) *catalogSnapshot {
+func newCatalogSnapshot(defs []CatalogDefinition, origin catalogOrigin) *catalogSnapshot {
 	byID := make(map[string]*CatalogDefinition, len(defs))
 	byMfr := map[int][]*CatalogDefinition{}
 	for i := range defs {
@@ -143,13 +174,20 @@ func newCatalogSnapshot(defs []CatalogDefinition, source, build, etag string) *c
 		slices.SortFunc(list, func(a, b *CatalogDefinition) int { return strings.Compare(a.ID, b.ID) })
 	}
 	return &catalogSnapshot{
-		byID:        byID,
-		byMfrToken:  byMfr,
-		source:      source,
-		build:       build,
-		etag:        etag,
-		lastSuccess: time.Now(),
+		byID:          byID,
+		byMfrToken:    byMfr,
+		catalogOrigin: origin,
+		lastSuccess:   time.Now(),
 	}
+}
+
+// sameOrigin reports whether a snapshot was read from the document this origin
+// names. A cold pod holds no snapshot, which is never the same origin.
+func (s *catalogSnapshot) sameOrigin(o catalogOrigin) bool {
+	if s == nil || s.source != o.source {
+		return false
+	}
+	return s.build == o.build && s.createdAt == o.createdAt && slices.Equal(s.shards, o.shards)
 }
 
 func (s *catalogSnapshot) size() int {
@@ -535,9 +573,11 @@ func (s *DefinitionsCatalogService) refresh(ctx context.Context) (string, error)
 	}
 }
 
-// refreshTemplates adopts the build the index names. A build id that has not
-// changed means the catalog has not changed: shards are immutable, so there is
-// nothing to fetch.
+// refreshTemplates adopts the build the index names. An index that names the
+// same build, published at the same moment, with the same shards, means the
+// catalog has not changed: those shards are immutable, so there is nothing to
+// fetch. Anything else is a publish this pod has not read, including a
+// republish of the build it already holds.
 func (s *DefinitionsCatalogService) refreshTemplates(ctx context.Context, held *catalogSnapshot, resp *http.Response) error {
 	var m buildManifest
 	if err := json.NewDecoder(resp.Body).Decode(&m); err != nil {
@@ -547,7 +587,7 @@ func (s *DefinitionsCatalogService) refreshTemplates(ctx context.Context, held *
 		return errors.New("the definitions index names no build")
 	}
 	etag := resp.Header.Get("Etag")
-	if held != nil && held.source == sourceTemplate && held.build == m.Build {
+	if held != nil && held.sameBuild(&m) {
 		s.confirm(held, etag)
 		return nil
 	}
@@ -556,7 +596,13 @@ func (s *DefinitionsCatalogService) refreshTemplates(ctx context.Context, held *
 	if err != nil {
 		return err
 	}
-	return s.adopt(ctx, held, c, sourceTemplate, m.Build, etag)
+	return s.adopt(ctx, held, c, catalogOrigin{
+		source:    sourceTemplate,
+		build:     m.Build,
+		createdAt: m.CreatedAt,
+		shards:    m.Shards,
+		etag:      etag,
+	})
 }
 
 // loadBuild fetches every shard of a build and flattens the templates in it.
@@ -705,7 +751,7 @@ func (s *DefinitionsCatalogService) refreshLegacy(ctx context.Context, held *cat
 	if err := decodeLegacyManifest(resp.Body, c.visit); err != nil {
 		return fmt.Errorf("failed to decode definitions manifest: %w", err)
 	}
-	return s.adopt(ctx, held, c, sourceLegacy, "", resp.Header.Get("Etag"))
+	return s.adopt(ctx, held, c, catalogOrigin{source: sourceLegacy, etag: resp.Header.Get("Etag")})
 }
 
 // get issues one conditional GET. A request that cannot even be built is a
@@ -745,7 +791,8 @@ func (s *DefinitionsCatalogService) confirm(held *catalogSnapshot, etag string) 
 }
 
 // adopt vets a candidate and swaps it in, or reports why it was refused.
-func (s *DefinitionsCatalogService) adopt(ctx context.Context, held *catalogSnapshot, c *catalogCandidate, source, build, etag string) error {
+func (s *DefinitionsCatalogService) adopt(ctx context.Context, held *catalogSnapshot, c *catalogCandidate, origin catalogOrigin) error {
+	source := origin.source
 	if c.invalid > 0 {
 		s.log.Warn().Int("invalid", c.invalid).Int("kept", len(c.defs)).Strs("first", c.examples).
 			Msg("skipped invalid elements in the definitions catalog")
@@ -757,17 +804,21 @@ func (s *DefinitionsCatalogService) adopt(ctx context.Context, held *catalogSnap
 		return fmt.Errorf("refusing the %s definitions catalog: %w", source, err)
 	}
 
-	next := newCatalogSnapshot(c.defs, source, build, etag)
+	next := newCatalogSnapshot(c.defs, origin)
 	s.snap.Store(next)
-	if held == nil || held.source != next.source || held.build != next.build {
+	// A republished build keeps its id while its contents change, so what the
+	// by-id fallback learned about the old one -- above all that a definition
+	// was missing -- has to go with it.
+	sameAsHeld := held.sameOrigin(origin)
+	if !sameAsHeld {
 		s.lookups.Store(newTemplateLookups())
 	}
 
 	level := zerolog.DebugLevel
-	if held == nil || held.source != next.source || held.build != next.build || held.size() != next.size() {
+	if !sameAsHeld || held.size() != next.size() {
 		level = zerolog.InfoLevel
 	}
-	s.log.WithLevel(level).Str("source", source).Str("build", build).
+	s.log.WithLevel(level).Str("source", source).Str("build", origin.build).
 		Int("definitions", next.size()).Int("invalid", c.invalid).
 		Msg("adopted a definitions catalog snapshot")
 	// A cold pod has nothing to compare against, so an empty catalog is
