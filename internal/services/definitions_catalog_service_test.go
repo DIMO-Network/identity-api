@@ -708,14 +708,19 @@ func buildTime(at time.Time) string {
 	return at.UTC().Format("2006-01-02T15:04:05.000Z")
 }
 
-// freshBuildTime is a build a healthy worker would have published: recent
-// enough to sit inside DEFINITIONS_MAX_BUILD_AGE. It must be relative to now.
-// A literal date ages past that bound and turns every test serving an index
-// red days after it was written, which is exactly what a hard-coded
-// 2026-09-14 stamp did here. A test that cares about a build's age passes its
-// own timestamp to buildIndexAt.
+// fixtureBuildTime is a build a healthy worker would have published: recent
+// enough to sit inside DEFINITIONS_MAX_BUILD_AGE. It must be relative to now,
+// because a literal date ages past that bound and turns every test serving an
+// index red days after it was written, which is what a hard-coded 2026-09-14
+// stamp did here. It must also be stamped ONCE: createdAt is how a republish
+// is recognised, so a per-call time.Now() makes re-serving the same index look
+// like a new publish, and whether it does depends on which millisecond each
+// call lands in. A test that cares about a build's age passes its own
+// timestamp to buildIndexAt.
+var fixtureBuildTime = buildTime(time.Now().Add(-time.Hour))
+
 func freshBuildTime() string {
-	return buildTime(time.Now().Add(-time.Hour))
+	return fixtureBuildTime
 }
 
 func buildIndexOf(build string, shards ...string) string {
