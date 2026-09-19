@@ -40,12 +40,15 @@ func (r *RewardsQueryTestSuite) SetupSuite() {
 	r.pdb, r.container = test.StartContainerDatabase(r.ctx, r.T(), migrationsDir)
 
 	r.settings = config.Settings{
-		DIMORegistryAddr:    "0x4de1bcf2b7e851e31216fc07989caa902a604784",
-		DIMORegistryChainID: 80001,
+		DefinitionsCatalogURL: "http://definitions.invalid",
+		DIMORegistryAddr:      "0x4de1bcf2b7e851e31216fc07989caa902a604784",
+		DIMORegistryChainID:   80001,
 	}
 	logger := zerolog.Nop()
 	r.repo = base.NewRepository(r.pdb, r.settings, &logger)
-	r.resolver = NewResolver(r.repo)
+	resolver, err := NewResolver(r.repo)
+	r.Require().NoError(err)
+	r.resolver = resolver
 }
 
 // TearDownTest after each test truncate tables

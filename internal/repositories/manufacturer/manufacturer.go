@@ -3,6 +3,8 @@ package manufacturer
 import (
 	"bytes"
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"math/big"
 
@@ -105,12 +107,56 @@ func (r *Repository) GetManufacturer(ctx context.Context, by gmodel.Manufacturer
 		return nil, fmt.Errorf("invalid filter")
 	}
 
-	m, err := models.Manufacturers(qm).One(ctx, r.PDB.DBS().Reader)
+	m, err := manufacturerOrAbsent(models.Manufacturers(qm).One(ctx, r.PDB.DBS().Reader))
 	if err != nil {
-		return nil, err
+		// Whatever the database said stays in the log. The client gets
+		// "Internal error", never a driver string it cannot act on.
+		r.Log.Error().Err(err).Msg("Failed to look up manufacturer.")
+		return nil, base.InternalError
+	}
+	if m == nil {
+		// The contract for an unknown make: `data.manufacturer` is null and
+		// there is no `errors` entry. The schema's
+		// `manufacturer(by:): Manufacturer` is nullable, so absence is a
+		// representable answer, and identity has no error presenter -- an
+		// error here would reach clients as the raw `sql: no rows in result
+		// set`, which a client that reads any errors entry as an outage
+		// cannot tell from the service being down. Callers distinguish
+		// "no such manufacturer" from "identity is broken" by the presence
+		// of an errors entry, not by its text.
+		return nil, nil
 	}
 
 	return r.ToAPI(m)
+}
+
+// manufacturerOrAbsent maps a single-row manufacturer lookup onto what the API
+// serves for it: a row, or absence. The lookups here are all by a client-
+// supplied identifier, so "nothing matched" is an ordinary answer and only a
+// real failure is an error.
+func manufacturerOrAbsent(m *models.Manufacturer, err error) (*models.Manufacturer, error) {
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return m, nil
+}
+
+// SlugsByTokenID returns every manufacturer's slug keyed by token id. The
+// device definitions catalog is checked against it: the catalog carries no
+// chain marker, and the same slug has different token ids on different chains.
+func (r *Repository) SlugsByTokenID(ctx context.Context) (map[int]string, error) {
+	ms, err := models.Manufacturers(qm.Select(models.ManufacturerColumns.ID, models.ManufacturerColumns.Slug)).All(ctx, r.PDB.DBS().Reader)
+	if err != nil {
+		return nil, fmt.Errorf("error reading manufacturers: %w", err)
+	}
+	slugs := make(map[int]string, len(ms))
+	for _, m := range ms {
+		slugs[m.ID] = m.Slug
+	}
+	return slugs, nil
 }
 
 func (r *Repository) GetManufacturers(ctx context.Context) (*gmodel.ManufacturerConnection, error) {

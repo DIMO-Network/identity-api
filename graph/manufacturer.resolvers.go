@@ -18,7 +18,7 @@ func (r *manufacturerResolver) AftermarketDevices(ctx context.Context, obj *mode
 
 // DeviceDefinitions is the resolver for the deviceDefinitions field.
 func (r *manufacturerResolver) DeviceDefinitions(ctx context.Context, obj *model.Manufacturer, first *int, after *string, last *int, before *string, filterBy *model.DeviceDefinitionFilter) (*model.DeviceDefinitionConnection, error) {
-	return r.deviceDefinition.GetDeviceDefinitions(ctx, obj.TableID, first, after, last, before, filterBy)
+	return r.deviceDefinition.GetDeviceDefinitions(ctx, obj.TokenID, first, after, last, before, filterBy)
 }
 
 // Manufacturer is the resolver for the manufacturer field.
