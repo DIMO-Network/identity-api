@@ -2,6 +2,9 @@ package devicedefinition
 
 import (
 	"context"
+	"database/sql"
+	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"sync"
@@ -270,5 +273,51 @@ func Test_GetDeviceDefinition_Query(t *testing.T) {
 	assert.Equal(t, "powertrain_type", res.Attributes[0].Name)
 	assert.Equal(t, "ICE", res.Attributes[0].Value)
 
+	// bmw-m_z4_2021's id prefix matches no manufacturer row in this database.
+	// The listing path serves it with a null manufacturer, so the by-id path
+	// must too; it used to answer the raw driver string instead.
+	res, err = adController.GetDeviceDefinition(ctx, model.DeviceDefinitionBy{ID: "bmw-m_z4_2021"})
+	require.NoError(t, err, "a definition whose manufacturer slug has no row is still served")
+	assert.Equal(t, "bmw-m_z4_2021", res.DeviceDefinitionID)
+	assert.Nil(t, res.Manufacturer)
+
+	// A definition the catalog genuinely lacks still gets the not-found
+	// answer, whether or not its manufacturer resolves.
+	_, err = adController.GetDeviceDefinition(ctx, model.DeviceDefinitionBy{ID: "alfa-romeo_nope_1999"})
+	require.Error(t, err)
+	assert.Equal(t, "no device definition found with that id", err.Error())
+
+	_, err = adController.GetDeviceDefinition(ctx, model.DeviceDefinitionBy{ID: "no-such-make_nope_1999"})
+	require.Error(t, err)
+	assert.Equal(t, "no device definition found with that id", err.Error(),
+		"an unknown make is not reported as a database error")
+
 	catalog.assertOnlyExpectedPaths(t)
+}
+
+// The by-id path resolves its one manufacturer with a single-row query, so it
+// has to make the same call the page-wide query makes through
+// indexManufacturers: a slug with no row is an absent manufacturer, not an
+// error, and certainly not the driver's own sql.ErrNoRows on the wire.
+func Test_manufacturerOrAbsent(t *testing.T) {
+	bmw := &models.Manufacturer{ID: 13, Name: "BMW", Slug: "bmw"}
+
+	got, err := manufacturerOrAbsent(bmw, nil)
+	require.NoError(t, err)
+	assert.Equal(t, bmw, got)
+
+	got, err = manufacturerOrAbsent(nil, sql.ErrNoRows)
+	require.NoError(t, err, "a slug this database does not have is not an error")
+	assert.Nil(t, got, "it is a definition with no manufacturer, which ToAPI leaves null")
+
+	boom := errors.New("read pool is down")
+	got, err = manufacturerOrAbsent(nil, boom)
+	assert.ErrorIs(t, err, boom, "a real failure is still a failure")
+	assert.Nil(t, got)
+
+	// sqlboiler wraps the driver error, so the check has to unwrap.
+	wrapped := fmt.Errorf("bind failed: %w", sql.ErrNoRows)
+	got, err = manufacturerOrAbsent(nil, wrapped)
+	require.NoError(t, err)
+	assert.Nil(t, got)
 }

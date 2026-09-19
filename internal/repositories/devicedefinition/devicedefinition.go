@@ -2,6 +2,7 @@ package devicedefinition
 
 import (
 	"context"
+	"database/sql"
 	"encoding/base64"
 	"errors"
 	"slices"
@@ -89,11 +90,10 @@ func (r *Repository) GetDeviceDefinition(ctx context.Context, by gmodel.DeviceDe
 		return nil, gqlerror.Errorf("The `ID` is incorrect.")
 	}
 
-	mfr, err := models.Manufacturers(models.ManufacturerWhere.Slug.EQ(mfrSlug)).One(ctx, r.PDB.DBS().Reader)
-	if err != nil {
-		return nil, err
-	}
-
+	// The catalog decides whether this id names a definition at all; the
+	// manufacturer is decoration on top of that answer, so it is resolved
+	// second and never gets to turn a definition the snapshot holds into an
+	// error.
 	def, err := r.Catalog.GetDefinitionByID(ctx, by.ID)
 	if err != nil {
 		return nil, err
@@ -102,7 +102,33 @@ func (r *Repository) GetDeviceDefinition(ctx context.Context, by gmodel.DeviceDe
 		return nil, errors.New("no device definition found with that id")
 	}
 
+	mfr, err := manufacturerOrAbsent(models.Manufacturers(models.ManufacturerWhere.Slug.EQ(mfrSlug)).One(ctx, r.PDB.DBS().Reader))
+	if err != nil {
+		return nil, err
+	}
+	if mfr == nil {
+		r.Log.Warn().Str("slug", mfrSlug).Str("definition", by.ID).
+			Msg("device definition names a manufacturer slug this database does not have; serving it without a manufacturer")
+	}
+
 	return r.ToAPI(def, mfr)
+}
+
+// manufacturerOrAbsent maps a single-row manufacturer lookup onto what the API
+// serves for it. A slug with no row is an absent manufacturer, not an error:
+// for the reasons manufacturersForPage gives, the catalog's idea of a
+// manufacturer's slug and this database's can differ by design, the schema's
+// `manufacturer: Manufacturer` is nullable, and ToAPI already leaves it null.
+// Returning the driver's sql.ErrNoRows instead put `sql: no rows in result
+// set` on the wire for a definition the listing path serves happily.
+func manufacturerOrAbsent(mfr *models.Manufacturer, err error) (*models.Manufacturer, error) {
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return mfr, nil
 }
 
 func (r *Repository) GetDeviceDefinitions(ctx context.Context, manufacturerTokenID int, first *int, after *string, last *int, before *string, filterBy *gmodel.DeviceDefinitionFilter) (*gmodel.DeviceDefinitionConnection, error) {
