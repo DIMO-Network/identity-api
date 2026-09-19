@@ -703,8 +703,23 @@ func grenadierTemplate(model string) string {
 func shardKeyFor(build string, n int) string  { return fmt.Sprintf("idx/%s/shard-%d.json", build, n) }
 func shardPathFor(build string, n int) string { return "/" + shardKeyFor(build, n) }
 
+// buildTime stamps a build the way the worker does, with toISOString().
+func buildTime(at time.Time) string {
+	return at.UTC().Format("2006-01-02T15:04:05.000Z")
+}
+
+// freshBuildTime is a build a healthy worker would have published: recent
+// enough to sit inside DEFINITIONS_MAX_BUILD_AGE. It must be relative to now.
+// A literal date ages past that bound and turns every test serving an index
+// red days after it was written, which is exactly what a hard-coded
+// 2026-09-14 stamp did here. A test that cares about a build's age passes its
+// own timestamp to buildIndexAt.
+func freshBuildTime() string {
+	return buildTime(time.Now().Add(-time.Hour))
+}
+
 func buildIndexOf(build string, shards ...string) string {
-	return buildIndexAt(build, "2026-09-14T00:00:00.000Z", shards...)
+	return buildIndexAt(build, freshBuildTime(), shards...)
 }
 
 // buildIndexAt is the index the worker publishes: a build id, the timestamp
@@ -806,7 +821,10 @@ func TestCatalogSkipsTheShardsWhenTheBuildIsUnchanged(t *testing.T) {
 // served the short catalog of an early publish forever.
 func TestCatalogReloadsARepublishedBuild(t *testing.T) {
 	srv := newCatalogServer(t)
-	srv.serve(catalogIndexPath, buildIndexAt("b1", "2026-09-14T00:00:00.000Z", shardKeyFor("b1", 0)))
+	// Relative, for the reason freshBuildTime explains; the offsets are what
+	// make each publish of b1 a new one.
+	published := time.Now().Add(-3 * time.Hour)
+	srv.serve(catalogIndexPath, buildIndexAt("b1", buildTime(published), shardKeyFor("b1", 0)))
 	srv.serve(shardPathFor("b1", 0), "["+camryTemplate+"]")
 	srv.serve("/t/toyota_ghost_2020.json", "")
 	svc := manualCatalog(t, srv, config.Settings{})
@@ -824,7 +842,7 @@ func TestCatalogReloadsARepublishedBuild(t *testing.T) {
 
 	// The operator published b1 before the walk finished, then finished it and
 	// published b1 again: the same id, a new createdAt, a longer shard list.
-	srv.serve(catalogIndexPath, buildIndexAt("b1", "2026-09-14T02:00:00.000Z", shardKeyFor("b1", 0), shardKeyFor("b1", 1)))
+	srv.serve(catalogIndexPath, buildIndexAt("b1", buildTime(published.Add(time.Hour)), shardKeyFor("b1", 0), shardKeyFor("b1", 1)))
 	srv.serve(shardPathFor("b1", 1), "["+supraTemplate+"]")
 	require.NoError(t, svc.refreshOnce())
 
@@ -836,7 +854,7 @@ func TestCatalogReloadsARepublishedBuild(t *testing.T) {
 
 	t.Run("a retried publish that adds no shards still reloads", func(t *testing.T) {
 		before := srv.hitsFor(shardPathFor("b1", 0))
-		srv.serve(catalogIndexPath, buildIndexAt("b1", "2026-09-14T03:00:00.000Z", shardKeyFor("b1", 0), shardKeyFor("b1", 1)))
+		srv.serve(catalogIndexPath, buildIndexAt("b1", buildTime(published.Add(2*time.Hour)), shardKeyFor("b1", 0), shardKeyFor("b1", 1)))
 		require.NoError(t, svc.refreshOnce())
 		assert.Equal(t, before+1, srv.hitsFor(shardPathFor("b1", 0)), "a new createdAt is a new publish")
 	})
