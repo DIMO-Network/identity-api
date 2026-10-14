@@ -37,13 +37,15 @@ func (s *VehicleTestSuite) SetupSuite() {
 	regAddr := common.HexToAddress("0xB9")
 
 	settings := config.Settings{
-		DIMORegistryChainID: 1,
-		DIMORegistryAddr:    regAddr.Hex(),
-		VehicleNFTAddr:      vehicleAddr.Hex(),
+		DefinitionsCatalogURL: "http://definitions.invalid",
+		DIMORegistryChainID:   1,
+		DIMORegistryAddr:      regAddr.Hex(),
+		VehicleNFTAddr:        vehicleAddr.Hex(),
 	}
 
 	repo := base.NewRepository(db, settings, &logger)
-	resolver := NewResolver(repo)
+	resolver, err := NewResolver(repo)
+	s.Require().NoError(err)
 
 	s.consumer = services.NewContractsEventsConsumer(db, &logger, &settings)
 	s.handler = loader.Middleware(db, NewDefaultServer(NewExecutableSchema(Config{Resolvers: resolver})), settings, &logger)

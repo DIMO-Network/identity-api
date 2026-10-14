@@ -34,13 +34,15 @@ func TestDCNQuery(t *testing.T) {
 
 	logger := zerolog.New(os.Stdout)
 	settings := config.Settings{
-		DCNRegistryAddr:     "0xE9F4dfE02f895DC17E2e146e578873c9095bA293", // For realism.
-		DIMORegistryChainID: 137,
-		DCNResolverAddr:     "0x60627326F55054Ea448e0a7BC750785bD65EF757",
+		DefinitionsCatalogURL: "http://definitions.invalid",
+		DCNRegistryAddr:       "0xE9F4dfE02f895DC17E2e146e578873c9095bA293", // For realism.
+		DIMORegistryChainID:   137,
+		DCNResolverAddr:       "0x60627326F55054Ea448e0a7BC750785bD65EF757",
 	}
 
 	repo := base.NewRepository(pdb, settings, &logger)
-	resolver := NewResolver(repo)
+	resolver, err := NewResolver(repo)
+	require.NoError(err)
 
 	_, wallet, err := helpers.GenerateWallet()
 	assert.NoError(err)

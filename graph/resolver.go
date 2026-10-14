@@ -2,6 +2,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/DIMO-Network/identity-api/graph/model"
 	"github.com/DIMO-Network/identity-api/internal/loader"
@@ -81,7 +82,7 @@ type VehicleRepository interface {
 //go:generate mockgen -destination=./mock_devicedefinition_test.go -package=graph github.com/DIMO-Network/identity-api/graph DeviceDefinitionRepository
 type DeviceDefinitionRepository interface {
 	GetDeviceDefinition(ctx context.Context, by model.DeviceDefinitionBy) (*model.DeviceDefinition, error)
-	GetDeviceDefinitions(ctx context.Context, tableID, first *int, after *string, last *int, before *string, filterBy *model.DeviceDefinitionFilter) (*model.DeviceDefinitionConnection, error)
+	GetDeviceDefinitions(ctx context.Context, manufacturerTokenID int, first *int, after *string, last *int, before *string, filterBy *model.DeviceDefinitionFilter) (*model.DeviceDefinitionConnection, error)
 }
 
 // DeveloperLicenseRepository interface for mocking devicedefinition.Repository.
@@ -144,23 +145,34 @@ type Resolver struct {
 	accountsacd      AccountSacdRepository
 	connectionsacd   ConnectionSacdRepository
 	vehicleDefFetch  loader.VehicleDefinitionFetcher
-	log              *zerolog.Logger
+	// definitionsCatalog is held so StartBackground can warm it at process
+	// start; the device definition repository is what reads from it.
+	definitionsCatalog *services.DefinitionsCatalogService
+	log                *zerolog.Logger
 }
 
-// NewResolver creates a new Resolver with allocated repositories.
-func NewResolver(baseRepo *base.Repository) *Resolver {
-	tablelandApiService := services.NewTablelandApiService(baseRepo.Log, &baseRepo.Settings)
+// NewResolver creates a new Resolver with allocated repositories. It fails when
+// the device definitions catalog settings are invalid.
+func NewResolver(baseRepo *base.Repository) (*Resolver, error) {
+	manufacturerRepo := manufacturer.New(baseRepo)
+	definitionsCatalog, err := services.NewDefinitionsCatalogService(baseRepo.Log, &baseRepo.Settings,
+		// The catalog carries no chain marker, so a candidate is compared with
+		// the manufacturers this deployment has before it is adopted.
+		services.WithManufacturerSlugs(manufacturerRepo.SlugsByTokenID))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create the device definitions catalog: %w", err)
+	}
 
 	return &Resolver{
 		aftermarket:      aftermarket.New(baseRepo),
 		dcn:              dcn.New(baseRepo),
-		manufacturer:     manufacturer.New(baseRepo),
+		manufacturer:     manufacturerRepo,
 		reward:           reward.Repository{Repository: baseRepo},
 		synthetic:        synthetic.New(baseRepo),
 		vehicle:          vehicle.New(baseRepo),
 		vehicleprivilege: vehicleprivilege.Repository{Repository: baseRepo},
 		vehiclesacd:      vehiclesacd.Repository{Repository: baseRepo},
-		deviceDefinition: devicedefinition.New(baseRepo, tablelandApiService),
+		deviceDefinition: devicedefinition.New(baseRepo, definitionsCatalog),
 		developerLicense: developerlicense.New(baseRepo),
 		stake:            stake.New(baseRepo),
 		connection:       connection.New(baseRepo),
@@ -168,6 +180,16 @@ func NewResolver(baseRepo *base.Repository) *Resolver {
 		accountsacd:      &accountsacd.Repository{Repository: baseRepo},
 		connectionsacd:   &connectionsacd.Repository{Repository: baseRepo},
 		vehicleDefFetch:  loader.NewVehicleDefinitionFetcher(baseRepo.Settings, baseRepo.Log),
-		log:              baseRepo.Log,
-	}
+
+		definitionsCatalog: definitionsCatalog,
+		log:                baseRepo.Log,
+	}, nil
+}
+
+// StartBackground starts the resolver's background work. Call it once at
+// process start: it warms the device definitions catalog and keeps it
+// refreshed, so a pod loads the catalog before it takes traffic rather than on
+// the first query that needs it.
+func (r *Resolver) StartBackground() {
+	r.definitionsCatalog.Start()
 }
