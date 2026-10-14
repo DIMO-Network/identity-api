@@ -53,8 +53,42 @@ type DeviceDefinition {
 
   """
   Device attributes for this device definition.
+
+  Only attributes shared by every trim of this model-year appear here. An
+  attribute whose value differs between trims belongs to those trims, not to
+  the model-year, and is served under trims instead.
   """
   attributes: [DeviceDefinitionAttribute!]!
+
+  """
+  Trims of this model-year, as the manufacturer markets them.
+
+  Empty for a definition served from the legacy manifest, which has no trims.
+  """
+  trims: [DeviceDefinitionTrim!]!
+}
+
+"""
+One trim of a device definition: a specific configuration of the model-year.
+"""
+type DeviceDefinitionTrim {
+  """
+  Trim name as the manufacturer markets it, for example "XSE V6", "Hybrid LE"
+  or "Long Range AWD".
+  """
+  name: String!
+
+  """
+  Attributes specific to this trim. These are the attributes that vary across
+  the definition's trims, so they are absent from the definition's own
+  attributes.
+  """
+  attributes: [DeviceDefinitionAttribute!]!
+
+  """
+  Hardware template id for this trim, when it differs from the definition's.
+  """
+  hardwareTemplateId: String
 }
 
 type DeviceDefinitionAttribute {

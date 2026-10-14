@@ -281,7 +281,15 @@ type DeviceDefinition struct {
 	// Image URI for this device definition.
 	ImageURI *string `json:"imageURI,omitempty"`
 	// Device attributes for this device definition.
+	//
+	// Only attributes shared by every trim of this model-year appear here. An
+	// attribute whose value differs between trims belongs to those trims, not to
+	// the model-year, and is served under trims instead.
 	Attributes []*DeviceDefinitionAttribute `json:"attributes"`
+	// Trims of this model-year, as the manufacturer markets them.
+	//
+	// Empty for a definition served from the legacy manifest, which has no trims.
+	Trims []*DeviceDefinitionTrim `json:"trims"`
 }
 
 type DeviceDefinitionAttribute struct {
@@ -324,6 +332,19 @@ type DeviceDefinitionFilter struct {
 	Model *string `json:"model,omitempty"`
 	// Year filters for device definition that are of the given year.
 	Year *int `json:"year,omitempty"`
+}
+
+// One trim of a device definition: a specific configuration of the model-year.
+type DeviceDefinitionTrim struct {
+	// Trim name as the manufacturer markets it, for example "XSE V6", "Hybrid LE"
+	// or "Long Range AWD".
+	Name string `json:"name"`
+	// Attributes specific to this trim. These are the attributes that vary across
+	// the definition's trims, so they are absent from the definition's own
+	// attributes.
+	Attributes []*DeviceDefinitionAttribute `json:"attributes"`
+	// Hardware template id for this trim, when it differs from the definition's.
+	HardwareTemplateID *string `json:"hardwareTemplateId,omitempty"`
 }
 
 type Earning struct {

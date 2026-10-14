@@ -77,6 +77,35 @@ func (r *Repository) ToAPI(v *services.CatalogDefinition, mfr *models.Manufactur
 		})
 	}
 
+	// Trims carry the attributes that vary across this model-year, which the
+	// flattened Attributes above cannot hold -- for most definitions that is
+	// where powertrain, economy and drivetrain actually live. A trim with no
+	// name is dropped: the name is how a client tells trims apart, and the
+	// worker's schema requires it, so a nameless one is a malformed document
+	// rather than an unnamed configuration.
+	for _, trim := range v.Trims {
+		if trim.Name == "" {
+			continue
+		}
+		gt := &gmodel.DeviceDefinitionTrim{Name: trim.Name}
+		if trim.HardwareTemplateID != "" {
+			id := trim.HardwareTemplateID
+			gt.HardwareTemplateID = &id
+		}
+		for _, attr := range trim.Attributes {
+			// Same dead-value filter the definition's own attributes get, for
+			// the same reason: these come from the same documents.
+			if attr.Name == "" || attr.Value == "" || attr.Value == "<nil>" {
+				continue
+			}
+			gt.Attributes = append(gt.Attributes, &gmodel.DeviceDefinitionAttribute{
+				Name:  attr.Name,
+				Value: attr.Value,
+			})
+		}
+		result.Trims = append(result.Trims, gt)
+	}
+
 	return &result, nil
 }
 
