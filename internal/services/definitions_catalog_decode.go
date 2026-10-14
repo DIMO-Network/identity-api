@@ -54,6 +54,20 @@ type CatalogDefinition struct {
 	ImageURI     string                    `json:"imageuri"`
 	Metadata     CatalogDefinitionMetadata `json:"metadata"`
 	Manufacturer CatalogManufacturer       `json:"manufacturer"`
+	// Trims carries the per-trim attributes a flattened definition cannot
+	// hold. Empty for a definition decoded from the legacy manifest, which has
+	// no trims at all -- so a reader must treat empty as "not published here",
+	// never as "this model-year has no trims".
+	Trims []CatalogTrim `json:"trims"`
+}
+
+// CatalogTrim is one trim of a template. Only the fields this service serves
+// are decoded: selectors are how device-definitions-api matches a decoded VIN
+// to a trim, which is that service's job and not something identity answers.
+type CatalogTrim struct {
+	Name               string                       `json:"name"`
+	HardwareTemplateID string                       `json:"hardwareTemplateId"`
+	Attributes         []CatalogDefinitionAttribute `json:"attributes"`
 }
 
 // decodeLegacyManifest streams the legacy flat manifest,
@@ -121,17 +135,35 @@ func decodeElements[T any](dec *json.Decoder, visit func(T, error)) error {
 }
 
 // catalogTemplate is the part of a definitions-worker Template document this
-// service reads (definitions-worker schema/template.schema.json). Trims,
-// version, author and the timestamps are deliberately not decoded: a flattened
+// service reads (definitions-worker schema/template.schema.json). Version,
+// author and the timestamps are deliberately not decoded: a flattened
 // definition has nowhere to put them.
+//
+// Trims are decoded. They were not, on the reasoning that a flattened
+// definition has nowhere to put them either -- but the consequence was that
+// every attribute varying across a definition's trims had no route to any
+// consumer at all. Measured on the dev catalog, flattening drops
+// toyota_camry_2020 from twelve attributes to three, and mpg, wheelbase and
+// powertrain_type are among the nine it loses. The template is the only place
+// those values exist, so this service has to carry them through.
 type catalogTemplate struct {
-	ID           string              `json:"id"`
-	DeviceType   string              `json:"deviceType"`
-	Manufacturer CatalogManufacturer `json:"manufacturer"`
-	Model        string              `json:"model"`
-	Year         int                 `json:"year"`
-	ImageURI     string              `json:"imageURI"`
-	Attributes   map[string]any      `json:"attributes"`
+	ID           string                `json:"id"`
+	DeviceType   string                `json:"deviceType"`
+	Manufacturer CatalogManufacturer   `json:"manufacturer"`
+	Model        string                `json:"model"`
+	Year         int                   `json:"year"`
+	ImageURI     string                `json:"imageURI"`
+	Attributes   map[string]any        `json:"attributes"`
+	Trims        []catalogTemplateTrim `json:"trims"`
+}
+
+// catalogTemplateTrim mirrors $defs/trim in the worker's template schema, for
+// the fields this service serves. `name` and `attributes` are required there;
+// `hardwareTemplateId` is optional and overrides the template's value.
+type catalogTemplateTrim struct {
+	Name               string         `json:"name"`
+	HardwareTemplateID string         `json:"hardwareTemplateId"`
+	Attributes         map[string]any `json:"attributes"`
 }
 
 // templateToDefinition flattens a template the way device-definitions-api does
@@ -141,10 +173,26 @@ type catalogTemplate struct {
 // sorted by name: a trim's attributes belong to that trim, not to the
 // model-year. KSUID stays empty because templates have none, and inventing one
 // would put a value into a field consumers read as an identifier.
+//
+// The flattened attribute set is unchanged by carrying trims through -- that
+// field's meaning is "shared by every trim" and existing clients must keep
+// seeing exactly what they saw. The trims ride alongside it.
 func templateToDefinition(t *catalogTemplate) CatalogDefinition {
 	attrs := make([]CatalogDefinitionAttribute, 0, len(t.Attributes))
 	for _, name := range slices.Sorted(maps.Keys(t.Attributes)) {
 		attrs = append(attrs, CatalogDefinitionAttribute{Name: name, Value: attributeString(t.Attributes[name])})
+	}
+	trims := make([]CatalogTrim, 0, len(t.Trims))
+	for _, tr := range t.Trims {
+		trimAttrs := make([]CatalogDefinitionAttribute, 0, len(tr.Attributes))
+		for _, name := range slices.Sorted(maps.Keys(tr.Attributes)) {
+			trimAttrs = append(trimAttrs, CatalogDefinitionAttribute{Name: name, Value: attributeString(tr.Attributes[name])})
+		}
+		trims = append(trims, CatalogTrim{
+			Name:               tr.Name,
+			HardwareTemplateID: tr.HardwareTemplateID,
+			Attributes:         trimAttrs,
+		})
 	}
 	return CatalogDefinition{
 		ID:           t.ID,
@@ -154,6 +202,7 @@ func templateToDefinition(t *catalogTemplate) CatalogDefinition {
 		ImageURI:     t.ImageURI,
 		Metadata:     CatalogDefinitionMetadata{DeviceAttributes: attrs},
 		Manufacturer: t.Manufacturer,
+		Trims:        trims,
 	}
 }
 

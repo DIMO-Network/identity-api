@@ -181,6 +181,7 @@ type ComplexityRoot struct {
 		LegacyID           func(childComplexity int) int
 		Manufacturer       func(childComplexity int) int
 		Model              func(childComplexity int) int
+		Trims              func(childComplexity int) int
 		Year               func(childComplexity int) int
 	}
 
@@ -199,6 +200,12 @@ type ComplexityRoot struct {
 	DeviceDefinitionEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
+	}
+
+	DeviceDefinitionTrim struct {
+		Attributes         func(childComplexity int) int
+		HardwareTemplateID func(childComplexity int) int
+		Name               func(childComplexity int) int
 	}
 
 	Earning struct {
@@ -1110,6 +1117,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.DeviceDefinition.Model(childComplexity), true
+	case "DeviceDefinition.trims":
+		if e.ComplexityRoot.DeviceDefinition.Trims == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DeviceDefinition.Trims(childComplexity), true
 	case "DeviceDefinition.year":
 		if e.ComplexityRoot.DeviceDefinition.Year == nil {
 			break
@@ -1167,6 +1180,25 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.DeviceDefinitionEdge.Node(childComplexity), true
+
+	case "DeviceDefinitionTrim.attributes":
+		if e.ComplexityRoot.DeviceDefinitionTrim.Attributes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DeviceDefinitionTrim.Attributes(childComplexity), true
+	case "DeviceDefinitionTrim.hardwareTemplateId":
+		if e.ComplexityRoot.DeviceDefinitionTrim.HardwareTemplateID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DeviceDefinitionTrim.HardwareTemplateID(childComplexity), true
+	case "DeviceDefinitionTrim.name":
+		if e.ComplexityRoot.DeviceDefinitionTrim.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DeviceDefinitionTrim.Name(childComplexity), true
 
 	case "Earning.aftermarketDevice":
 		if e.ComplexityRoot.Earning.AftermarketDevice == nil {
@@ -6125,6 +6157,43 @@ func (ec *executionContext) fieldContext_DeviceDefinition_attributes(_ context.C
 	return fc, nil
 }
 
+func (ec *executionContext) _DeviceDefinition_trims(ctx context.Context, field graphql.CollectedField, obj *model.DeviceDefinition) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DeviceDefinition_trims,
+		func(ctx context.Context) (any, error) {
+			return obj.Trims, nil
+		},
+		nil,
+		ec.marshalNDeviceDefinitionTrim2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeviceDefinitionTrimᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DeviceDefinition_trims(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeviceDefinition",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "name":
+				return ec.fieldContext_DeviceDefinitionTrim_name(ctx, field)
+			case "attributes":
+				return ec.fieldContext_DeviceDefinitionTrim_attributes(ctx, field)
+			case "hardwareTemplateId":
+				return ec.fieldContext_DeviceDefinitionTrim_hardwareTemplateId(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DeviceDefinitionTrim", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _DeviceDefinitionAttribute_name(ctx context.Context, field graphql.CollectedField, obj *model.DeviceDefinitionAttribute) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -6287,6 +6356,8 @@ func (ec *executionContext) fieldContext_DeviceDefinitionConnection_nodes(_ cont
 				return ec.fieldContext_DeviceDefinition_imageURI(ctx, field)
 			case "attributes":
 				return ec.fieldContext_DeviceDefinition_attributes(ctx, field)
+			case "trims":
+				return ec.fieldContext_DeviceDefinition_trims(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type DeviceDefinition", field.Name)
 		},
@@ -6402,8 +6473,103 @@ func (ec *executionContext) fieldContext_DeviceDefinitionEdge_node(_ context.Con
 				return ec.fieldContext_DeviceDefinition_imageURI(ctx, field)
 			case "attributes":
 				return ec.fieldContext_DeviceDefinition_attributes(ctx, field)
+			case "trims":
+				return ec.fieldContext_DeviceDefinition_trims(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type DeviceDefinition", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DeviceDefinitionTrim_name(ctx context.Context, field graphql.CollectedField, obj *model.DeviceDefinitionTrim) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DeviceDefinitionTrim_name,
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DeviceDefinitionTrim_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeviceDefinitionTrim",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DeviceDefinitionTrim_attributes(ctx context.Context, field graphql.CollectedField, obj *model.DeviceDefinitionTrim) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DeviceDefinitionTrim_attributes,
+		func(ctx context.Context) (any, error) {
+			return obj.Attributes, nil
+		},
+		nil,
+		ec.marshalNDeviceDefinitionAttribute2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeviceDefinitionAttributeᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DeviceDefinitionTrim_attributes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeviceDefinitionTrim",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "name":
+				return ec.fieldContext_DeviceDefinitionAttribute_name(ctx, field)
+			case "value":
+				return ec.fieldContext_DeviceDefinitionAttribute_value(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DeviceDefinitionAttribute", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DeviceDefinitionTrim_hardwareTemplateId(ctx context.Context, field graphql.CollectedField, obj *model.DeviceDefinitionTrim) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DeviceDefinitionTrim_hardwareTemplateId,
+		func(ctx context.Context) (any, error) {
+			return obj.HardwareTemplateID, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_DeviceDefinitionTrim_hardwareTemplateId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeviceDefinitionTrim",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -8552,6 +8718,8 @@ func (ec *executionContext) fieldContext_Query_deviceDefinition(ctx context.Cont
 				return ec.fieldContext_DeviceDefinition_imageURI(ctx, field)
 			case "attributes":
 				return ec.fieldContext_DeviceDefinition_attributes(ctx, field)
+			case "trims":
+				return ec.fieldContext_DeviceDefinition_trims(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type DeviceDefinition", field.Name)
 		},
@@ -16540,6 +16708,11 @@ func (ec *executionContext) _DeviceDefinition(ctx context.Context, sel ast.Selec
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "trims":
+			out.Values[i] = ec._DeviceDefinition_trims(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -16682,6 +16855,52 @@ func (ec *executionContext) _DeviceDefinitionEdge(ctx context.Context, sel ast.S
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var deviceDefinitionTrimImplementors = []string{"DeviceDefinitionTrim"}
+
+func (ec *executionContext) _DeviceDefinitionTrim(ctx context.Context, sel ast.SelectionSet, obj *model.DeviceDefinitionTrim) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deviceDefinitionTrimImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DeviceDefinitionTrim")
+		case "name":
+			out.Values[i] = ec._DeviceDefinitionTrim_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "attributes":
+			out.Values[i] = ec._DeviceDefinitionTrim_attributes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "hardwareTemplateId":
+			out.Values[i] = ec._DeviceDefinitionTrim_hardwareTemplateId(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -20517,6 +20736,32 @@ func (ec *executionContext) marshalNDeviceDefinitionEdge2ᚖgithubᚗcomᚋDIMO�
 		return graphql.Null
 	}
 	return ec._DeviceDefinitionEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDeviceDefinitionTrim2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeviceDefinitionTrimᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.DeviceDefinitionTrim) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDeviceDefinitionTrim2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeviceDefinitionTrim(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDeviceDefinitionTrim2ᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐDeviceDefinitionTrim(ctx context.Context, sel ast.SelectionSet, v *model.DeviceDefinitionTrim) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DeviceDefinitionTrim(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNEarning2ᚕᚖgithubᚗcomᚋDIMOᚑNetworkᚋidentityᚑapiᚋgraphᚋmodelᚐEarningᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Earning) graphql.Marshaler {
