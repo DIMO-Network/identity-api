@@ -1,6 +1,6 @@
 module github.com/DIMO-Network/identity-api
 
-go 1.25.0
+go 1.27.0
 
 require (
 	github.com/99designs/gqlgen v0.17.89
