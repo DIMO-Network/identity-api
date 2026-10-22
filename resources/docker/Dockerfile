@@ -1,4 +1,4 @@
-FROM golang:1.25 AS build
+FROM golang:1.27 AS build
 
 RUN useradd -u 10001 dimo
 
@@ -7,7 +7,7 @@ COPY . ./
 
 RUN make build
 
-FROM gcr.io/distroless/base AS final
+FROM gcr.io/distroless/static AS final
 
 LABEL maintainer="DIMO <hello@dimo.zone>"
 
